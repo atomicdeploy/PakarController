@@ -77,6 +77,8 @@ template <uint16_t Groups,uint16_t Pixels> class HostPresentation {
     for(uint8_t i=0;i<=Fade;++i)if(value&&!strcmp(value,name(Effect(i)))){effect=Effect(i);return true;}
     return false;
   }
+  template<class Rgb,class Layout> static void composeLayer(const Layer &layer,Rgb *out,
+      const Layout &layout,const uint8_t *mapping,uint32_t elapsed){render(layer,out,layout,mapping,elapsed);}
  private:
   template<class Rgb,class Layout> static void render(const Layer &layer,Rgb *out,
       const Layout &layout,const uint8_t *mapping,uint32_t elapsed){

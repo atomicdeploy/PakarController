@@ -712,7 +712,12 @@ class PakarApi {
     }
     if (isUsb) return _usbCommand(path, values, authorize);
     var snapshot = _latestStatus;
-    if (snapshot?.peer.has('command-ack') != true) return null;
+    if (snapshot?.peer.has('command-ack') != true) {
+      if (path.startsWith('/api/minigame/')) {
+        throw const FormatException('Minigame command receipts unavailable');
+      }
+      return null;
+    }
     if (const ['/api/audio', '/api/buzzer', '/api/outputs'].contains(path) &&
         snapshot?.peer.has('avr-command-ack') != true) {
       return null;
@@ -1670,6 +1675,22 @@ class PakarApi {
     bool Function()? authorize,
   }) async {
     _requireNetwork();
+    if (path.startsWith('/api/minigame/')) {
+      final actual = await fastCommand(
+        path,
+        values,
+        authorize: authorize ?? () => true,
+      );
+      if (actual == null) {
+        throw const FormatException('Minigame command receipt unavailable');
+      }
+      return {
+        'accepted': true,
+        'board_id': actual.json['board_id'],
+        'boot_id': actual.json['boot_id'],
+        'status': actual.json,
+      };
+    }
     if (isUsb) {
       if (path == '/api/pixels/corrections' ||
           path == '/api/pixels/corrections/preview') {
@@ -1760,6 +1781,10 @@ class PakarApi {
     Map<String, String> values = const {},
   ]) async {
     _requireNetwork();
+    if (path.startsWith('/api/minigame/')) {
+      await postJson(path, values);
+      return;
+    }
     if (isUsb) {
       await _ensureUsb();
       if (freshStatus == null && !usb.busy) await status();

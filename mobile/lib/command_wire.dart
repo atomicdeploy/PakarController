@@ -7,8 +7,12 @@ import 'command_failure.dart';
 import 'cell_assignments.dart';
 import 'game_settings_command.dart';
 import 'command_readback.dart';
+import 'minigame.dart';
 
 const commandNames = {
+  minigameConfigure: 'minigame-configure',
+  minigameControl: 'minigame-control',
+  minigameInput: 'minigame-input',
   '/api/audio': 'audio',
   '/api/buzzer': 'buzzer',
   '/api/outputs': 'outputs',
@@ -49,6 +53,9 @@ String commandPacket(
   final gameSettings = path == '/api/game/settings'
       ? gameSettingsPatch(values)
       : null;
+  final miniFields = minigamePaths.contains(path)
+      ? status.peer.minigame!.command(path, values)
+      : null;
   return jsonEncode({
     'type': 'command',
     'request_id': id,
@@ -57,7 +64,8 @@ String commandPacket(
     'expires_at_ms': clock + 8000,
     'command': commandNames[path],
     ...?gameSettings,
-    if (gameSettings == null)
+    ...?miniFields,
+    if (gameSettings == null && miniFields == null)
       for (final item in values.entries)
         item.key:
             path == '/api/pixels/corrections/preview' &&
@@ -149,6 +157,10 @@ DeviceStatus verifyCommandReply(
     throw const FormatException('Same-board command readback unavailable');
   }
   final actual = DeviceStatus(json);
+  if (minigamePaths.contains(path) &&
+      !minigameReadbackMatches(json['minigame'], path, values)) {
+    throw const FormatException('Minigame readback differs; not retried');
+  }
   if (requireGameReadback &&
       path == '/api/game/settings' &&
       !commandReadbackMatches(actual, path, values)) {

@@ -2179,6 +2179,21 @@ impl PakarControllerApp {
             Err("USB API peer retired; result not applied".into())
         } else {result};
         match purpose {
+            pixel_groups::Purpose::Minigame(request) => {
+                match result.and_then(|value|request.verify(value)) {
+                    Ok(observed) => {
+                        if let Some(status)=self.serial_status.as_mut() {
+                            if observed.command_clock_ms>=status.command_clock_ms {
+                                status.minigame=observed.minigame;
+                                status.command_clock_ms=observed.command_clock_ms;
+                                status.winner=observed.winner;
+                            }
+                        }
+                        self.message="Game command ACK and same-board readback verified over USB".into();
+                    },
+                    Err(error)=>self.message=error,
+                }
+            },
             pixel_groups::Purpose::Frame{revision,layout_revision,at}=> {
                 if let Ok(value)=result && let Some(status)=self.live_status() {
                     let peer=peer_http::Pin::from_status(status);
@@ -2854,6 +2869,7 @@ impl PakarControllerApp {
             );
         }
         if modes.iter().any(|mode| mode.id == "first-wins") {
+          if !snapshot.as_ref().is_some_and(|s| crate::minigame::snapshot(s).is_some()) {
             ui.horizontal_wrapped(|ui| {
                 ui.add_enabled_ui(
                     snapshot
@@ -2873,6 +2889,7 @@ impl PakarControllerApp {
                 );
             });
             ui.add_space(10.0);
+          }
         }
         // Table owns semantic selection/actions and cell identity. Do not keep
         // a second hardcoded White/Red card that contradicts its saved palette.
@@ -3294,6 +3311,18 @@ impl PakarControllerApp {
             }
         });
     }
+    fn send_minigame(&mut self, request: crate::minigame::Request) -> Result<(),String> {
+        match self.command_route() {
+            Some(Transport::WiFi)=>self.queue_realtime(request.path,request.form,None),
+            Some(Transport::Serial)=> {
+                let status=self.live_status().ok_or("Fresh USB game status unavailable")?;
+                let stamp=self.serial_admission().ok_or("USB game owner unavailable")?.stamp;
+                let (request,packet)=crate::minigame::UsbRequest::prepare(status,request,stamp)?;
+                self.begin_pixel_api(pixel_groups::Purpose::Minigame(request),"POST","/api/command",packet)
+            },
+            None=>Err("No selected live game transport".into()),
+        }
+    }
     pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui, game_only: bool) {
         let Some(s) = self.live_status().cloned() else {
             ui.label(crate::ui::i18n::text("Hardware state unavailable"));
@@ -3308,7 +3337,21 @@ impl PakarControllerApp {
                 .is_some_and(|c| c.role == "first-wins")
         {
             let mask = s.key_game["enabled_mask"].as_u64().unwrap_or(511) as u16;
+            let minigame = crate::minigame::snapshot(&s).is_some();
+            let minigame_writable = crate::realtime::supported(&s,crate::minigame::CONTROL)
+                && match self.command_route() {
+                    Some(Transport::WiFi)=>self.http_writable(),
+                    Some(Transport::Serial)=>self.pixel_api_reply.is_none() && self.has_feature("usb-api"),
+                    None=>false,
+                };
+            if minigame {
+                for request in crate::minigame::controls(ui,&s,minigame_writable) {
+                    if let Err(error)=self.send_minigame(request) {self.message=error;}
+                }
+                ui.add_space(8.0);
+            }
             dialog::section(ui, icons::HAND_TAP, "Keys", |ui| {
+              if !minigame {
                 ui.horizontal_wrapped(|ui| {
                     ui.strong(if s.winner == 0 {
                         "Ready for first press".to_owned()
@@ -3329,6 +3372,7 @@ impl PakarControllerApp {
                         }
                     });
                 });
+              }
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut self.key_trigger_on_click, "Trigger on click")
@@ -3357,9 +3401,10 @@ impl PakarControllerApp {
                 });
                 let boxes = std::array::from_fn(|index| {
                     let key = (index + 1) as u8;
-                    let (color_name, fallback) = if s.winner == key {
+                    let winner = if minigame {s.minigame["winner"].as_u64().unwrap_or(0) as u8} else {s.winner};
+                    let (color_name, fallback) = if winner == key {
                         ("win_rgb", 0x00ff00)
-                    } else if s.winner != 0 {
+                    } else if winner != 0 {
                         ("lose_rgb", 0xff0000)
                     } else {
                         ("idle_rgb", 0xffffff)
@@ -3367,13 +3412,15 @@ impl PakarControllerApp {
                     let rgb = s.key_game[color_name].as_u64().unwrap_or(fallback) as u32;
                     super::key_boxes::BoxView {
                         enabled: mask & (1 << index) != 0,
-                        pressed: if key == 9 {
+                        pressed: if minigame {
+                            s.minigame["held_mask"].as_u64().unwrap_or(0) & (1 << index) != 0
+                        } else if key == 9 {
                             s.input_9
                         } else {
                             s.active_inputs & (1 << index) != 0
                         },
-                        winner: s.winner == key,
-                        round_active: s.winner != 0,
+                        winner: winner == key,
+                        round_active: winner != 0,
                         color: egui::Color32::from_rgb(
                             (rgb >> 16) as u8,
                             (rgb >> 8) as u8,
@@ -3390,7 +3437,8 @@ impl PakarControllerApp {
                         }),
                     }
                 });
-                let can_trigger = super::effect_controls::game_press_available(&s);
+                let can_trigger = if minigame {minigame_writable && crate::minigame::ready(&s)}
+                    else {super::effect_controls::game_press_available(&s)};
                 let result = super::key_boxes::show(
                     ui,
                     &s.board_id,
@@ -3410,9 +3458,13 @@ impl PakarControllerApp {
                     self.save_workspace();
                 }
                 if let Some(key) = result.trigger {
-                    self.post("/api/game/press", vec![("key".into(), key.to_string())]);
+                    if minigame {
+                        let request=crate::minigame::input(key,&crate::minigame::input_action(ui,&s));
+                        if let Err(error)=self.send_minigame(request) {self.message=error;}
+                    } else {self.post("/api/game/press", vec![("key".into(), key.to_string())]);}
                 }
                 if self.has_feature("key-settings") {
+                  ui.add_enabled_ui(!minigame || minigame_writable, |ui| {
                     if self.has_feature("game-presentation")
                         && s.key_game["presentation"].is_object()
                     {
@@ -3542,6 +3594,7 @@ impl PakarControllerApp {
                             });
                         }
                     });
+                  });
                 }
             });
             ui.add_space(10.0);

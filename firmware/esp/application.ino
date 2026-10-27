@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <GameRole.h>
+#if PAKAR_FIRST_WINS_ENABLED
+#include "src/KeyMiniGameSettings.h"
+#endif
 #include <RadioReception.h>
 #ifndef PAKAR_NETWORK_ENABLED
 #define PAKAR_NETWORK_ENABLED 1
@@ -254,6 +257,19 @@ PixelCorrectionStore<LedGrid::kPixels> pixelCorrections;
 #include "src/KeyGameSettings.h"
 #include "src/StateAppearanceSettings.h"
 KeyGameSettings keySettings;
+#if PAKAR_FIRST_WINS_ENABLED
+KeyMiniGameSettings miniSettings;
+BoardCore::KeyMiniGame miniGame;
+LedGrid::Presentation::Layer miniLayer;
+bool avrMiniGames=false,avrMiniOwned=false;
+uint16_t miniPhysicalHeld=0,miniRemoteHeld=0;
+uint16_t miniEpoch=1,avrMiniEpoch=0,miniEpochSent=0;
+bool miniResumeAfterFence=false;
+uint16_t miniFenceNote=0;
+uint32_t miniFenceAt=0;
+bool miniCommand(JsonObjectConst request,String &result);
+uint32_t miniRemoteAt[9]{};
+#endif
 StateAppearanceSettings stateAppearance;
 void syncStateAppearanceFromKeys(){
   auto &v=stateAppearance.value;
@@ -480,7 +496,7 @@ void serviceSnake(uint32_t now);
 void serviceDiscovery();
 void registerAsyncOta();
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
-               const uint8_t *payload = nullptr, uint8_t payloadLength = 0);
+               const uint8_t *payload = nullptr, uint8_t payloadLength = 0,bool gameOutput = false);
 String pcReceiptJson(const BoardCore::PcContractTransport::Receipt &receipt);
 void publishPcEvent(const String &event,bool displaySnapshot=false) {
 #if defined(ARDUINO_ARCH_ESP32)
@@ -1087,6 +1103,14 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       if(frame.payloadLength!=1||frame.payload[0]>1){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
       grid.setRedLock(frame.payload[0]);hostLink.ack(frame.sequence,frame.opcode);break;
     case kGameReset:
+#if PAKAR_FIRST_WINS_ENABLED
+      if(avrMiniOwned){
+        JsonDocument request;request["command"]="minigame-control";request["action"]="reset";String result;
+        if(miniCommand(request.as<JsonObjectConst>(),result))hostLink.ack(frame.sequence,frame.opcode);
+        else hostLink.error(frame.sequence,frame.opcode,kHardwareUnavailable);
+        break;
+      }
+#endif
       if(!avrOnline || !keyMaskApplied || programmingLatched ||
           !requestAndWaitForAck(kGameReset,nullptr,0,750)) {
         hostLink.error(frame.sequence,frame.opcode,kHardwareUnavailable);break;
@@ -1175,6 +1199,15 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       hostLink.ack(frame.sequence, frame.opcode);
       break;
     case kGamePress:
+#if PAKAR_FIRST_WINS_ENABLED
+      if(avrMiniOwned){
+        if(frame.payloadLength!=1){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
+        JsonDocument request;request["command"]="minigame-input";request["action"]="tap";request["key"]=frame.payload[0];String result;
+        if(miniCommand(request.as<JsonObjectConst>(),result))hostLink.ack(frame.sequence,frame.opcode);
+        else hostLink.error(frame.sequence,frame.opcode,kHardwareUnavailable);
+        break;
+      }
+#endif
       if(!PAKAR_FIRST_WINS_ENABLED||!avrOnline||!avrRemotePress||!keyMaskApplied||programmingLatched||
          frame.payloadLength!=1||!keySettings.enabled(frame.payload[0])){
         hostLink.error(frame.sequence,frame.opcode,kUnsafe);break;
@@ -1603,7 +1636,12 @@ String deviceNameJson(bool accepted) {
 }
 
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
-               const uint8_t *payload, uint8_t payloadLength) {
+               const uint8_t *payload, uint8_t payloadLength,bool gameOutput) {
+#if PAKAR_FIRST_WINS_ENABLED
+  if(avrMiniOwned&&opcode==kOutputMask&&!gameOutput)return false;
+#else
+  (void)gameOutput;
+#endif
   if (!PAKAR_AVR_LINK_ENABLED || urbootRawOwned) return false;
 #if defined(ARDUINO_ARCH_ESP32)
   if (!avrUart.started()) return false;
@@ -1748,6 +1786,9 @@ bool requestAndWaitForAck(uint8_t opcode, const uint8_t *payload = nullptr,
   return awaitedReplySeen && awaitedReplyOk;
 }
 bool submitAvrCommand(uint8_t opcode,const uint8_t *payload,uint8_t length,String &result){
+#if PAKAR_FIRST_WINS_ENABLED
+  if(avrMiniOwned&&opcode==kOutputMask){result=F("outputs_owned_by_minigame");return false;}
+#endif
   if(!avrOnline){result=F("avr_unavailable");return false;}
   if(!requestAndWaitForAck(opcode,payload,length,150)){
     result=awaitedReplySeen?F("avr_command_rejected"):F("avr_outcome_unknown");return false;
@@ -2112,6 +2153,7 @@ uint64_t commandClock() {
   const uint32_t now=millis();if(now<previous)high+=1ULL<<32;previous=now;
   return high|now; // Queried every telemetry tick; old intents cannot revive at millis wrap.
 }
+#include "src/KeyMiniGameService.h"
 #include "src/SemanticPanelService.h"
 String buildStatusJson() { return buildStatusJson(false); }
 String buildStatusJson(bool compact) {
@@ -2156,6 +2198,7 @@ String buildStatusJson(bool compact) {
   body += F("\",\"led_output\":");body+=grid.outputJson(compact);
 #if PAKAR_FIRST_WINS_ENABLED
   body += F(",\"key_game\":");body+=keySettings.json();
+  if(avrMiniGames){body+=F(",\"minigame\":");body+=miniJson();}
   body += F(",\"key_mask_applied\":");body+=(avrOnline&&keyMaskApplied)?F("true"):F("false");
   body += F(",\"game_audio_applied\":");body+=(avrOnline&&avrGameMelodies&&keyAudioApplied)?F("true"):F("false");
   body += F(",\"auto_reset_state\":\"");body+=gameAutoResetState;body+='"';
@@ -2368,6 +2411,7 @@ String buildStatusJson(bool compact) {
   body += F(",\"key-settings\",\"usb-key-settings\",\"reset-ack\"");
   if(avrOnline&&avrGameMelodies)body += F(",\"game-melodies\"");
   body += F(",\"game-presentation\"");
+  if(avrMiniGames)body += F(",\"board-minigames\",\"minigame-configure\",\"minigame-control\",\"minigame-input\"");
   if(avrOnline&&avrRemotePress)body += F(",\"game-press\"");
 #endif
   if(avrOnline&&avrAudioStream)body += F(",\"audio-stream\"");
@@ -2609,7 +2653,7 @@ String commandReply(const String &message,bool boundedDiagnostic) {
     const String id=PakarCommand::stringValue(object,"request_id");
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
-    const bool supported=command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
+    const bool supported=command=="minigame-configure"||command=="minigame-control"||command=="minigame-input"||command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
         command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell"||command=="cell-assignments"||command=="cell-lock"||command=="audio"||command=="buzzer"||command=="outputs";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
@@ -2624,7 +2668,7 @@ String commandReply(const String &message,bool boundedDiagnostic) {
         String result;
         entry->accepted=!programmingLatched && !otaActive && !otaRebootAt && !avrUploadOwner &&
             !remoteFirmware.busy() && !networkApplyPending && !cloudApplyPending && handleCloudCommand(message,result);
-        if(!entry->accepted&&(command=="snake"||command=="presentation"||command=="pixel-corrections-preview"))reply["reason"]=result;
+        if(!entry->accepted&&(command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command.startsWith("minigame-")))reply["reason"]=result;
         if(!entry->accepted)entry->failure=result==F("red_cells_locked")?BoardCore::CommandReceipts::RedCellsLocked:
             result==F("invalid_cell_assignments")?BoardCore::CommandReceipts::InvalidCellAssignments:
             result==F("unsupported_board_role")?BoardCore::CommandReceipts::UnsupportedBoardRole:
@@ -2986,6 +3030,9 @@ bool handleCloudCommand(const String &message, String &result) {
   }
   const JsonObjectConst commandRequest=commandDocument.as<JsonObjectConst>();
   const String command=PakarCommand::stringValue(commandRequest,"command");
+#if PAKAR_FIRST_WINS_ENABLED
+  if(command=="minigame-configure"||command=="minigame-control"||command=="minigame-input")return miniCommand(commandRequest,result);
+#endif
   if(command=="presentation"){
     const char *error=applyHostPresentation(commandRequest);result=error?String(error):presentationJson();return !error;
   }
@@ -3036,6 +3083,10 @@ bool handleCloudCommand(const String &message, String &result) {
     result=F("state presentation saved");return true;
   }
   if(command=="game-press"){
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned){JsonDocument input;input["command"]="minigame-input";input["action"]="tap";input["key"]=commandRequest["key"];
+      return miniCommand(input.as<JsonObjectConst>(),result);}
+#endif
     const auto key=commandRequest["key"];
     if(!PAKAR_FIRST_WINS_ENABLED||!avrOnline||!avrRemotePress||!keyMaskApplied||programmingLatched||
        !key.is<uint8_t>()||!keySettings.enabled(key.as<uint8_t>())){result=F("game_press_unavailable");return false;}
@@ -3404,6 +3455,9 @@ bool handleCloudCommand(const String &message, String &result) {
   if (command == F("reset")) {
     if(!avrOnline || !keyMaskApplied || programmingLatched){result=F("avr_not_ready");return false;}
     if(!requestAndWaitForAck(kGameReset)){result=F("avr_reset_not_acknowledged");return false;}
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned)miniReset(millis());
+#endif
     if(!grid.resetWhite()){result=F("red_cells_locked");return false;}
     winner = 0;
     grid.setOutputEnabled(true);
@@ -3449,6 +3503,11 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     return;
   }
   if (frame.opcode == kPcContractResponse) {
+#if PAKAR_FIRST_WINS_ENABLED
+    if(miniReady()&&frame.sequence==0&&frame.payloadLength==8&&frame.payload[0]==ControllerProtocol::Event&&frame.payload[1]==1&&frame.payload[2]<9&&
+       frame.payload[4]==0&&(frame.payload[6]|uint16_t(frame.payload[7])<<8)==miniEpoch&&
+       (frame.payload[3]==5||frame.payload[3]==6))miniInput(frame.payload[2]+1,frame.payload[3]==5,true,millis());
+#endif
     auto *receipt = pcTransport.accept(frame, millis());
     if (receipt) {
       if (receipt->usb) {
@@ -3493,9 +3552,15 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       frame.payload[0]==kKeyMask && frame.payload[1]==kNoError &&
       keyMaskSentValue==keySettings.enabledMask){
     keyMaskApplied=true;
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniGames&&miniEpochSent!=miniEpoch)keyMaskApplied=false;
+#endif
     avrAdmissionRecovery.confirmed();
     keyAudioApplied=avrGameMelodies && keyWinnerCueSent==BoardCore::AudioCues::kSilent && keyResetCueSent==keySettings.resetCue;
     keyMaskPending=avrGameMelodies&&!keyAudioApplied;
+#if PAKAR_FIRST_WINS_ENABLED
+    keyMaskPending=keyMaskPending||(avrMiniGames&&!avrMiniOwned);
+#endif
   }
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_GAME_RESET_PIN >= 0
   if(physicalResetPending && frame.sequence==physicalResetSequence &&
@@ -3512,6 +3577,10 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     awaitedReplyOk = frame.opcode == kAck && frame.payload[1] == kNoError;
   }
   if (frame.opcode == kHelloResponse) {
+#if PAKAR_FIRST_WINS_ENABLED
+    avrMiniGames=frame.payloadLength>=20&&frame.payload[19]==1;
+    avrMiniOwned=false;avrMiniEpoch=0;miniPhysicalHeld=miniRemoteHeld=0;
+#endif
     keyMaskApplied=false;keyMaskPending=true;
     keyAudioApplied=false;keyMaskSentAt=0;
     avrGameMelodies=frame.payloadLength>=17 && frame.payload[16]==1;
@@ -3545,12 +3614,14 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
 #if PAKAR_FIRST_WINS_ENABLED
     // The observed mask can settle a lost ACK without replaying a game action.
     if(gameRoleMatches && frame.payloadLength>=28) {
+      avrMiniOwned=avrMiniGames&&frame.payloadLength>=33&&frame.payload[30]==1;
+      avrMiniEpoch=frame.payloadLength>=33?(frame.payload[31]|uint16_t(frame.payload[32])<<8):0;
       const uint16_t observedMask=frame.payload[26]|uint16_t(frame.payload[27])<<8;
-      keyMaskApplied=observedMask==keySettings.enabledMask;
+      keyMaskApplied=observedMask==keySettings.enabledMask&&(!avrMiniGames||avrMiniEpoch==miniEpoch);
       if(keyMaskApplied)avrAdmissionRecovery.confirmed();
       keyAudioApplied=avrGameMelodies && frame.payloadLength>=30 &&
           frame.payload[28]==BoardCore::AudioCues::kSilent && frame.payload[29]==keySettings.resetCue;
-      keyMaskPending=!keyMaskApplied||(avrGameMelodies&&!keyAudioApplied);
+      keyMaskPending=!keyMaskApplied||(avrGameMelodies&&!keyAudioApplied)||(avrMiniGames&&!avrMiniOwned);
     }
 #endif
     const uint8_t previousWinner = winner;
@@ -3567,7 +3638,12 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     } else if (BoardCore::GameRole::accepts(frame.payload[0])) {
       mode = static_cast<GameMode>(frame.payload[0]);
       // A boot/default status is not a new first-wins input.
-      if (mode == kModeFirstWins && keyMaskApplied && keySettings.enabled(frame.payload[1])) winner = frame.payload[1];
+      if (mode == kModeFirstWins && keyMaskApplied && keySettings.enabled(frame.payload[1])) {
+#if PAKAR_FIRST_WINS_ENABLED
+        if(!avrMiniOwned)
+#endif
+          winner = frame.payload[1];
+      }
     }
     }
     if (frame.payloadLength >= 7) {
@@ -3600,6 +3676,10 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       const uint8_t currentResetRevision = frame.payload[12];
       if (gameStateInitialized && gameRoleMatches) {
         if (currentResetRevision != lastResetRevision) {
+#if PAKAR_FIRST_WINS_ENABLED
+          if(avrMiniOwned)miniReset(millis());
+          else {
+#endif
           winner = frame.payload[1];
           if (mode == kModeSnake) startSnake();
 #if PAKAR_FIRST_WINS_ENABLED
@@ -3610,6 +3690,9 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
                        lastResetRevision, winner)) grid.showWinner(winner);
 #endif
           else grid.resetWhite();
+#if PAKAR_FIRST_WINS_ENABLED
+          }
+#endif
         }
         if (PAKAR_TABLE_SELECTION && cellRevision != lastCellActionRevision &&
             actionEffect <= kEffectPulse && frame.payload[2] >= 1 &&
@@ -3638,7 +3721,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       avrPanelMeta = frame.payload[24] | static_cast<uint16_t>(frame.payload[25]) << 8;
     }
 #if PAKAR_FIRST_WINS_ENABLED
-    if (gameRoleMatches && mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
+    if (!avrMiniOwned && gameRoleMatches && mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
       grid.showWinner(winner);
       gameWinnerAt=millis();gameAutoResetArmed=true;gameAutoResetState="armed";
       gameAudioPulse=255;gameAudioStarted=false;
@@ -4432,6 +4515,9 @@ void registerApi() {
       server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"avr_not_ready\"}"));return;
     }
     if(!requestAndWaitForAck(kGameReset)){server.send(503,"application/json",F("{\"accepted\":false,\"error\":\"avr_reset_not_acknowledged\"}"));return;}
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned)miniReset(millis());
+#endif
     if(!grid.resetWhite()){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"red_cells_locked\"}"));return;}
     winner = 0;
     grid.setOutputEnabled(true);
@@ -4448,6 +4534,15 @@ void registerApi() {
       server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"game_press_unavailable\"}"));return;
     }
     const uint8_t key=value[0]-'0';
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned){
+      JsonDocument request;request["command"]="minigame-input";request["key"]=key;request["action"]="tap";
+      String result;const bool accepted=miniCommand(request.as<JsonObjectConst>(),result);
+      if(!accepted){JsonDocument error;error["accepted"]=false;error["error"]=result;String json;serializeJson(error,json);server.send(409,"application/json",json);return;}
+      server.send(200,"application/json",String(F("{\"accepted\":true,\"minigame\":"))+result+"}");
+      webSocket.textAll(buildStatusJson());return;
+    }
+#endif
     if(!requestAndWaitForAck(kGamePress,&key,1)){
       server.send(503,"application/json",F("{\"accepted\":false,\"error\":\"game_press_not_acknowledged\"}"));return;
     }
@@ -5100,6 +5195,18 @@ void setup() {
 #endif
 #if PAKAR_FIRST_WINS_ENABLED
   keySettings.load(LittleFS);
+#if PAKAR_FIRST_WINS_ENABLED
+  miniSettings.value.enabledMask=keySettings.enabledMask;
+  for(uint8_t i=0;i<8;++i)miniSettings.value.outputs[i]={BoardCore::KeyMiniGame::KeyWinner,uint8_t(i+1)};
+  if(!miniSettings.load(LittleFS)&&!miniSettings.value.valid()){
+    for(uint8_t i=0;i<BoardCore::KeyMiniGame::ModeCount;++i)if(BoardCore::KeyMiniGame::available(BoardCore::KeyMiniGame::Mode(i))){
+      miniSettings.value=BoardCore::KeyMiniGame::Config::defaults(BoardCore::KeyMiniGame::Mode(i));miniSettings.value.enabledMask=keySettings.enabledMask;
+      if(miniSettings.value.valid())break;
+    }
+  }
+  miniGame.configure(miniSettings.value,millis());grid.setGamePresentation(&miniLayer);
+  miniEpoch=uint16_t(micros())|1U;
+#endif
   syncStateAppearanceFromKeys();
   grid.configureKeys(keySettings.enabledMask,keySettings.idleRgb,keySettings.winRgb,keySettings.loseRgb);
   grid.configureKeyMotion(keySettings.chasePeriodMs,keySettings.chaseNeighbors,keySettings.chaseInvert);
@@ -5256,6 +5363,10 @@ __attribute__((noinline)) void serviceQueuedWebSocketMessage() {
 
 namespace {
 bool applyKeySettings(const KeyGameSettings &next) {
+#if PAKAR_FIRST_WINS_ENABLED
+  auto miniNext=miniSettings.value;miniNext.enabledMask=next.enabledMask;
+  if(avrMiniGames&&!miniNext.valid())return false;
+#endif
   const bool maskChanged=next.enabledMask!=keySettings.enabledMask;
   const bool audioChanged=next.winnerCue!=keySettings.winnerCue||next.resetCue!=keySettings.resetCue;
   if(audioChanged&&(!avrOnline||!avrGameMelodies))return false;
@@ -5263,6 +5374,9 @@ bool applyKeySettings(const KeyGameSettings &next) {
       (next.resetCue!=BoardCore::AudioCues::kSilent&&next.resetCue>=avrAudioCueCount)))return false;
   if(!next.save(LittleFS))return false;
   keySettings=next;
+#if PAKAR_FIRST_WINS_ENABLED
+  if(maskChanged){miniSettings.value=miniNext;miniGame.configure(miniNext,millis());miniInputFence(millis());}
+#endif
   syncStateAppearanceFromKeys();
   if(audioChanged){keyAudioApplied=false;keyMaskPending=true;keyMaskSentAt=0;}
   if(maskChanged){winner=0;gameAutoResetArmed=false;keyMaskApplied=false;keyMaskPending=true;keyMaskSentAt=0;}
@@ -5324,9 +5438,10 @@ void serviceGameLink(uint32_t now) {
       if(sendToAvr(kHello,sequence++))avrAdmissionRecovery.confirmed();
       return;
     }
-    const uint8_t payload[]={uint8_t(keySettings.enabledMask),uint8_t(keySettings.enabledMask>>8),BoardCore::AudioCues::kSilent,keySettings.resetCue};
+    const uint8_t payload[]={uint8_t(keySettings.enabledMask),uint8_t(keySettings.enabledMask>>8),BoardCore::AudioCues::kSilent,keySettings.resetCue,1,uint8_t(miniEpoch),uint8_t(miniEpoch>>8)};
     keyMaskSequence=sequence++;
-    if(sendToAvr(kKeyMask,keyMaskSequence,payload,avrGameMelodies?sizeof(payload):2)){
+    if(sendToAvr(kKeyMask,keyMaskSequence,payload,avrMiniGames?7:avrGameMelodies?4:2)){
+      miniEpochSent=miniEpoch;
       avrAdmissionRecovery.sent();
       keyMaskSentAt=now;keyMaskSentValue=keySettings.enabledMask;
       keyWinnerCueSent=BoardCore::AudioCues::kSilent;keyResetCueSent=keySettings.resetCue;
@@ -5378,6 +5493,9 @@ void loop() {
 #endif
   servicePcContracts();
   const uint32_t now = millis();
+  #if PAKAR_FIRST_WINS_ENABLED
+  serviceMiniGame(now);
+  #endif
   if (PAKAR_NETWORK_ENABLED && NetworkPath::service()) {
     cloudServices.suspend();
     ntpConfigured = false;
@@ -5417,6 +5535,9 @@ void loop() {
   }
   if(physicalResetAccepted) {
     physicalResetAccepted=false;
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned)miniReset(now);
+#endif
     if(grid.resetWhite()) {
       winner=0;
       grid.setOutputEnabled(true);

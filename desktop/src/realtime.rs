@@ -18,9 +18,11 @@ pub struct Intent {
     pub correction_request: Option<crate::pixel_corrections::PreviewRequest>,
     path: &'static str,
     form: Vec<(String, String)>,
+    minigame_revision: Option<u64>,
 }
 pub fn supported(status: &DeviceStatus, path: &str) -> bool {
-    (path != "/api/game/reset"
+    (!crate::minigame::path(path) || crate::minigame::ready(status))
+        && (path != "/api/game/reset"
         || status
             .capabilities
             .as_ref()
@@ -42,6 +44,9 @@ pub fn supported(status: &DeviceStatus, path: &str) -> bool {
                 | "/api/game/reset"
                 | "/api/game/settings"
                 | "/api/game/press"
+                | crate::minigame::CONFIGURE
+                | crate::minigame::CONTROL
+                | crate::minigame::INPUT
                 | "/api/cells/assignments"
                 | "/api/cells/lock"
                 | "/api/cell"
@@ -93,6 +98,7 @@ impl Intent {
         }
         let peer = peer_http::Pin::from_status(status)
             .ok_or("Realtime command requires a pinned board")?;
+        if crate::minigame::path(path) { crate::minigame::validate(status,path,&form)?; }
         if path == "/api/led/output" && let Some((_, backend)) = form.iter().find(|(key, _)| key == "backend") {
             if !crate::led_backend::allowed(status, backend) {
                 return Err("LED backend unavailable or switching; nothing sent".into());
@@ -165,6 +171,9 @@ impl Intent {
             }
         }
         let command = match path {
+            crate::minigame::CONFIGURE => "minigame-configure",
+            crate::minigame::CONTROL => "minigame-control",
+            crate::minigame::INPUT => "minigame-input",
             "/api/led/presentation" => "state-presentation",
             "/api/led/preview" => "color-preview",
             "/api/game/press" => "game-press",
@@ -189,11 +198,13 @@ impl Intent {
         for (key, item) in &form {
             value[key] = if key == "configuration" && path == crate::pixel_corrections::PREVIEW_PATH {
                 correction_request.as_ref().ok_or("Missing correction preview")?.payload()
+            } else if key == "settings" && path == crate::minigame::CONFIGURE {
+                crate::minigame::settings(item,&status.minigame)?
             } else if key == "settings" && path == "/api/led/presentation" {
                 crate::state_appearance::parse(item)?
             } else if key == "presentation" {
                 crate::game_presentation::parse(item)?
-            } else if key == "key" && path == "/api/game/press" {
+            } else if key == "key" && matches!(path,"/api/game/press" | crate::minigame::INPUT) {
                 serde_json::json!(item.parse::<u8>().ok().filter(|key| (1..=9).contains(key)).ok_or("Invalid key")?)
             } else if key == "assignments" {
                 let assignments: Vec<crate::cell_assignments::Assignment> =
@@ -246,6 +257,7 @@ impl Intent {
             correction_request,
             path,
             form,
+            minigame_revision: if crate::minigame::path(path) {status.minigame["revision"].as_u64()} else {None},
         })
     }
     pub fn admit(&self) -> Result<(), String> {
@@ -280,6 +292,11 @@ impl Intent {
         if peer_http::Pin::from_status(&status).as_ref() != Some(&self.peer) {
             return Err("Command readback belongs to another boot".into());
         }
+        if crate::minigame::path(self.path) && !matches!(
+            (self.minigame_revision,status.minigame["revision"].as_u64()),
+            (Some(before),Some(after)) if after>=before) {
+            return Err("Game readback revision is missing or stale; nothing replayed".into());
+        }
         if let Some(request) = &self.correction_request {
             self.admit()?;
             let summary=&value["pixel_corrections_preview"];
@@ -309,6 +326,8 @@ impl Intent {
                 .map(|status|VerifiedReceipt{status,corrections:None});
         }
         let matches = match self.path {
+            crate::minigame::CONFIGURE | crate::minigame::CONTROL | crate::minigame::INPUT =>
+                crate::minigame::verify(self.path,&self.form,&status),
             "/api/audio"|"/api/buzzer"=>value["avr_acknowledged"]==true,
             // ACK confirms the accepted command payload. active_outputs is a
             // separate AVR snapshot and may legitimately arrive a frame later.
@@ -474,6 +493,29 @@ mod tests {
         observed.cells[79] = "red".into();
         serde_json::json!({"type":"command-result","request_id":request.id,"board_id":observed.board_id,
             "boot_id":observed.boot_id,"accepted":true,"count":2,"status":observed})
+    }
+    #[test]
+    fn minigame_intents_remain_typed_pinned_and_readback_verified() {
+        let mut current=status();
+        current.capabilities.as_mut().unwrap().role="first-wins".into();
+        current.minigame=serde_json::json!({"ready":true,"revision":1,"phase":"ready",
+            "available_modes":[{"id":"simon","label":"Simon"}],"settings":{"mode":"simon","rounds":5}});
+        let gate=connection::Gate::default();let epoch=gate.select(Some(crate::Transport::WiFi));
+        let (tx,_)=std::sync::mpsc::channel();let mut queue=peer_http::Queue::new(tx);queue.observe(&current);
+        let form=vec![("settings".into(),"{\"rounds\":7}".into())];
+        let request=Intent::new(endpoint(),&current,crate::minigame::CONFIGURE,form,
+            queue.capture(),gate.stamp(crate::Transport::WiFi,epoch),None).unwrap();
+        let packet:serde_json::Value=serde_json::from_str(&request.packet).unwrap();
+        assert_eq!(packet["command"],"minigame-configure");assert_eq!(packet["settings"]["rounds"],7);
+        assert_eq!(packet["board_id"],current.board_id);assert!(packet["expires_at_ms"].as_u64().is_some());
+        let mut result=serde_json::json!({"type":"command-result","request_id":request.id,
+            "board_id":current.board_id,"boot_id":current.boot_id,"accepted":true,"status":current});
+        assert!(request.verify(result.clone()).is_err());
+        result["status"]["minigame"]["settings"]["rounds"]=serde_json::json!(7);
+        assert!(request.verify(result.clone()).is_ok());
+        result["boot_id"]=serde_json::json!("foreign");assert!(request.verify(result).is_err());
+        current.minigame["ready"]=serde_json::json!(false);
+        assert!(!supported(&current,crate::minigame::CONTROL));
     }
     #[test]
     fn game_settings_use_typed_websocket_intent_and_selected_field_readback() {

@@ -5,6 +5,7 @@ import 'game_settings_command.dart';
 import 'board_artwork.dart';
 import 'application_artwork.dart';
 import 'led_backend.dart';
+import 'minigame.dart';
 
 /// Actual PCController peripheral-availability.ts ready AND advertised rule,
 /// adapted through Pakar's living capability manifest (capabilities.rs).
@@ -21,6 +22,7 @@ class PeerContext {
     this.application,
     this.ledOutput,
     this.role,
+    this.minigame,
   );
   static final unknown = PeerContext._(
     false,
@@ -33,6 +35,7 @@ class PeerContext {
     null,
     null,
     '',
+    null,
   );
   final bool known;
   final String kind, name, hostname;
@@ -42,6 +45,7 @@ class PeerContext {
   final PeerApplication? application;
   final LedOutputCapability? ledOutput;
   final String role;
+  final MiniGameSnapshot? minigame;
   bool get tableSelection =>
       table &&
       (role == 'table-selection' ||
@@ -133,6 +137,7 @@ class PeerContext {
           ? LedOutputCapability.parse(value['led_output'])
           : null,
       role,
+      keyGame ? MiniGameSnapshot.read(status['minigame']) : null,
     );
   }
 
@@ -142,6 +147,8 @@ class PeerContext {
   bool allows(String path, Map<String, String> values) {
     if (!known) return false;
     return switch (path) {
+      minigameConfigure || minigameControl || minigameInput =>
+        has('command-ack') && minigame?.allows(path, values) == true,
       '/api/led/presentation' ||
       '/api/led/preview' => has('state-presentation') && has('leds'),
       '/api/cell' || '/api/cells/mapping' => tableSelection,

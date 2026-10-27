@@ -54,6 +54,7 @@ mod usb_api;
 mod platform;
 mod realtime;
 mod game_presentation;
+mod minigame;
 mod state_appearance;
 mod streaming;
 mod terminal_ui;
@@ -174,6 +175,8 @@ struct DeviceStatus {
     winner: u8,
     #[serde(default)]
     key_game: serde_json::Value,
+    #[serde(default)]
+    minigame: serde_json::Value,
     #[serde(default)]
     key_mask_applied: Option<bool>,
     #[serde(default)]

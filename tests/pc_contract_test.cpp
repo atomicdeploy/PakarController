@@ -25,7 +25,10 @@ struct Hardware final : PcControllerHardware {
     ++commands; return P::kNoError;
   }
   void applySettings(const BoardSettings &s) override { live.brightness = s.displayBrightness; live.muted = s.flags & 1; }
-  P::Error menuAction(uint8_t, uint8_t page) override { return page == 2 ? P::kUnsafe : P::kNoError; }
+  P::Error menuAction(uint8_t action, uint8_t page) override {
+    if (page == 1) live.outputs += action == 2 ? -1 : 1;
+    return page == 2 ? P::kUnsafe : P::kNoError;
+  }
   void showMenu(uint8_t,bool,bool) override {}
   void safeStop() override { ++stops; live.outputs = 0; }
   bool ready() const override { return canReceive; }
@@ -345,7 +348,78 @@ void companionMirroring() {
   h.frames.clear();r.companionPoll(3022,3022000);assert(h.frames.empty());
   assert(h.commands==0 && h.stops==0 && !r.menuActive() && !r.running());
 }
+void gameInputOwnership(){
+  EEPROM.reset();Hardware h;PcControllerRuntime r(h);r.begin(0);
+  r.companionHeartbeat(10);r.gameOwner(true);h.live.outputs=3;
+  for(uint8_t key=0;key<9;++key)r.gameInput(key,KeyEvent::Down);
+  for(uint8_t i=0;i<9;++i)r.service(20+i,(20+i)*1000);
+  unsigned keys=0;for(const auto &f:h.frames)if(f.p.size()==8&&f.p[0]==PC::Event&&f.p[1]==1){
+    assert(f.p[4]==0&&f.p[6]==1&&f.p[7]==0);++keys;
+  }
+  assert(keys==9&&r.lostEvents()==0);
+  h.frames.clear();r.gameInput(0,KeyEvent::Down);r.gameOwner(true,0x1234);
+  assert(h.live.outputs==0&&h.stops==1);
+  h.live.outputs=7;r.gameOwner(true,0x1234);
+  assert(h.live.outputs==7&&h.stops==1); // Same-epoch retry is not a reset.
+  r.service(40,40000); // Old queued Down was retired by the new round.
+  for(const auto &f:h.frames)assert(f.p.empty()||f.p[0]!=PC::Event);
+  h.frames.clear();r.gameInput(1,KeyEvent::Down);r.service(41,41000);
+  assert(h.frames.size()==1&&h.frames[0].p.size()==8&&h.frames[0].p[6]==0x34&&h.frames[0].p[7]==0x12);
+  r.service(3010,3010000);assert(!r.gameOwnerActive()&&h.live.outputs==0&&h.stops==2);
+  r.companionHeartbeat(3011);r.service(3011,3011000);assert(!r.gameOwnerActive());
+}
+void gameOutputOwnership(){
+  EEPROM.reset();Hardware h;PcControllerRuntime r(h);r.begin(0);
+  // Handoff cancels a scheduled macro, irrespective of keep-output options.
+  send(r,h,PC::MacroStart,{1,ControllerCore::MacroRing::KeepOutputsOnCancel,1,0});
+  send(r,h,PC::MacroStep,{0,0,0,1,0,100,0,0,0,PC::Buzzer,4,0xE8,3,20,0});
+  send(r,h,PC::MacroStep,{1});h.live.outputs=7;
+  r.companionHeartbeat(100);r.gameOwner(true);
+  assert(h.stops==1&&h.live.outputs==0);
+  h.live.outputs=0x5a;r.gameOwner(true);r.service(101,101000);
+  assert(h.commands==0&&h.live.outputs==0x5a&&h.stops==1);
+  send(r,h,PC::MacroStep,{2});
+  assert(h.frames[0].p[2]==ControllerCore::MacroRing::Cancelled);
+  send(r,h,PC::MacroStart,{2,0,0,0});error(h,PC::MacroStart,P::kBusy);
+  send(r,h,PC::MacroCancel,{0});error(h,PC::MacroCancel,P::kBusy);
+  for(uint8_t action:{0,1,3,4,6,7}){
+    send(r,h,PC::MacroStep,{action});error(h,PC::MacroStep,P::kBusy);
+  }
+  send(r,h,PC::MenuSetPage,{1});
+  send(r,h,PC::MenuAction,{3});error(h,PC::MenuAction,P::kBusy);
+  send(r,h,PC::RemoteKeyGesture,{2,static_cast<uint8_t>(KeyEvent::Down)});
+  error(h,PC::RemoteKeyGesture,P::kBusy);
+  assert(h.live.outputs==0x5a);
+  // Stored host-loss SafeStop and a host running flag do not own game outputs.
+  AutomationRecord rule{0xFF,1,static_cast<uint8_t>(AutomationEventKind::Host),0,0xFF,
+      static_cast<uint8_t>(AutomationActionKind::SafeStop),0,0,0,0};
+  assert(boardAutomations.put(rule));
+  send(r,h,PC::ProgramState,{1},200);
+  r.companionHeartbeat(5200);r.service(5200,5200000);
+  assert(h.live.outputs==0x5a&&h.stops==1&&!r.running());
+  // Explicit reset and companion expiry retain their safety authority.
+  send(r,h,PC::Reset,{0},5201);assert(h.live.outputs==0&&h.stops==2);
+  h.live.outputs=7;r.service(8200,8200000);
+  assert(h.live.outputs==0&&h.stops==3&&!r.gameOwnerActive());
+
+  // Recorded relay replay is retired too; releasing ownership never resumes it.
+  EEPROM.reset();Hardware recorded;PcControllerRuntime playback(recorded);playback.begin(0);
+  send(playback,recorded,PC::MacroStep,{3,1});
+  recorded.live.outputs=3;playback.service(110,110000);
+  send(playback,recorded,PC::MacroStep,{4});
+  send(playback,recorded,PC::MacroStep,{6});
+  playback.companionHeartbeat(120);playback.gameOwner(true);
+  recorded.live.outputs=0x55;playback.service(121,130000);
+  assert(recorded.live.outputs==0x55&&recorded.commands==0);
+  send(playback,recorded,PC::MacroStep,{5,0,0});
+  assert(recorded.frames[0].p[2]==0x80); // Saved recording remains readable.
+  send(playback,recorded,PC::MacroStep,{6});error(recorded,PC::MacroStep,P::kBusy);
+  playback.gameOwner(false);playback.service(122,140000);
+  assert(recorded.live.outputs==0x55&&recorded.commands==0);
+}
 int main() {
+  gameInputOwnership();
+  gameOutputOwnership();
   settingsTransactions(); dispatcher(); macroAndAutomations(); transport(); keysAndDisplay(); stripAndChunks(); polling(); savedMenuPage(); companionMirroring();
   puts("PCController profile: dispatch, safety, settings/automation torn writes, macros, transport, keys, TM1637 passed.");
 }

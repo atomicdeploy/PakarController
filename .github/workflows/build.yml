@@ -127,6 +127,10 @@ jobs:
           bash tools/test-pc-flags.sh
           # ESP8266 source/tooling is retained, but its full image currently
           # exceeds physical RAM/flash budgets and is not a release target.
+          # Board-owned key games need both ends compiled, not only host fixtures.
+          # Subsequent table builds restore the canonical release artifacts.
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target avr -GameMode first-wins -LinkMode buffered -AvrRadio -Jobs 2
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -GameMode first-wins -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -S3Bluetooth disabled -Jobs 2
           bash build.sh polling avr
           bash build.sh busy-wire avr
           bash build.sh buffered avr

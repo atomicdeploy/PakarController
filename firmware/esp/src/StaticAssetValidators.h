@@ -1,11 +1,11 @@
 // Generated from exact static wire bytes; no boot-time hashing.
 #pragma once
-static const char kStaticUiEtag[] = "\"8c8007435e588e32d06b088682749dde8a123688e2527b5965d7dbaacae43739\"";
+static const char kStaticUiEtag[] = "\"7217dc43f28ebb6d936780557ede07c32e5cf0ffd238b37a7e9a37529f6aeb7a\"";
 static const char kStaticFontEtag[] = "\"9a9e147da4e32e28078bc286b31ecaca9fba859ed1cc41ecd31858f4b97ba4e6\"";
 static const char kStaticLicenseEtag[] = "\"89f4712342c96f1821b77244b722348c932db2153870c084e02181e2eec9a166\"";
 static const char kStaticBasicEtag[] = "\"1ed3259c7fc09ef0bf4cb4a6a86248b862eb0507cf6b98598fc821889af75565\"";
 static const char kStaticManifestEtag[] = "\"1dbbeae930593b46ec48de4632bd92931f33ffd059e83ce5c0b6627f7f388d96\"";
-static const char kStaticWorkerEtag[] = "\"4792125d99c96975ec96f86afacbe0937e6924faaa8e243c8cf22b9d88542d18\"";
+static const char kStaticWorkerEtag[] = "\"aaf21217f980c6d09413f4da7b7135a56bfa6d9022bbda90cd4bc036ceb9772c\"";
 #if PAKAR_GAME_MODE == 2
 static const char kStaticIconEtag[] = "\"5fb79859a2ef9ff54dedc9225c8717663305e7f579dd46fbd2f8d8ca5b556b65\"";
 #else

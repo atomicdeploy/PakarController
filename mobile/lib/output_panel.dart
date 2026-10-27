@@ -16,6 +16,7 @@ import 'table_workspace.dart';
 import 'workspace_widgets.dart';
 import 'led_backend.dart';
 import 'led_backend_control.dart';
+import 'minigame_panel.dart';
 
 enum OutputPanelSection { output, game }
 
@@ -1035,6 +1036,25 @@ class _OutputPanelState extends State<OutputPanel> {
   @override
   Widget build(BuildContext context) {
     final game = widget.section == OutputPanelSection.game;
+    if (game &&
+        widget.status?.json['minigame'] != null &&
+        (widget.status?.peer.minigame?.ready != true ||
+            widget.verifiedCommand == null)) {
+      return const Center(child: Text('Waiting for minigame readiness.'));
+    }
+    if (game &&
+        widget.status?.peer.minigame?.ready == true &&
+        widget.verifiedCommand != null) {
+      return MiniGamePanel(
+        key: ValueKey(
+          'minigame-${widget.status!.json['board_id']}/${widget.status!.json['boot_id']}',
+        ),
+        status: widget.status!,
+        connected: widget.connected,
+        command: widget.verifiedCommand!,
+        openBoxSettings: gameSettings,
+      );
+    }
     final visibleCards = game
         ? [if (firstWins) 'scene']
         : workspace.outputCards

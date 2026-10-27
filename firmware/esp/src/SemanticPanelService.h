@@ -70,6 +70,9 @@ void serviceSemanticPanel(uint32_t now) {
   } else if(grid.pattern()!=LedGrid::kPatternNone)snprintf(text,sizeof(text),"%s",
     grid.pattern()==LedGrid::kPatternRainbow?"rAIn":grid.pattern()==LedGrid::kPatternFire?"FIrE":"CHAS");
   else snprintf(text,sizeof(text),"C%03u",selectedCell);
+#if PAKAR_FIRST_WINS_ENABLED
+  if(!grid.diagnosticActive()&&grid.outputEnabled())miniPanel(text,now);
+#endif
   semanticPanel.resting(text);
   const bool cl=networkConfig.stationConnected();
   if(initialized) {
@@ -109,7 +112,11 @@ void serviceSemanticPanel(uint32_t now) {
   if(updating) {
     if(progress>=0)snprintf(text,sizeof(text),"P%03u",unsigned(progress));else snprintf(text,sizeof(text),"UPdt");
   }
-  semanticPanel.persistent(updating,text);
+  bool gameCountdown=false;
+#if PAKAR_FIRST_WINS_ENABLED
+  if(!updating&&miniReady()&&miniGame.view().timed&&miniGame.running())gameCountdown=miniPanel(text,now);
+#endif
+  semanticPanel.persistent(updating||gameCountdown,text);
   uint8_t payload[12];
   const bool inhibited=urbootRawOwned||programmingLatched||avrUploadOwner||avrCaptured||
     (avrMenuActive&&!updating)||semanticPanel.manualActive(now);

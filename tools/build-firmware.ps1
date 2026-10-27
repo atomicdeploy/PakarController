@@ -7,6 +7,8 @@ param(
     [ValidateSet('both', 'avr', 'esp8266', 'esp32s3')] [string] $Target = 'both',
     [ValidateSet('table-selection','first-wins')] [string] $GameMode = 'table-selection',
     [ValidateRange(1, 511)] [int] $InitialKeyMask = 511,
+    [ValidateSet('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle')]
+    [string[]] $KeyMiniGames = @('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle'),
     [ValidateSet('auto','enabled','disabled')] [string] $AvrAutomations = 'auto',
     [switch] $AvrRadio,
     [switch] $AvrLedDiagnostic,
@@ -44,6 +46,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if($PSBoundParameters.ContainsKey('KeyMiniGames') -and ($Target -ne 'esp32s3' -or $GameMode -ne 'first-wins')){throw 'Key mini-game inclusion flags require the ESP32-S3 keycontroller role.'}
+if($GameMode -eq 'first-wins' -and -not $KeyMiniGames.Count){throw 'Include at least one key minigame.'}
 if($BoardSnake -and ($Target -ne 'esp32s3' -or $GameMode -ne 'table-selection')) { throw 'Board Snake is opt-in for ESP32-S3 table builds only.' }
 if ($S3MicroSd -and ($Target -ne 'esp32s3' -or $S3SdClk -eq -1 -or $S3SdCmd -eq -1 -or $S3SdD0 -eq -1 -or @(@($S3SdClk,$S3SdCmd,$S3SdD0) | Select-Object -Unique).Count -ne 3)) { throw 'microSD requires ESP32-S3 and three explicit, distinct reviewed SD_MMC pins.' }
 if (-not $S3MicroSd -and ($S3SdClk -ne -1 -or $S3SdCmd -ne -1 -or $S3SdD0 -ne -1)) { throw 'SD pins require the explicit -S3MicroSd opt-in.' }
@@ -242,6 +246,10 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         $ledProfile.Content += "#define PAKAR_NETWORK_ENABLED $(if($DisableNetworking){0}else{1})`n"
         $ledProfile.Content += "#define PAKAR_REMOTE_QUERY_UDP_ENABLED $(if($EnableUdpDiagnostics){1}else{0})`n"
         $ledProfile.Content += "#define PAKAR_BOARD_SNAKE $(if($BoardSnake){1}else{0})`n"
+        foreach($miniMode in @('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle')){
+            $miniFlag=$miniMode.Replace('-','_').ToUpperInvariant()
+            $ledProfile.Content += "#define PAKAR_GAME_$miniFlag $(if($GameMode -eq 'first-wins' -and $miniMode -in $KeyMiniGames){1}else{0})`n"
+        }
         $ledProfile.Content += "#define PAKAR_MICROSD_ENABLED $(if($S3MicroSd){1}else{0})`n"
         if($S3MicroSd){$ledProfile.Content += "#define PAKAR_SD_CLK $S3SdClk`n#define PAKAR_SD_CMD $S3SdCmd`n#define PAKAR_SD_D0 $S3SdD0`n"}
         $ledProfile.Content += "#define PAKAR_AVR_RECOVERY_IMAGE_AVAILABLE $(if($recoveryBytes){1}else{0})`n"

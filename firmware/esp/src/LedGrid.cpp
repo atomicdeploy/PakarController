@@ -267,6 +267,7 @@ bool LedGrid::needsRender(uint32_t now) const {
   if (!outputEnabled_)return false;
   if (staging_) return static_cast<uint32_t>(now-stagingAt_)>=500U;
   if (!readyToShow(now)) return false;
+  if(gameLayer_&&gameLayer_->enabled)return true;
   if(presentationAnimated())return true;
   if(diagnosticActive_ && diagnosticOptions_.animated() && !diagnosticOff_)return true;
   if(previewDuration_ && !previewActive(now))return true;
@@ -293,6 +294,7 @@ void LedGrid::service(uint32_t now) {
   if(previewDuration_ && !previewActive(now))cancelPreview();
   if(staging_){if(static_cast<uint32_t>(now-stagingAt_)<500U)return;staging_=false;dirty_=true;}
   if (!readyToShow(now)) return;
+  if(gameLayer_&&gameLayer_->enabled){showStaged();return;}
   if(PAKAR_FIRST_WINS_ENABLED && keyEffects_ && keyWinner_ && !staticMode_){
     renderKeyEffects(now);showStaged();return;
   }
@@ -601,7 +603,8 @@ void LedGrid::showStaged() {
   if(staging_)::memcpy(pixels_,staged_,sizeof(pixels_));
   const bool diagnosing=diagnosticActive_ && !staging_ && !maintenanceActive_;
   const bool previewing=previewActive(millis()) && !staging_ && !maintenanceActive_ && !diagnosing;
-  const bool presenting=presentation_&&presentation_->active()&&!staging_&&!maintenanceActive_;
+  const bool gamePresenting=gameLayer_&&gameLayer_->enabled&&!staging_&&!maintenanceActive_;
+  const bool presenting=(gamePresenting||(presentation_&&presentation_->active()))&&!staging_&&!maintenanceActive_;
   if(diagnosing||presenting)::memcpy(staged_,pixels_,sizeof(pixels_));
   if(previewing){
     // Reuse the unowned staging workspace; never commit a preview to the base.
@@ -618,7 +621,8 @@ void LedGrid::showStaged() {
     const uint16_t first=groupLayout_.start(group);
     for(uint16_t sector=1;sector<groupLayout_.count(group);++sector)pixels_[first+sector]=pixels_[first];
   }
-  if(presenting)presentation_->compose(pixels_,groupLayout_,physicalCells_,millis());
+  if(gamePresenting)Presentation::composeLayer(*gameLayer_,pixels_,groupLayout_,physicalCells_,millis());
+  else if(presenting)presentation_->compose(pixels_,groupLayout_,physicalCells_,millis());
 #if PAKAR_FIRST_WINS_ENABLED
   // Clear disabled physical boxes on EVERY frame, including rainbow/stream.
   // Retain the black tail on wire so resizing cannot leave stale LEDs lit.

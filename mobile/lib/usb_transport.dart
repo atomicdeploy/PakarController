@@ -960,6 +960,24 @@ class PakarUsbTransport {
       throw const FormatException('USB board not ready; nothing sent');
     }
     final before = latest!, features = before.peer;
+    if (path.startsWith('/api/minigame/')) {
+      if (!features.allows(path, values) || !features.has('usb-api')) {
+        throw const FormatException('USB minigame command unavailable');
+      }
+      final packet = commandPacket(before, path, values);
+      final reply = await _apiJson(
+        'POST',
+        '/api/command',
+        Map<String, dynamic>.from(jsonDecode(packet) as Map),
+        authorize,
+      );
+      final actual = verifyCommandReply(reply, packet, path, values);
+      if (!authorize()) {
+        throw const FormatException('USB minigame owner retired');
+      }
+      latest = actual;
+      return actual;
+    }
     const gamePaths = {
       '/api/game/settings',
       '/api/game/reset',

@@ -54,6 +54,12 @@ class PcControllerRuntime : public ControllerEventSink {
   bool menuActive() const { return menuActive_; }
   uint8_t menuPage() const { return page_; }
   uint16_t lostEvents() const { return lostEvents_; }
+  // ESP-owned games use the same bounded native event queue without invoking
+  // local menu/automation rules or depending on a host UI connection.
+  void gameInput(uint8_t bit,KeyEvent event){if(eventCount_==8&&hardware_.ready())drainOne();eventCodec_.key(bit,static_cast<uint8_t>(event),InputEventSource::Physical,0xFF);}
+  void gameOwner(bool enabled,uint16_t epoch=1);
+  uint16_t gameEpoch()const{return gameEpoch_;}
+  bool gameOwnerActive()const{return gameOwned_;}
 #if PAKAR_PC_RF
   void radioReceived(uint32_t code, uint8_t bits, uint8_t protocol, uint16_t pulse) {
     eventCodec_.rfReceived(code, bits, protocol, pulse, 0xFF);
@@ -97,6 +103,8 @@ class PcControllerRuntime : public ControllerEventSink {
   uint8_t resultHead_ = 0, resultCount_ = 0;
   uint8_t eventHead_ = 0, eventCount_ = 0;
   uint16_t lostEvents_ = 0;
+  bool gameOwned_ = false;
+  uint16_t gameEpoch_=0;
   uint8_t page_ = 0;
   uint8_t lastSegments_[5] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   uint8_t lastAudioRevision_ = 0xFF;

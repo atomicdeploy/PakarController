@@ -10552,3 +10552,33 @@ under the task parent; current local preview remains localhost:63200.
 The nested map/rules scroll regions remain cramped when both are expanded at
 720px height; layout refinement and phone/tablet/RTL acceptance remain open.
 This is rendered fixture evidence, not production hardware acceptance.
+
+## Board-owned key minigames, 2026-10-28 — issue #32
+
+Read the complete ControllerBoardMini/Puzzles/Puzzles.ino donor and adapted its
+game phase, countdown and relay predicates into one allocation-free board engine.
+Blocking tones, fixed puzzle codes and nested timers were replaced by bounded
+ticks, typed configuration and the existing shared HostPresentation renderer.
+The reviewed source and exact target/proof hashes are in the Puzzles ledger row.
+Flutter reused PCController's actual effect-editor draft/section conventions;
+Rust reused Pealayer's dialog/setting/action controls, including narrow-row wrap;
+Web reused its EffectGroupDialog behavior within the single canonical entrypoint.
+PU tooling/workflow and Pealayer CI sources were read before adding focused game
+tests and paired AVR/S3 compilation to existing CI, not another build pipeline.
+
+The first S3 compile found an Arduino bit macro collision and a header included
+inside the sketch namespace. Renaming the helper and moving that include restored
+target compilation. Final review additionally fixed missing completing notes,
+remote-menu events masquerading as physical input, macro/menu output-ownership
+bypasses and stale queued presses after reset. AVR now carries an input epoch,
+clears prior outputs on a new epoch and preserves idempotent retries. The existing
+MacroRing cancellation/stop-request mechanism is reused without deleting saved
+recordings. A fixture caught the raw-event versus outer-opcode offset before
+deployment; the corrected encoder and nine-key burst/epoch tests pass.
+
+Focused evidence: both full and press-only native core tests, four integration
+guards, approved audio/PC-contract suite, Flutter analyzer and 22 tests, six Rust
+tests plus Check/Release, and canonical Web command/DOM tests pass. Flutter APK,
+Rust EXE and final paired ESP/AVR firmware candidates are built, not installed.
+Per-mode physical feedback remains tracked on issue #32. Concurrent SSH work is
+preserved independently. No production board or running app was modified.
