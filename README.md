@@ -170,7 +170,7 @@ builds; installation and dependency updates are explicit:
 ```powershell
 .\pakar.cmd dependencies --plan
 .\pakar.cmd firmware --target esp32s3 --plan
-.\pakar.cmd firmware --target esp32s3 --link-mode buffered --s3-flash-mb 16 --s3-psram opi
+.\pakar.cmd firmware --target esp32s3 --link-mode buffered --s3-flash-mb 16 --s3-psram opi --s3-led-gpio --s3-led-rmt-dma
 .\pakar.cmd desktop --mode Check --plan
 .\pakar.cmd mobile --mode ApkPreview --build-only --plan
 ```
@@ -182,6 +182,9 @@ AVR profiles and buffered S3; deployed peers need compatible build
 flags. Every merged AVR+Urboot image must be exactly 32 KiB.
 Default release packages contain the matched buffered S3+AVR pair. The explicit
 legacy tooling does not make an overflowing ESP8266 image releasable.
+The S3 example explicitly includes both runtime LED backends. Omitting both
+inclusion flags intentionally builds no matrix driver; saved selection still
+determines which included backend runs. Check the board's actual flash/PSRAM profile.
 
 Run `.\pakar.cmd test protocol` for COBS/CRC bounds/corruption fixtures.
 The [script tooling reference](docs/SCRIPT-TOOLING.md) covers common help,

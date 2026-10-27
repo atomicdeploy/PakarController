@@ -2,6 +2,25 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Completed code-bearing verification at c1d2dd17: Build 40508742014 passed every
+workflow/tooling/quality/firmware/Windows/Android job; CodeQL 40508742015 and its
+standalone finding check passed. No acceptance check was disabled. PR #24 merged
+normally as f4259db with an identical code tree; GitHub confirms #21–#23 merged
+through their retained integration commits. Every original source/dependency and
+temporary repair head is a verified main ancestor. Merged refs were removed only
+after verification, and the local main checkout was fast-forwarded without reset.
+No source stash/other worktree or dirty application work remains. The following
+receipt commit is documentation/audit only, with separate post-merge CI.
+
+Fresh paginated conversation review includes the final merged states and receipt;
+only those four reviewed PR records plus the fully read new legacy issue are
+rebound. Historical no-worker/current-branch wording is corrected without
+certifying a full PWA import. An initial out-of-order metadata patch was rejected
+without edits; placing its insertion before later hunks applied it correctly.
+The README now shows the same explicit dual-backend flags as canonical CI.
+Private settings/backups remain local; no board, installed app or Android device
+was modified. Issues #2/#3/#25 retain production/donor/legacy unfinished scope.
+
 The9bd8074 Linux protocol suite now passed through LEDs, queue/runtime backends,
 cloud/network/OTA models, TM1637, audio, UART and USB. Its final old PC flag loop
 still expected RF to be unimplemented, contrary to actual BoardFeatures.h and

@@ -6,6 +6,28 @@ groups, semantic state/effects, Rust and Flutter controls, and the single canoni
 Web application. Existing donor and production acceptance ledgers remain open;
 publishing source is not a new hardware deployment or complete feature acceptance.
 
+## Verified GitHub integration
+
+PRs #21–#24 are merged. Normal merge
+`f4259db186464aae8d2aeb080e3368acf084ad0c` has the exact source tree of
+`c1d2dd17d479dc4ab259d8785b995ddd7db5de41`, which passed every required build,
+package, contract and security check in [Build 40508742014](https://github.com/atomicdeploy/PakarController/actions/runs/40508742014)
+and [CodeQL 40508742015](https://github.com/atomicdeploy/PakarController/actions/runs/40508742015).
+Draft publication was skipped; no release or tag was created. The original
+preservation checkpoint, dependency heads and temporary AVR repair are verified
+ancestors of main. Only verified-merged branches were removed; their commits
+remain recoverable from main history. No stash or second worktree held source.
+
+The follow-up handoff commit changes documentation/audit metadata only; its
+post-merge CI is separate from the verified code-bearing checkpoint above.
+Production issue #2 and donor gaps remain open. No board was flashed/reset or
+actuated, and no installed desktop/Android app was replaced for this Git handoff.
+
+Dependency reconciliation retains mdns-sd 0.21.6 and archive 4/MQTT/XML 7. The
+eframe/egui 0.37 migration is explicitly deferred because current dock/icon/theme
+dependencies still require egui 0.36 types; no version-specific adapter was added.
+Original PR #22 history is preserved, not a claim that 0.37 is enabled.
+
 ## Release targets
 
 The owner selected **ESP32-S3 + ATmega328P** as the release targets. The primary

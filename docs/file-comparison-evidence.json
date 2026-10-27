@@ -15386,7 +15386,7 @@
         },
         {
           "path": "docs/GITHUB-COORDINATION.md",
-          "sha256": "af4cb34d087b8d198f992f318eac8fee9803a7e8dc981b27fd7cc9b60501832e",
+          "sha256": "9ca5c47d5e27cab9b0fd4ac45832c270c56bd33c509c805286c9e6a39e431846",
           "anchor": "# Conversation-aware integration"
         }
       ],
@@ -16639,7 +16639,7 @@
       "targets": [
         {
           "path": "README.md",
-          "sha256": "5ecdc7a5f6dd4d420dbff23537f751e0d00213a0fe40ca96f95cff1d55126297",
+          "sha256": "c97b6901dc78cbac665d27760bdb129d0dfe1705e51584bba5d6fa0cd5cf7e04",
           "anchor": "Connected boards. One contextual control workspace."
         },
         {

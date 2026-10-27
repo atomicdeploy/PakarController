@@ -48,9 +48,10 @@ or advertised as a release artifact. Legacy packaging still validates actual
 images; opting in is not proof that today's source fits or boots.
 
 No production-signing key is configured here. Android remains preview-signed.
-The complete build/release upgrade is on the application PR. Main's repository-only
-checkpoint adds presentation, CodeQL and governance without claiming the expanded
-build/publisher is already active on that older application source.
+The consolidated build/release workflow is on main after normal PR #24 merge.
+Its code-bearing head c1d2dd17 passed firmware, native, mobile and security checks;
+the source handoff receipt is in docs/HANDOFF.md. The draft publisher was not
+dispatched, and no published release, production signature or deployment is implied.
 No new release or tag is created just to make a badge green. Curated version notes
 may replace `docs/releases/next.md` using `docs/releases/vX.Y.Z.md`.
 

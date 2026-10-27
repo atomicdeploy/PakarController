@@ -2,24 +2,27 @@
 
 ## Handoff consolidation (supersedes all historical branch/status snapshots)
 
-PR24 preserves the accumulated source on handoff-consolidation. PR21/22/23
-are incorporated through normal merges retaining their original commits.
-Workflow updates, mdns-sd0.21.6 and archive4/MQTT/XML7 are retained; eframe0.37
-is explicitly deferred until the dock/icon/theme family supports its egui types.
-Post-dependency Rust461 tests and Flutter722 tests pass, with3 environment/live
-skips and clean analysis. Full local quality and exact-head GitHub package/build
-checks are tracked separately from these focused results.
+PRs #21–#24 are merged. Main merge f4259db preserves the exact code tree of
+c1d2dd17, which passed Build 40508742014 and CodeQL 40508742015, including the
+standalone finding check. All workflow, tooling, quality, S3/AVR, Windows and
+Android jobs passed; draft publishing was skipped. Original source/dependency
+heads and the temporary AVR repair are verified main ancestors. The local
+checkout was fast-forwarded and only verified-merged branches removed.
+Workflow updates, mdns-sd 0.21.6 and archive 4/MQTT/XML 7 are retained;
+eframe/egui 0.37 is deferred until the dock/icon/theme family supports its types.
 
 Every paginated conversation/review/thread on all four PRs was read. The seven
 new CodeQL threads are resolved after source fixes or narrowly documented
-test/intentional-transfer dispositions; the fresh80cd685 CodeQL check passes.
+test/intentional-transfer dispositions. Later artifact-read races and the
+late backup mutation were fixed without suppressing checks. Current CodeQL passes.
 No completed Copilot review is claimed: GitHub rejected both reviewer requests.
-The master production issue remains OPEN. The merge/branch-cleanup receipt will
-be published on issue2 only after verifying main ancestry and a clean checkout.
+The master production issue remains OPEN. Its source-sync checklist and the
+post-merge conversation inventory are refreshed; final receipt changes are
+documentation/audit only, with a separate post-merge CI run. See docs/HANDOFF.md.
 Private outputs, secrets, rollback images and installed settings remain local
 and untouched; source synchronization is not a board/client deployment.
 
-## Current checkpoint (supersedes historical empty-PR statements below)
+## Historical pre-merge checkpoint
 
 The fresh Pakar enumeration contains 23 complete records. Dependency PRs 21,
 22 and 23 are open; required CI is not green, so they are not merged or certified
@@ -56,7 +59,7 @@ Conversation decisions are a separate, hash-bound requirements audit, not anothe
 code-completion ledger. Never promote all pending source rows after fetching a
 repository, or reinterpret useful generic behavior as excluded business logic.
 
-## Current integration and discovered risks
+## Historical integration and discovered risks
 
 - Pakar PR #14 merged as `e9125c766d105b784b1d4a44adcaa5cdde5a44e7`.
   Complete diff/conversations read; zero review threads and prior exact-head CI
@@ -75,8 +78,9 @@ repository, or reinterpret useful generic behavior as excluded business logic.
   accepted-write/readback mismatch. These source checks are not a full DNS-rebinding
   audit or physical durable-write proof. Do not import permissive donor CORS.
 - PCController PR #212 retains two CodeQL origin findings for service workers.
-  Pakar has no service worker today; future PWA imports must validate message
-  origin and sending WindowClient before cache/lifecycle mutation. Do not mark
+  That older checkpoint had no worker. The current canonical web/sw.js only
+  handles same-origin shell GETs and has no message-control handler. Future
+  message controls must validate origin and sending WindowClient. Do not mark
   those donor threads resolved from this repository.
 - PCController #552 distinguishes ACK from authoritative output state. Preserve
   this distinction in every Pakar actuator surface; live output/readback parity

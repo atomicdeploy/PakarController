@@ -30,8 +30,8 @@
       "title": "PakarController complete production acceptance and donor parity",
       "url": "https://github.com/atomicdeploy/PakarController/issues/2",
       "state": "open",
-      "content_sha256": "9b8c9161862c99c21d4bec13f558ad8e0254e4c28a88d7d66705e3c497a25430",
-      "comments": 163,
+      "content_sha256": "df429adc5e5f50611bfde64bdebf30f86752df3db47134dde3472419d852ad70",
+      "comments": 164,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -352,8 +352,8 @@
       "kind": "pull_request",
       "title": "Bump the actions group with 4 updates",
       "url": "https://github.com/atomicdeploy/PakarController/pull/21",
-      "state": "open",
-      "content_sha256": "0192a063aa9992a5b19b1e09cd5c7c1cf82d7d4fa8f3857c91b21afa0988db9f",
+      "state": "closed",
+      "content_sha256": "aaea95d5c7ff9d00b93a30730567b651574ff793f780f290add48378275ad4f6",
       "comments": 1,
       "reviews": 0,
       "threads": 0,
@@ -361,7 +361,7 @@
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
       "read_state": "reviewed-record",
-      "application": "Read complete dependency body/diff and all paginated conversations, including the integration receipt. No review threads. Original pinned workflow commits retained by normal merge into PR24 without permission/trust-boundary changes. Exact consolidated checks remain separate from old failed PR checks and deployment."
+      "application": "Complete dependency conversation/diff and unchanged post-merge body reviewed. Original workflow head is preserved by d112e02 and normal PR24 merge f4259db; GitHub confirms merged. Exact consolidated c1d2dd17 Build40508742014 and security checks pass. No permission/trust boundary was loosened, and source synchronization is not deployment."
     },
     {
       "repository": "atomicdeploy/PakarController",
@@ -369,8 +369,8 @@
       "kind": "pull_request",
       "title": "Bump the cargo-dependencies group in /desktop with 2 updates",
       "url": "https://github.com/atomicdeploy/PakarController/pull/22",
-      "state": "open",
-      "content_sha256": "c32285a7d12437838a52a809282b5f5af49c4769b7006d9a0c6e598fc3852128",
+      "state": "closed",
+      "content_sha256": "f8f27cb070a7488cf203ac9a9fc79b57f3c371d1a5f2a3890a1940b58ffd6b06",
       "comments": 1,
       "reviews": 0,
       "threads": 0,
@@ -378,7 +378,7 @@
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
       "read_state": "reviewed-record",
-      "application": "Read complete manifest/lock diff, dependency body and integration comment; zero reviews/threads. Retained mdns-sd0.21.6 and original PR ancestry. Explicitly deferred eframe0.37 because existing dock/icon/theme dependencies expose egui0.36 types; restored coherent0.36.2 and added mixed-type-family negatives. Rust461 tests pass after reconciliation; this is not a completed0.37 migration or runtime deployment."
+      "application": "Complete dependency conversation/diff and unchanged post-merge body reviewed; GitHub confirms merged through 1c1fb59 and PR24. Original ancestry and mdns-sd0.21.6 retained. Explicitly deferred eframe0.37 because dock/icon/theme expose egui0.36 types; coherent0.36.2 and mixed-family negative guards remain. Final c1d2dd17 native tests/package pass. This is not an enabled0.37 migration or runtime deployment."
     },
     {
       "repository": "atomicdeploy/PakarController",
@@ -386,8 +386,8 @@
       "kind": "pull_request",
       "title": "Bump the mobile-dependencies group in /mobile with 3 updates",
       "url": "https://github.com/atomicdeploy/PakarController/pull/23",
-      "state": "open",
-      "content_sha256": "f5dae63bc8157823430294a4e258c96a463698bfd32bf18e385374b6d2238cad",
+      "state": "closed",
+      "content_sha256": "88a8ff704f1eee1b84ed986781d5d87077496a8cf718cd5377371267ea56e382",
       "comments": 1,
       "reviews": 0,
       "threads": 0,
@@ -395,7 +395,7 @@
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
       "read_state": "reviewed-record",
-      "application": "Read complete manifest/lock diff, release body and integration comment; zero reviews/threads. Original ancestry and archive4/MQTT/XML7 updates retained. Adapted actual raw compressed stream API without bypassing bounded decompression/CRC guards; XML namespaceUri updated. Clean analysis and722 tests pass with3 environment/live skips; no Android replacement or physical acceptance."
+      "application": "Complete manifest/lock diff, release body and integration conversation reviewed; GitHub confirms merged through d9bdae7 and PR24. Original ancestry and archive4/MQTT/XML7 retained, with raw compressed stream, bounded inflate/CRC and namespaceUri adaptations. Final c1d2dd17 Android analysis/tests/APK pass. No tablet replacement or physical acceptance is inferred."
     },
     {
       "repository": "atomicdeploy/PakarController",
@@ -403,16 +403,33 @@
       "kind": "pull_request",
       "title": "Consolidate preserved firmware and client work for cross-device handoff",
       "url": "https://github.com/atomicdeploy/PakarController/pull/24",
-      "state": "open",
-      "content_sha256": "2e10bf27625afada36846b37703d590572b3439bf0d5b1265a8eee27b5707f82",
-      "comments": 5,
+      "state": "closed",
+      "content_sha256": "13efb63ca141bb6bb5aa5e2e45895b40b729e64b11a9f23f798e34d6a7751bf5",
+      "comments": 6,
       "reviews": 3,
       "threads": 7,
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
       "read_state": "reviewed-record",
-      "application": "Read complete consolidation conversation, both security review summaries and all seven threads including outdated/resolved comments and the malformed-tag reply. Descriptor-based candidate reads, exclusive fixture config creation and forgiving test-only script extraction are fixed; receipt wx, isolated request logging and intentional admitted firmware upload have scoped documented dispositions. Read all five current integration comments, including measured AVR/S3 builds and the owner-approved S3/AVR release scope; preserved ESP8266 limits are tracked separately. CodeQL passed atceb4be5; new report-file race findings at49b1a9b require the descriptor fix and fresh scan before merge. Copilot requests rejected, not completed. This conversation review is not blanket donor-feature, production or whole-codebase acceptance. Main merge requires current build/package checks; issue2 remains open."
+      "application": "Complete consolidation conversation, six integration comments, all review summaries and seven resolved threads reviewed including final merged state and receipt. Candidate/report descriptor reads, exclusive fixture creation, script extraction and post-peer backup rehash are fixed; remaining intentional-transfer/test dispositions are scoped. Exact c1d2dd17 Build40508742014, CodeQL40508742015 and standalone finding check pass. Normal main merge f4259db preserves original source/dependency/temporary heads; all four PRs are merged and verified-merged branches removed. Copilot requests were rejected, not completed reviews. ESP8266 remains unfinished issue25; issues2/3 and physical/donor acceptance remain open. Follow-up metadata CI is separate from verified application code."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 25,
+      "kind": "issue",
+      "title": "Retained ESP8266 support: resolve full-image RAM and instruction-flash overflow",
+      "url": "https://github.com/atomicdeploy/PakarController/issues/25",
+      "state": "open",
+      "content_sha256": "7bc8df2ff872d71e18b55432d9fa4bee22b36a59ba4f511299510005d4f957e9",
+      "comments": 0,
+      "reviews": 0,
+      "threads": 0,
+      "unresolved_threads": [],
+      "copilot_messages": 0,
+      "copilot_quota_notices": 0,
+      "read_state": "reviewed-record",
+      "application": "Read the complete owner-directed legacy scope and measured RAM/flash checklist; no comments/reviews/threads. ESP32-S3+AVR are release targets, legacy source/tooling preserved. Current ESP8266 full-image linking and physical/OTA acceptance remain explicitly unfinished; no limits enlarged and no device flashed."
     },
     {
       "repository": "atomicdeploy/PCController",
@@ -4019,7 +4036,7 @@
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
       "read_state": "reviewed-comment-scope",
-      "application": "Read both unresolved CodeQL thread bodies. Future service-worker imports must verify origin/sender before cache or lifecycle actions. Pakar has no service worker today; full donor PR and cleared scanner acceptance remain pending."
+      "application": "Read both unresolved CodeQL thread bodies. Worker message controls must verify origin/sender before cache/lifecycle mutation. The earlier no-worker note is historical: canonical Pakar web/sw.js now restricts shell GETs to same origin and has no message-control handler. This does not certify full donor PWA import, complete PR/body review or cleared donor findings; do not resolve donor threads."
     },
     {
       "repository": "atomicdeploy/PCController",
