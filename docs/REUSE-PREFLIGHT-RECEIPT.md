@@ -2,6 +2,26 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Firmware CI40494129965 exposed a real AVR overflow:32608B against the32384B
+Urboot-safe boundary. Consulted build-storage/firmware-hardware, the actual
+MiniCore3.1.3 LTO menu/recipes and the existing canonical wrapper/donor runner.
+The wrapper's compiler.cpp.extra_flags override erased the selected menu's
+-flto while C/link still retained it. Restoring that selected C++ option (AVR
+only) produced28318B/32384B,1486B static SRAM; busy-wire28564B and buffered28498B,
+each with vector/384B Urboot-chain validation passing. The actual build/storage
+Plan regressions pass. No features, bootloader bytes, upload limits or fuses were
+removed/changed; no device was contacted. Actual Plan regression checks now
+require both the selected LTO profile and retained C++ option. Android CI at
+8f676bf completed its analysis/tests/APK successfully. Fresh GitHub firmware
+and final-head package verification remain separate gates.
+
+A read-only review initially used two nonexistent guessed maintenance filenames;
+the real inventory led to BoardCore/FilesystemInitialization.h and UsbApiService.h
+plus the guarded initialization tool, which were read without replacement code.
+A mechanical hash patch initially used the task-root-relative path and made no
+edit; the absolute repo path was then used. Only reviewed wrapper/test hashes
+were rebound; no unread source rows were promoted.
+
 The complete local quality phase at80cd685 passed through repository governance,
 including ledger/route hashes and all registered Web/host contracts. The fresh
 GitHub CodeQL run40493579318 completed successfully, including the standalone

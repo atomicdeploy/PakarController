@@ -1323,14 +1323,14 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a",
+          "sha256": "6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd",
           "anchor": "Four-box profile must keep its unique hostname"
         }
       ],
@@ -1370,7 +1370,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -1920,7 +1920,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         },
         {
@@ -2034,14 +2034,14 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a",
+          "sha256": "6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd",
           "anchor": "Four-box profile must keep its unique hostname"
         }
       ],
@@ -2081,7 +2081,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -8561,14 +8561,14 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a",
+          "sha256": "6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd",
           "anchor": "Four-box profile must keep its unique hostname"
         }
       ],
@@ -8612,7 +8612,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -10076,7 +10076,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a"
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85"
         }
       ],
       "omissions": [
@@ -12480,7 +12480,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -12531,7 +12531,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -16738,7 +16738,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a",
+          "sha256": "6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd",
           "anchor": "Actual donor serial test contract"
         },
         {
@@ -17995,7 +17995,7 @@
       "proof": [
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a",
+          "sha256": "6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd",
           "anchor": "One canonical target"
         }
       ],
@@ -22674,7 +22674,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -22813,7 +22813,7 @@
         },
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a",
+          "sha256": "6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd",
           "anchor": "$taskStaticS3"
         },
         {
@@ -22981,7 +22981,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a",
+          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -23109,7 +23109,7 @@
         },
         {
           "path": "tests/build_storage_test.ps1",
-          "sha256": "91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a",
+          "sha256": "6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd",
           "anchor": "$taskStaticS3"
         },
         {

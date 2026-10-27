@@ -30,6 +30,10 @@ foreach ($taskBoard in $taskFirmware) {
     Assert-Storage ($taskBoard.Arguments -contains '--build-path') 'Stable Arduino build path'
     Assert-Storage (-not ($taskBoard.Arguments -contains '--clean')) 'No forced clean by default'
 }
+$taskAvrPlan=$taskFirmware | Where-Object Board -eq 'avr'
+Assert-Storage (($taskAvrPlan.Arguments -join ' ') -match 'LTO=Os_flto') 'AVR retains selected bootloader-safe MiniCore LTO profile'
+$taskCppFlags=@($taskAvrPlan.Arguments | Where-Object { $_ -like 'compiler.cpp.extra_flags=*' })
+Assert-Storage ($taskCppFlags.Count -eq 1 -and $taskCppFlags[0] -match '(?:=|\s)-flto(?:\s|$)') 'Custom AVR macros must not erase the selected MiniCore C++ LTO option'
 $taskEsp = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -Plan )
 $taskPolling = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target avr -LinkMode polling -Clean -Plan )
 Assert-Storage ($taskEsp.Count -eq 1 -and $taskEsp[0].Board -eq 'esp8266') 'Selective ESP build'

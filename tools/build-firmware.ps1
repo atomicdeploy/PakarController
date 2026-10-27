@@ -152,6 +152,10 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
     }
     $flags = if ($board -eq 'avr') { $extraFlags } else { $espFlags }
     if($board -eq 'avr') {
+        # compiler.cpp.extra_flags replaces MiniCore's selected LTO menu value.
+        # Preserve -flto explicitly, not just on C/link recipes, or the sketch
+        # silently loses LTO and can exceed Urboot's application boundary.
+        $flags += ' -flto'
         $avrAutomationFlag=if($AvrAutomations -eq 'enabled' -or ($AvrAutomations -eq 'auto' -and $GameMode -ne 'first-wins')){1}else{0}
         $flags += " -DPAKAR_PC_AUTOMATIONS=$avrAutomationFlag"
         if ($AvrRadio) { $flags += ' -DPAKAR_PC_RF=1' }

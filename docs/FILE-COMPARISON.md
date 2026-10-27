@@ -27,11 +27,11 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `15e208f1026c9c6bcc144d842cf4d2df0bd32b9aea5b169f486dc03fe45eafd5`.
 
-- Target: `tools/build-firmware.ps1:161 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor=MiniCore:avr:328:bootloader=uart0]`.
+- Target: `tools/build-firmware.ps1:165 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor=MiniCore:avr:328:bootloader=uart0]`.
 - Retained: Read the complete Timer donor profile. Its MiniCore ATmega328P board, UART0 Urboot, EEPROM keep, 115200 bootloader baud, modelP, 2.7 V BOD, size-LTO and external 16 MHz selections match the Puzzles profile and are retained by the canonical AVR build owner.
 - Omitted/replaced code: `fixed Puzzle_WithTimer.ino, COM12 port and USBasp programmer`. Disposition: **replaced**. Reason: The combined build selects its role/target and the currently inventoried device explicitly; retaining a retired Timer sketch name or stale host COM/programmer assumption could build or write the wrong target.
 - Omitted/replaced code: `editor-owned build output`. Disposition: **replaced**. Reason: The guarded wrapper owns one canonical low-write output/cache layout instead of allowing an editor extension to create an untracked duplicate build tree.
-- Test-code evidence: `tests/build_storage_test.ps1:58 [UTF8-LF sha256=91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a; anchor=Four-box profile must keep its unique hostname]`.
+- Test-code evidence: `tests/build_storage_test.ps1:62 [UTF8-LF sha256=6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd; anchor=Four-box profile must keep its unique hostname]`.
 - Scoped advantage: The portable build owner retains the donor hardware profile without binding this combined project to the retired Timer sketch, one COM assignment or duplicate output.
 - Remaining: Physical programmer/serial discovery, backup, flash and board verification remain required; a build plan is not deployment proof.
 
@@ -40,7 +40,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `f94454e8edf978f7eb7d5ac1ed93c06186b35a03ac5e81b314855ba6a0551e9d`.
 
 - Target: `.vscode/settings.json:5 [UTF8-LF sha256=2373a0d9d9a7af54872b0ae854ccf1ff95116ef8f80aebfad513fe3031914d5f; anchor="*.ino": "cpp"]`.
-- Target: `tools/build-firmware.ps1:208 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor='compile', '--jobs', "$Jobs", '--fqbn']`.
+- Target: `tools/build-firmware.ps1:212 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor='compile', '--jobs', "$Jobs", '--fqbn']`.
 - Retained: Read all 539 Timer donor lines through EOF and confirmed byte identity with the reviewed Puzzles snapshot. AVR/Arduino language ownership and compile-profile intent are retained by portable editor associations and the actual MiniCore compile command.
 - Omitted/replaced code: `absolute Arduino15 compiler/core/library paths and copied avr-g++ predefined macros`. Disposition: **replaced**. Reason: Generated host/version paths and compiler-owned macros go stale and can misdescribe the selected MCU. The canonical build resolves the installed pinned toolchain and supplies the real FQBN/options.
 - Omitted/replaced code: `gcc-x64 IntelliSense mode and USBCON define for ATmega328P`. Disposition: **replaced**. Reason: Those generated values do not describe the AVR target ABI and can falsely advertise USB capability; real compiler invocation remains authoritative.
@@ -231,7 +231,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `afe04b5cd7cda37b9650dcbc0937f1d6a7f8f831c7f105ac4e2c84bdf9e687bf`.
 
-- Target: `tools/build-firmware.ps1:161 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor=MiniCore:avr:328:bootloader=uart0]`.
+- Target: `tools/build-firmware.ps1:165 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor=MiniCore:avr:328:bootloader=uart0]`.
 - Target: `tools/update-firmware.mjs:216 [UTF8-LF sha256=f1661663563a2dcd4eaed9d1a054cc986cf03d8e3b0806bc93d6bf07560ad068; anchor=export async function updateFirmware(]`.
 - Retained: Read the complete batch file. Download-before-program and explicit ATmega328P/UART bootloader intent are retained in the guarded firmware build/update pipeline.
 - Omitted/replaced code: `unauthenticated curl localhost:800 and delete-old-before-content-verification`. Disposition: **replaced**. Reason: The update owner requires peer identity, admission, expected image metadata, verified backup and hash/readback instead of accepting any HTTP body or deleting rollback first.
@@ -261,11 +261,11 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `674d0df0aec5c7448b8c27a47b03951d2a40ee8c5a295bd62b7ca50aa85ea1f4`.
 
-- Target: `tools/build-firmware.ps1:161 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor=MiniCore:avr:328:bootloader=uart0]`.
+- Target: `tools/build-firmware.ps1:165 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor=MiniCore:avr:328:bootloader=uart0]`.
 - Retained: Read the complete donor profile. Its MiniCore ATmega328P board, UART0 Urboot, EEPROM keep, 115200 bootloader baud, modelP, 2.7 V BOD, size-LTO and external 16 MHz selections are retained by the canonical AVR build owner.
 - Omitted/replaced code: `fixed COM12 port and USBasp programmer`. Disposition: **replaced**. Reason: Production discovery and explicit deployment select the currently inventoried device; committing a stale host COM number or assuming a programmer would risk writing the wrong board.
 - Omitted/replaced code: `sketch/output fields owned by the retired Arduino VS Code extension`. Disposition: **replaced**. Reason: The guarded build wrapper owns the target sketch, shared cache and low-write output layout for AVR and ESP profiles rather than allowing an editor extension to create an untracked build directory.
-- Test-code evidence: `tests/build_storage_test.ps1:58 [UTF8-LF sha256=91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a; anchor=Four-box profile must keep its unique hostname]`.
+- Test-code evidence: `tests/build_storage_test.ps1:62 [UTF8-LF sha256=6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd; anchor=Four-box profile must keep its unique hostname]`.
 - Scoped advantage: The portable guarded build owner retains the donor hardware configuration without binding the project to one machine's COM assignment or duplicate editor build output.
 - Remaining: Physical programmer/serial discovery, backup, flash and board verification remain required; a build plan is not deployment proof.
 
@@ -274,7 +274,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `f94454e8edf978f7eb7d5ac1ed93c06186b35a03ac5e81b314855ba6a0551e9d`.
 
 - Target: `.vscode/settings.json:5 [UTF8-LF sha256=2373a0d9d9a7af54872b0ae854ccf1ff95116ef8f80aebfad513fe3031914d5f; anchor="*.ino": "cpp"]`.
-- Target: `tools/build-firmware.ps1:208 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor='compile', '--jobs', "$Jobs", '--fqbn']`.
+- Target: `tools/build-firmware.ps1:212 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor='compile', '--jobs', "$Jobs", '--fqbn']`.
 - Retained: Read all 539 donor lines through EOF. The useful AVR/Arduino C and C++ language ownership and compile-profile intent are retained by editor associations plus the actual MiniCore compile command.
 - Omitted/replaced code: `absolute C:\Users\David Arduino15 compiler/core/library include paths`. Disposition: **replaced**. Reason: These generated host/version paths are not portable source configuration and go stale whenever Arduino packages move. The build wrapper resolves the installed pinned toolchain and passes the real FQBN/options to arduino-cli.
 - Omitted/replaced code: `hundreds of copied avr-g++ predefined macros including USBCON`. Disposition: **replaced**. Reason: Compiler-owned predefined macros must come from the selected AVR compiler invocation; committing a generated snapshot can lie to IntelliSense about the active MCU and USB capability.
@@ -1398,7 +1398,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp32s3/src/LedWire.h:37 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=inline constexpr uint16_t zeroHigh=12]`.
 - Target: `firmware/esp/src/LedRenderAdmission.h:7 [UTF8-LF sha256=a6dc69b69cba74db1fff54fd75b8940bf88958404f6c3ac971b27797d5b13c50; anchor=inline bool uartWindowReady(]`.
 - Target: `firmware/esp/application.ino:1240 [UTF8-LF sha256=99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec; anchor=uint8_t defaultPhysicalCell]`.
-- Target: `tools/build-firmware.ps1:32 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor=CellChaseOnBoot]`.
+- Target: `tools/build-firmware.ps1:32 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor=CellChaseOnBoot]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:13 [UTF8-LF sha256=46f0e3cc947e5262451e6b3659bdfedb9cc3fa3d5de8bc4779ec6ddc97f81fec; anchor=#if !defined(PAKAR_S3_LED_GPIO_ENABLED)]`.
 - Target: `firmware/esp32s3/src/LedDmaGuard.h:16 [UTF8-LF sha256=6418b38a2773c592ccd48dd9c2cbfaaa1ff0a8f0aab99437e68c1a7c419a2a65; anchor=class LedDmaSetupScope]`.
 - Target: `firmware/esp32s3/src/LedDmaGuard.cpp:68 [UTF8-LF sha256=c2c2b90ee34d7919d22c0e4dc6c651c077b9acc0ed833090aab57e2c335e1d7e; anchor=newCacheSafeLedChannel]`.
@@ -1437,7 +1437,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/led_dma_guard_test.cpp:38 [UTF8-LF sha256=d69b5b0bd26348aabd176350120d11199748f2aceada1d39c113078719fa80c0; anchor=int main(]`.
 - Test-code evidence: `tools/test-led-dma-guard.ps1:14 [UTF8-LF sha256=f35494c76825ab2deccfe40759e9a7853142dc30875ffaa813f648d67de1b2e5; anchor=--wrap=gdma_new_ahb_channel]`.
 - Test-code evidence: `tests/cell_chase_wiring_test.mjs:9 [UTF8-LF sha256=e1659e2a3c12039a7c3f9bbd3c876ebdc467b85957ac6b5a5f51a367e4991507; anchor=const preset=]`.
-- Test-code evidence: `tests/build_storage_test.ps1:48 [UTF8-LF sha256=91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a; anchor=$taskStaticS3]`.
+- Test-code evidence: `tests/build_storage_test.ps1:52 [UTF8-LF sha256=6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd; anchor=$taskStaticS3]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_test.dart:77 [UTF8-LF sha256=134ffbe9e72eb91a25460f2c4f4610777e44ac7a2dc45a21287370843fb96e7d; anchor=Every raw position clears]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_page_test.dart:615 [UTF8-LF sha256=719e05d13cd64b01eb41e87344f27ae9b4862123f1a469e0b6e7e2af78798fbe; anchor=Pending writes cannot repeat]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_transport_test.dart:97 [UTF8-LF sha256=253d183118520a978fbea6b6470cca2917fe6b45688bf6982601fbe86825f152; anchor=one complete frame, no replay]`.
@@ -1475,7 +1475,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp32s3/src/LedWire.h:37 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=inline constexpr uint16_t zeroHigh=12]`.
 - Target: `firmware/esp/src/LedRenderAdmission.h:7 [UTF8-LF sha256=a6dc69b69cba74db1fff54fd75b8940bf88958404f6c3ac971b27797d5b13c50; anchor=inline bool uartWindowReady(]`.
 - Target: `firmware/esp/application.ino:1240 [UTF8-LF sha256=99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec; anchor=uint8_t defaultPhysicalCell]`.
-- Target: `tools/build-firmware.ps1:32 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor=CellChaseOnBoot]`.
+- Target: `tools/build-firmware.ps1:32 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor=CellChaseOnBoot]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:13 [UTF8-LF sha256=46f0e3cc947e5262451e6b3659bdfedb9cc3fa3d5de8bc4779ec6ddc97f81fec; anchor=#if !defined(PAKAR_S3_LED_GPIO_ENABLED)]`.
 - Target: `firmware/esp32s3/src/LedDmaGuard.h:16 [UTF8-LF sha256=6418b38a2773c592ccd48dd9c2cbfaaa1ff0a8f0aab99437e68c1a7c419a2a65; anchor=class LedDmaSetupScope]`.
 - Target: `firmware/esp32s3/src/LedDmaGuard.cpp:68 [UTF8-LF sha256=c2c2b90ee34d7919d22c0e4dc6c651c077b9acc0ed833090aab57e2c335e1d7e; anchor=newCacheSafeLedChannel]`.
@@ -1510,7 +1510,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/led_dma_guard_test.cpp:38 [UTF8-LF sha256=d69b5b0bd26348aabd176350120d11199748f2aceada1d39c113078719fa80c0; anchor=int main(]`.
 - Test-code evidence: `tools/test-led-dma-guard.ps1:14 [UTF8-LF sha256=f35494c76825ab2deccfe40759e9a7853142dc30875ffaa813f648d67de1b2e5; anchor=--wrap=gdma_new_ahb_channel]`.
 - Test-code evidence: `tests/cell_chase_wiring_test.mjs:9 [UTF8-LF sha256=e1659e2a3c12039a7c3f9bbd3c876ebdc467b85957ac6b5a5f51a367e4991507; anchor=const preset=]`.
-- Test-code evidence: `tests/build_storage_test.ps1:48 [UTF8-LF sha256=91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a; anchor=$taskStaticS3]`.
+- Test-code evidence: `tests/build_storage_test.ps1:52 [UTF8-LF sha256=6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd; anchor=$taskStaticS3]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_test.dart:77 [UTF8-LF sha256=134ffbe9e72eb91a25460f2c4f4610777e44ac7a2dc45a21287370843fb96e7d; anchor=Every raw position clears]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_page_test.dart:615 [UTF8-LF sha256=719e05d13cd64b01eb41e87344f27ae9b4862123f1a469e0b6e7e2af78798fbe; anchor=Pending writes cannot repeat]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_transport_test.dart:97 [UTF8-LF sha256=253d183118520a978fbea6b6470cca2917fe6b45688bf6982601fbe86825f152; anchor=one complete frame, no replay]`.
@@ -1922,7 +1922,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `5e5607d54af43ead28eddb747e48b6e2450dd45ef7c47202203c4f5cfc8991ab`.
 
 - Target: `tools/prepare-avr-image.mjs:65 [UTF8-LF sha256=0d4e2a5a87967031393a6079e07938c7612e6fbfcb0d38c9a2a3ae419e86d525; anchor=export function mergeUrboot(]`.
-- Target: `tools/build-firmware.ps1:262 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor='prepare-avr-image.mjs']`.
+- Target: `tools/build-firmware.ps1:266 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor='prepare-avr-image.mjs']`.
 - Retained: Read the complete donor builder and README. Adapted actual Intel HEX/checksum parsing, AVR jump decoding/encoding, wrapped reset RJMP, ELF __bad_interrupt unused-vector proof, metadata-selected application trampoline, erased-gap fill, full-flash binary/HEX round trip and exact source hash validation into the canonical AVR build. No chip, fuse, EEPROM or UART operation is performed by packaging.
 - Retained: Found and corrected Pakar stock merged image reset vector bypassing its included vector Urboot. Preserve stock MiniCore UART0 autobaud, reset-register r2, EEPROM and chip-erase features with a pinned 384-byte image; never silently substitute the donor custom 512-byte backend.
 - Omitted/replaced code: `u8.0.1 custom 512-byte backend, progress hook and TM1637 D13/PB5 CLK, D11/PB3 DIO implementation`. Disposition: **pending**. Reason: This board uses A5 CLK/A4 DIO and the stock 384-byte application ceiling. Do not deploy a wrong-pin backend or silently shrink available application space. Adapt the backend/pin profile and revalidate flash budget before any optional custom bootloader installation.
@@ -1937,7 +1937,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `2ec873e7f23b56a6997a0c83de1e258ae2ce9b75cf1eb7cf08b40da5aaa68090`.
 
 - Target: `tools/prepare-avr-image.mjs:65 [UTF8-LF sha256=0d4e2a5a87967031393a6079e07938c7612e6fbfcb0d38c9a2a3ae419e86d525; anchor=export function mergeUrboot(]`.
-- Target: `tools/build-firmware.ps1:262 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor='prepare-avr-image.mjs']`.
+- Target: `tools/build-firmware.ps1:266 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor='prepare-avr-image.mjs']`.
 - Retained: Read the complete donor builder and README. Adapted actual Intel HEX/checksum parsing, AVR jump decoding/encoding, wrapped reset RJMP, ELF __bad_interrupt unused-vector proof, metadata-selected application trampoline, erased-gap fill, full-flash binary/HEX round trip and exact source hash validation into the canonical AVR build. No chip, fuse, EEPROM or UART operation is performed by packaging.
 - Retained: Found and corrected Pakar stock merged image reset vector bypassing its included vector Urboot. Preserve stock MiniCore UART0 autobaud, reset-register r2, EEPROM and chip-erase features with a pinned 384-byte image; never silently substitute the donor custom 512-byte backend.
 - Omitted/replaced code: `u8.0.1 custom 512-byte backend, progress hook and TM1637 D13/PB5 CLK, D11/PB3 DIO implementation`. Disposition: **pending**. Reason: This board uses A5 CLK/A4 DIO and the stock 384-byte application ceiling. Do not deploy a wrong-pin backend or silently shrink available application space. Adapt the backend/pin profile and revalidate flash budget before any optional custom bootloader installation.
@@ -2829,7 +2829,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Omitted/replaced code: `macOS Intel/Apple silicon and Linux native platform matrix/packages`. Disposition: **pending**. Reason: Current accepted native target is Windows; firmware and Android use Linux runners. Full donor reread includes the new scripts/run-ci-rust-tests.sh macOS sampling helper and 15-minute native test step. Linux/macOS native matrix and diagnostic sampling remain useful pending work; they require actual Pakar platform coverage, not donor's unrelated acceptance.
 - Omitted/replaced code: `UPX checksum-locked packing and packed native package smoke/resource checks`. Disposition: **pending**. Reason: Existing Windows wrappers preserve donor resource/donor/cache gates and CLI runtime tests, but Pakar has no accepted compressed native package probe. Do not call a source or CLI test full packed GUI runtime acceptance.
 - Omitted/replaced code: `branch-tag and archive suffix creation, softprops update-existing release`. Disposition: **replaced**. Reason: User requests stable names without random/time suffixes. Version releases keep stable package names; release enumeration must succeed and an existing release is not overwritten.
-- Test-code evidence: `tests/build_storage_test.ps1:17 [UTF8-LF sha256=91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a; anchor=Actual donor serial test contract]`.
+- Test-code evidence: `tests/build_storage_test.ps1:17 [UTF8-LF sha256=6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd; anchor=Actual donor serial test contract]`.
 - Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97; anchor=console.log('Repository governance]`.
 - Remaining: The historical 8849ab8 menu failure was subsequently fixed; 5d02b07 Build 38141677102 and CodeQL 38141677110 pass. This is not production/deployment proof. Validate the unexecuted draft publisher, useful additional native targets, donor macOS diagnostics and optional compressed package/runtime verification.
 
@@ -3020,7 +3020,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Omitted/replaced code: `libmpv host resolution/environment/profile and DLL copy`. Disposition: **not-applicable**. Reason: These operations configure the excluded mpv renderer. Pakar uses its own mpv-free linked dependencies.
 - Omitted/replaced code: `BuildOnly versus launch forwarding with ApplicationArguments`. Disposition: **pending**. Reason: Pakar wrapper builds only. Generic built-executable validation and configurable run forwarding should become a Pakar runner; manual launching is not equivalent.
 - Omitted/replaced code: `Set-Location to repository root`. Disposition: **replaced**. Reason: Absolute manifest and resolved target paths preserve caller cwd without introducing a second cache.
-- Test-code evidence: `tests/build_storage_test.ps1:15 [UTF8-LF sha256=91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a; anchor=One canonical target]`.
+- Test-code evidence: `tests/build_storage_test.ps1:15 [UTF8-LF sha256=6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd; anchor=One canonical target]`.
 - Remaining: Import generic Windows runner/toolchain fallback and host-triple provenance without mpv.
 
 ### Pealayer: `scripts/storage-hygiene.ps1`
@@ -4799,7 +4799,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `54df8b54e56a589f85b981f15996813e447fc14245ea8048c5f87cfd1f3fdf51`.
 
 - Target: `tools/firmware-dependencies.json:2 [UTF8-LF sha256=dc64a7f76dbb2272bcd6f35a51623a372e6bff55256ae588f02a2a4d315d3207; anchor="platforms"]`.
-- Target: `tools/build-firmware.ps1:181 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor=esp32:esp32:esp32s3:CDCOnBoot]`.
+- Target: `tools/build-firmware.ps1:185 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor=esp32:esp32:esp32s3:CDCOnBoot]`.
 - Retained: Read complete donor board profile/platform/library locks. Retain exact ESP8266 core/ArduinoJson/ESP Async TCP pins where applicable, preserve existing reviewed Pakar dependency pins, and keep actual S3/AVR FQBN/flags in the canonical wrapper.
 - Omitted/replaced code: `PU-specific board/profile and separate dependency/config write paths`. Disposition: **replaced**. Reason: Reuse applicable exact versions/official registries in one reviewed pin owner. Preserve operator config and Pakar hardware flags; no silent downgrade, duplicate Arduino_JSON API, unsupported library additions or automatic SDK initialization.
 - Test-code evidence: `tests/script_tooling_test.mjs:107 [UTF8-LF sha256=53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498; anchor=Script tooling:]`.
@@ -5506,12 +5506,12 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `fa26772dc3f07e02815543e65fe5d90de6415c5b0803aa0e4416aeb8a63b0b31`.
 
-- Target: `tools/build-firmware.ps1:161 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor=MiniCore:avr:328:bootloader=uart0]`.
+- Target: `tools/build-firmware.ps1:165 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor=MiniCore:avr:328:bootloader=uart0]`.
 - Retained: Read the complete donor profile. External 16 MHz operation, UART bootloader, EEPROM retention and 2.7 V brownout protection remain explicit in the canonical AVR build owner.
 - Omitted/replaced code: `MightyCore ATmega32 board/pinout`. Disposition: **replaced**. Reason: The fitted controller is ATmega328P. MiniCore modelP is the reviewed target; copying this editor profile would compile for the wrong MCU and memory/pin map.
 - Omitted/replaced code: `fixed COM1 and USBasp programmer`. Disposition: **replaced**. Reason: COM1 is commonly the ASUS built-in port. Backup-first deployment inventories and pins the newly enumerated device/programmer instead of risking a stale fixed target.
 - Omitted/replaced code: `editor-owned Build output directory`. Disposition: **replaced**. Reason: The guarded wrapper owns reusable low-write caches and artifact directories across AVR/S3 profiles; a second editor output wastes SSD space and can serve stale binaries.
-- Test-code evidence: `tests/build_storage_test.ps1:58 [UTF8-LF sha256=91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a; anchor=Four-box profile must keep its unique hostname]`.
+- Test-code evidence: `tests/build_storage_test.ps1:62 [UTF8-LF sha256=6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd; anchor=Four-box profile must keep its unique hostname]`.
 - Remaining: The connected four-box AVR still requires identity, backup, flash/readback and physical UART/key verification; a build profile is not deployment proof.
 
 ### PuzzleBoard: `.vscode/c_cpp_properties.json`
@@ -5519,7 +5519,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `ca7d6699a966afa9e1132a4a83359978fa9ace81d2bee295662fa5ba0bd8ca53`.
 
 - Target: `.vscode/settings.json:5 [UTF8-LF sha256=2373a0d9d9a7af54872b0ae854ccf1ff95116ef8f80aebfad513fe3031914d5f; anchor="*.ino": "cpp"]`.
-- Target: `tools/build-firmware.ps1:208 [UTF8-LF sha256=7d050d9b0d493050fb6d0978f00be45811a1e9d89168be95cb9ca601a503313a; anchor='compile', '--jobs', "$Jobs", '--fqbn']`.
+- Target: `tools/build-firmware.ps1:212 [UTF8-LF sha256=8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85; anchor='compile', '--jobs', "$Jobs", '--fqbn']`.
 - Retained: Read all 536 donor lines through EOF. Arduino/AVR C++ source association and target compile-profile intent are retained by portable workspace associations and the actual arduino-cli invocation.
 - Omitted/replaced code: `absolute Arduino15 compiler/core/include paths and tool version`. Disposition: **replaced**. Reason: Generated per-user paths become stale when packages move. The wrapper resolves the installed toolchain and selected FQBN at build time.
 - Omitted/replaced code: `ATmega32/USBCON and hundreds of copied compiler predefined macros`. Disposition: **replaced**. Reason: The selected compiler must define its real ATmega328P ABI and capabilities; a committed ATmega32 snapshot would make IntelliSense contradict the production build.
