@@ -404,15 +404,15 @@
       "title": "Consolidate preserved firmware and client work for cross-device handoff",
       "url": "https://github.com/atomicdeploy/PakarController/pull/24",
       "state": "open",
-      "content_sha256": "9db7987097c32bc0fb42d95631c2f874fb9386598c66cd62ffff6dd934f299d4",
-      "comments": 1,
+      "content_sha256": "2e10bf27625afada36846b37703d590572b3439bf0d5b1265a8eee27b5707f82",
+      "comments": 5,
       "reviews": 3,
       "threads": 7,
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
       "read_state": "reviewed-record",
-      "application": "Read complete consolidation conversation, both security review summaries and all seven threads including outdated/resolved comments and the malformed-tag reply. Descriptor-based candidate reads, exclusive fixture config creation and forgiving test-only script extraction are fixed; receipt wx, isolated request logging and intentional admitted firmware upload have scoped documented dispositions. Fresh80cd685 CodeQL check passes. Copilot requests rejected, not completed. This conversation review is not blanket donor-feature, production or whole-codebase acceptance. Main merge requires current build/package checks; issue2 remains open."
+      "application": "Read complete consolidation conversation, both security review summaries and all seven threads including outdated/resolved comments and the malformed-tag reply. Descriptor-based candidate reads, exclusive fixture config creation and forgiving test-only script extraction are fixed; receipt wx, isolated request logging and intentional admitted firmware upload have scoped documented dispositions. Read all five current integration comments, including measured AVR/S3 builds and the owner-approved S3/AVR release scope; preserved ESP8266 limits are tracked separately. CodeQL passed atceb4be5; new report-file race findings at49b1a9b require the descriptor fix and fresh scan before merge. Copilot requests rejected, not completed. This conversation review is not blanket donor-feature, production or whole-codebase acceptance. Main merge requires current build/package checks; issue2 remains open."
     },
     {
       "repository": "atomicdeploy/PCController",

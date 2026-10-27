@@ -19,6 +19,7 @@ Its full current polling build does not fit: the measured `.bss` end is
 is `0x1054c4` bytes, beyond its instruction mapping. This remains an unfinished
 support/resource optimization item, not a successful build or hardware release.
 No physical memory, OTA-slot or Urboot limits were enlarged to hide a failure.
+The unfinished legacy checklist is [issue #25](https://github.com/atomicdeploy/PakarController/issues/25).
 
 ## Continue on another computer
 

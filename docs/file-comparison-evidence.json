@@ -2626,7 +2626,7 @@
       "proof": [
         {
           "path": "tests/script_tooling_test.mjs",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1",
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054",
           "anchor": "const independent=createLogger("
         }
       ],
@@ -2731,7 +2731,7 @@
       "targets": [
         {
           "path": "tools/firmware-report.mjs",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d",
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423",
           "anchor": "const gz=portableGzip(bytes),manifest=createFirmwareManifest("
         },
         {
@@ -3342,7 +3342,7 @@
       "targets": [
         {
           "path": "tools/firmware-report.mjs",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d",
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423",
           "anchor": "const gz=portableGzip(bytes),manifest=createFirmwareManifest("
         },
         {
@@ -9556,7 +9556,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -9595,7 +9595,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9662,7 +9662,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -9691,7 +9691,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9767,7 +9767,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9828,7 +9828,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9898,7 +9898,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9969,7 +9969,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10030,7 +10030,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10090,7 +10090,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10155,7 +10155,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10220,7 +10220,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10267,7 +10267,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423"
         }
       ],
       "omissions": [
@@ -10286,7 +10286,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10333,7 +10333,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423"
         }
       ],
       "omissions": [
@@ -10352,7 +10352,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10413,7 +10413,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10459,7 +10459,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423"
         }
       ],
       "omissions": [
@@ -10478,7 +10478,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10525,7 +10525,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423"
         }
       ],
       "omissions": [
@@ -10544,7 +10544,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10593,7 +10593,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423"
         }
       ],
       "omissions": [
@@ -10612,7 +10612,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10668,7 +10668,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10709,7 +10709,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "const source_sha=execFileSync",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423"
         }
       ],
       "omissions": [
@@ -10723,7 +10723,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10764,7 +10764,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "const source_sha=execFileSync",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423"
         }
       ],
       "omissions": [
@@ -10778,7 +10778,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10838,7 +10838,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10898,7 +10898,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10958,7 +10958,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11027,7 +11027,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11156,7 +11156,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11217,7 +11217,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function artifactMarkdown",
-          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
+          "sha256": "a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423"
         }
       ],
       "omissions": [
@@ -11231,7 +11231,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11315,7 +11315,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11391,7 +11391,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11471,7 +11471,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
+          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
         },
         {
           "path": "tests/script_tooling_test.ps1",

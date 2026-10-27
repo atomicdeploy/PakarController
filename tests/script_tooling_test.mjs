@@ -1,13 +1,13 @@
 // Offline and child-process fixtures only. No compiler, device or SDK install.
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,existsSync,unlinkSync,symlinkSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,existsSync,unlinkSync,symlinkSync,realpathSync,openSync,ftruncateSync,closeSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {createLogger,sanitizeText,runChild} from '../tools/script-console.mjs';
 import {main,portableArguments,legacyBuildArguments,doctor,scriptPath} from '../tools/pakar.mjs';
 import {compareVersions,installationPlan,validatePins,checkDependencies,applyUpdates,dependencyMarkdown,fetchIndex} from '../tools/firmware-dependencies.mjs';
-import {collectArtifacts,expectedArtifacts,legacyArtifacts,unchangedWrite,artifactMarkdown} from '../tools/firmware-report.mjs';
+import {collectArtifacts,readArtifact,expectedArtifacts,legacyArtifacts,unchangedWrite,artifactMarkdown} from '../tools/firmware-report.mjs';
 import {trustedBuild,verifiedArtifact,deployArtifact} from '../tools/deploy-artifact.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const memory=()=>({value:'',write(text){this.value+=text;}});
@@ -88,6 +88,17 @@ for(const name of legacyArtifacts){
 }
 assert.equal(collectArtifacts(artifacts,{required:true}).length,4,'Old cached legacy artifacts are not primary release artifacts');
 assert.equal(collectArtifacts(artifacts,{required:true,includeLegacy:true,compress:true}).length,8,'Explicit legacy raw/gzip collection is preserved');
+assert.deepEqual(readArtifact(imagePath,realpathSync(artifacts)),image,'Actual descriptor read retains original application bytes');
+const emptyPath=resolve(artifacts,'empty.bin'),oversizedPath=resolve(artifacts,'oversized.bin'),aliasPath=resolve(artifacts,'alias.bin');
+writeFileSync(emptyPath,Buffer.alloc(0),{flag:'wx'});
+assert.throws(()=>readArtifact(emptyPath,realpathSync(artifacts)),/size/);
+const oversizedFd=openSync(oversizedPath,'wx');try{ftruncateSync(oversizedFd,4*1024*1024+1);}finally{closeSync(oversizedFd);}
+assert.throws(()=>readArtifact(oversizedPath,realpathSync(artifacts)),/size/,'Reject before allocating/reading oversized data');
+assert.throws(()=>readArtifact(artifacts,realpathSync(artifacts)),/nonregular/);
+assert.throws(()=>readArtifact(imagePath,realpathSync(resolve(artifacts,'avr'))),/Escaping/);
+let linked=false;try{symlinkSync(imagePath,aliasPath);linked=true;}catch(error){if(!['EPERM','EACCES'].includes(error.code))throw error;}
+if(linked){assert.throws(()=>readArtifact(aliasPath,realpathSync(artifacts)));unlinkSync(aliasPath);}
+unlinkSync(emptyPath);unlinkSync(oversizedPath); // Only the exact fixtures exclusively created above.
 const sha='a'.repeat(40),report={product:'PakarController',source_sha:sha,source_dirty:false,artifacts:observed};
 const reportPath=resolve(artifacts,'firmware-report.json');writeFileSync(reportPath,JSON.stringify(report));
 assert.equal(unchangedWrite(reportPath,JSON.stringify(report)),false);

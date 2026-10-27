@@ -2,6 +2,22 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Fresh49b1a9b CodeQL re-exposed two real report-file races (alerts9/10): derived
+unchangedWrite used exists-then-read, while artifact collection validated a path
+then reopened it. Consulted pu-tooling and reread the existing descriptor-based
+running-image verifier, report and manifest fixtures. Adapted its same-open-file
+ownership into readArtifact: O_NOFOLLOW where supported, descriptor/path identity,
+regular-file/root/4MiB bounds, fixed-size descriptor reads and final size/mtime/EOF
+checks with guaranteed close. Missing optional files are handled from open errors,
+not preflight pathname checks. Derived report comparison directly reads/catches
+ENOENT; no original image/settings is rewritten. Fixtures cover valid raw bytes,
+empty/oversized/nonregular/out-of-root files and symlink rejection where allowed;
+legacy compression/manifest tests pass. One negative fixture initially chose a
+containing root, so it correctly did not throw; corrected it to an unrelated
+root. No security query is disabled or finding dismissed to obtain a merge.
+The actual S3 build passes2318667/3342336B, globals133008/327680; full local quality
+passes. New exact-head scan/build gates remain separate from these source results.
+
 The owner explicitly selected ESP32-S3 + AVR as release targets, preserving
 unfinished ESP8266 support. After moving the shared DiagnosticReceipt helper
 include outside the optional correction-store guard, an actual ESP8266 polling
