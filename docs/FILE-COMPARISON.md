@@ -2811,7 +2811,7 @@ Verdict: **scoped-improvement**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cd
 - Target: `.github/dependabot.yml:1 [UTF8-LF sha256=136887ba77b56544d0bcd367a31d2daaa7637ecdb8b997d63df6cb552d6f08e8; anchor=version: 2]`.
 - Retained: Actual donor weekly grouped github-actions and Cargo updates, with Cargo path adapted to the existing desktop workspace.
 - Omitted/replaced code: `npm updates at /web_ui`. Disposition: **not-applicable**. Reason: Pakar has no /web_ui/package.json or Vite runtime. Embedded Web/tests use Node built-ins; Flutter's actual /mobile Pub dependency contract is covered instead.
-- Test-code evidence: `tests/repository_governance_test.mjs:99 [UTF8-LF sha256=d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:105 [UTF8-LF sha256=2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1; anchor=console.log('Repository governance]`.
 - Scoped advantage: Adds grouped Pub updates for the actual Android client and label routing while retaining weekly grouped Actions/Cargo updates.
 
 ### Pealayer: `.github/workflows/ci-cd.yml`
@@ -2830,7 +2830,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Omitted/replaced code: `UPX checksum-locked packing and packed native package smoke/resource checks`. Disposition: **pending**. Reason: Existing Windows wrappers preserve donor resource/donor/cache gates and CLI runtime tests, but Pakar has no accepted compressed native package probe. Do not call a source or CLI test full packed GUI runtime acceptance.
 - Omitted/replaced code: `branch-tag and archive suffix creation, softprops update-existing release`. Disposition: **replaced**. Reason: User requests stable names without random/time suffixes. Version releases keep stable package names; release enumeration must succeed and an existing release is not overwritten.
 - Test-code evidence: `tests/build_storage_test.ps1:17 [UTF8-LF sha256=6bfae8dbd4e71ee19a6d760fe69898d3f057354877c3182dff73ee9240f1dbbd; anchor=Actual donor serial test contract]`.
-- Test-code evidence: `tests/repository_governance_test.mjs:99 [UTF8-LF sha256=d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:105 [UTF8-LF sha256=2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1; anchor=console.log('Repository governance]`.
 - Remaining: The historical 8849ab8 menu failure was subsequently fixed; 5d02b07 Build 38141677102 and CodeQL 38141677110 pass. This is not production/deployment proof. Validate the unexecuted draft publisher, useful additional native targets, donor macOS diagnostics and optional compressed package/runtime verification.
 
 ### Pealayer: `.github/workflows/codeql.yml`
@@ -2840,7 +2840,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 - Target: `.github/workflows/codeql.yml:2 [UTF8-LF sha256=0ced3b7ee236102d9322f20ee0e4a37347aae41d791d48c38731f96daf4bdfba; anchor=name: "🛡️ Security · CodeQL"]`.
 - Retained: Actual donor Actions and JavaScript matrix, no-build security-extended queries, pinned checkout/CodeQL actions, no persisted checkout credentials, PR/main/schedule/dispatch/merge-group triggers, cancellation, timeouts and fail-closed aggregate summary.
 - Omitted/replaced code: `Pealayer React/Vite names, packages:read permission and branded prose`. Disposition: **replaced**. Reason: Pakar analyzes embedded Web/scripts and Actions, not Pealayer React. Package read permission is unnecessary for these none-build scans; Rust/C++ coverage is explicitly not invented.
-- Test-code evidence: `tests/repository_governance_test.mjs:99 [UTF8-LF sha256=d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:105 [UTF8-LF sha256=2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1; anchor=console.log('Repository governance]`.
 
 ### Pealayer: `assets/themes/palettes.json`
 
@@ -2872,7 +2872,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 - Target: `docs/releases/next.md:1 [UTF8-LF sha256=9e83c4d1a348af3bc275a5ec924abea7317ba22d1f0e66eac63d6f5499efbeec; anchor=# PakarController development packages]`.
 - Retained: Actual donor curated preview notes explicitly distinguish a development milestone from stable-release, physical and platform acceptance.
 - Omitted/replaced code: `Pealayer media/audio/timeline milestone inventory and archived media screenshot evolution links`. Disposition: **replaced**. Reason: These are donor-specific release facts, not transferable Pakar features. Record actual controller/interface packages and link Pakar issue #2 instead.
-- Test-code evidence: `tests/repository_governance_test.mjs:99 [UTF8-LF sha256=d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:105 [UTF8-LF sha256=2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1; anchor=console.log('Repository governance]`.
 
 ### Pealayer: `docs/REVIEW-COMMENT-AUDIT.md`
 
@@ -2940,7 +2940,7 @@ Verdict: **scoped-improvement**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cd
 - Retained: Pealayer's actual centered logo/title/tagline, badge row, visual preview, section navigation, architecture, build, docs, contribution and license structure adapted to Pakar.
 - Omitted/replaced code: `Media engine, NLE cue/timeline walkthroughs, playback APIs/shortcuts and libmpv installation sections`. Disposition: **not-applicable**. Reason: These describe Pealayer media business/runtime rather than Pakar board control. README links actual controller APIs, wiring and release/acceptance instead; no mpv is linked.
 - Omitted/replaced code: `Donor platform and latest-release badges, cinema-grade completion language and media screenshots`. Disposition: **replaced**. Reason: Unsupported OS/release claims and unrelated images would misrepresent this repo. Use the shared application logo and real embedded Web screenshot labeled simulated, explicit PR/source and physical acceptance boundaries.
-- Test-code evidence: `tests/repository_governance_test.mjs:99 [UTF8-LF sha256=d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:105 [UTF8-LF sha256=2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1; anchor=console.log('Repository governance]`.
 - Scoped advantage: Canonical cross-interface icon bytes and explicit proof/acceptance boundaries prevent a polished landing page from claiming an unaccepted release.
 
 ### Pealayer: `scripts/capture-visible-window-windows.ps1`

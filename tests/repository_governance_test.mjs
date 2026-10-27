@@ -38,6 +38,12 @@ for(const target of ['led_scheduler_test.cpp','led_worker_test.cpp']){
   const command=hostProtocol.split(/(?<=\n)(?=c\+\+|  c\+\+)/).find(command=>command.includes(target));
   assert(command?.includes('-I "$root/libraries/BoardCore/src"'),`${target} requires actual GameRole headers`);
 }
+const pcFlags=read('tools/test-pc-flags.sh');
+assert.match(pcFlags,/for feature in I2C SENSORS PWM RELAYS STATUS_RGB AVR_LED; do/);
+assert.match(pcFlags,/pwsh -NoProfile -File "\$root\/tools\/test-radio.ps1"/,
+  'Implemented RF needs its actual positive adapter tests, not an obsolete expected compilation failure');
+assert.match(pcFlags,/for value in -1 2; do/);
+assert.match(read('libraries/BoardCore/src/BoardFeatures.h'),/implemented = Menu \| Macros \| Automations \| Rf/);
 assert.match(firmwareJob,/actions\/setup-node@[a-f0-9]{40}[\s\S]*node-version: '24'/,
   'Firmware asset verification must use the same Node major as source quality');
 const quietSdkCommand='pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -PauseAvrLink -Jobs 2';

@@ -2,6 +2,22 @@
 
 ## GitHub handoff consolidation and CI repair
 
+The9bd8074 Linux protocol suite now passed through LEDs, queue/runtime backends,
+cloud/network/OTA models, TM1637, audio, UART and USB. Its final old PC flag loop
+still expected RF to be unimplemented, contrary to actual BoardFeatures.h and
+RadioAdapter. Consulted api-contract and read those complete current sources,
+PcController RF dispatch/receive, test-radio.ps1 and its adapter fixture. Retained
+all six genuinely unsupported hardware failures, replaced the stale RF rejection
+with the SAME real adapter fixture used by Windows, and added non-boolean RF
+rejections. Raw forwarding, decoder validation, active-round TX rejection and RX
+restoration are exercised; learning is still unsupported and no RF hardware is
+claimed. Governance guards tie the script to those actual feature semantics.
+Bare bash selected WSL with a Windows c++ and could not resolve /mnt/c paths;
+the explicitly installed Git Bash supplied correct host path translation and
+the complete flag script passed. Its linker emitted existing incompatible-search
+warnings before finding usable libraries; no host PATH or compiler was changed.
+Linux CI remains the Linux acceptance gate, not that Windows result.
+
 The early e33f54c quality gate caught intermittent download_firmware_test
 rejection failure before SDK work. Read the actual downloader/fixture and the
 mapped pinned PU Go watch digestUnchangedFile/validateWatchCandidate functions

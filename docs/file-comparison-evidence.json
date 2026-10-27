@@ -16671,7 +16671,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
+          "sha256": "2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16743,7 +16743,7 @@
         },
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
+          "sha256": "2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16776,7 +16776,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
+          "sha256": "2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16809,7 +16809,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
+          "sha256": "2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16842,7 +16842,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
+          "sha256": "2c8393bbd1463ce367cff24d72110a96e53e664824d780f2e66a2c8f8930bda1",
           "anchor": "console.log('Repository governance"
         }
       ]
