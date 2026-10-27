@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 const source=await read('web/index.html');
-for(const script of source.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(script[1]);
+for(const script of source.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi))new vm.Script(script[1]);
 const plain=value=>JSON.parse(JSON.stringify(value));
 const layoutContext=vm.createContext({});
 vm.runInContext(await read('web/modules/table-layout.js'),layoutContext);

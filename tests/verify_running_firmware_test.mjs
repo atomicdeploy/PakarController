@@ -21,9 +21,14 @@ let completed=0;
 try{
   for(const scenario of ['success','retry','wrong-peer','wrong-header','wrong-boot','wrong-address','metadata','slot','hash',
     'range','length','section-hash','duplicate','encoding','http-reject','transport-twice','protocol-no-retry',
-    'deadline','retry-deadline','ws-peer','final-slot','existing-receipt','receipt-race']){
+    'deadline','retry-deadline','ws-peer','final-slot','existing-receipt','receipt-race','file-success','file-directory']){
     const receipt=resolve(directory,scenario+'.json');assert(await absent(receipt),'Unknown fixture must be preserved: '+receipt);owned.push(receipt);
     if(scenario==='existing-receipt')await writeFile(receipt,'preserve',{flag:'wx'});
+    let candidate=image;
+    if(scenario==='file-success'){
+      candidate=resolve(directory,'candidate.bin');assert(await absent(candidate));owned.push(candidate);
+      await writeFile(candidate,image,{flag:'wx'});
+    }else if(scenario==='file-directory')candidate=directory;
     let clock=0,requests=0,ranges=0,sockets=0,statusReads=0,telemetryReads=0,firstRangeAttempts=0;
     const events=[],calls=[];
     const request=async(_origin,path,options={})=>{
@@ -75,8 +80,8 @@ try{
       assert(options.connectTimeoutMs+options.statusTimeoutMs<=120000-clock);
       return {board_id:scenario==='ws-peer'?'other':board,boot_id:boot,status_requests:1};
     };
-    const invocation=()=>verifyRunningFirmware({origin:'http://fixture.local',board,image,receipt,request,websocket,now:()=>clock,log:event=>events.push(event)});
-    if(scenario==='success'||scenario==='retry'){
+    const invocation=()=>verifyRunningFirmware({origin:'http://fixture.local',board,image:candidate,receipt,request,websocket,now:()=>clock,log:event=>events.push(event)});
+    if(['success','retry','file-success'].includes(scenario)){
       const result=await invocation();assert.equal(result.ok,true);assert.equal(result.read_only,true);assert.equal(result.firmware_written,false);
       assert.equal(result.avr_touched,false);assert.equal(result.simulated,true);assert.equal(result.image.sha256,expected.sha256);
       assert.equal(result.range_count,3);assert.equal(result.range_bytes,16384);assert.equal(result.transport_retries,scenario==='retry'?1:0);
@@ -85,6 +90,7 @@ try{
     }else{
       await assert.rejects(invocation());
       if(scenario==='existing-receipt'){assert.equal(requests,0);assert.equal((await readFile(receipt)).toString(),'preserve');}
+      else if(scenario==='file-directory'){assert.equal(requests,0);assert(await absent(receipt));}
       else if(scenario==='receipt-race')assert.equal((await readFile(receipt)).toString(),'another owner');
       else assert(await absent(receipt),'Failure must not publish a successful receipt');
       if(scenario==='wrong-peer'){assert.equal(requests,1);assert.equal(sockets,0);}
@@ -102,7 +108,8 @@ try{
   for(const args of [[],[...valid,'--run'],[...valid,'--mode','local'],[...valid,'--board',board],valid.slice(0,-1)])assert.throws(()=>parseVerificationArguments(args));
   const cli=spawnSync(process.execPath,['tools/verify-running-firmware.mjs',...valid,'--run'],{encoding:'utf8',timeout:10000,windowsHide:true});
   assert.equal(cli.status,1);assert.match(cli.stderr,/read-only/);assert.equal(cli.stdout,'');
-  const created=(await readdir(directory)).filter(file=>!before.has(file));
+  assert.deepEqual(await readFile(resolve(directory,'candidate.bin')),image,'The explicit input fixture is not rewritten');
+  const created=(await readdir(directory)).filter(file=>!before.has(file)&&file!=='candidate.bin');
   assert(created.every(file=>file.endsWith('.json')),'Verifier must not create binary readback files');
 }finally{for(const path of owned)if(!(await absent(path)))await unlink(path);}
 console.log(`Read-only running firmware verifier: ${completed} peer/hash/range/deadline/receipt scenarios plus strict CLI passed; no board contact or flash.`);

@@ -1,7 +1,7 @@
 // Read-only post-deployment verification, without another firmware copy/flash.
 // Reuses PU850 upload.js verifiedDownload/verifyAfterReboot adaptations already
 // owned by update-firmware, download-firmware and the shared peer transport.
-import {readFile, lstat, writeFile} from 'node:fs/promises';
+import {open, lstat, writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {dirname, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -45,9 +45,17 @@ export async function verifyRunningFirmware({origin,board,image,receipt,
   let bytes;
   if(Buffer.isBuffer(image))bytes=image;
   else {
-    const file=await lstat(image);
-    if(!file.isFile()||file.isSymbolicLink()||file.size>maxDownloadSize)throw Error('Candidate must be a bounded regular application image');
-    bytes=await readFile(image);
+    // Read the validated open descriptor, never reopen a checked pathname.
+    const handle=await open(image,'r');
+    try{
+      const file=await handle.stat(),path=await lstat(image);
+      if(!file.isFile()||!path.isFile()||path.isSymbolicLink()||file.dev!==path.dev||file.ino!==path.ino||file.size>maxDownloadSize)
+        throw Error('Candidate must be a bounded regular application image');
+      bytes=await handle.readFile();
+      const after=await handle.stat();
+      if(bytes.length!==file.size||after.size!==file.size||after.mtimeMs!==file.mtimeMs)
+        throw Error('Candidate changed while reading');
+    }finally{await handle.close();}
   }
   if(bytes.length>maxDownloadSize)throw Error('Candidate exceeds firmware size bound');
   const expected=imageIdentity(bytes);

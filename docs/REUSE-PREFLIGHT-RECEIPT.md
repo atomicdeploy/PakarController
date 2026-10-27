@@ -2,6 +2,29 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Final pre-dependency mobile pass:722 tests passed,3 environment/authorized-live
+skips, analysis clean. Fixed a real Hardware ExpansionTile storage collision:
+its boolean expansion state now has a distinct peer-scoped PageStorageKey and
+cannot read the parent scroll position as a bool. Unknown output retains disabled
+geometry rather than disappearing, and Rainbow test remains disabled until the
+output is observed enabled. Canonical Rust461 tests and Web/contracts passed
+locally; this is not exact future dependency-head CI or device acceptance.
+
+Reviewed all seven PR24 CodeQL annotations. Candidate file reading now validates
+and reads the SAME open descriptor, checking path inode/device, regular-file
+status, size and post-read metadata;25 verifier scenarios include a real input
+file and directory rejection. Script extraction is now case insensitive. Removed
+redundant native-fixture exists probes: exclusive wx creation remains the atomic
+configuration protection; spawn handles missing executable paths. New scans must
+verify these fixes rather than declaring their alerts cleared from source alone.
+Alert28 was reviewed/dismissed as a false positive: receipt publication is already
+atomic wx and the competing-owner tests pass. Alert29 is an intentional bounded
+200-entry JSON request log in an isolated loopback test with a fixed CLI path.
+Alert18 is intentional explicit firmware upload after image/board/boot/address/
+capacity admission, not arbitrary file exfiltration. Exact scoped dismissal
+comments are on GitHub. Historical unrelated security findings are not declared
+resolved, checks are not disabled and no CodeQL-success claim precedes a new scan.
+
 Follow-through found two genuine mobile lifecycle gaps among the stale fixtures:
 missing critical board identity could be rejected by hostname validation before
 retiring captured firmware owners, and the new zoom/pan viewport was not part of

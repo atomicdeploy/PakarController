@@ -27,10 +27,9 @@ assert(width === undefined || (Number.isInteger(width) && width >= 900 && width 
   && Number.isInteger(height) && height >= 600 && height <= 2160), 'Capture viewport must be within 900x600 and 3840x2160');
 const statusScenario = ['connected', 'offline', 'warning', 'progress', 'status-rgb'].includes(scenario);
 const exe = resolve(exeArg), profile = resolve(profileArg), config = join(profile, 'preferences.json');
-await access(exe);
 await mkdir(profile, {recursive: true});
 // Existing fixture preferences (including saved box positions) are never replaced.
-await assert.rejects(access(config), 'Choose an unused isolated fixture profile directory');
+// The exclusive write below is the atomic authority, not a prior exists check.
 const sockets = new Set();
 const requests = [];
 const winner = scenario === 'ready' || statusScenario ? 0 : 2;

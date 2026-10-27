@@ -3598,6 +3598,7 @@ class HardwarePage extends StatelessWidget {
           Card(
             child: ExpansionTile(
               leading: const Icon(Icons.extension_outlined),
+              key: PageStorageKey('hardware-capabilities:${inventory?.ownerKey ?? peer.hostname}'),
               title: const Text('Capabilities'),
               subtitle: Text('${features.where(peer.has).length} acknowledged'),
               childrenPadding: const EdgeInsets.all(16),

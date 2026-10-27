@@ -294,7 +294,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "final correctionPeer = (",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98"
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84"
         },
         {
           "path": "mobile/lib/pixel_correction_address.dart",
@@ -742,7 +742,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "selectionHasCellState(status!.json, selection, value)",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98"
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84"
         }
       ],
       "proof": [
@@ -819,7 +819,7 @@
         {
           "path": "tests/web_app_contract_test.mjs",
           "anchor": "workspace.offset('ArrowLeft',rtl)",
-          "sha256": "774336f13b46df70d55c659280edd65659a18b44ff1f19d90fb25a4042c609cf"
+          "sha256": "23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f"
         }
       ],
       "omissions": [
@@ -859,12 +859,12 @@
         {
           "path": "tests/web_app_contract_test.mjs",
           "anchor": "workspace.normalize({order:'corrupt'",
-          "sha256": "774336f13b46df70d55c659280edd65659a18b44ff1f19d90fb25a4042c609cf"
+          "sha256": "23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f"
         },
         {
           "path": "tests/web_app_contract_test.mjs",
           "anchor": "Reordering leaves original state immutable",
-          "sha256": "774336f13b46df70d55c659280edd65659a18b44ff1f19d90fb25a4042c609cf"
+          "sha256": "23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f"
         }
       ],
       "omissions": [
@@ -2276,7 +2276,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98",
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
           "anchor": ": WorkspaceActivityStrip("
         },
         {
@@ -7273,7 +7273,7 @@
         {
           "path": "mobile/test/panel_inventory_test.dart",
           "anchor": "testWidgets",
-          "sha256": "cc1b469e6ac1c7761fe8ebdc4b0d0e7fe0c17d774e27294a0f3b8b87348a4655"
+          "sha256": "da040bcdd993c2a78185e4f5974c2be7dfd2d2447e9b0dbb5c4c98a0febff664"
         },
         {
           "path": "mobile/test/read_deadline_transport_test.dart",
@@ -7369,7 +7369,7 @@
         {
           "path": "mobile/test/panel_inventory_test.dart",
           "anchor": "testWidgets",
-          "sha256": "cc1b469e6ac1c7761fe8ebdc4b0d0e7fe0c17d774e27294a0f3b8b87348a4655"
+          "sha256": "da040bcdd993c2a78185e4f5974c2be7dfd2d2447e9b0dbb5c4c98a0febff664"
         },
         {
           "path": "mobile/test/read_deadline_transport_test.dart",
@@ -11132,7 +11132,7 @@
         {
           "path": "tools/verify-running-firmware.mjs",
           "anchor": "export async function verifyRunningFirmware(",
-          "sha256": "79070238577245c21b4392f8b525c1ebfbe2ea9e6dae17d1841c791b6e53d23f"
+          "sha256": "44264fe63ba4c81079517521f8bc0cde96e4602d0d56ab23dfed0356bccdaa9a"
         },
         {
           "path": "tools/download-firmware.mjs",
@@ -11171,7 +11171,7 @@
         {
           "path": "tests/verify_running_firmware_test.mjs",
           "anchor": "Read-only running firmware verifier:",
-          "sha256": "180842d0279e483bdd4b22174a0ba9b6f0a7073f73bf198fa94bc14cffa5e9a4"
+          "sha256": "77f9d8389d7668b39cdfb57b71a9ec9acba3da9b439bf7feefdb284d98a04058"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -14262,7 +14262,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98",
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
           "anchor": "api.onPeerChanged = ()"
         },
         {
@@ -17163,7 +17163,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98",
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
           "anchor": "Future<bool> _command"
         },
         {
@@ -17488,7 +17488,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98",
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -17562,7 +17562,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98",
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
           "anchor": "Future<void> _openConnection()"
         },
         {
@@ -23230,7 +23230,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98",
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -23406,7 +23406,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98"
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84"
         }
       ],
       "proof": [
@@ -23446,7 +23446,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98"
+          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84"
         }
       ],
       "proof": [

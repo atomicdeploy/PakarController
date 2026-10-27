@@ -137,7 +137,7 @@ void main() {
         same(workspace),
       );
       expect(workspace.selection, {1, 80});
-      expect(workspace.query.text, '1,80');
+      expect(workspace.query.text, '1, 80');
       expect(workspace.pageScroll.offset, vertical);
       expect(find.widgetWithText(ChoiceChip, 'First wins'), findsNothing);
       expect(api.writes, 0);

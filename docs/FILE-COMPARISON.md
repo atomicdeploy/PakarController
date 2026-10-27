@@ -1032,7 +1032,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `7c4c3a679ede250bb44effc96ccaf8a33a49f15e3ec8a1e1f5dfca082d64c72f`.
 
 - Target: `mobile/lib/connection_preferences.dart:56 [UTF8-LF sha256=9b4b4d787f7169a31f09717118c63ec7f88476df0568a84eb04909a0bd547d54; anchor=class ConnectionPreferences]`.
-- Target: `mobile/lib/main.dart:887 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=_saveWorkspaces]`.
+- Target: `mobile/lib/main.dart:887 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=_saveWorkspaces]`.
 - Retained: Complete donor read: preserve secure password migration and last explicit connection profile; adapt nonsecret connection draft restoration and explicit Disconnect/transport intent without automatically selecting discovered paths. Pristine settings fields follow async profile loading, edited fields retain the draft.
 - Omitted/replaced code: `Mandatory/nonempty default password and restoring secret drafts`. Disposition: **replaced**. Reason: Current board authentication is optional. Existing secure credential ownership remains separate; workspace persistence excludes passwords/tokens and does not require credentials before the board does.
 - Test-code evidence: `mobile/test/workspace_lifecycle_test.dart:13 [UTF8-LF sha256=537941477dab0a2460cf42aab9220a7baf8d1aecf36eb140b21179674985071e; anchor=connection]`.
@@ -1182,7 +1182,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/pixel_corrections.rs:4 [UTF8-LF sha256=b1303032d704a39d11fb222bb539b08a176f2fdcdef60cccb06f62a52195be19; anchor=pub struct Rule]`.
 - Target: `mobile/lib/pixel_tools_navigation.dart:8 [UTF8-LF sha256=bbc13b4422def156b5ed0b8df7211f465fd9a54fcfaadf2b30f7a293784d3f8a; anchor=class PixelToolsNavigation]`.
 - Target: `mobile/lib/pixel_corrections_page.dart:539 [UTF8-LF sha256=392cc722fcfcf4731c6ef8880d31d26ba52a4a926be32f8b415669e42a9513a0; anchor=Future<bool> requestLeave()]`.
-- Target: `mobile/lib/main.dart:1302 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=final correctionPeer = (]`.
+- Target: `mobile/lib/main.dart:1302 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=final correctionPeer = (]`.
 - Target: `mobile/lib/pixel_correction_address.dart:22 [UTF8-LF sha256=d746e76f0a761ff2db83a35bd182ee7ba65edb67ad3712a4a6015e91cd242aed; anchor=String pixelCorrectionAddress({]`.
 - Target: `mobile/lib/pixel_corrections_editor.dart:6 [UTF8-LF sha256=8f2332519d2fbf57767e5999201172d1ffcd1be9010faf4b1bd2289093d5f80c; anchor=class PixelCorrectionRuleIntent]`.
 - Retained: Diagnostic owner read the complete donor. Adapted numberDrafts/numberError separation, bounded typed values and responsive LayoutBuilder/Wrap into diagnostic timing controls. ESP renders blink/breathe/rainbow; Flutter never streams synthetic animation frames or reports a draft as applied.
@@ -1221,7 +1221,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `fb4552dba17b3ec1bd999b6f43a05c2d85838fc490da4caec4d0b5316e5f9239`.
 
 - Target: `mobile/lib/pixel_diagnostic.dart:120 [UTF8-LF sha256=c5143cb176678151bc81273fbd7ebe7d666d9a145f400efc65ac1a8e7ecb817c; anchor=class PixelDiagnosticWorkspace]`.
-- Target: `mobile/lib/main.dart:887 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=_saveWorkspaces]`.
+- Target: `mobile/lib/main.dart:887 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=_saveWorkspaces]`.
 - Retained: Complete donor read: adapt bounded enum/preferences restore and separate phone mirroring options into the existing ordered snapshot writer. Preserve visual/volume/follow-mute preferences without restarting PCM sessions, tones or commands.
 - Retained: Reread the complete same-hash donor preferences load/save/change notification. Cold-start repair separates observation demand from preference persistence: binding the board workspace immediately restores its saved LED preview subscription; repeated status does not write preferences. Existing coalesced writer and per-board user choices remain authoritative.
 - Omitted/replaced code: `Per-keystroke sequential preference writes and PC-only branding`. Disposition: **replaced**. Reason: Use one content-equal coalesced writer, preserving the requested low-write policy and Pakar identity.
@@ -1260,7 +1260,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `assets/themes/browser-appearance.js:5 [UTF8-LF sha256=056ef41691b92dacbcd7c75b11ff38a2e492093e769aab26dc2577785994de54; anchor=const appearanceDefaults=]`.
 - Target: `mobile/lib/cell_controls.dart:53 [UTF8-LF sha256=02671bd9d09be5620be54c896172f2bc46eabf78e26c49bf710293558d3ec567; anchor=ButtonStyle cellColorActionStyle(]`.
 - Target: `mobile/lib/semantic_cells.dart:23 [UTF8-LF sha256=3ad39e619348a04af4cd6f23efeff6421a81ec90eb53f797b9769209438febb7; anchor=bool selectionHasCellState(]`.
-- Target: `mobile/lib/main.dart:2358 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=selectionHasCellState(status!.json, selection, value)]`.
+- Target: `mobile/lib/main.dart:2358 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=selectionHasCellState(status!.json, selection, value)]`.
 - Retained: Fully read the actual 51-line relayActionStyle implementation through EOF and verified current donor bytes against the inventory. Adapted its semantic action tone independent of branding, luminance-based black/white contrast selection, WidgetState-resolved enabled/disabled foreground and background, and transparent filled-action borders into cellColorActionStyle. CellColorAction uses that style through FilledButton.icon; public constructors and command/state semantics remain unchanged.
 - Retained: The target adds a subtle opaque surface blend for board-defined RGB colors, compact 36px painted controls with padded 48px minimum touch targets, 140ms state transitions, distinct hover/focus/pressed overlays, reserved one-pixel geometry, no idle/disabled outline, and a restrained focus edge. CellOption retains its existing FilterChip behavior while adopting tonal fills, smaller icon/type scale, transparent unselected edges and a muted selected semantic edge.
 - Retained: Web presentation checkpoint reread the complete actual relay_style.dart from canonical PCController at the same inventory revision/hash. Adapt semantic success/danger identity, contrasting text, stable outline and disabled distinction to existing CSS controls and state-caption data attributes; no Flutter widget runtime or game-state business logic is duplicated. Bright green uses dark high-contrast text, light-theme green uses a darker semantic tone, and explicit saved accents remain authoritative while the default uses shared green branding. Normal/hover/active tonal treatments use fixed border geometry and reduced-motion-safe controls.
@@ -1311,7 +1311,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `mobile/test/command_admission_transport_test.dart:122 [UTF8-LF sha256=2c53969b0ed1f881ebea20b760e58125d6c6a574b6fbb722edc5073d1bec6fb4; anchor=Fresh same-boot WS admission overtakes a stalled background HTTP read]`.
 - Test-code evidence: `mobile/test/api_test.dart:86 [UTF8-LF sha256=13fe2bd841ff70ffd8b87da264e84fa758885d8413c7f96493211abe17984b72; anchor=A write retires]`.
 - Test-code evidence: `desktop/src/ui/cell_pixels.rs:371 [UTF8-LF sha256=547feb8158f8436ce6b3664dd90fcd59affdcce21dc7f9be273d2945e7424da6; anchor=fn usb_capture_time_is_not_replaced_by_chunk_completion_time()]`.
-- Test-code evidence: `mobile/test/panel_inventory_test.dart:68 [UTF8-LF sha256=cc1b469e6ac1c7761fe8ebdc4b0d0e7fe0c17d774e27294a0f3b8b87348a4655; anchor=testWidgets]`.
+- Test-code evidence: `mobile/test/panel_inventory_test.dart:68 [UTF8-LF sha256=da040bcdd993c2a78185e4f5974c2be7dfd2d2447e9b0dbb5c4c98a0febff664; anchor=testWidgets]`.
 - Test-code evidence: `mobile/test/read_deadline_transport_test.dart:71 [UTF8-LF sha256=5a1a7076e101ece8add3c151ca5dbd3d8f81d5bd0302fca3db7da0c6be9cb8d7; anchor=stalled]`.
 - Test-code evidence: `mobile/test/realtime_transport_test.dart:13 [UTF8-LF sha256=ef8a5a39abe37c40e3393cdde5b3f012dbc5a7adfc2e2cd104571ca04cd5de7e; anchor=Older same-boot WS producer]`.
 - Test-code evidence: `mobile/test/selection_batch_network_test.dart:228 [UTF8-LF sha256=41eb7d501bf707974913ef8d1813b0e18d841b85266c032778acd15848f09dc3; anchor=offline slots stay stable]`.
@@ -1327,7 +1327,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `f00ed672c1f72f1a66fb65cff1cfe0a89dea5f7b6222f154db00a7c52c2e1a82`.
 
 - Target: `mobile/lib/workspace_activity_strip.dart:8 [UTF8-LF sha256=fccaa432c6ff25855405fab28b9ebcddd5de82ae967a8c4246354a75ef593924; anchor=class WorkspaceActivityStrip]`.
-- Target: `mobile/lib/main.dart:1921 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=: WorkspaceActivityStrip(]`.
+- Target: `mobile/lib/main.dart:1921 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=: WorkspaceActivityStrip(]`.
 - Target: `mobile/lib/workspace_widgets.dart:303 [UTF8-LF sha256=26ce0129b1723a7e37fe28e1aa7a4df096b2f7bbcbeaffcde244139a42d9b6a1; anchor=class WorkspaceActionCard]`.
 - Target: `mobile/lib/workspace_widgets.dart:270 [UTF8-LF sha256=26ce0129b1723a7e37fe28e1aa7a4df096b2f7bbcbeaffcde244139a42d9b6a1; anchor=class WorkspaceGrid]`.
 - Target: `mobile/lib/workspace_widgets.dart:394 [UTF8-LF sha256=26ce0129b1723a7e37fe28e1aa7a4df096b2f7bbcbeaffcde244139a42d9b6a1; anchor=class WorkspaceValueRow]`.
@@ -1371,7 +1371,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `mobile/test/command_admission_transport_test.dart:35 [UTF8-LF sha256=2c53969b0ed1f881ebea20b760e58125d6c6a574b6fbb722edc5073d1bec6fb4; anchor=Late WS receipt settles same-ID HTTP recovery]`.
 - Test-code evidence: `mobile/test/command_fallback_transport_test.dart:127 [UTF8-LF sha256=c05c6aaa794202ddde9051e37513062464264ae34bdd83d70f5917a6509238bb; anchor=void main()]`.
 - Test-code evidence: `mobile/test/command_preferences_widget_test.dart:9 [UTF8-LF sha256=d4830d63f8497a2778a3e54a6bb7fce776d9d014a2765081141c92adaecfa7a3; anchor=Command fallback saves offline]`.
-- Test-code evidence: `mobile/test/panel_inventory_test.dart:68 [UTF8-LF sha256=cc1b469e6ac1c7761fe8ebdc4b0d0e7fe0c17d774e27294a0f3b8b87348a4655; anchor=testWidgets]`.
+- Test-code evidence: `mobile/test/panel_inventory_test.dart:68 [UTF8-LF sha256=da040bcdd993c2a78185e4f5974c2be7dfd2d2447e9b0dbb5c4c98a0febff664; anchor=testWidgets]`.
 - Test-code evidence: `mobile/test/read_deadline_transport_test.dart:71 [UTF8-LF sha256=5a1a7076e101ece8add3c151ca5dbd3d8f81d5bd0302fca3db7da0c6be9cb8d7; anchor=stalled]`.
 - Test-code evidence: `mobile/test/realtime_transport_test.dart:13 [UTF8-LF sha256=ef8a5a39abe37c40e3393cdde5b3f012dbc5a7adfc2e2cd104571ca04cd5de7e; anchor=Older same-boot WS producer]`.
 - Test-code evidence: `mobile/test/selection_batch_network_test.dart:228 [UTF8-LF sha256=41eb7d501bf707974913ef8d1813b0e18d841b85266c032778acd15848f09dc3; anchor=offline slots stay stable]`.
@@ -2385,7 +2385,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/terminal_ui.rs:806 [UTF8-LF sha256=762c7ee8137a21fdbd83a40bb776238a6f75b943da35d01073bbff6b2dd64379; anchor=fn command_request(]`.
 - Target: `mobile/lib/api.dart:1863 [UTF8-LF sha256=ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a; anchor=bool _acceptIdentity(]`.
-- Target: `mobile/lib/main.dart:216 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=api.onPeerChanged = ()]`.
+- Target: `mobile/lib/main.dart:216 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=api.onPeerChanged = ()]`.
 - Target: `mobile/lib/bridge.dart:373 [UTF8-LF sha256=6b7fe15e223d7a110972adc698dc66e739f956f596ed265894445f333676df98; anchor=watchdog = Timer.periodic]`.
 - Target: `libraries/BoardCore/src/PeerFence.h:31 [UTF8-LF sha256=9f1ab63252bd881d2fc786e230a18db331e66708a1bd3ccd0f096d2d2b5d49d5; anchor=inline bool accepts(]`.
 - Target: `firmware/esp/src/WebAccess.h:91 [UTF8-LF sha256=314ca16a853e550f62f71211c3607e1c27d5c9c488484f7168eb27ec85e45ca2; anchor=bool peerAllowed(]`.
@@ -2657,8 +2657,8 @@ Verdict: **equivalent-behavior**. Revision: `b0111ae0c80dc34149ea1044de7dd548892
 - Retained: Read the complete current donor file through EOF; its bytes still match the inventoried snapshot. Adapted default order, allowed-ID filtering, duplicate removal, append-new-panels behavior, immutable relative move insertion, collapse/hide toggling, guarded JSON storage reads and optional-storage writes. Layout now persists by board identity plus page container rather than donor dashboard/workbench names.
 - Omitted/replaced code: `CardLayout generic types, dashboard/workbench protocol storage key and standalone storage wrapper exports`. Disposition: **replaced**. Reason: The canonical Web candidate is plain JavaScript with actual DOM cards and runtime capability-dependent pages. normalize and move are testable exports; attach owns the browser-local storage lifecycle with per-board/page isolation. Donor business surface names are not carried into controller UI.
 - Omitted/replaced code: `resetCardLayout removes the saved key`. Disposition: **replaced**. Reason: The reset action saves the normalized current default layout instead of removing the key. Both restore the current allowed panels; this owner keeps a single persistence path and still appends newly discovered panels on later normalization.
-- Test-code evidence: `tests/web_app_contract_test.mjs:54 [UTF8-LF sha256=774336f13b46df70d55c659280edd65659a18b44ff1f19d90fb25a4042c609cf; anchor=workspace.normalize({order:'corrupt']`.
-- Test-code evidence: `tests/web_app_contract_test.mjs:58 [UTF8-LF sha256=774336f13b46df70d55c659280edd65659a18b44ff1f19d90fb25a4042c609cf; anchor=Reordering leaves original state immutable]`.
+- Test-code evidence: `tests/web_app_contract_test.mjs:54 [UTF8-LF sha256=23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f; anchor=workspace.normalize({order:'corrupt']`.
+- Test-code evidence: `tests/web_app_contract_test.mjs:58 [UTF8-LF sha256=23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f; anchor=Reordering leaves original state immutable]`.
 - Remaining: Issue #3: verify actual drag/drop and keyboard layouts survive reload/role changes in desktop, tablet and phone browsers. Helpers are embedded in the canonical application; its existing workspace storage owner is preserved rather than installing a second layout owner. Node tests prove normalization, immutable ordering and source guards, not rendered geometry or full Web/native/mobile parity.
 
 ### PCController: `Tools/Controller/web/src/peripheral-availability.test.ts`
@@ -2687,7 +2687,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/capabilities.rs:225 [UTF8-LF sha256=543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503; anchor=pub fn has(]`.
 - Target: `mobile/lib/peer_context.dart:50 [UTF8-LF sha256=e2d91e078d6dad7454eaa68f9a030ef1aa8ae2c91ba72ba522818da6b74131b8; anchor=static PeerContext fromStatus]`.
 - Target: `mobile/lib/cell_pixel_preview.dart:12 [UTF8-LF sha256=b02d26cea9854561864beeab59c1576a32e31af1bb42cd5b8c42d196e6f7bc1b; anchor=CellPixelPreview? cellPixelPreview]`.
-- Target: `mobile/lib/main.dart:1049 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=Future<bool> _command]`.
+- Target: `mobile/lib/main.dart:1049 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=Future<bool> _command]`.
 - Target: `libraries/BoardCore/src/DeviceContext.h:25 [UTF8-LF sha256=d1fe9e5a3663b13017ea61d251b6bc314ce91b2cb43b8c8b9c5308fe5fa73f1c; anchor=inline uint16_t features(]`.
 - Target: `firmware/esp/application.ino:2422 [UTF8-LF sha256=99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec; anchor=if(BoardCore::Context::pixelEvents(available))]`.
 - Target: `firmware/esp/src/WebUi.h:2251 [UTF8-LF sha256=612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a; anchor=function peerAvailability(]`.
@@ -2718,7 +2718,7 @@ Verdict: **equivalent-behavior**. Revision: `b0111ae0c80dc34149ea1044de7dd548892
 - Target: `web/modules/workspace.js:16 [UTF8-LF sha256=72fe2aa53c2efe6053695759aba1008de86ec25c909af63458fd35552633f483; anchor=next!==id&&next!==drag.last]`.
 - Retained: Read the complete current donor file through EOF; its bytes still match the inventoried snapshot. Adapted pointerReorderTargetChanged's candidate/source/last-target exclusion directly into the pointer-capture move handler, and keyboardReorderOffset's vertical and RTL-aware horizontal offsets into offset. Reordering requires explicit edit mode and preserves the existing card DOM and handlers.
 - Omitted/replaced code: `TypeScript generic type-predicate export and separate pointer target helper`. Disposition: **replaced**. Reason: The same Boolean guard is inlined into the single DOM reorder owner; keyboard offsets remain an exported testable helper. This does not import or imply parity with the separate React card-layout components.
-- Test-code evidence: `tests/web_app_contract_test.mjs:60 [UTF8-LF sha256=774336f13b46df70d55c659280edd65659a18b44ff1f19d90fb25a4042c609cf; anchor=workspace.offset('ArrowLeft',rtl)]`.
+- Test-code evidence: `tests/web_app_contract_test.mjs:60 [UTF8-LF sha256=23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f; anchor=workspace.offset('ArrowLeft',rtl)]`.
 - Remaining: Issue #3: verify stationary-pointer capture, cancellation, focus retention and touch behavior in real browsers. The helpers are embedded in the canonical application, but its existing layout owner remains authoritative; DOM attach integration and real browser behavior need acceptance. Deterministic offset/edit-gate checks do not prove rendered or physical behavior.
 
 ### PCController: `Tools/Controller/web/src/quick-header-preferences.ts`
@@ -3077,7 +3077,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `desktop/src/brand_image.rs:25 [UTF8-LF sha256=ab71607dcde16d7af14b0a292982f902186dacf6b5b78b3f4c983e37464428e9; anchor=pub fn native_icon_bytes]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `desktop/src/branding.rs:9 [UTF8-LF sha256=13a85d887a09acb79aed6acb7b8c0e38f9ea1ba2e35e9306c8bf7558211bc211; anchor=pub fn sync_peer]`.
-- Target: `mobile/lib/main.dart:1654 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
+- Target: `mobile/lib/main.dart:1654 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=peer.application?.icon ?? bundledApplicationArtwork]`.
 - Target: `mobile/lib/application_artwork.dart:2 [UTF8-LF sha256=a1ee8fc15b0aa9111a5c416fcf74b3d05093b22e47b76d7744837f175f7b5ef4; anchor=const applicationArtworkBase64]`.
 - Retained: Actual icon_data_from_bytes imported unchanged; one embedded PNG supplies native/Web artwork without disk caches.
 - Retained: Actual native_icon_bytes seven-frame ICO encoding/master preservation/Lanczos3 resampling and shell derivative test adapted to shared supplied bytes and PNG-only decoder.
@@ -3556,7 +3556,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Target: `web/index.html:2211 [UTF8-LF sha256=64ff59a7b22d89162c426e99ee8a6f0fd9a947c58143a8d76d462b5ebca2f601; anchor=function workspaceDiagnosticDraft()]`.
 - Target: `mobile/test/output_panel_test.dart:196 [UTF8-LF sha256=d40cd2b5189af50d1e862629cae0facd6169d7151fbccb0325564a368312b4b6; anchor=Output order is bounded, durable and independent of table selection]`.
 - Target: `mobile/lib/table_workspace.dart:13 [UTF8-LF sha256=1f21007e69778ddbedb34a1c392a152693f5dd742aae185019e6dbc1dc2b08a5; anchor=class TableWorkspace]`.
-- Target: `mobile/lib/main.dart:894 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=Future<void> _saveWorkspaces()]`.
+- Target: `mobile/lib/main.dart:894 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=Future<void> _saveWorkspaces()]`.
 - Target: `desktop/src/capabilities.rs:78 [UTF8-LF sha256=543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503; anchor=pub struct Presentation]`.
 - Target: `desktop/src/ui/shell.rs:1052 [UTF8-LF sha256=9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679; anchor=fn synchronize_context]`.
 - Target: `desktop/src/ui/layout.rs:231 [UTF8-LF sha256=8f46efe56d3579c0aeb1fe177ef76c0f548041a0af04a30f98f0ddbfc23202cc; anchor=presentation_context()]`.
@@ -3734,7 +3734,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 - Target: `tools/generate-branding.mjs:3 [UTF8-LF sha256=c4d0ab1f747b9b73d05fef2171e504fc3612e1a4b3b8bb35d929d885500e43a9; anchor=Pakar embeds it for the standalone ESP surface]`.
 - Target: `mobile/lib/header_controls.dart:17 [UTF8-LF sha256=fdbae404068b75de261d1add7d5768e1b6844272ddfe4edb1b92b338f6cf4f87; anchor=class HeaderLayout]`.
-- Target: `mobile/lib/main.dart:764 [UTF8-LF sha256=127b0a743529b8f213eb0f1cd1c2bf646629ad4f3410558a64fe23ff51297f98; anchor=Future<void> _openConnection()]`.
+- Target: `mobile/lib/main.dart:764 [UTF8-LF sha256=fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84; anchor=Future<void> _openConnection()]`.
 - Target: `firmware/esp/src/WebUi.h:392 [UTF8-LF sha256=612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a; anchor=<!-- BEGIN SHARED BRAND HEADER -->]`.
 - Target: `docs/BRANDING-PARITY.md:60 [UTF8-LF sha256=0bfa8122dc9d6034551304f2fed472ddebcff170e14a23f63011177aab75d2d3; anchor=## Explicit unfinished useful code and reasons]`.
 - Target: `firmware/esp/src/WebUi.h:2653 [UTF8-LF sha256=612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a; anchor=function renderApplicationIdentity]`.
@@ -5441,7 +5441,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Target: `tools/update-firmware.mjs:216 [UTF8-LF sha256=f1661663563a2dcd4eaed9d1a054cc986cf03d8e3b0806bc93d6bf07560ad068; anchor=export async function updateFirmware(]`.
 - Target: `tools/peer-identity.mjs:54 [UTF8-LF sha256=869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7; anchor=export function boardPeer(]`.
 - Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Actual backup-before-update orchestration, 2026-10-19]`.
-- Target: `tools/verify-running-firmware.mjs:35 [UTF8-LF sha256=79070238577245c21b4392f8b525c1ebfbe2ea9e6dae17d1841c791b6e53d23f; anchor=export async function verifyRunningFirmware(]`.
+- Target: `tools/verify-running-firmware.mjs:35 [UTF8-LF sha256=44264fe63ba4c81079517521f8bc0cde96e4602d0d56ab23dfed0356bccdaa9a; anchor=export async function verifyRunningFirmware(]`.
 - Target: `tools/download-firmware.mjs:14 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export const verificationRangeBytes=16*1024;]`.
 - Retained: Import actual logger, terminal sanitizer, stable exit categories, quiet/color rules and argv/preflight concepts into script-console.mjs/pakar.mjs. Correct OSC-before-ESC regex ordering and redirected stderr coloring. Existing updater retains hostname/TCP identity pinning, no uncertain-write replay and full postboot verification.
 - Retained: Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply.
@@ -5452,7 +5452,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Test-code evidence: `tests/script_tooling_test.mjs:107 [UTF8-LF sha256=53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498; anchor=Script tooling:]`.
 - Test-code evidence: `tests/script_tooling_test.ps1:26 [UTF8-LF sha256=d3c679d8caa22177e7a5590564cd1141b84e1b194b3c3ee0bb825c26a4d46305; anchor=PowerShell utilities parse]`.
 - Test-code evidence: `tests/update_backup_test.mjs:53 [UTF8-LF sha256=9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc; anchor=Backup must precede even remote staging]`.
-- Test-code evidence: `tests/verify_running_firmware_test.mjs:108 [UTF8-LF sha256=180842d0279e483bdd4b22174a0ba9b6f0a7073f73bf198fa94bc14cffa5e9a4; anchor=Read-only running firmware verifier:]`.
+- Test-code evidence: `tests/verify_running_firmware_test.mjs:115 [UTF8-LF sha256=77f9d8389d7668b39cdfb57b71a9ec9acba3da9b439bf7feefdb284d98a04058; anchor=Read-only running firmware verifier:]`.
 - Test-code evidence: `tests/update_tool_test.mjs:113 [UTF8-LF sha256=0e6180f0beb443a5d092bf3b2c7496cb8a28f4a143c9d09a04d342d52b14696b; anchor=Exercise the actual post-reboot loop past the observed ~1 MiB failure point.]`.
 - Remaining: Explicit verified backup-before-update and resumable export now imported. Remaining stable watcher/coalescing/graceful stop/skip-identical/progress, gzip consumer/platform/filesystem/transport and unported negative scenarios need applicable implementation/acceptance; no source fixture closes live/physical/restore gates.
 - Remaining: No physical deployment, full client distribution or donor-wide completion is inferred from source or fixtures.
