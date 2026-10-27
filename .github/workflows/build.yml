@@ -101,7 +101,7 @@ jobs:
           ./tools/build-mobile.ps1 -Mode Analyze -Plan
           ./tools/build-all.ps1
   firmware:
-    name: "🔧 ESP32-S3 + ESP8266 + AVR"
+    name: "🔧 ESP32-S3 + AVR"
     needs: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -119,8 +119,10 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libssl-dev
-          bash build.sh polling
-          bash build.sh busy-wire
+          # ESP8266 source/tooling is retained, but its full image currently
+          # exceeds physical RAM/flash budgets and is not a release target.
+          bash build.sh polling avr
+          bash build.sh busy-wire avr
           bash build.sh buffered avr
           # Compile the optional RX-only SDK adapter, then restore the canonical
           # normal image in the SAME cache/output before any artifact upload.
@@ -140,11 +142,9 @@ jobs:
           path: |
             build/avr/avr.ino.with_bootloader.bin
             build/avr/avr.ino.hex
-            build/esp8266/esp8266.ino.bin
             build/SHA256SUMS
             build/avr-busy-wire/avr.ino.with_bootloader.bin
             build/avr-busy-wire/avr.ino.hex
-            build/esp8266-busy-wire/esp8266.ino.bin
             build/firmware-report.json
             build/avr-buffered/avr.ino.with_bootloader.bin
             build/avr-buffered/avr.ino.hex
@@ -301,7 +301,7 @@ jobs:
             echo "| Workflow syntax | $LINT |"
             echo "| Windows / Linux / macOS script plans | $TOOLING |"
             echo "| Interface / donor contracts | $QUALITY |"
-            echo "| ESP + AVR, both link modes | $FIRMWARE |"
+            echo "| ESP32-S3 + AVR (three AVR link profiles) | $FIRMWARE |"
             echo "| Windows | $WINDOWS |"
             echo "| Android preview | $ANDROID |"
             echo "| Draft release | $RELEASE |"

@@ -94,8 +94,8 @@
 #include "src/UsbSnapshotProjection.h"
 #if PAKAR_PIXEL_CORRECTIONS
 #include "src/PixelCorrectionStore.h"
-#include "src/DiagnosticReceipt.h"
 #endif
+#include "src/DiagnosticReceipt.h"
 #include "src/LedScene.h"
 #include "src/AvrSceneSync.h"
 #include "src/NetworkConfig.h"

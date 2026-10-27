@@ -6,6 +6,20 @@ groups, semantic state/effects, Rust and Flutter controls, and the single canoni
 Web application. Existing donor and production acceptance ledgers remain open;
 publishing source is not a new hardware deployment or complete feature acceptance.
 
+## Release targets
+
+The owner selected **ESP32-S3 + ATmega328P** as the release targets. The primary
+workflow builds S3 buffered UART plus all three AVR link profiles, packages the
+matched S3/AVR buffered pair, and retains native/Android and security checks.
+
+ESP8266 source, pins, direct compiler commands, optional compression/reporting
+and explicitly requested legacy packaging are preserved, not silently removed.
+Its full current polling build does not fit: the measured `.bss` end is
+`0x3fffdd20`, beyond the `0x3fffc000` DRAM boundary by 7,456 bytes; `.irom0.text`
+is `0x1054c4` bytes, beyond its instruction mapping. This remains an unfinished
+support/resource optimization item, not a successful build or hardware release.
+No physical memory, OTA-slot or Urboot limits were enlarged to hide a failure.
+
 ## Continue on another computer
 
 Pull the repository's `main` branch only after the synchronization receipt confirms

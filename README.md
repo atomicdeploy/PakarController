@@ -10,7 +10,7 @@
 [![CodeQL](https://github.com/atomicdeploy/PakarController/actions/workflows/codeql.yml/badge.svg)](https://github.com/atomicdeploy/PakarController/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-10b981.svg)](LICENSE)
 [![Rust · egui](https://img.shields.io/badge/Desktop-Rust%20%7C%20egui-f59e0b?logo=rust)](desktop)
-[![ESP + AVR](https://img.shields.io/badge/Firmware-ESP32--S3%20%7C%20ESP8266%20%2B%20ATmega328P-06b6d4)](firmware)
+[![ESP + AVR](https://img.shields.io/badge/Firmware-ESP32--S3%20%2B%20ATmega328P-06b6d4)](firmware)
 [![Android preview](https://img.shields.io/badge/Android-preview-8b5cf6?logo=android)](https://github.com/atomicdeploy/PakarController/pull/1)
 
 [Overview](#overview) · [Architecture](#architecture) · [Build](#build) · [CI/CD](#continuous-integration--delivery) · [Roadmap](https://github.com/atomicdeploy/PakarController/issues/2)
@@ -24,12 +24,15 @@
 
 ## Overview
 
-An ESP32-S3 / ESP8266 + ATmega328P controller with an mpv-free Windows workspace, embedded
+An ESP32-S3 + ATmega328P controller with an mpv-free Windows workspace, embedded
 Web interface, CLI/TUI and an Android preview. Controls must follow the connected
 board's acknowledged capabilities; offline or unsupported peripherals are not
 invented by the client. Pealayer supplies real reusable desktop foundations,
 PCController supplies protocol/contracts, and the earlier boards supply hardware
 mapping and reusable drivers. Exact reuse gaps remain tracked rather than hidden.
+ESP8266 source and explicit tooling remain preserved, but its full image currently
+exceeds physical RAM/flash budgets and is not a release target. See
+[the handoff scope and measured limits](docs/HANDOFF.md#release-targets).
 
 Each firmware build selects one board role using `-GameMode table-selection`
 or `-GameMode first-wins`. The table role provides a persistent red-to-white
@@ -110,12 +113,13 @@ PakarController is a two-controller game platform built from the reusable parts 
 AtomicDeploy's earlier PuzzleBoard, 40LED, Puzzles, pu850-esp, PCController,
 and Pealayer work.
 
-- The ATmega328P owns deterministic keys, shift-register outputs, the ninth
-  ADC6 button, TM1637 display, buzzer, melodies, and winner arbitration.
+- The ATmega328P owns deterministic keys, shift-register outputs, the optional
+  ninth digital-GPIO button (not ADC6), TM1637 display, buzzer and melodies;
+  feature-gated arbitration supports ESP-owned game orchestration.
 - The ESP32-S3 owns the MT16703/WS2811-compatible LED field, Wi-Fi/API/UI,
   streaming, self-OTA, AVR ISP recovery, and LittleFS firmware backups.
 - The retained ESP8266 target shares the integrated firmware; Bluetooth is S3-only.
-  Legacy memory/OTA acceptance remains separate from the primary S3 target.
+  Its full-image memory/flash overflow is unfinished support, not accepted release coverage.
 - Both use the PCController COBS + CRC-8/ATM UART envelope at 38400 baud. The
   AVR uses its hardware UART; S3 uses a separate hardware UART (ESP8266 uses
   SoftwareSerial), while the USB UART
@@ -173,9 +177,11 @@ builds; installation and dependency updates are explicit:
 
 Linux/macOS use `bash pakar.sh` with the same options. Legacy `build.cmd` and
 `bash build.sh polling` / `bash build.sh busy-wire` remain aliases; tests are
-explicit rather than hidden build side effects. CI builds polling/busy-wire
-ESP8266+AVR pairs and buffered S3+AVR; deployed peers need compatible build
+explicit rather than hidden build side effects. CI builds polling/busy-wire/buffered
+AVR profiles and buffered S3; deployed peers need compatible build
 flags. Every merged AVR+Urboot image must be exactly 32 KiB.
+Default release packages contain the matched buffered S3+AVR pair. The explicit
+legacy tooling does not make an overflowing ESP8266 image releasable.
 
 Run `.\pakar.cmd test protocol` for COBS/CRC bounds/corruption fixtures.
 The [script tooling reference](docs/SCRIPT-TOOLING.md) covers common help,

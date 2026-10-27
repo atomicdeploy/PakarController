@@ -10,18 +10,19 @@ import {portableGzip} from './portable-gzip.mjs';
 import {createFirmwareManifest} from './firmware-manifest.mjs';
 export const expectedArtifacts=[
   ...['','-busy-wire','-buffered'].map(mode=>`avr${mode}/avr.ino.with_bootloader.bin`),
-  ...['','-busy-wire'].map(mode=>`esp8266${mode}/esp8266.ino.bin`),
   'esp32s3-buffered/esp32s3.ino.bin',
 ];
+// Preserved for explicit legacy builds; these are not promised release outputs.
+export const legacyArtifacts=['','-busy-wire'].map(mode=>`esp8266${mode}/esp8266.ino.bin`);
 const digest=(algorithm,bytes)=>createHash(algorithm).update(bytes).digest('hex');
 export function unchangedWrite(path,bytes) {
   if(existsSync(path)&&readFileSync(path).equals(Buffer.from(bytes)))return false;
   // Reports are derived metadata, not original firmware/settings/recovery data.
   writeFileSync(path,bytes);return true;
 }
-export function collectArtifacts(directory,{required=false,compress=false}={}) {
+export function collectArtifacts(directory,{required=false,compress=false,includeLegacy=false}={}) {
   const root=realpathSync(directory),artifacts=[];
-  for(const name of expectedArtifacts){
+  for(const name of [...expectedArtifacts,...(includeLegacy?legacyArtifacts:[])]){
     const path=resolve(root,name);
     if(!existsSync(path)){if(required)throw Error('Missing expected firmware artifact: '+name);continue;}
     if(lstatSync(path).isSymbolicLink()||!realpathSync(path).startsWith(root+sep))throw Error('Escaping firmware artifact');
@@ -44,12 +45,12 @@ export function artifactMarkdown(report,url='') {
     '\n\nMD5 and format/size metadata are in firmware-report.json. Build artifacts do not prove installation, electrical/optical operation or physical acceptance.\n';
 }
 export function main(args=process.argv.slice(2)) {
-  const options=new Set(args);for(const arg of options)if(!['--write','--require','--compress','--help'].includes(arg))throw Error('Unknown report option');
-  if(options.has('--help')){console.log('PakarController artifacts: read-only by default. --write emits stable metadata; --require needs all six images; --compress adds separate ESP8266 .gz only.');return;}
+  const options=new Set(args);for(const arg of options)if(!['--write','--require','--compress','--legacy','--help'].includes(arg))throw Error('Unknown report option');
+  if(options.has('--help')){console.log('PakarController artifacts: read-only by default. --write emits stable metadata; --require needs three AVR profiles and ESP32-S3. --legacy additionally collects unfinished ESP8266 artifacts; --compress adds separate legacy .gz only.');return;}
   const root=fileURLToPath(new URL('../',import.meta.url)),directory=resolve(root,'build');
   const source_sha=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
   const source_dirty=!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim();
-  const report={product:'PakarController',source_sha,source_dirty,scope:'existing artifact bytes, not embedded-source or hardware proof',artifacts:collectArtifacts(directory,{required:options.has('--require'),compress:options.has('--compress')})};
+  const report={product:'PakarController',source_sha,source_dirty,release_targets:['esp32s3','atmega328p'],legacy_esp8266:'unfinished; resource-budget failures; explicit opt-in artifacts only',scope:'existing artifact bytes, not embedded-source or hardware proof',artifacts:collectArtifacts(directory,{required:options.has('--require'),compress:options.has('--compress'),includeLegacy:options.has('--legacy')})};
   if(options.has('--write')){
     unchangedWrite(resolve(directory,'firmware-report.json'),JSON.stringify(report,null,2)+'\n');
     unchangedWrite(resolve(directory,'SHA256SUMS'),report.artifacts.map(row=>`${row.sha256}  ${row.path}`).join('\n')+'\n');

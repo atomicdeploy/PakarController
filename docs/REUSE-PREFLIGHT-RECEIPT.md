@@ -2,6 +2,28 @@
 
 ## GitHub handoff consolidation and CI repair
 
+The owner explicitly selected ESP32-S3 + AVR as release targets, preserving
+unfinished ESP8266 support. After moving the shared DiagnosticReceipt helper
+include outside the optional correction-store guard, an actual ESP8266 polling
+build passed compilation but failed real linking: BSS ends0x3fffdd20 against
+0x3fffc000 (7456B over), and irom0.text is0x1054c4. No physical memory/OTA limits
+were raised. The helper's cross-feature regression and USB host tests pass.
+The primary CI now builds all three AVR UART profiles and buffered S3, while
+default reporting/packaging requires the actual S3 application/AVR pair rather
+than stale ESP8266 paths. Explicit legacy build/report/gzip/package functionality
+and source remain; no file from the original preservation checkpoint was deleted.
+The existing manifest's S3 chip-id9/hashed-application guard is reused, not a
+new permissive parser. Real packaging fixtures pass nine primary assets, checksums,
+overwrite rejection and separately opted-in legacy pairs; source governance and
+repeat tooling fixtures pass. Revisited actual Pealayer CI release/provenance
+and PU build size/hash/gzip mechanisms; retained immutable drafts and raw images,
+not donor timestamp rewrites or gzip renamed to .bin. Only the changed reviewed
+workflow/report/package/tests/docs hash bindings are refreshed. No unread donor
+rows are promoted. The receipt is docs/REUSE-PREFLIGHT-RECEIPT.md (an initial
+root-path lookup missed it); the sparse PU workflow is absent and was not
+invented. GitHub native/Android checks atceb4be5 both passed; final-head firmware
+checks remain required. No board, installed client or production scene was touched.
+
 Windows CI at8f676bf passed compilation,461 tests, real PE/resource startup and
 all built CLI fixtures, then failed the focused23-file PC contract certificate.
 The authoritative exhaustive ledger already had current hashes; the smaller

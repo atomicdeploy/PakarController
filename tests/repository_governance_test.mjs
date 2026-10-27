@@ -22,6 +22,10 @@ assert.match(build,/--draft --prerelease/);assert.match(build,/attest-build-prov
 assert.match(build,/retention-days: 7/);assert.match(build,/workspaces: desktop -> target/);
 assert.match(build,/node tools\/ci-checks.mjs (quality|desktop)/);
 const firmwareJob=build.split('  firmware:')[1].split('  windows-desktop:')[0];
+assert.match(firmwareJob,/name: "🔧 ESP32-S3 \+ AVR"/);
+for(const mode of ['polling','busy-wire','buffered'])assert(firmwareJob.includes(`bash build.sh ${mode} avr`));
+assert.doesNotMatch(firmwareJob,/build\/esp8266|bash build.sh (?:polling|busy-wire)\s*\n/,
+  'Primary releases must not require the unfinished, resource-overflowing ESP8266 image');
 assert.match(firmwareJob,/actions\/setup-node@[a-f0-9]{40}[\s\S]*node-version: '24'/,
   'Firmware asset verification must use the same Node major as source quality');
 const quietSdkCommand='pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -PauseAvrLink -Jobs 2';
@@ -67,6 +71,12 @@ for(const mode of ['polling','busy-wire']){
   assert.equal(value.esp.sha256,sha256(esp));assert.equal(value.avr.sha256,sha256(avr));
   assert(value.esp.url.endsWith(`/esp-${mode}.bin`));assert(value.avr.url.endsWith(`/avr-${mode}.bin`));
 }
+const s3=Buffer.from(esp);s3.writeUInt16LE(9,12);s3[23]=1;
+const s3Value=firmwareManifest(s3,avr,identity,'buffered');
+assert.equal(s3Value.profile,'pakar-esp32s3-atmega328p');
+assert.equal(s3Value.esp.model,'esp32s3');assert.equal(s3Value.link_mode,'buffered');
+assert.equal(s3Value.esp.sha256,sha256(s3));
+assert.throws(()=>firmwareManifest(esp,avr,identity,'buffered'),/ESP32-S3/);
 assert.throws(()=>firmwareManifest(esp,avr.subarray(0,32000),identity,'busy-wire'));
 assert.throws(()=>firmwareManifest(esp,avr,identity,'mixed'));
 assert.equal(checksumList([{name:'b.bin',data:esp},{name:'a.bin',data:avr}]),`${sha256(avr)}  a.bin\n${sha256(esp)}  b.bin\n`);
@@ -74,4 +84,4 @@ assert.throws(()=>checksumList([{name:'../escape',data:esp}]));
 assert(read('README.md').includes('simulated device state'));
 assert(read('SECURITY.md').includes('not authentication'));
 assert(read('docs/REPOSITORY-GOVERNANCE.md').includes('not whole-project superiority'));
-console.log('Repository governance, immutable release identity, both matched manifests, malformed image/tag and checksum tests passed. Source tests are not publication or hardware proof.');
+console.log('Repository governance, primary S3 and explicit legacy manifests, immutable release identity, malformed image/tag and checksum tests passed. Source tests are not publication or hardware proof.');

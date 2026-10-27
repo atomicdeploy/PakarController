@@ -2626,7 +2626,7 @@
       "proof": [
         {
           "path": "tests/script_tooling_test.mjs",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498",
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1",
           "anchor": "const independent=createLogger("
         }
       ],
@@ -2731,7 +2731,7 @@
       "targets": [
         {
           "path": "tools/firmware-report.mjs",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698",
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d",
           "anchor": "const gz=portableGzip(bytes),manifest=createFirmwareManifest("
         },
         {
@@ -3342,7 +3342,7 @@
       "targets": [
         {
           "path": "tools/firmware-report.mjs",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698",
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d",
           "anchor": "const gz=portableGzip(bytes),manifest=createFirmwareManifest("
         },
         {
@@ -9556,7 +9556,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -9595,7 +9595,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9662,7 +9662,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -9691,7 +9691,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9767,7 +9767,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9828,7 +9828,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9898,7 +9898,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -9969,7 +9969,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10030,7 +10030,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10090,7 +10090,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10155,7 +10155,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10220,7 +10220,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10267,7 +10267,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698"
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
         }
       ],
       "omissions": [
@@ -10286,7 +10286,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10333,7 +10333,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698"
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
         }
       ],
       "omissions": [
@@ -10352,7 +10352,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10399,7 +10399,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "292fb97a0e4fd93681ead4016b0b5a45f674f7d6fed1039966ee5fe101f8cf62"
+          "sha256": "7a2f09196ee216b7152d1740e168310cdb1aeb1c847e021c63ec38f3de9266f8"
         }
       ],
       "omissions": [
@@ -10413,7 +10413,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10459,7 +10459,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698"
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
         }
       ],
       "omissions": [
@@ -10478,7 +10478,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10525,7 +10525,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698"
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
         }
       ],
       "omissions": [
@@ -10544,7 +10544,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10593,7 +10593,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function collectArtifacts",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698"
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
         }
       ],
       "omissions": [
@@ -10612,7 +10612,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10668,7 +10668,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10709,7 +10709,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "const source_sha=execFileSync",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698"
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
         }
       ],
       "omissions": [
@@ -10723,7 +10723,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10764,7 +10764,7 @@
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "const source_sha=execFileSync",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698"
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
         }
       ],
       "omissions": [
@@ -10778,7 +10778,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10819,7 +10819,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "292fb97a0e4fd93681ead4016b0b5a45f674f7d6fed1039966ee5fe101f8cf62"
+          "sha256": "7a2f09196ee216b7152d1740e168310cdb1aeb1c847e021c63ec38f3de9266f8"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -10838,7 +10838,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10898,7 +10898,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10958,7 +10958,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11027,7 +11027,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11156,7 +11156,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11211,13 +11211,13 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "anchor": "name: \"🔧 ESP32-S3 + ESP8266 + AVR\"",
-          "sha256": "292fb97a0e4fd93681ead4016b0b5a45f674f7d6fed1039966ee5fe101f8cf62"
+          "anchor": "name: \"🔧 ESP32-S3 + AVR\"",
+          "sha256": "7a2f09196ee216b7152d1740e168310cdb1aeb1c847e021c63ec38f3de9266f8"
         },
         {
           "path": "tools/firmware-report.mjs",
           "anchor": "export function artifactMarkdown",
-          "sha256": "fbe1f3f238379cf514626d1a46232ce0c22086417b79aa14c6e82939edeb5698"
+          "sha256": "519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d"
         }
       ],
       "omissions": [
@@ -11231,7 +11231,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11315,7 +11315,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11391,7 +11391,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11471,7 +11471,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "53ce71d8a1965076c732bcd32c94c9cf0d70f08e0a5488d5a715d3d794a33498"
+          "sha256": "c69c60a6b9437e4cfc0c4ef6adfc5500bb00024ee5f8e47d4abdcfd23737f6b1"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11528,7 +11528,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec"
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -12030,7 +12030,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec"
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -12088,7 +12088,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec"
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
         }
       ],
       "omissions": [
@@ -12149,7 +12149,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec",
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -12165,7 +12165,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec"
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -13527,7 +13527,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec",
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -13957,7 +13957,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec",
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -14282,7 +14282,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec",
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
           "anchor": "bool authenticate()"
         },
         {
@@ -16639,7 +16639,7 @@
       "targets": [
         {
           "path": "README.md",
-          "sha256": "51d0ea041556187fe82a91112199e781f3d4ea5498d4769e97387c4792ce564d",
+          "sha256": "5ecdc7a5f6dd4d420dbff23537f751e0d00213a0fe40ca96f95cff1d55126297",
           "anchor": "Connected boards. One contextual control workspace."
         },
         {
@@ -16671,7 +16671,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
+          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16682,7 +16682,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "292fb97a0e4fd93681ead4016b0b5a45f674f7d6fed1039966ee5fe101f8cf62",
+          "sha256": "7a2f09196ee216b7152d1740e168310cdb1aeb1c847e021c63ec38f3de9266f8",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -16697,13 +16697,13 @@
         },
         {
           "path": "tools/prepare-release.mjs",
-          "sha256": "c5dcb698c397b30ca0ed076437a695838366aa0a82ed3c580df3cf6380d03306",
+          "sha256": "820cefc9698d46f95cf39b4cd667494a05cd03d119a1c54f9892b2a35d8b824b",
           "anchor": "export function firmwareManifest"
         }
       ],
       "preserved": [
         "Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.",
-        "Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token.",
+        "Release content is gated on all supported-target builds, created as an immutable draft prerelease, with the matched S3/AVR buffered pair and raw HTTPS update manifests. Explicit legacy packaging is preserved but the overflowing ESP8266 image is not promised as a release output. Untrusted PRs do not execute publishing code with a write token.",
         "Actual donor serial native test execution, isolated test configuration and RUST_BACKTRACE=1 restored. Runtime harness flags are separated from compile jobs; immediate panic output remains available even if a later test aborts before its summary."
       ],
       "omissions": [
@@ -16743,7 +16743,7 @@
         },
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
+          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16776,7 +16776,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
+          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16809,7 +16809,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
+          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16820,7 +16820,7 @@
       "targets": [
         {
           "path": "docs/releases/next.md",
-          "sha256": "cecaadeb61a7daaec709130503f49a0bb98cde4408af69bc6abe5837b7756fcd",
+          "sha256": "9e83c4d1a348af3bc275a5ec924abea7317ba22d1f0e66eac63d6f5499efbeec",
           "anchor": "# PakarController development packages"
         }
       ],
@@ -16842,7 +16842,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
+          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -17173,7 +17173,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec",
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
@@ -21799,7 +21799,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec",
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -22669,7 +22669,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec",
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -22750,7 +22750,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec"
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -22976,7 +22976,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec",
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -23052,7 +23052,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec"
+          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
         }
       ],
       "omissions": [

@@ -44,6 +44,8 @@ for(const text of ['pixel_groups_conflict','pixel_groups_damaged','pixel_groups_
 assert(store.includes('file.readString()==bytes'));
 assert(!store.includes('format('),'No destructive initialization on invalid records');
 assert(read('firmware/esp/src/DiagnosticReceipt.h').includes('"pixel_groups"'));
+// Receipts are shared even when correction storage is compiled out (ESP8266).
+assert.match(app,/#if PAKAR_PIXEL_CORRECTIONS\s+#include "src\/PixelCorrectionStore.h"\s+#endif\s+#include "src\/DiagnosticReceipt.h"/);
 assert(app.includes('pixel_frame_partial\\":true'));
 assert(app.includes('status_partial\\":true'));
 assert(app.includes('capabilities.application.icon_png_base64'));
