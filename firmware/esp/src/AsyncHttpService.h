@@ -68,7 +68,7 @@ class SnapshotResponse final : public AsyncWebServerResponse {
   }
  private:
   void configure(int code,const char *type,size_t length) {
-    _code=code;_contentType=type;_contentLength=length;_sendContentLength=true;_chunked=false;
+    _code=code;_contentType=type;_contentLength=length;_sendContentLength=code!=304;_chunked=false;
     addHeader("Connection","close",false);
   }
   std::shared_ptr<const String> payload_;

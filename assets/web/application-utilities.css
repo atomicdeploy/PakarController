@@ -21,3 +21,9 @@
 [data-control-density=compact] #workspace :is(button,select,input:not([type=range]):not([type=checkbox]):not([type=color]):not([type=file])){min-height:30px;padding-block:5px;line-height:1.25}
 [data-control-density=compact] #workspace .studio-square{width:30px;height:30px;padding:5px}
 @media(max-width:600px){.application-event{grid-template-columns:16px minmax(0,1fr) auto}.application-event time{grid-column:2;grid-row:2}.application-command-open>span{display:none}.application-command-open{width:36px;min-width:36px;height:36px;padding:8px}}
+/* Shared file workspace: compact columns on desktop, wrapping on mobile. */
+.file-browser-list{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto}
+.file-browser-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px;border-bottom:1px solid var(--line)}
+.file-browser-name{flex:1 1 140px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.file-browser-row .muted{font-size:.85em;flex:1 1 180px}
+#userFilesCard progress{width:100%;accent-color:var(--accent)}

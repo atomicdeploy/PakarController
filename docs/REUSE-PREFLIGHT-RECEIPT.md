@@ -1,5 +1,44 @@
 # Donor-first preflight receipt
 
+## Static file serving comparison (issue #28)
+
+Reread PU850-ESP `pu850-esp.ino` routes `/file/download`, `/`, and default
+headers (bounded route review, not a new full-file completion claim).
+PU's root sends text/plain; its catch-all LittleFS serving is commented out.
+Its device-file download supports HEAD/ranges/date metadata but uses shared
+PU transfer state and serial-pumping callback loops. Those loops are not copied
+into public flash-asset serving or the isolated managed-file namespace.
+
+Pakar now shares one static service across seven exact public asset routes:
+bounded ACK-safe flash snapshots, GET/HEAD, byte-derived strong ETags with weak
+If-None-Match matching, bodyless 304, revalidation, MIME/nosniff and explicit
+Accept-Encoding handling/Vary. Compressed-only page/font return 406 when gzip
+is explicitly unacceptable; the uncompressed /basic recovery page remains.
+Range downloads remain in ArtifactDownload/FirmwareTransfer, not misadvertised
+for the static shell. Generic private filesystem access stays prohibited.
+No claim of universally superior throughput, hardware acceptance, WebDAV or
+full PU parity follows from this source comparison. See focused test results
+and GitHub #28; HTTP semantics checked against RFC 9110 sections 8.8, 12.5.3,
+13.1.2 and 15.4.5.
+
+## Managed file workspace (issue #28)
+
+Read the actual complete Pealayer `ServerFilePicker.tsx` and `preferenceFiles.ts`;
+consulted the existing inventory, artifact read leases, shared USB maintenance
+owner, PixelGroupStore staging/readback, and PU850 `/file/download` metadata/range
+slice. Reused bounded listing/filter/explicit acceptance and stale-peer rejection
+in `assets/web/user-files.js`, rather than introducing React or arbitrary host
+filesystem paths. Existing firmware backup routes and private settings exports
+are unchanged. The new managed namespace uses immutable data and two checksummed
+catalogue generations, since FAT cannot assume LittleFS rename replacement.
+
+The first focused compile rejected misleading single-line condition indentation;
+split those statements and retained `-Werror`. No gate was disabled. Focused
+store/UI tests now cover bytes/dates, explicit overwrite, integrity, interrupted
+publication, private paths, late peers and generation fallback. New SDK compilation
+and physical SD/power-cut acceptance are separate. No board or installed app is
+contacted or changed. `docs/USER-FILES.md` states limits and no WebDAV claim.
+
 ## GitHub handoff consolidation and CI repair
 
 Completed code-bearing verification at c1d2dd17: Build 40508742014 passed every

@@ -56,8 +56,8 @@
       "target": "firmware/esp/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine.",
-      "target_sha256_utf8_lf": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
-      "target_line": 410
+      "target_sha256_utf8_lf": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
+      "target_line": 416
     },
     {
       "source": "LocalLib/AsyncOTA.cpp",
@@ -68,8 +68,8 @@
       "target": "firmware/esp/application.ino",
       "anchor": "server.native().on(\"/update\"",
       "reason": "Integrated guarded authenticated upload, owner/disconnect fencing and platform OTA capacity/abort retained beside pinned remote download. Quiet S3 passive capture rejects new upload ownership. U_FS replacement is disabled to preserve credentials/recovery; S3 compressed-image support is not certified.",
-      "target_sha256_utf8_lf": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
-      "target_line": 3790
+      "target_sha256_utf8_lf": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+      "target_line": 3798
     },
     {
       "source": "LocalLib/AsyncWebServer.h",
@@ -80,8 +80,8 @@
       "target": "firmware/esp/application.ino",
       "anchor": "if(parsed[\"type\"]==\"telemetry\")",
       "reason": "Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. Incoming messages are explicitly rejected during quiet S3 passive capture, before binary streaming or command dispatch.",
-      "target_sha256_utf8_lf": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
-      "target_line": 2859
+      "target_sha256_utf8_lf": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+      "target_line": 2867
     },
     {
       "source": "LocalLib/Authentication.cpp",
@@ -128,8 +128,8 @@
       "target": "firmware/esp/application.ino",
       "anchor": "server.on(\"/description.xml\"",
       "reason": "Actual product/hostname root-device XML; S3 delegates escaped description generation to the adapted donor SSDP device, ESP8266 keeps its existing description. Neither advertises nonexistent SOAP/GENA services. S3 NBNS readiness is independently observed from exact interface-bound UDP137 sockets, not inferred from SSDP.",
-      "target_sha256_utf8_lf": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
-      "target_line": 4185
+      "target_sha256_utf8_lf": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+      "target_line": 4184
     },
     {
       "source": "pu850-esp.ino",
@@ -596,8 +596,8 @@
       "target": "firmware/esp/application.ino",
       "anchor": "server.native().on(\"/update/info\"",
       "reason": "Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity.",
-      "target_sha256_utf8_lf": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
-      "target_line": 3778
+      "target_sha256_utf8_lf": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+      "target_line": 3786
     },
     {
       "source": "pu850-esp.ino",
@@ -608,8 +608,8 @@
       "target": "firmware/esp/application.ino",
       "anchor": "server.on(\"/info\"",
       "reason": "Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text.",
-      "target_sha256_utf8_lf": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
-      "target_line": 3779
+      "target_sha256_utf8_lf": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+      "target_line": 3787
     },
     {
       "source": "pu850-esp.ino",
@@ -620,8 +620,8 @@
       "target": "firmware/esp/src/WebUi.h",
       "anchor": "Verified remote update",
       "reason": "Real control workspace rather than donor static placeholder; access gate and actual peer state retained. Optional DHCP/static editor preserves stored station credentials and RGB preview requires fresh actual output, not a synthetic animation.",
-      "target_sha256_utf8_lf": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
-      "target_line": 410
+      "target_sha256_utf8_lf": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
+      "target_line": 416
     }
   ]
 }

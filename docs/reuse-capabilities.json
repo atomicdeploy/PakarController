@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"user-files","origins":["Pealayer"],"path_pattern":"^web_ui/src/components/ServerFilePicker\\.tsx$","required_reviews":["Pealayer|web_ui/src/components/ServerFilePicker.tsx"],"issue":28},
     {"id":"pixel-group-layout","origins":["PCController","Pealayer"],"path_pattern":"(^Project/(AddressableLeds|SettingsStore)\\.(cpp|h)$|^mobile/lib/unified/(controller_dialog|pwm_control|effect_editor)\\.dart$|^web_ui/src/components/NumericValueControl\\.tsx$)","required_reviews":["PCController|Project/AddressableLeds.cpp","PCController|Project/SettingsStore.cpp","Pealayer|web_ui/src/components/NumericValueControl.tsx"],"issue":2},
     {"id":"pixel-workbench","origins":["PCController","Pealayer"],"path_pattern":"(^mobile/lib/unified/(controller_dialog|pwm_control|effect_editor)\\.dart$|^web_ui/src/components/NumericValueControl\\.tsx$)","required_reviews":["PCController|mobile/lib/unified/controller_dialog.dart","PCController|mobile/lib/unified/pwm_control.dart","PCController|mobile/lib/unified/effect_editor.dart","Pealayer|web_ui/src/components/NumericValueControl.tsx"],"issue":2},
     {"id":"table-viewport","origins":["Pealayer"],"path_pattern":"^web_ui/src/timelineWheel\\.ts$","required_reviews":["Pealayer|web_ui/src/timelineWheel.ts"],"issue":3},

@@ -15,13 +15,35 @@
         "Read the complete actual donor before implementation. Adapted preset selection, uppercase RGB representation and twelve deduplicated session recent colors into the shared Flutter picker used by semantic state appearance, temporary test color and game group overrides. An explicit Apply commits the local picker choice; Cancel makes no command or recent-color write.",
         "Added sixteen named LED swatches, HSV hue/saturation/brightness controls, validated optional hex entry, fixed circular hit targets and semantic labels. The picker itself owns no connection or persistence; existing peer-bound command/readback and game Save paths remain authoritative."
       ],
-      "targets": [{"path":"mobile/lib/color_picker.dart","anchor":"Future<int?> showLedColorPicker","sha256":"8d1b4206d9b99bf4067df432e0147fdfc7fe67f60c6dab83ceb04478de2560c2"}],
-      "proof": [{"path":"mobile/test/appearance_live_test.dart","anchor":"testWidgets","sha256":"e216cfc82743b33c47acae4d2a95e51b4e5358108fdb4e46f004ecff481c9daa"}],
-      "omissions": [
-        {"code":"react-color ChromePicker and Ant Design runtime","disposition":"replaced","reason":"Flutter uses native Material controls and HSVColor; embedding a second JavaScript UI runtime adds no useful color semantics."},
-        {"code":"Media-effect onChangeComplete callback","disposition":"replaced","reason":"An explicit local Apply hands the value to the existing device-owner command path, avoiding accidental board changes while dragging a color slider."}
+      "targets": [
+        {
+          "path": "mobile/lib/color_picker.dart",
+          "anchor": "Future<int?> showLedColorPicker",
+          "sha256": "8d1b4206d9b99bf4067df432e0147fdfc7fe67f60c6dab83ceb04478de2560c2"
+        }
       ],
-      "remaining": ["Issue #26: candidate source/widget verification is not installed Android touch or physical color acceptance."]
+      "proof": [
+        {
+          "path": "mobile/test/appearance_live_test.dart",
+          "anchor": "testWidgets",
+          "sha256": "e216cfc82743b33c47acae4d2a95e51b4e5358108fdb4e46f004ecff481c9daa"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "react-color ChromePicker and Ant Design runtime",
+          "disposition": "replaced",
+          "reason": "Flutter uses native Material controls and HSVColor; embedding a second JavaScript UI runtime adds no useful color semantics."
+        },
+        {
+          "code": "Media-effect onChangeComplete callback",
+          "disposition": "replaced",
+          "reason": "An explicit local Apply hands the value to the existing device-owner command path, avoiding accidental board changes while dragging a color slider."
+        }
+      ],
+      "remaining": [
+        "Issue #26: candidate source/widget verification is not installed Android touch or physical color acceptance."
+      ]
     },
     {
       "origin": "Pealayer",
@@ -30,14 +52,38 @@
       "source_revision": "5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad",
       "source_read": "complete",
       "verdict": "parity-gap",
-      "preserved": ["Read the full donor. Retained a single focused picker, bounded scrollable content, named presets and keyboard-focusable controls, with session recents shared across callers. Flutter dialog owns Cancel/Apply and returns a color rather than inventing another state or transport owner."],
-      "targets": [{"path":"mobile/lib/color_picker.dart","anchor":"class _ColorPicker","sha256":"8d1b4206d9b99bf4067df432e0147fdfc7fe67f60c6dab83ceb04478de2560c2"}],
-      "proof": [{"path":"mobile/test/appearance_live_test.dart","anchor":"testWidgets","sha256":"e216cfc82743b33c47acae4d2a95e51b4e5358108fdb4e46f004ecff481c9daa"}],
-      "omissions": [
-        {"code":"Ant Design popup positioning and DOM refs","disposition":"replaced","reason":"Flutter dialog focus and bounded scrolling provide the corresponding modal behavior without DOM-dependent code."},
-        {"code":"Donor directional-arrow preset roving navigation","disposition":"pending","reason":"Flutter retains standard focus traversal; exact directional preset navigation has not been ported or verified."}
+      "preserved": [
+        "Read the full donor. Retained a single focused picker, bounded scrollable content, named presets and keyboard-focusable controls, with session recents shared across callers. Flutter dialog owns Cancel/Apply and returns a color rather than inventing another state or transport owner."
       ],
-      "remaining": ["Issue #26: verify desktop keyboard and installed tablet/phone picker ergonomics; no claim of complete donor parity."]
+      "targets": [
+        {
+          "path": "mobile/lib/color_picker.dart",
+          "anchor": "class _ColorPicker",
+          "sha256": "8d1b4206d9b99bf4067df432e0147fdfc7fe67f60c6dab83ceb04478de2560c2"
+        }
+      ],
+      "proof": [
+        {
+          "path": "mobile/test/appearance_live_test.dart",
+          "anchor": "testWidgets",
+          "sha256": "e216cfc82743b33c47acae4d2a95e51b4e5358108fdb4e46f004ecff481c9daa"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Ant Design popup positioning and DOM refs",
+          "disposition": "replaced",
+          "reason": "Flutter dialog focus and bounded scrolling provide the corresponding modal behavior without DOM-dependent code."
+        },
+        {
+          "code": "Donor directional-arrow preset roving navigation",
+          "disposition": "pending",
+          "reason": "Flutter retains standard focus traversal; exact directional preset navigation has not been ported or verified."
+        }
+      ],
+      "remaining": [
+        "Issue #26: verify desktop keyboard and installed tablet/phone picker ergonomics; no claim of complete donor parity."
+      ]
     },
     {
       "origin": "Pealayer",
@@ -56,12 +102,12 @@
         {
           "path": "assets/web/feature-workspaces.js",
           "anchor": "async function reloadCorrections(",
-          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1"
+          "sha256": "a5bd7c2a890daaa3c1dc50ff223ab1074bf19c7ba8fe19f72b23cfb8d97de81b"
         },
         {
           "path": "web/modules/components.js",
           "anchor": "function dialog(",
-          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
         },
         {
           "path": "assets/web/application-utilities.js",
@@ -198,7 +244,7 @@
         {
           "path": "assets/web/feature-workspaces.js",
           "anchor": "function stepped(",
-          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1"
+          "sha256": "a5bd7c2a890daaa3c1dc50ff223ab1074bf19c7ba8fe19f72b23cfb8d97de81b"
         },
         {
           "path": "assets/web/command-transport.js",
@@ -291,7 +337,7 @@
         {
           "path": "assets/web/feature-workspaces.js",
           "anchor": "function correctionsMatch(",
-          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1"
+          "sha256": "a5bd7c2a890daaa3c1dc50ff223ab1074bf19c7ba8fe19f72b23cfb8d97de81b"
         },
         {
           "path": "assets/web/correction-preview.js",
@@ -492,12 +538,12 @@
         {
           "path": "web/modules/components.js",
           "anchor": "function decorateControl(",
-          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
         },
         {
           "path": "web/modules/components.js",
           "anchor": "function setControlText(",
-          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
         },
         {
           "path": "assets/web/localization.js",
@@ -558,7 +604,7 @@
         {
           "path": "web/index.html",
           "anchor": "function renderAssignmentTools(",
-          "sha256": "c36b30af3c0ccb389db9e1eefeb72d145c43df59efae0f1e76e526e954e76a55"
+          "sha256": "8eccb63f901ce960356af96d49d7a2afee756b8b931ee54dcf3486f7cb188d18"
         }
       ],
       "proof": [
@@ -603,7 +649,7 @@
         {
           "path": "web/modules/components.js",
           "anchor": "const actionIcons=",
-          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
         },
         {
           "path": "assets/web/application-utilities.js",
@@ -658,7 +704,7 @@
         {
           "path": "web/modules/components.js",
           "anchor": "const controlIcons=",
-          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
         },
         {
           "path": "assets/web/localization.js",
@@ -1541,7 +1587,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -1588,7 +1634,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -2138,7 +2184,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         },
         {
@@ -2252,7 +2298,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -2299,7 +2345,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -6708,7 +6754,8 @@
         "wifi_handle_event_cb every opmode/STA/auth/IP/DHCP/AP/probe/lease/default; getDHCPStatus/getMacAddress/setNetFlags/getNetFlags/getAPStatus/getStationStatus",
         "onDateTimeReceived/Sent/onValueUpdate every suffix/onResponseReceived/onBulkDataReceived/onMessageReceived/onBeepReceived/onWsReceivedCommand/ConfirmSettings",
         "loop all startup/one-second/100ms/RSSI/WS/subscription/reset/settings/discovery/OTA reboot/serial/commented bridge branches",
-        "Exact function dispositions and generic remaining work: docs/PU850-PARITY.md Fresh runtime and shell section review, 2026-10-19."
+        "Exact function dispositions and generic remaining work: docs/PU850-PARITY.md Fresh runtime and shell section review, 2026-10-19.",
+        "Issue 28 bounded rereview: root static serving, commented serveStatic, default headers and full /file/download route. Adapted HEAD/date preservation; public compiled assets now use exact routes, byte-derived ETags, 304, encoding negotiation and bounded short-write/ACK-safe snapshots. PU serial-pumping callbacks are not imported into flash serving. No broad parity or hardware throughput claim."
       ],
       "source_read": "complete",
       "verdict": "parity-gap",
@@ -6744,6 +6791,11 @@
           "path": "firmware/esp32s3/src/DiscoveryMdns.h",
           "sha256": "ce5382414fc13567b127b6268ef1be610ae9ca566690dfc5ef0482b04039dfe4",
           "anchor": "bool startDiscoveryMdns("
+        },
+        {
+          "path": "firmware/esp/src/StaticAssetService.h",
+          "sha256": "959c630339f75a5385ebde79f914746041786034e6b312af25cadaac62fc0bac",
+          "anchor": "inline void serveStaticAsset("
         }
       ],
       "proof": [
@@ -6766,6 +6818,16 @@
           "path": "tests/discovery_mdns_test.cpp",
           "sha256": "115c8090212c01bdf7c3857386a5f4e2f0b05a4840bef9100a45f723906c8e37",
           "anchor": "for(unsigned at=1;at<=15;++at)"
+        },
+        {
+          "path": "tests/async_http_test.cpp",
+          "sha256": "1d3dc679c85dc177b7d255ad8a46eaa2d38f022f3f248d8c0720433aad50a9de",
+          "anchor": "Static assets: negotiation, validators"
+        },
+        {
+          "path": "tests/web_compressed_test.mjs",
+          "sha256": "c8b6d8c98234c067eda07d621cd8d677be1927cfa9ad6b3d091602e5d1dc917f",
+          "anchor": "ETag covers actual gzip bytes"
         }
       ],
       "omissions": [
@@ -7726,7 +7788,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function firmwareUpdateObservation(s)"
         }
       ],
@@ -8779,7 +8841,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -8830,7 +8892,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -10294,7 +10356,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85"
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28"
         }
       ],
       "omissions": [
@@ -11746,7 +11808,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -11791,7 +11853,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function upgradeObservation(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         }
       ],
       "omissions": [
@@ -11916,7 +11978,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         }
       ],
       "proof": [
@@ -12006,7 +12068,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         }
       ],
       "proof": [
@@ -12096,7 +12158,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         }
       ],
       "proof": [
@@ -12186,7 +12248,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         }
       ],
       "proof": [
@@ -12248,12 +12310,12 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
           "anchor": "explicit AsyncHttpService(uint16_t port) : native_(port) {}",
-          "sha256": "50a432a62e484ae5f3bf59ffb5a9642ef66d7f07a5743402accb664056840d02"
+          "sha256": "dcd0e23c89924263fdfca757e53618601e2d7fac2c9b3cc200cac572f7feb716"
         }
       ],
       "omissions": [
@@ -12267,7 +12329,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "aa31ba27f15b74ba5cd1f61133bc261776c09637b22a4f7d6365b9208867fc97"
+          "sha256": "1d3dc679c85dc177b7d255ad8a46eaa2d38f022f3f248d8c0720433aad50a9de"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -12301,12 +12363,12 @@
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
           "anchor": "explicit AsyncHttpService(uint16_t port) : native_(port) {}",
-          "sha256": "50a432a62e484ae5f3bf59ffb5a9642ef66d7f07a5743402accb664056840d02"
+          "sha256": "dcd0e23c89924263fdfca757e53618601e2d7fac2c9b3cc200cac572f7feb716"
         },
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
         }
       ],
       "omissions": [
@@ -12320,7 +12382,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "aa31ba27f15b74ba5cd1f61133bc261776c09637b22a4f7d6365b9208867fc97"
+          "sha256": "1d3dc679c85dc177b7d255ad8a46eaa2d38f022f3f248d8c0720433aad50a9de"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -12358,7 +12420,7 @@
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
           "anchor": "AsyncURIMatcher::exact(path)",
-          "sha256": "50a432a62e484ae5f3bf59ffb5a9642ef66d7f07a5743402accb664056840d02"
+          "sha256": "dcd0e23c89924263fdfca757e53618601e2d7fac2c9b3cc200cac572f7feb716"
         },
         {
           "path": "firmware/esp/src/LoopMessages.h",
@@ -12367,7 +12429,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -12383,7 +12445,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -12437,7 +12499,7 @@
         {
           "path": "tests/async_http_test.cpp",
           "anchor": "Reproduce installed SDK3.12.1",
-          "sha256": "aa31ba27f15b74ba5cd1f61133bc261776c09637b22a4f7d6365b9208867fc97"
+          "sha256": "1d3dc679c85dc177b7d255ad8a46eaa2d38f022f3f248d8c0720433aad50a9de"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",
@@ -12498,7 +12560,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -12639,7 +12701,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         }
       ],
       "proof": [
@@ -12698,7 +12760,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -12749,7 +12811,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -12818,7 +12880,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -12895,7 +12957,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -13696,7 +13758,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function statusRgbOutput"
         }
       ],
@@ -13745,7 +13807,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -13830,7 +13892,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function acceptStatusRgb("
         }
       ],
@@ -14175,7 +14237,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -14304,7 +14366,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -14500,7 +14562,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
           "anchor": "bool authenticate()"
         },
         {
@@ -15745,7 +15807,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function connectWs()"
         }
       ],
@@ -15854,7 +15916,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -15946,7 +16008,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -16118,7 +16180,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function connectWs()"
         }
       ],
@@ -16221,7 +16283,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -16317,7 +16379,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -16402,7 +16464,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -16436,10 +16498,16 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
+        "Issue #28: reread the complete picker and preferenceFiles helper. Adapt bounded list/filter, explicit file actions and stale asynchronous reply rejection into the canonical Web Files panel. Board-managed names replace arbitrary host paths; uploads are staged and verified, and file replacement is explicitly confirmed. Original bytes and modification timestamps are kept together; PAX export preserves timestamps without claiming browser filesystem permissions.",
         "Fully read actual typed single-file selection, disabled/unselected/loading state, extension filtering, cancellation, stale-result protection and explicit acceptance. Adapted into Flutter AndroidDocuments + native SAF; firmware imports are validated and separately confirmed before any upload. Parent navigation is locked during maintenance confirmation/picking and writes; selected bytes never automatically program either board.",
         "Canonical Pakar desktop maintenance and actual firmware routes were read, not fabricated mobile endpoints. FirmwareController pins remote job/boot/hash/targets and verifies a fresh identity before apply/cancel; single-dispatch bounded HTTP refuses redirects/replay. FirmwarePage gates each ISP/OTA domain on individual live feature ACK, distinguishes stage/apply/completion, and exposes real full flash/EEPROM exports."
       ],
       "targets": [
+        {
+          "path": "assets/web/user-files.js",
+          "anchor": "function create(o)",
+          "sha256": "8b25d6925e5a604b95769d844c1c1d7d06ae9e49a33a9e2307bae5c75d77ec5f"
+        },
         {
           "path": "mobile/lib/documents.dart",
           "sha256": "9b447b248f21e855c2481e28c6c31e66969af5ab837fd32e4d57eb76164b9ff5",
@@ -16590,12 +16658,12 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "c36b30af3c0ccb389db9e1eefeb72d145c43df59efae0f1e76e526e954e76a55",
+          "sha256": "8eccb63f901ce960356af96d49d7a2afee756b8b931ee54dcf3486f7cb188d18",
           "anchor": "function renderLedBackendControl(anchor){"
         },
         {
           "path": "web/index.html",
-          "sha256": "c36b30af3c0ccb389db9e1eefeb72d145c43df59efae0f1e76e526e954e76a55",
+          "sha256": "8eccb63f901ce960356af96d49d7a2afee756b8b931ee54dcf3486f7cb188d18",
           "anchor": "function waitForLedBackend("
         }
       ],
@@ -16773,12 +16841,12 @@
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "1096059fc83aadeac46a559a6bd0e184336fb6a222422b67a35cd1431f17d60c",
+          "sha256": "fdf6b75dac5afebad8598abbe408cd44bbf09cb306d4db91ee515add5ebb1412",
           "anchor": "const dictionary={}"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -16910,7 +16978,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "40a5704191ca1c66a03c9d0d620f7a57f5ae5cd168a94d70b856a5c27e3213b7",
+          "sha256": "f206fcd501e46c9bb5ee6db96167bca4871c450dfcad79a570f519b7c1a451de",
           "anchor": "export function runChecks"
         },
         {
@@ -17084,7 +17152,7 @@
         },
         {
           "path": "assets/web/feature-workspaces.js",
-          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1",
+          "sha256": "a5bd7c2a890daaa3c1dc50ff223ab1074bf19c7ba8fe19f72b23cfb8d97de81b",
           "anchor": "function reveal(target)"
         },
         {
@@ -17210,7 +17278,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function statusRgbOutput"
         },
         {
@@ -17391,12 +17459,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function peerAvailability("
         }
       ],
@@ -17586,7 +17654,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         }
       ],
       "omissions": [
@@ -17785,7 +17853,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -17795,7 +17863,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -17876,7 +17944,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -18617,7 +18685,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -18787,7 +18855,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -20755,7 +20823,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -20860,7 +20928,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "/* Fixed manager slots:"
         },
         {
@@ -21091,7 +21159,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -22017,7 +22085,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -22048,7 +22116,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -22300,7 +22368,7 @@
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
-          "sha256": "50a432a62e484ae5f3bf59ffb5a9642ef66d7f07a5743402accb664056840d02",
+          "sha256": "dcd0e23c89924263fdfca757e53618601e2d7fac2c9b3cc200cac572f7feb716",
           "anchor": "AsyncURIMatcher::exact(path)"
         },
         {
@@ -22428,7 +22496,7 @@
         },
         {
           "path": "tests/async_http_test.cpp",
-          "sha256": "aa31ba27f15b74ba5cd1f61133bc261776c09637b22a4f7d6365b9208867fc97",
+          "sha256": "1d3dc679c85dc177b7d255ad8a46eaa2d38f022f3f248d8c0720433aad50a9de",
           "anchor": "Reproduce installed SDK3.12.1"
         },
         {
@@ -22887,12 +22955,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -22968,7 +23036,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -23194,12 +23262,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "8c5355e77c691452e986dd2667e017189be67ead6a9797490e277c752d2d6b85",
+          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -23270,7 +23338,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
+          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
         }
       ],
       "omissions": [
@@ -23428,12 +23496,12 @@
         },
         {
           "path": "assets/web/feature-workspaces.js",
-          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1",
+          "sha256": "a5bd7c2a890daaa3c1dc50ff223ab1074bf19c7ba8fe19f72b23cfb8d97de81b",
           "anchor": "function diagnosticWorkspace(value)"
         },
         {
           "path": "web/index.html",
-          "sha256": "c36b30af3c0ccb389db9e1eefeb72d145c43df59efae0f1e76e526e954e76a55",
+          "sha256": "8eccb63f901ce960356af96d49d7a2afee756b8b931ee54dcf3486f7cb188d18",
           "anchor": "function workspaceDiagnosticDraft()"
         },
         {
@@ -23764,7 +23832,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function createWorkspaceStorage",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         },
         {
           "path": "assets/web/device-settings.js",
@@ -23818,7 +23886,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function workspaceSettingsRecord",
-          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
+          "sha256": "c5e8a50fcf6e194408b4a7becd3e468f842bd352a8944de8c89f7daaf1c36bd0"
         }
       ],
       "proof": [

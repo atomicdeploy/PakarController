@@ -1,4 +1,5 @@
 #include "AsyncHttpService.h"
+#include "StaticAssetService.h"
 #include <assert.h>
 #include <stdio.h>
 #include <thread>
@@ -219,6 +220,38 @@ int main() {
   auto head=std::make_shared<AsyncWebServerRequest>();head->requestMethod=HTTP_HEAD;
   server.native().handlers.at("/head")(head.get());server.service();drain(head,"");
   assert(head->connection.sentWire.find("Content-Length: 15\r\n")!=String::npos);
+  {
+    using namespace PakarStatic;
+    assert(accepts(nullptr,"gzip")&&!accepts("","gzip"));
+    assert(accepts("br, GZip; q=0.125","gzip"));
+    assert(!accepts("gzip;q=0, *;q=1","gzip"));
+    assert(!accepts("gzip;q=garbage","gzip")&&!accepts("gzip;q=1.1","gzip"));
+    assert(accepts("*;q=0.2","gzip")&&!accepts("br","gzip"));
+    assert(accepts("","identity")&&accepts("gzip","identity"));
+    assert(!accepts("*;q=0","identity")&&accepts("*;q=0, identity;q=1","identity"));
+    assert(notModified("W/\"other\", W/\"abc\"","\"abc\""));
+    assert(notModified("*","\"abc\"")&&!notModified("\"abcd\"","\"abc\""));
+    assert(!notModified("\"abc\"garbage","\"abc\""));
+    auto asset=[&](int method,const char *enc,const char *tag,int status,const String &expected){
+      auto r=std::make_shared<AsyncWebServerRequest>();r->requestMethod=method;
+      if(enc)r->headers["Accept-Encoding"].text=enc;
+      if(tag)r->headers["If-None-Match"].text=tag;
+      r->connection.addLimits={1,0,3,1,0,13};r->connection.sendResults={false,true};
+      {AsyncSdkFixture::Actor actor;serveStaticAsset(r.get(),"text/html",compressed.data(),compressed.size(),"\"abc\"",true);}
+      drain(r,expected);assert(r->status==status);
+      assert(r->responseHeaders.at("Vary")=="Accept-Encoding");
+      assert(r->responseHeaders.at("X-Content-Type-Options")=="nosniff");
+      if(status==304)assert(r->connection.sentWire.find("Content-Length:")==String::npos);
+      if(status==200)assert(r->connection.sentWire.find("Content-Length: 66056\r\n")!=String::npos);
+      if(status==406)assert(!r->responseHeaders.count("Content-Encoding")&&!r->responseHeaders.count("ETag"));
+    };
+    asset(HTTP_GET,"gzip",nullptr,200,expectedCompressed);
+    asset(HTTP_HEAD,"gzip",nullptr,200,"");
+    asset(HTTP_GET,"gzip","W/\"abc\"",304,"");
+    asset(HTTP_GET,"identity","\"abc\"",406,"");
+    asset(HTTP_GET,"gzip;q=0",nullptr,406,"");
+    puts("Static assets: negotiation, validators, HEAD/304/406 and binary short-write/ACK integrity passed.");
+  }
   auto midway=std::make_shared<AsyncWebServerRequest>();midway->connection.windowCapacity=127;
   server.native().handlers.at("/flash")(midway.get());server.service();midway->connection.poll();
   assert(!midway->getResponse()->_finished());const auto midwayWire=midway->connection.wire;

@@ -44,7 +44,9 @@ String maintenanceApi(const String &message,bool physicalUsb) {
     reply["filesystem_initialized_reboot_required"]=filesystemInitializationComplete;
     reply["firmware_bytes"]=runningImageSize();reply["firmware_md5"]=runningImageMd5();
     reply["usb_api"]=true;reply["usb_firmware_read"]=true;
-    reply["usb_firmware_upload"]=false;reply["file_write"]=false;reply["cloud_configuration_sync"]=false;
+    reply["usb_firmware_upload"]=false;reply["file_write"]=true;reply["cloud_configuration_sync"]=false;
+    reply["managed_files"]=true;reply["file_dates"]=true;reply["private_file_access"]=false;
+    reply["microsd_built"]=bool(PAKAR_MICROSD_ENABLED);
     return encodedJson(reply);
   }
   if(request["board_id"].as<String>()!=pcBoardId||request["boot_id"].as<String>()!=pcBootId)return maintenanceApiError("peer_changed");
@@ -112,6 +114,7 @@ String maintenanceApi(const String &message,bool physicalUsb) {
 #endif
   }
   if(!accessConfig.ready()&&!(physicalUsb&&method=="GET"&&path=="/firmware/download"))return maintenanceApiError("settings_unavailable");
+  if(method=="POST"&&path=="/api/storage/files")return userFileRequest(body);
   // HTTP was authenticated by its route. USB is physical authority, matching
   // existing USB network/access provisioning, not a network auth bypass.
   if(method=="POST"&&path=="/api/command") {

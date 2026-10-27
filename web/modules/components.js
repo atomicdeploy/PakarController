@@ -5,6 +5,7 @@
 (() => {
   'use strict';
   const paths = {
+    folder:'M3 6V4h7l2 3h9v13H3zM3 8h18',
     controls:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
     table:'M3 4h18v16H3zM3 9h18M3 14h18M9 4v16M15 4v16',
     mapping:'M3 4h6v6H3zM13 4h8v6h-8zM3 14h10v6H3zM17 14h4v6h-4z',

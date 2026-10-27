@@ -53,6 +53,8 @@
 #include <time.h>
 #include "src/SystemPlatform.h"
 #include "src/FirmwarePlatform.h"
+#include "src/UserFileStore.h"
+#include "src/OptionalMicroSd.h"
 #include "src/UpdateProgress.h"
 #include "src/UpgradeLifecycle.h"
 #include "src/LocalOtaReceipt.h"
@@ -113,6 +115,8 @@
 #include "src/WebUiCompressed.h"
 #include "src/WebAppAssets.h"
 #include "src/BasicUi.h"
+#include "src/StaticAssetService.h"
+#include "src/StaticAssetValidators.h"
 #include "src/FontAssets.h"
 
 using namespace BoardCore::Protocol;
@@ -2448,6 +2452,10 @@ String buildStatusJson(bool compact) {
   body += F("\",\"application\":"); body += applicationIdentityJson();
   body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"pixel-diagnostic-effects\",\"pixel-diagnostic-overlay\",\"pixel-group-layout\",\"panel-events\",\"usb-demand\",\"usb-pixel-diagnostic\"");
   body += F(",\"state-presentation\",\"host-presentation\"");
+  body += F(",\"managed-files\"");
+#if PAKAR_MICROSD_ENABLED
+  body += F(",\"microsd-files\"");
+#endif
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
   body += F(",\"peer-relay-http\"");
 #endif
@@ -3995,38 +4003,29 @@ void registerApi() {
     server.send(code,ok?"application/json":"text/plain",body);
   });
 #endif
-  server.native().on("/assets/fonts/Vazirmatn-OFL.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send_P(200,"text/plain; charset=utf-8",kVazirmatnLicense);
+  server.native().on(AsyncURIMatcher::exact("/assets/fonts/Vazirmatn-OFL.txt"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"text/plain; charset=utf-8",kVazirmatnLicense,sizeof(kVazirmatnLicense)-1,kStaticLicenseEtag);
   });
   // Immutable public UI asset. Async response reads PROGMEM, not a heap copy.
-  server.native().on("/assets/fonts/Vazirmatn-Regular.ttf", HTTP_GET, [](AsyncWebServerRequest *request) {
-    auto *response = request->beginResponse_P(200, "font/ttf", kVazirmatnGzip, sizeof(kVazirmatnGzip));
-    response->addHeader("Content-Encoding", "gzip");
-    response->addHeader("Cache-Control", "public,max-age=86400");
-    response->addHeader("X-Content-Type-Options", "nosniff");
-    request->send(response);
+  server.native().on(AsyncURIMatcher::exact("/assets/fonts/Vazirmatn-Regular.ttf"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"font/ttf",kVazirmatnGzip,sizeof(kVazirmatnGzip),kStaticFontEtag,true);
   });
   // Immutable static asset: serve on the SDK actor just like the font above.
   // No hardware snapshot or loop-thread state belongs in this handler.
-  server.native().on(AsyncURIMatcher::exact("/basic"), HTTP_GET, [](AsyncWebServerRequest *request) {
-    // ESP32's deprecated char* send_P selects a heap-backed BasicResponse.
-    // Explicit bytes select the SDK's bounded flash response on both targets.
-    request->send(200, "text/html; charset=utf-8",
-                  reinterpret_cast<const uint8_t *>(kBasicUi), sizeof(kBasicUi) - 1);
+  server.native().on(AsyncURIMatcher::exact("/basic"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"text/html; charset=utf-8",kBasicUi,sizeof(kBasicUi)-1,kStaticBasicEtag);
   });
-  server.native().on("/manifest.webmanifest", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200,"application/manifest+json",reinterpret_cast<const uint8_t *>(kWebManifest),sizeof(kWebManifest)-1);
+  server.native().on(AsyncURIMatcher::exact("/manifest.webmanifest"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"application/manifest+json",kWebManifest,sizeof(kWebManifest)-1,kStaticManifestEtag);
   });
-  server.native().on("/app-icon.png", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200,"image/png",kWebAppPng,sizeof(kWebAppPng));
+  server.native().on(AsyncURIMatcher::exact("/app-icon.png"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"image/png",kWebAppPng,sizeof(kWebAppPng),kStaticIconEtag);
   });
-  server.native().on("/sw.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-    auto *response=request->beginResponse(200,"text/javascript",reinterpret_cast<const uint8_t *>(kWebWorker),sizeof(kWebWorker)-1);
-    response->addHeader("Cache-Control","no-cache");request->send(response);
+  server.native().on(AsyncURIMatcher::exact("/sw.js"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"text/javascript; charset=utf-8",kWebWorker,sizeof(kWebWorker)-1,kStaticWorkerEtag);
   });
-  server.native().on(AsyncURIMatcher::exact("/"), HTTP_GET, [](AsyncWebServerRequest *request) {
-    auto *response=request->beginResponse(200,"text/html; charset=utf-8",kWebUiGzip,sizeof(kWebUiGzip));
-    response->addHeader("Content-Encoding","gzip");response->addHeader("Cache-Control","no-cache");request->send(response);
+  server.native().on(AsyncURIMatcher::exact("/"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"text/html; charset=utf-8",kWebUiGzip,sizeof(kWebUiGzip),kStaticUiEtag,true);
   });
   server.on("/api/status", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -5099,6 +5098,7 @@ void serviceConsole() {
 }
 
 #include "src/MaintenanceRoutes.h"
+#include "src/UserFileService.h"
 #include "src/UsbApiService.h"
 #include "src/ShellService.h"
 #include "src/ShellTuiBinding.h"
@@ -5144,6 +5144,10 @@ void setup() {
   // Never erase damaged storage and silently restore public credentials.
   const bool filesystemMounted = SystemPlatform::mountFilesystem();
   captureBootFilesystemTelemetry(filesystemMounted);
+  userFiles.begin(LittleFS,filesystemMounted);
+#if PAKAR_MICROSD_ENABLED
+  sdUserFiles.begin(SD_MMC,PakarStorage::mount());
+#endif
   loopMessages.begin(); // PSRAM-backed S3 queue, before any network callback.
   accessConfig.begin(LittleFS, filesystemMounted);
   networkConfig.begin(LittleFS);
