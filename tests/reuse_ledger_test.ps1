@@ -18,7 +18,7 @@ $ledger = Join-Path $scratch 'ledger.csv'
     Export-Csv -NoTypeInformation -LiteralPath $evidence
 $options = @{
     PealayerRoot=$donor; PCControllerRoot=$donor; PuzzlesRoot=$donor;
-    PuzzleBoardRoot=$donor; ControllerBoardMiniRoot=$donor; Pu850Root=$donor; RayanLampRoot=$donor; Esp32Ws2811Root=$donor;
+    PuzzleBoardRoot=$donor; ControllerBoardMiniRoot=$donor; Pu850Root=$donor; RayanLampRoot=$donor; Esp32Ws2811Root=$donor; DrsSnakeRoot=$donor;
     DecisionsPath=$decisions; EvidencePath=$evidence; OutputPath=$ledger
 }
 function Assert-State([string]$origin, [string]$status) {
@@ -31,6 +31,8 @@ try {
     Assert-State PCController adapted
     Assert-State RayanLamp screened
     Assert-State esp32WS2811 screened
+    $marker = Import-Csv -LiteralPath $ledger | Where-Object { $_.origin -eq 'portable-shell' -and $_.path -eq '_codeql_detected_source_root' }
+    if ($marker.review_status -ne 'screened') { throw 'Generated marker must not invent a manual review without evidence' }
     . (Join-Path $root 'tools/donor-files.ps1')
     foreach ($relative in @('node_modules','dist','vendor')) {
         New-Item -ItemType Directory -Path (Join-Path $donor $relative) -Force | Out-Null

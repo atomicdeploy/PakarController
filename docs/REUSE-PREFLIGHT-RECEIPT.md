@@ -10454,3 +10454,22 @@ file is 2,309,728 bytes, SHA256
 These are compile/package figures, not runtime free heap or target provisioning
 proof. Source and comparison checks passed; no CI completion/main merge or live
 deployment is claimed by this checkpoint.
+
+## GitHub reconciliation and script regression, 2026-10-27
+
+Fresh inventory found a clean feature branch, no stash, one worktree and one
+open PR (#27), not the historical 508-entry backlog. Build 40562666802 failed
+because portable-shell used the undefined status `reviewed`. Its thirteen such
+manual records now use `reviewed-open`; the four existing adapted records stay
+adapted. The generator never invents a review for the omitted CodeQL symlink;
+hash-bound evidence is applied to verified pinned blobs as well as local files.
+The ledger fixture now supplies its own DRS-jSnake root, avoiding an unavailable
+developer drive on CI. No unresolved import is promoted to completion.
+
+Read actual Pealayer `scripts/storage-hygiene.ps1` and its entire safety test.
+Pakar's imported `Get-DirectorySummary` still failed for an empty directory under
+Windows PowerShell 5.1: Measure-Object can emit no object, not merely a null Sum.
+Added a null-measurement guard and an empty-directory regression, verified in
+both Windows PowerShell 5.1 and PowerShell 7. Read errors still fail; no real
+cache, running app, release artifact or rollback was removed. The existing
+source/target/proof ledger was selectively rebound for this reviewed change.

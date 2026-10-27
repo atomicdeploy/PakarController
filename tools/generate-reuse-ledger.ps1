@@ -157,7 +157,7 @@ if (-not $OnlyOrigin -or $OnlyOrigin -eq 'portable-shell') {
         $rows.Add([pscustomobject][ordered]@{
             origin='portable-shell';revision=$portableSource.revision;path=$file.path;sha256=$file.sha256;bytes=$file.bytes;
             category=(Get-Category -Origin 'portable-shell' -RelativePath $file.path);availability=$(if($file.snapshot){'present'}else{'pinned-blob'});
-            screening_signals='shell';review_status=$(if($file.snapshot){'screened'}else{'reviewed'});reuse_target='';
+            screening_signals='shell';review_status='screened';reuse_target='';
             notes='Pinned branch read through EOF; immutable source snapshot (CodeQL marker recorded only). Manual dispositions in file-comparison-evidence.json.'
         })
     }
@@ -235,7 +235,7 @@ if (Test-Path -LiteralPath $EvidencePath) {
     foreach ($row in $rows) {
         if ($OnlyOrigin -and $row.origin -ne $OnlyOrigin) { continue }
         $evidence = $evidenceIndex["$($row.origin)|$($row.path)"]
-        if ($null -eq $evidence -or $row.availability -ne 'present') { continue }
+        if ($null -eq $evidence -or $row.availability -notin @('present','pinned-blob')) { continue }
         if ($row.sha256 -ne $evidence.sha256) {
             $row.review_status = 'stale-review'
             $row.notes = "Source changed since manual review of $($evidence.sha256). Re-read required."

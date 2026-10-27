@@ -19033,7 +19033,7 @@
         },
         {
           "path": "tests/storage_hygiene_test.ps1",
-          "sha256": "7e6d4223563e3e5f2b641928c87cda91fa06312815434d63d46b76602cd49dca",
+          "sha256": "e465eb90d9957a10586110273f35a6c7ce8107c679f3dfbd7ab10d68aa798899",
           "anchor": "Actual imported equal-content helper"
         }
       ],
@@ -21590,7 +21590,7 @@
       "targets": [
         {
           "path": "tools/storage-hygiene.ps1",
-          "sha256": "0d1af57a83775e2670a5ac222973970dfc3bfc2c2e1bde1a1753523b444bdb5c",
+          "sha256": "3d1091c2761add106a5104f671bf12793c9621803f38bd898b193f597eabb329",
           "anchor": "function Get-DirectorySummary"
         },
         {
@@ -21622,12 +21622,12 @@
       "proof": [
         {
           "path": "tests/storage_hygiene_test.ps1",
-          "sha256": "7e6d4223563e3e5f2b641928c87cda91fa06312815434d63d46b76602cd49dca",
+          "sha256": "e465eb90d9957a10586110273f35a6c7ce8107c679f3dfbd7ab10d68aa798899",
           "anchor": "Actual imported recursive summary"
         },
         {
           "path": "tests/storage_hygiene_test.ps1",
-          "sha256": "7e6d4223563e3e5f2b641928c87cda91fa06312815434d63d46b76602cd49dca",
+          "sha256": "e465eb90d9957a10586110273f35a6c7ce8107c679f3dfbd7ab10d68aa798899",
           "anchor": "Default inventory stays read-only"
         },
         {
