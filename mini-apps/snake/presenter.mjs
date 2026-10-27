@@ -23,7 +23,9 @@ export class Presenter {
   async connect() {
     const first=await this.read('/api/status');this.peer=boardPeer(first.value,first.remote);
     const features=first.value.capabilities?.acknowledged_features??[];
-    if(!features.includes('host-presentation')||!features.includes('table-selection'))throw Error('Snake requires an acknowledged table-selection board');
+    if(!features.includes('host-presentation')||!features.includes('table')||
+      first.value.capabilities?.board_kind!=='table'||first.value.capabilities?.role!=='table-selection')
+      throw Error('Snake requires an acknowledged table-selection board with host presentation');
     this.status=first.value;this.observed=this.now();
     this.groups=(await this.read('/api/pixels/groups')).value;
     if(this.groups.group_count!==80||!Number.isSafeInteger(this.groups.revision))throw Error('Expected 80 logical table cells');

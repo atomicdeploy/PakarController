@@ -86,8 +86,9 @@ spans, wiring mapping and corrections. The game never multiplies IDs by six.
 ## Board protocol and failure behavior
 
 Uses the existing [host presentation contract](../../docs/HOST-PRESENTATION.md),
-not a second game transport. Require acknowledged `host-presentation` and
-`table-selection`, an 80-group layout, board/boot identity, revision and clock.
+not a second game transport. Require acknowledged `host-presentation` and `table`,
+board kind `table`, role `table-selection`, an 80-group layout, board/boot identity,
+revision and clock.
 Send temporary logical-cell frames through WebSocket first, HTTP if no socket
 is available before a send. An uncertain command is **not** replayed through a
 second transport. One in-flight frame, no growing frame queue.

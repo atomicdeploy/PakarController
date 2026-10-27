@@ -72,7 +72,7 @@ test('portals, switch and mirror mechanics are not executable map code',()=>{
 function fixture({reject=false,address='192.0.2.2'}={}){
   const calls=[],board='table-test',boot='a'.repeat(32),identity={board_id:board,boot_id:boot};
   const status={...identity,version:toolRelease.version,http_peer_fencing:true,hostname:'ledcontroller',command_clock_ms:1000,
-    capabilities:{hostname:'ledcontroller',acknowledged_features:['network','host-presentation','table-selection']}};
+    capabilities:{hostname:'ledcontroller',board_kind:'table',role:'table-selection',acknowledged_features:['network','host-presentation','table']}};
   let revision=0;
   const request=async(_url,path,options={})=>{
     calls.push({path,options});let value;
@@ -88,6 +88,14 @@ test('temporary presentation uses logical cells, revision, release and no saved 
   assert.equal(f.calls.filter(c=>c.options.form).length,0);await p.frame([{id:80,rgb:0x00ff00}]);await p.renew();await p.close();
   const packets=f.calls.filter(c=>c.options.form).map(c=>JSON.parse(c.options.form.packet));
   assert.equal(packets.length,3);assert.equal(packets[0].space,'cells');assert.equal(packets[0].lifetime,'temporary');assert.equal(packets[1].lease_id,9);assert.equal(packets[1].replace,false);assert.equal(packets[2].action,'clear');
+});
+
+test('admission uses real firmware role and capabilities, never inferred table size',async()=>{
+  for(const change of [s=>s.capabilities.role='first-wins',s=>s.capabilities.board_kind='keys',
+    s=>s.capabilities.acknowledged_features=['network','table']]){
+    const f=fixture();change(f.status);const p=new Presenter({origin:'http://ledcontroller.local',request:f.request,environment:{}});
+    await assert.rejects(p.connect(),/acknowledged table-selection/);assert.equal(f.calls.filter(c=>c.options.form).length,0);
+  }
 });
 
 test('actual loopback WebSocket carries correlated frames; no HTTP mutations',async()=>{
