@@ -2,6 +2,15 @@
 
 ## GitHub handoff consolidation and CI repair
 
+The complete local quality phase at80cd685 passed through repository governance,
+including ledger/route hashes and all registered Web/host contracts. The fresh
+GitHub CodeQL run40493579318 completed successfully, including the standalone
+CodeQL finding check; all seven new review threads are resolved. Complete PR21-24
+conversation decisions are hash-bound in the existing audit. The pending build
+workflow is not claimed successful, and no Copilot or device acceptance is
+inferred. Only superseded owned workflow40492884038 was canceled to release
+the latest exact-head checks; no acceptance check or query was disabled.
+
 Post-dependency verification at57244ea passed Rust461/461 and Flutter722 with
 3 environment/live skips; analysis is clean. The fresh GitHub security scan
 confirmed the descriptor/configuration fixes, but found an additional forgiving

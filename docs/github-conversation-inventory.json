@@ -360,8 +360,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Read complete dependency body/diff and all paginated conversations, including the integration receipt. No review threads. Original pinned workflow commits retained by normal merge into PR24 without permission/trust-boundary changes. Exact consolidated checks remain separate from old failed PR checks and deployment."
     },
     {
       "repository": "atomicdeploy/PakarController",
@@ -377,8 +377,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Read complete manifest/lock diff, dependency body and integration comment; zero reviews/threads. Retained mdns-sd0.21.6 and original PR ancestry. Explicitly deferred eframe0.37 because existing dock/icon/theme dependencies expose egui0.36 types; restored coherent0.36.2 and added mixed-type-family negatives. Rust461 tests pass after reconciliation; this is not a completed0.37 migration or runtime deployment."
     },
     {
       "repository": "atomicdeploy/PakarController",
@@ -394,8 +394,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Read complete manifest/lock diff, release body and integration comment; zero reviews/threads. Original ancestry and archive4/MQTT/XML7 updates retained. Adapted actual raw compressed stream API without bypassing bounded decompression/CRC guards; XML namespaceUri updated. Clean analysis and722 tests pass with3 environment/live skips; no Android replacement or physical acceptance."
     },
     {
       "repository": "atomicdeploy/PakarController",
@@ -404,17 +404,15 @@
       "title": "Consolidate preserved firmware and client work for cross-device handoff",
       "url": "https://github.com/atomicdeploy/PakarController/pull/24",
       "state": "open",
-      "content_sha256": "6bf2b39ece315b9effc4b2235067142a35b86b3561ad035297d781810856c297",
+      "content_sha256": "9db7987097c32bc0fb42d95631c2f874fb9386598c66cd62ffff6dd934f299d4",
       "comments": 1,
-      "reviews": 2,
+      "reviews": 3,
       "threads": 7,
-      "unresolved_threads": [
-        "PRRT_kwDOVDBl_c6wpxGw"
-      ],
+      "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Read complete consolidation conversation, both security review summaries and all seven threads including outdated/resolved comments and the malformed-tag reply. Descriptor-based candidate reads, exclusive fixture config creation and forgiving test-only script extraction are fixed; receipt wx, isolated request logging and intentional admitted firmware upload have scoped documented dispositions. Fresh80cd685 CodeQL check passes. Copilot requests rejected, not completed. This conversation review is not blanket donor-feature, production or whole-codebase acceptance. Main merge requires current build/package checks; issue2 remains open."
     },
     {
       "repository": "atomicdeploy/PCController",
