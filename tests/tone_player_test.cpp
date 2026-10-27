@@ -51,8 +51,29 @@ int main() {
   assert((TCCR1B & (_BV(CS10)|_BV(CS11)|_BV(CS12))) == 0);
   assert(player.revision() != mutedRevision); // No replay of interrupted note.
   player.update(1100); assert(!player.isBusy()); player.stop(); assert(!player.isBusy());
+  // Remote chunks prefill the existing ring; network arrivals never start notes.
+  uint8_t beginStream[]={0,1,0,0,0}, status[7];
+  uint8_t chunk[]={1,1,0,0,0,0xe8,3,100,0,0,0,50,0};
+  uint8_t startStream[]={2,1,0,2,0}, finishStream[]={3,1,0,2,0};
+  assert(player.stream(beginStream,5)==0);
+  assert(player.stream(chunk,sizeof(chunk))==0);
+  player.update(1200);assert(player.activeFrequencyHz()==0);
+  assert(player.stream(chunk,sizeof(chunk))==6); // No duplicate append replay.
+  assert(player.stream(finishStream,5)==0);
+  assert(player.stream(startStream,5)==0);
+  player.update(1300);assert(player.activeFrequencyHz()==1000);
+  player.update(1410);assert(player.activeFrequencyHz()==0);
+  player.update(1450);player.streamStatus(status);assert(status[5]==3&&status[4]==10);
+  beginStream[1]=2;chunk[1]=2;startStream[1]=2;
+  assert(player.stream(beginStream,5)==0);
+  assert(player.stream(chunk,sizeof(chunk))==0);
+  assert(player.stream(startStream,5)==0);
+  player.update(1500);player.update(1650);
+  player.streamStatus(status);assert(status[5]==4); // Underrun stays silent.
+  chunk[3]=2;assert(player.stream(chunk,sizeof(chunk))==6);
+  player.stop();
   using namespace BoardCore::Protocol;
-  const uint16_t durations[kCueCount] = {530,450,410,300,305,450,400,600,100,5750,300,300,520,590,240};
+  const uint16_t durations[kCueCount] = {530,450,410,300,1080,450,400,600,100,5750,300,300,520,590,240};
   CueTimeline timelines[kCueCount];
   for (uint8_t cue=0;cue<kCueCount;++cue) {
     assert(playAudioCue(static_cast<AudioCue>(cue), player));
@@ -73,6 +94,11 @@ int main() {
     assert(!player.isBusy()); player.setMuted(false);
   }
   // Distinct names/IDs must not conceal exactly duplicated melodies. Check
+  assert(timelines[kCueWinner][0]==NOTE_C6 && timelines[kCueWinner][239]==NOTE_C6);
+  assert(timelines[kCueWinner][240]==0 && timelines[kCueWinner][359]==0);
+  assert(timelines[kCueWinner][360]==NOTE_E6 && timelines[kCueWinner][599]==NOTE_E6);
+  assert(timelines[kCueWinner][600]==0 && timelines[kCueWinner][719]==0);
+  assert(timelines[kCueWinner][720]==NOTE_G6 && timelines[kCueWinner][1079]==NOTE_G6);
   // all pairs, including equal-duration entries and the donor welcome variants.
   for (uint8_t cue = 0; cue < kCueCount; ++cue) {
     for (uint8_t other = 0; other < cue; ++other) {
@@ -118,6 +144,18 @@ int main() {
   playBootMelody(player); player.update(0);
   assert(!playAudioCue(static_cast<AudioCue>(255),player)); assert(player.activeFrequencyHz()==1032);
   uint8_t unchanged=77; assert(!BoardCore::AudioCues::parse("bad",unchanged) && unchanged==77);
+  uint8_t gameCue=77;
+  assert(BoardCore::AudioCues::parseGame("silent",gameCue)&&gameCue==255);
+  assert(strcmp(BoardCore::AudioCues::gameName(gameCue),"silent")==0);
+  assert(BoardCore::AudioCues::validGameCue(gameCue));
+  assert(!BoardCore::AudioCues::parse("silent",gameCue)); // Not a playable catalog cue.
+  assert(!BoardCore::AudioCues::parseGame("",gameCue)&&gameCue==255);
+  assert(!BoardCore::AudioCues::validGameCue(kCueCount));
+  assert(!BoardCore::AudioCues::validGameCue(254));
+  for(uint8_t cue=0;cue<kCueCount;++cue){
+    assert(BoardCore::AudioCues::validGameCue(cue));
+    assert(BoardCore::AudioCues::parseGame(BoardCore::AudioCues::gameName(cue),gameCue)&&gameCue==cue);
+  }
   assert(!BoardCore::AudioCues::parse(nullptr,unchanged));
   assert(BoardCore::AudioCues::supportedCount(true,true,12)==12);
   assert(BoardCore::AudioCues::supportedCount(true,true,14)==14);

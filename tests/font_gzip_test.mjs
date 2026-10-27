@@ -4,7 +4,7 @@ import {gzipSync,gunzipSync} from 'node:zlib';
 import {normalizeGzipPlatform,portableGzip} from '../tools/portable-gzip.mjs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url));
 const font=read('assets/fonts/Vazirmatn-Regular.ttf');
-const generated=read('firmware/esp8266/src/FontAssets.h').toString();
+const generated=read('firmware/esp/src/FontAssets.h').toString();
 const embedded=Buffer.from(generated.match(/kVazirmatnGzip\[\] PROGMEM = \{([\s\S]*?)\};/)[1].match(/\d+/g).map(Number));
 const canonical=portableGzip(font),raw=gzipSync(font,{level:9});
 assert.equal(canonical[9],255);

@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/NetworkPath.h"
+#include "../firmware/esp/src/NetworkPath.h"
 #include "../firmware/esp32s3/src/DiscoveryInterfaces.h"
 #include <cassert>
 #include <cstdio>

@@ -87,8 +87,35 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         return english.to_owned();
     }
     let translated = match english {
+        "Update progress" => "پیشرفت به‌روزرسانی",
+        "Disconnected" => "قطع‌شده",
+        "Check hardware" => "بررسی سخت‌افزار",
+        "Hardware" => "سخت‌افزار",
+        "Network" => "شبکه",
+        "No device selected" => "دستگاهی انتخاب نشده",
+        "Manage connection" => "مدیریت اتصال",
+        "No acknowledgement" => "بدون تأیید",
+        "Progress not reported" => "پیشرفت گزارش نشده",
+        "Active errors" => "خطاهای فعال",
+        "Steady" => "ثابت",
+        "Breathe" => "تنفسی",
+        "Color fade" => "تغییر تدریجی رنگ",
+        "Fade out" => "خاموش‌شدن تدریجی",
+        "Pulse" => "تپش",
+        "Double blink" => "چشمک دوتایی",
+        "Revision" => "بازنگری",
+        "Place at start" => "قرار دادن در ابتدا",
+        "Place at end" => "قرار دادن در انتها",
+        "Move earlier" => "انتقال به قبل",
+        "Move later" => "انتقال به بعد",
+        "Restore status bar" => "بازگردانی نوار وضعیت",
+        "More status actions" => "عملیات بیشتر نوار وضعیت",
+        "Copy color" => "کپی رنگ",
+        "Status message" => "پیام وضعیت",
         "Lock red → white" => "قفل تغییر قرمز به سفید",
-        "Board-enforced; Off remains available. The observed board value is shown only after ACK/readback." => "قفل در خود برد اعمال می‌شود؛ خاموش‌کردن همچنان ممکن است. وضعیت فقط پس از تأیید و بازخوانی برد نمایش داده می‌شود.",
+        "Board-enforced; Off remains available. The observed board value is shown only after ACK/readback." => {
+            "قفل در خود برد اعمال می‌شود؛ خاموش‌کردن همچنان ممکن است. وضعیت فقط پس از تأیید و بازخوانی برد نمایش داده می‌شود."
+        }
         "Import colors…" => "درون‌ریزی رنگ‌ها…",
         "Export colors" => "برون‌ریزی رنگ‌ها",
         "Import cell colors" => "درون‌ریزی رنگ خانه‌ها",
@@ -100,11 +127,19 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Review changes" => "بازبینی تغییرات",
         "Imported" => "درون‌ریزی‌شده",
         "assignments; omitted cells stay unchanged" => "خانه؛ خانه‌های ذکرنشده تغییر نمی‌کنند",
-        "The selected board changed or is offline. Reopen this file after reconnecting." => "برد انتخاب‌شده تغییر کرده یا آفلاین است. پس از اتصال دوباره پرونده را باز کنید.",
-        "Red lock blocks this import. No assignments will be applied." => "قفل قرمز مانع این درون‌ریزی است. هیچ خانه‌ای تغییر نخواهد کرد.",
+        "The selected board changed or is offline. Reopen this file after reconnecting." => {
+            "برد انتخاب‌شده تغییر کرده یا آفلاین است. پس از اتصال دوباره پرونده را باز کنید."
+        }
+        "Red lock blocks this import. No assignments will be applied." => {
+            "قفل قرمز مانع این درون‌ریزی است. هیچ خانه‌ای تغییر نخواهد کرد."
+        }
         "Apply atomically" => "اعمال یکپارچه",
-        "Waiting for a fresh board observation before export…" => "در انتظار وضعیت تازهٔ برد برای برون‌ریزی…",
-        "Export cancelled: fresh board state was not available" => "برون‌ریزی لغو شد: وضعیت تازهٔ برد در دسترس نبود",
+        "Waiting for a fresh board observation before export…" => {
+            "در انتظار وضعیت تازهٔ برد برای برون‌ریزی…"
+        }
+        "Export cancelled: fresh board state was not available" => {
+            "برون‌ریزی لغو شد: وضعیت تازهٔ برد در دسترس نبود"
+        }
         "Exported all 80 observed assignments" => "رنگ مشاهده‌شدهٔ هر ۸۰ خانه برون‌ریزی شد",
         "Export failed" => "برون‌ریزی ناموفق بود",
         "Board sound" => "صدای برد",
@@ -114,17 +149,27 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Seven-segment brightness" => "روشنایی نمایشگر هفت‌قسمتی",
         "Button 9 ADC threshold" => "آستانهٔ ADC دکمهٔ ۹",
         "Periodic AVR telemetry" => "گزارش دوره‌ای AVR",
-        "0 sends only changed state; otherwise 100–65535 ms." => "صفر فقط تغییر وضعیت را ارسال می‌کند؛ در غیر این صورت ۱۰۰ تا ۶۵۵۳۵ میلی‌ثانیه.",
+        "0 sends only changed state; otherwise 100–65535 ms." => {
+            "صفر فقط تغییر وضعیت را ارسال می‌کند؛ در غیر این صورت ۱۰۰ تا ۶۵۵۳۵ میلی‌ثانیه."
+        }
         "Start page" => "صفحهٔ آغازین",
         "Front-panel pages" => "صفحه‌های پنل جلویی",
         "Move page up" => "انتقال صفحه به بالا",
         "Move page down" => "انتقال صفحه به پایین",
         "Read board" => "خواندن برد",
         "Save to AVR" => "ذخیره در AVR",
-        "Mutes the physical board buzzer, including welcome and menu sounds. Saved directly on the board; Windows notification sound is separate." => "بیزر خود برد، از جمله صدای خوشامد و منوها را بی‌صدا می‌کند. مستقیم روی برد ذخیره می‌شود؛ صدای اعلان ویندوز جدا است.",
-        "Mutes the physical board buzzer, including welcome and menu sounds. Saves directly on the board; browser sound is separate." => "بیزر خود برد، از جمله صدای خوشامد و منوها را بی‌صدا می‌کند. مستقیم روی برد ذخیره می‌شود؛ صدای مرورگر جدا است.",
-        "Appearance is saved in this browser. Board sound changes save directly to the board." => "ظاهر در این مرورگر ذخیره می‌شود. تغییرات صدای برد مستقیم روی برد ذخیره می‌شوند.",
-        "Programming safety keeps the board muted." => "حفاظت هنگام برنامه‌ریزی، برد را بی‌صدا نگه می‌دارد.",
+        "Mutes the physical board buzzer, including welcome and menu sounds. Saved directly on the board; Windows notification sound is separate." => {
+            "بیزر خود برد، از جمله صدای خوشامد و منوها را بی‌صدا می‌کند. مستقیم روی برد ذخیره می‌شود؛ صدای اعلان ویندوز جدا است."
+        }
+        "Mutes the physical board buzzer, including welcome and menu sounds. Saves directly on the board; browser sound is separate." => {
+            "بیزر خود برد، از جمله صدای خوشامد و منوها را بی‌صدا می‌کند. مستقیم روی برد ذخیره می‌شود؛ صدای مرورگر جدا است."
+        }
+        "Appearance is saved in this browser. Board sound changes save directly to the board." => {
+            "ظاهر در این مرورگر ذخیره می‌شود. تغییرات صدای برد مستقیم روی برد ذخیره می‌شوند."
+        }
+        "Programming safety keeps the board muted." => {
+            "حفاظت هنگام برنامه‌ریزی، برد را بی‌صدا نگه می‌دارد."
+        }
         "Verified · saved in EEPROM" => "تأیید شد · ذخیره‌شده در EEPROM",
         "Reading board…" => "در حال خواندن برد…",
         "LEDs & cells" => "LEDها و خانه‌ها",
@@ -284,6 +329,8 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Toggle multiple cells and rows without Ctrl" => "انتخاب چند خانه و ردیف بدون Ctrl",
         "Animate cell state transitions" => "پویانمایی گذار وضعیت خانه‌ها",
         "Show cell LED-state indicators" => "نمایش نشانگر وضعیت LED خانه‌ها",
+        "Fill lamp backgrounds with state color" => "رنگ پس‌زمینهٔ چراغ‌ها مطابق وضعیت",
+        "Use the board's state colors. Live individual-pixel previews remain unchanged." => "از رنگ وضعیت‌های برد استفاده می‌کند؛ پیش‌نمایش زندهٔ پیکسل‌ها تغییری نمی‌کند.",
         "Show physical pixel indices (top first, CCW)" => {
             "نمایش شمارهٔ پیکسل‌های فیزیکی (از بالا، پادساعت‌گرد)"
         }
@@ -303,6 +350,8 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Cell mapping…" | "Cell mapping" => "نگاشت خانه‌ها",
         "Preferences…" => "تنظیمات…",
         "Table" => "میز",
+        "Pixel diagnostics" => "عیب‌یابی پیکسل‌ها",
+        "Pixel corrections" => "اصلاح پیکسل‌ها",
         "Effect controls" => "کنترل جلوه‌ها",
         "Hardware monitor" => "پایش سخت‌افزار",
         "Network & cloud" => "شبکه و ابر",
@@ -311,6 +360,11 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Theme" => "پوسته",
         "Palette" => "پالت رنگ",
         "UI scale" => "مقیاس رابط",
+        "Control density" => "تراکم کنترل‌ها",
+        "Compact" => "فشرده",
+        "Regular" => "معمولی",
+        "Comfortable" => "راحت",
+        "Spacious" => "باز",
         "Search preferences" => "جست‌وجوی تنظیمات",
         "Search settings" => "جست‌وجوی تنظیمات",
         "Device endpoint" => "نشانی دستگاه",
@@ -330,6 +384,7 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Toggle fullscreen" => "تغییر حالت تمام‌صفحه",
         "Manage workspaces…" => "مدیریت فضاهای کاری…",
         "Reset workspace layout" => "بازنشانی چیدمان فضای کاری",
+        "Auto-hide Events when errors clear" => "پنهان‌کردن خودکار رویدادها پس از رفع خطاها",
         "Save workspace screenshot…" => "ذخیرهٔ تصویر فضای کاری…",
         "Refresh" => "تازه‌سازی",
         "Find cell" => "یافتن خانه",
@@ -458,7 +513,9 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Connecting…" => "در حال اتصال…",
         "Disconnect" => "قطع اتصال",
         "Hardware Disconnected" => "سخت‌افزار قطع است",
-        "Read-only: firmware must advertise board/boot identity and HTTP fencing" => "فقط خواندنی: میان‌افزار باید هویت برد و راه‌اندازی و حفاظت HTTP را اعلام کند",
+        "Read-only: firmware must advertise board/boot identity and HTTP fencing" => {
+            "فقط خواندنی: میان‌افزار باید هویت برد و راه‌اندازی و حفاظت HTTP را اعلام کند"
+        }
         "PCController coordinator connected" => "هماهنگ‌کنندهٔ PCController متصل است",
         "Custom endpoint or hardware path" => "نشانی سفارشی یا مسیر سخت‌افزار",
         "Enter a PCController endpoint or an OS hardware path." => {
@@ -673,7 +730,6 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Stop stream" => "توقف جریان",
         "Streaming" => "در حال پخش",
         "Idle" => "آماده",
-        "Buzzer & melodies" => "بیزر و ملودی‌ها",
         "Playing melody" => "ملودی در حال پخش است",
         "Playing" => "در حال پخش",
         "Board muted" => "برد بی‌صدا است",
@@ -807,6 +863,16 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Protocol" => "پروتکل",
         "Hex or decimal" => "هگز یا دهدهی",
         "Ready" => "آماده",
+        "Box" => "جعبه",
+        "Column" => "ستون",
+        "Row" => "ردیف",
+        "Button" => "دکمه",
+        "Indicator" => "نشانگر",
+        "Pressed" => "فشرده",
+        "Winner" => "برنده",
+        "Lost" => "بازنده",
+        "Drag or use arrow keys; Esc cancels" => "بکشید یا از کلیدهای جهت استفاده کنید؛ لغو با Esc",
+        "Live pixel preview not received" => "پیش‌نمایش زندهٔ پیکسل دریافت نشده است",
         "Invalid code" => "کد نامعتبر",
         "Transmit" => "ارسال",
         "State not sampled by the board" => "وضعیت توسط برد نمونه‌برداری نشده است",
@@ -828,6 +894,9 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Enable in-app keyboard shortcuts and hardware bindings" => {
             "فعال‌سازی میان‌برها و کلیدهای سخت‌افزاری داخل برنامه"
         }
+        "Leave a shortcut blank to disable it. Modified shortcuts remain available while editing text; bare printable keys do not interrupt typing." => {
+            "برای غیرفعال‌کردن، میان‌بر را خالی بگذارید. میان‌برهای دارای کلید کمکی هنگام ویرایش متن نیز فعال‌اند؛ کلیدهای چاپ‌پذیرِ تنها مزاحم تایپ نمی‌شوند."
+        }
         "Allow hardware hotkeys while Pealayer is in the background" => {
             "فعال‌سازی کلیدهای سراسری سخت‌افزار هنگامی که پی‌لیر در پس‌زمینه است"
         }
@@ -840,7 +909,6 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         "Right-button hold / drag" => "نگه‌داشتن یا کشیدن دکمهٔ راست",
         "Play / pause" => "پخش یا مکث",
         "Mute / unmute" => "قطع یا وصل صدا",
-        "Toggle fullscreen" => "تغییر حالت تمام‌صفحه",
         "Open context menu" => "باز کردن منوی زمینه‌ای",
         "Move application window" => "جابجایی پنجرهٔ برنامه",
         "Seek video" => "پیمایش ویدئو",
@@ -1441,38 +1509,46 @@ mod tests {
     fn changing_language_preserves_widget_fonts_and_monospace_fallback() {
         let context = egui::Context::default();
         configure_ui_fonts(&context, false);
-        context.run_ui(Default::default(), |_| {}).drop_without_applying_deltas();
+        context
+            .run_ui(Default::default(), |_| {})
+            .drop_without_applying_deltas();
         elegance::Theme::current(&context).install(&context);
-        context.run_ui(Default::default(), |_| {}).drop_without_applying_deltas();
+        context
+            .run_ui(Default::default(), |_| {})
+            .drop_without_applying_deltas();
         configure_ui_fonts(&context, true);
-        context.run_ui(Default::default(), |ui| {
-            ui.fonts(|fonts| {
-                let defs = fonts.definitions();
-                assert!(defs.font_data.contains_key("elegance-symbols"));
-                assert_eq!(
-                    defs.families[&egui::FontFamily::Proportional][0],
-                    "pealayer-vazirmatn"
-                );
-                assert_eq!(
-                    defs.families[&egui::FontFamily::Monospace]
-                        .iter()
-                        .filter(|name| *name == "pealayer-vazirmatn")
-                        .count(),
-                    1
-                );
-            });
-        }).drop_without_applying_deltas();
+        context
+            .run_ui(Default::default(), |ui| {
+                ui.fonts(|fonts| {
+                    let defs = fonts.definitions();
+                    assert!(defs.font_data.contains_key("elegance-symbols"));
+                    assert_eq!(
+                        defs.families[&egui::FontFamily::Proportional][0],
+                        "pealayer-vazirmatn"
+                    );
+                    assert_eq!(
+                        defs.families[&egui::FontFamily::Monospace]
+                            .iter()
+                            .filter(|name| *name == "pealayer-vazirmatn")
+                            .count(),
+                        1
+                    );
+                });
+            })
+            .drop_without_applying_deltas();
         configure_ui_fonts(&context, false);
-        context.run_ui(Default::default(), |ui| {
-            ui.fonts(|fonts| {
-                assert!(
-                    fonts
-                        .definitions()
-                        .font_data
-                        .contains_key("elegance-symbols")
-                )
-            });
-        }).drop_without_applying_deltas();
+        context
+            .run_ui(Default::default(), |ui| {
+                ui.fonts(|fonts| {
+                    assert!(
+                        fonts
+                            .definitions()
+                            .font_data
+                            .contains_key("elegance-symbols")
+                    )
+                });
+            })
+            .drop_without_applying_deltas();
     }
     // Actual Pealayer contextual-shaping test, expanded to the missing family.
     #[test]

@@ -1,6 +1,19 @@
 # PakarController PCController contracts
 
-Source version **0.2.6**. Source/build delivery, not physical-board or production-release certification. Donor inspected: PCController commit **20c6115bb462fe5111b66cd7c21f7328a1f78892**. Exact source/target hashes and exclusions: pccontroller/SOURCE-MAPPING.json. Whole-project gaps remain visible in FILE-COMPARISON.md; this does not close unrelated Pealayer, PuzzleBoard or PU850 gaps.
+Current source release is **0.2.8**. The original delivery below used 0.2.6 and
+donor commit `20c6115bb462fe5111b66cd7c21f7328a1f78892`; those are historical
+checkpoints, not the current donor baseline. The current comparison uses
+`b0111ae0c80dc34149ea1044de7dd5488920301b` and is documented in
+[PCController gaps and AVR convergence](PC-CONTROLLER-MERGE-READINESS.md).
+Current hash-bound decisions live in file-comparison-evidence.json; the older
+pccontroller/SOURCE-MAPPING.json remains historical provenance. Source support
+is not physical-board or production-release certification.
+
+For S3, use hardware UART1 TX17/RX18 at 38400 to AVR hardware UART0, with the
+matched buffered build (no busy wire). The NodeMCU wiring/defaults below describe
+the retained ESP8266 profile, not the current S3 profile. Source game role is
+build-selected; the newer first-wins role uses 216 ESP-owned pixels rather than
+the table's 480. See [architecture](ARCHITECTURE.md).
 
 ## Current hardware and ownership
 
@@ -45,7 +58,18 @@ Actual donor generated opcode header and JSON registry imported. Pakar legacy 0x
 | 42 HOST_MENU_DIRECTORY, 43 HOST_MENU_CONTENT, 44 HOST_MENU_STATE_GET | Registry-only: donor ProtocolRuntime has no handlers. Unsupported, never fake ACK. Future host-directory/menu adapter remains work, not a dropped working donor handler. |
 | Reserved 13, 26, 4A; unknown | Unsupported; never aliases a Pakar opcode. |
 
-SEGMENT_CHANGED, BUZZER_CHANGED, keys, macro/automation events derive from actual state. Actual donor ControllerEvents encoders are imported; key [type,id,gesture,source,sourceId] and buzzer [frequency_LE16,duration_LE16,muted] remain exactly five bytes. No extra UART timestamps. Latent hardware event encoders remain available for future adapters without synthesizing absent producers. Busy-wire emits at most one unsolicited frame per service iteration and retains blocked events/results. Polling GET_STATUS grants one extra bounded changed-only mirror/event frame after its own response. Polling builds never touch busy GPIO.
+SEGMENT_CHANGED, BUZZER_CHANGED, keys and macro/automation events derive from
+actual state. Typed key payloads remain [type,id,gesture,source,sourceId].
+Current Pakar BUZZER_CHANGED contains 13 inner bytes: frequency_LE16,
+duration_LE16, muted, tone-start_micros_LE32 and observation_micros_LE32.
+This replaces the earlier five-byte-only report. Current native PCController
+instead appends its four-byte send timestamp to five tone-state bytes; the
+reports are not interchangeable. Latent hardware event encoders remain available
+without synthesizing absent producers. Busy-wire emits at most one unsolicited
+frame per service iteration and retains blocked events/results. Polling
+GET_STATUS grants one extra bounded changed-only mirror/event frame after its
+own response. Polling builds never touch busy GPIO; S3 buffered builds permit
+bounded unsolicited output through UART capacity checks.
 
 ## Settings profile
 
@@ -109,4 +133,8 @@ AVR LED engine intentionally off: duplicates effects and consumes RAM/UART; ESP 
 
 Production-code host tests: dispatch/error isolation, feature-off profiles, Prog safety, keys, macros/record/replay, automation budget/ninth-key, settings/automation torn writes, TM1637 ACK/reconnect/cache/off, display capture/40 characters, chunk matching/expiry/rollover, per-client receipts, polling mirrors, no retries. CLI tests: authenticated loopback fixture, not board.
 
-ASUS SSH localhost:1022 refuses connection. No physical firmware/EEPROM write in this delivery. Do not disconnect USB based on source tests. Flashing/electrical checks, Wi-Fi/cloud acceptance and two-machine rollout remain unchecked.
+The original delivery's SSH localhost:1022 failure is historical; current ASUS
+access uses localhost:8022 and must be checked afresh before operation. No live
+firmware/EEPROM writes or hardware tests were performed in this documentation
+comparison. Do not disconnect USB based on source tests. Physical, Wi-Fi/cloud
+and installed-client acceptance remain separate gates.

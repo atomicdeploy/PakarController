@@ -12,5 +12,8 @@ target/
 tools/arduino-cli.exe
 release-assets/
 release-incoming/
+# Host-specific deployment evidence, firmware backups, credentials and caches.
+# Preserve locally; canonical source and tooling live outside this directory.
+/outputs/
 services/client-management/node_modules/
 services/remote-panel/node_modules/

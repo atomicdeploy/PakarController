@@ -1,5 +1,864 @@
 # PakarController comparison receipts
 
+## Staged correction-preview ownership controller
+
+Read the entire existing Flutter pixel_correction_preview.dart, SHA256
+16f75de8eacb1824b2b79f331e69697041a08c5f95b3a2102765f53ce314e8bd,
+and actual complete PCController pwm_control.dart at unchanged inventoried
+eda6596550cfb72833b1fddcdfca660ced88f2e7da3af0ee63ce7d0e7c3d55eb.
+The canonical installed donor matches; the original inventoried checkout is
+unavailable. PeripheralMirror was consulted only as a lifecycle slice, not a
+new full-file review. Firmware PixelCorrectionStore and relevant HTTP/USB,
+capability and command-dispatch contracts were inspected before adaptation.
+
+assets/web/correction-preview.js adapts the actual Flutter lease controller,
+reusing canonical correctionSources with injected original-route send/read,
+clock and notification hooks. Explicit start only; 280ms edit coalescing;
+uint32 saved revision/lease fences; exact active_sources/base/remaining readback;
+latency-adjusted renewal and expiry; no guessed owner cleanup or uncertain
+mutation replay. Cancellation before acquisition/readback, foreign renewal,
+route replacement, saved revision change, queued edits and expired in-flight
+renewal are covered. Each owned release is sent at most once. Unknown outcomes
+remain unconfirmed with the board's bounded expiry as the fallback.
+
+Actual helper/projection tests and JS syntax checks pass; CI registration added,
+not a claim of a full CI run. Helper SHA256
+55aa374ed73c57a940a3b9fa65207250b70a306eb7982ecc68c0c23f10f1e72d;
+test SHA25686d135e460c8406eed4d031e3e97327b0d18a5219ea0d3237fea72876d2b6d32.
+This is deliberately staged and NOT embedded or UI-wired. Existing firmware
+has fenced preview HTTP/USB routes but no named WebSocket preview command.
+No unsupported wire command or automatic LED preview was invented. Explicit
+controls, shared pinned transport/context authorization, foreground/panel and
+save/reload/disposal integration remain open, followed by rendered and device
+acceptance. Canonical Web package/preview are unchanged; no rebuild, board
+contact, native/APK build, deployment, new commit or all-parity claim.
+
+Ledger generation passes:391 reviewed/4697files,4306pending,289known gaps.
+The scoped issue2 comment attempt failed during GitHub CLI's GraphQL request:
+the authorized localhost8118 proxy connection was forcibly closed. After
+consulting github-coordination and its actual runbook, a read-only REST comments
+check failed the same way. No blind resubmission; publication is unconfirmed
+and must first be checked for duplicates after network recovery. The preceding
+published comment6405340227 remains the last successfully verified receipt.
+
+## Pixel-tool presentation uses the shared durable workspace
+
+Verified unchanged Pealayer src/ui/workspace_profiles.rs source hash and its
+previously fully read stable-ID ownership. Extend the existing canonical Web
+workspace writer and sanitizer, not a second storage key or persistence loop.
+Map view/filter/open, Advanced disclosure and expanded rule fingerprints restore
+per immutable board/application through reboot/reload. Duplicate rule occurrences
+have distinct presentation keys. Only freshly read canonical rules may match;
+changed/unmatched rules stay closed, and stored presentation never reconstructs
+correction settings, observations or pending commands.
+
+Equal snapshots and delayed programmatic toggle events do not schedule writes.
+Live status never writes presentation. Owner-transition fallback retains only
+sanitized scoped data, while explicit local changes use the existing coalesced
+writer. Rule edits stay local/explicit-save-owned; these fingerprints are not
+executable configuration. Existing verified-load/readback still owns rules.
+
+Actual module/core tests cover reload/reboot, duplicate/changed-rule matching,
+no passive writes or extra restore requests/commands, secret/unknown-field
+exclusion, fresh-config authority and board/application isolation. App/workspace
+and single-source checks pass; full/onboard HTML SHA256
+64ff59a7b22d89162c426e99ee8a6f0fd9a947c58143a8d76d462b5ebca2f601,
+499133 raw/140362 gzip bytes. Local mixed candidate; no source commit or board/
+app deployment. Actual expanded browser/touch/RTL/restore acceptance remains open.
+
+The authorized localhost8118 proxy restored GitHub metadata reads after direct
+TLS timeouts. Latest comments show the circle/rule-window checkpoints were not
+posted; publish those together with this checkpoint only after final ledger
+validation, preserving the distinction between local candidates and pushed code.
+
+Publication completed after that validation:
+https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6405340227.
+This supersedes the earlier pending-comment notes, not their runtime/visual or
+uncommitted-source limitations.
+
+## Per-rule focused correction windows
+
+The actual Flutter operationOption and complete PixelCorrectionDiagram methods
+were reread at their unchanged hashes recorded in the previous checkpoint;
+Pealayer NumericValueControl was reverified unchanged, not falsely recorded as
+a new donor file review. Adapt the clamped six-slot window using prior rules
+through the selected rule, while honoring actual global/per-row enable flags.
+An optional collapsed Rule preview includes the operation explanation, highlighted
+wire slot and existing projected source colors. Descriptions and title include
+Persian copy. Invalid current or preceding numeric drafts clear the diagram.
+
+Extracted mappingPixel/paintDiagram are shared with the full Applied/Draft map;
+no second projection, color validator, transport, subscriber or persistence
+writer. Compact28px circles follow Flutter's compact diameter and wrap without
+stretching or changing diagnostic pixel size. Closed views build no pixel nodes.
+Live colors preserve nodes; reorder carries the view with its rule. Retired
+disclosure callbacks are fenced; previewOpen never enters canonical saves.
+
+Actual DOM tests cover prefix order versus later rules, disabled flags, first/
+last/short-strip windows, lazy/open behavior, no requests or dirty-on-expand,
+live node retention, invalid dependency clearing, reorder and retired owners.
+Focused control geometry, app/workspace and single-source checks pass. Full and
+onboard HTML SHA256 9a65e27a9650cc5417a3e8bc04c29ad41938db6ac130a8a317357e78d9d0edc2,
+495983 raw/139525 gzip bytes. These are local mixed-workspace candidates, not
+committed/pushed code, firmware/app deployments or hardware acceptance.
+
+Expanded browser/RTL/touch checks remain blocked by the existing nonresponsive
+input. Rich per-option dropdown diagrams and durable disclosure preferences are
+not claimed implemented. GitHub read-only refresh again failed TLS handshake;
+publish this checkpoint and the preceding circle checkpoint after recovery,
+checking comments first to avoid duplication. No production board contact.
+
+## Correction wire/source circles and passive RGB updates
+
+Reread complete actual Flutter pixel_corrections_editor.dart at unchanged SHA256
+8f2332519d2fbf57767e5999201172d1ffcd1be9010faf4b1bd2289093d5f80c,
+complete Pealayer NumericValueControl and canonical PCController PwmSetpointControl
+at their inventoried hashes. Original PCController indexed checkout is unavailable;
+the installed canonical source was read and its bytes match the ledger.
+Read page observedRgb/mappingPreview and LedGrid pixelFrameJson/presentation
+function slices; neither whole page nor whole firmware file is newly certified.
+Published RGB is pre-correction scene data, so shifted wire slots must reference
+their projected source's color rather than their output index.
+
+The canonical Web Applied/Draft map now adapts Flutter PixelCorrectionDiagram:
+fixed32px circles, output number above, source number inside, crossed black,
+dashed unavailable color and luminance-selected ink. Existing current peer and
+published-frame validation excludes pending/malformed/capacity/topology mismatch.
+No new fetch/poll/subscribe loop, mutation, preview lease or persistent writer.
+Colors/focus update existing circles rather than rebuilding480 elements per
+frame; unrelated status preserves DOM identity. Closed maps remain lazy.
+
+Actual feature DOM tests cover projected colors, black/unknown semantics,
+accessible labels, source contrast, stale topology, pending publication, lost
+peer, zero new requests and stable nodes across RGB/telemetry updates. Focused
+control geometry, app/workspace and single-source checks passed. Full/onboard
+HTML SHA256 be965146dc82d636d16c2832931a7c2123aea9d92b6174bfbff10f13d006bbd8;
+491131 raw /138087 gzip bytes. An added invalid-cursor focus regression passes;
+clearing cursor text immediately retires its prior map highlight. Local mixed
+candidate only, no source commit or
+production deployment claimed.
+
+Existing preview refreshed after confirming no active correction draft. The
+unchanged collapsed-map screenshot matched the prior425f4b6d... bytes exactly;
+the existing web-diagnostic-workspace-current.png was reused without another
+SSD write. It does NOT establish expanded circles, responsive/RTL/touch or
+browser interaction acceptance. The previously nonresponsive input blocker and
+outstanding manual-opening request remain; no repeated blind input used.
+Per-rule focused-window/operation diagrams remain unfinished.
+
+## Diagnostic drafts use the existing durable workspace owner
+
+Reread complete Pealayer src/ui/workspace_profiles.rs and verified original-byte
+SHA256 410d274f51e5e7db7ce81582d36166a97240b097e993cec5fee8707a95183e2f.
+Read the actual Flutter PixelDiagnosticWorkspace constructor/observe/snapshot
+slice, not a newly certified complete-file import. Adapt stable board/application
+identity and bounded cursor, color, group and advanced-option drafts into the
+existing Web workspace snapshot/writer. There is no second storage key or writer.
+Only deliberate local edits, explicit live-cursor import or confirmed probe
+navigation update that draft. Live RGB/status observations never schedule writes.
+Restoration is passive and visibly local; no commands, pending operations,
+observations, revisions, authority or secrets enter persisted diagnostic data.
+Incomplete bounded numeric text remains editable rather than being accepted as
+wire data. Core owner-transition fallback preserves the prior peer's saved draft
+when the feature owner is between peers.
+
+Actual module/core DOM-storage tests cover reload/reboot, application and board
+isolation, malicious/oversized fields, invalid timing text, no live-update writes,
+and zero restore requests. Focused app, control, route, transport and state checks
+pass. Full/onboard source/gzip/header equality passes: HTML SHA256
+85662691a9bd6fb4376ea584cad4a1232be0597395a5784c34790588b0e3c59f,
+486250 raw /136805 gzip bytes. These are local mixed-workspace candidates, not
+a new commit, device deployment or production acceptance.
+
+Refreshed existing simulated diagnostics preview after checking it had no
+correction draft. Screenshot ../../outputs/PakarController/web-diagnostic-workspace-current.png
+SHA256 425f4b6d94957193cc0dfacbdcd664e2c440a8aca66aa6cb45a30da8370b1830
+was inspected at1280x720. It deliberately matches the unchanged basic layout;
+it does not prove draft restoration, expanded Advanced controls, real browser
+input, responsive/RTL/touch behavior or physical output. Existing browser input
+blocker remains open; no repeated blind input attempt or production contact.
+
+## Advanced board-owned pixel diagnostics
+
+Read full current mobile/lib/pixel_diagnostic.dart (SHA256
+c5143cb176678151bc81273fbd7ebe7d666d9a145f400efc65ac1a8e7ecb817c),
+the complete commandPacket function from command_wire.dart (file SHA256
+1bfce8bc4fa9ca96f6c70c9f3a1ba35d8e8a6f419ab6127e84b910feb81f50a3),
+actual firmware pixel-diagnostic handler, complete BoardCore PixelDiagnostic
+and DiagnosticReceipt contracts. Canonical Web now exposes acknowledged
+effects/timing/brightness and Solo/Overlay under Advanced probe. Shared numeric
+drafts and transport remain authoritative; no new renderer, loop or raw stream.
+Actual extended observations are validated fully; exact options/revision and
+published frame are required before confirmation, with at most one pinned
+/api/status?pixels=1 read and no mutation replay. All off explicitly uses clear,
+solid defaults even if the local timing draft is invalid or overlay was selected.
+
+Actual workspace/transport tests cover zero editing commands, typed numeric/
+boolean fields, malformed extended observations, bounds, live options, absent
+capabilities, invalid drafts, safe All off, mismatched timing and unpublished
+frame rejection. App/control/routes/single-source/state-presentation checks
+and full/onboard builds pass. HTML SHA256
+e2cd8c995230842e89017138ad38145a522cb5363185c9b4a436aabb726fb81a,
+483439 raw /135766 gzip bytes. Published-frame revision is bounded to uint32.
+No physical board contact, unrelated build,
+production deployment or new pushed source commit. Rendered Advanced controls,
+touch/RTL and real dynamic output acceptance remain open; the fixture does not
+advertise advanced diagnostic capabilities. Manual Wire map opening request
+remains outstanding; no stalled browser action retried for this source pass.
+
+## Local draft wire-map preview
+
+Read full existing Flutter pixel_corrections_editor.dart and the actual
+PixelCorrectionsPage.mappingPreview method. Reused the existing port of its
+pixelCorrectionSources, keeping applied board sources distinct from explicit
+local Draft view. Enabled black/remove/shift rules project without commands;
+invalid numbers clear the old projection and show validation. Filter/no-results,
+peer-model view retention, explicit mode semantics, lazy closed-map construction
+and zero GET/command counts pass in actual workspace tests. App/single-source/
+controls checks and full/onboard low-write builds pass. HTML SHA256
+58013d068a6e257ceedf180b4383b92608db77bbbcfc1067cd574465dcbcf707,
+475196 raw /133647 gzip bytes. No production contact or unrelated build.
+
+Refreshed the owned draft-free preview: AX and desktop screenshot show the new
+Wire map entry. Its advertised Expand secondary action returned without any
+visible expansion; stopped input, requested manual Wire map/Draft map opening.
+No locator/coordinate/alternate-driver retry. Saved/inspected
+web-wire-map-entry-desktop.png SHA256
+425f4b6d94957193cc0dfacbdcd664e2c440a8aca66aa6cb45a30da8370b1830.
+This proves only the collapsed entry, not new expanded controls or physical
+behavior. Complete circular raw-RGB/focused diagram parity, interactive layout,
+RTL and board live-preview leases remain pending. Local mixed-worktree candidate,
+not a new pushed commit or deployed firmware.
+
+## Correction-row draft and callback safety
+
+Before implementation, the actual workspace regression showed cleared Pixel1
+reverting to1 on Add rule. Reread complete NumericValueControl and extended the
+same owned-draft/explicit-commit contract to correction addresses and offsets.
+Typed strings now follow rules through reorder/redraw and peer return; model
+validation blocks Save and only canonical rule fields are serialized. All row
+toggles/kinds/inputs/steps/cursor/reorder/delete require original peer/model/row
+ownership, so old callbacks cannot affect replacement rows. Regression tests
+cover all those stale callbacks, same-peer retired delete, pixel/offset reorder,
+invalid Save blocking and valid normalized Save/readback. Focused workspace,
+canonical app and single-source tests and both low-write builds pass.
+HTML SHA25688646a90247cf18d3d4ef508bf0beaa4d15d4745c36f926ecb49001d4b7e0ce1,
+473054 raw /133137 gzip bytes. Preview assets refreshed, no board contact or
+unrelated build. Browser input/group/correction interactive acceptance remains
+open. Flutter live correction-preview support is still an explicit Web parity
+gap, not implemented by this safety fix. Source remains local mixed work.
+
+## Pixel-group incomplete numeric drafts
+
+Regression failed before implementation: a cleared group count became5 when
+adding another group redrew the rows. Reread complete actual NumericValueControl
+and pwm_control and reused their owned-draft/validated-commit separation. Typed
+strings now live in local rule drafts, survive redraw and original peer return,
+set aria-invalid and block Save at model validation as well as the UI. Explicit
+steppers recover the last valid value; normalized API overrides omit draft text.
+Empty,0,256 and1.5 cases, invalid callback blocking, recovery, peer return and
+valid Save/readback pass in actual workspace tests. Canonical app/single-source
+checks pass. Full/onboard SHA256965afecb7ce963a324a95380032e49f8cca316cdbf5aecc67e1f72bae4378976,
+472096 raw /132888 gzip bytes. Canonical preview assets refreshed; no production
+board contact, unrelated build, deployment or new source commit. Browser input,
+group editor rendering and responsive/RTL acceptance remain open; DOM tests do
+not substitute for them. Same donor/target/test ledger updated selectively.
+
+## Retired pixel-group row callback regression
+
+Reproduced an actual failure before the fix: invoking an old boot's retained
+Use default callback removed group1 from the replacement draft ([5,7] became
+[7]). Inputs, +/- and reset now capture peer/boot, model, render generation and
+row identity and require current nonbusy ownership. Old-boot and same-peer
+redraw regression tests pass. Actual complete NumericValueControl and canonical
+PCController pwm_control were reread; SHA256 matches inventoried6f1e99cd and
+eda65965 respectively. Consultation's original PC source path was unavailable,
+but the canonical installed checkout was available and explicitly byte-verified.
+
+Focused workspace/app/single-source/control tests pass. Full/onboard HTML:
+8b5fa957edfced5e5783c9b2b412cf15d1c177f9a3d7a9c4253bebe0027d223c,
+471643 raw /132769 gzip bytes. No production board contact or unrelated builds.
+Browser inventory/read-only AX/screenshot work again; no stalled input or
+viewport operation retried. Fresh #/diagnostics fixture tab inspected at1280x720;
+saved web-diagnostics-current-guard.png has the same static pixels/hash as the
+prior desktop capture e14a8a470f6ef6637d07aab03f665c2ee641245124a8ad94fac35f7febecb031.
+It does not expose the fixture-unadvertised group editor or prove the callback
+fix visually. Dialog/touch/RTL and viewport restoration remain unverified.
+Candidate is still local mixed work, not a published commit or deployment.
+
+## Pixel-group discard guard uses the canonical dialog
+
+Actual complete Pealayer EffectGroupDialog reread at the unchanged inventory hash;
+actual Flutter pixel_groups_page.dart read fully and correction reload guard
+inspected. Reused the shared in-app modal for Web group Reload instead of native
+browser confirm. Localized title/close, Cancel focus, one pending prompt and
+original model/peer/boot ownership retain drafts on cancel or device change.
+Capability loss/disposal dismiss the decision; missing modal support fails closed.
+Approval reads only saved group configuration; it never writes or starts a preview.
+
+Focused actual workspace tests cover cancel, duplicate prompt, approved read,
+old-boot late approval, original draft retention, capability loss, missing-modal
+failure and disposal. Test authoring initially called the parent workspace's
+nonexistent dirty accessor, then attempted to add an already-customized group;
+fixed the fixture assertions and selected a new group. Final tests pass, along
+with shared dialog, canonical app and single-source tests. Full/onboard SHA256
+e349b48a13230944837ca36ba5c9ffde8423a937d06a24dc1082e4e9363f5933;
+471348 raw /132686 gzip bytes,221 original IDs and292 named functions retained.
+The live preview serves the refreshed canonical source. No browser input retry,
+board contact, production actuation/update or unrelated component build occurred.
+Rendered keyboard/touch/RTL acceptance remains open; this is a local candidate,
+not a published source commit or deployed firmware.
+
+## Shared Web dialog accessibility and action lifecycle
+
+Reread the complete actual Pealayer EffectGroupDialog.tsx (live inventory hash
+8c90f7a85286efada6d5a1e24212a03dd1ae14e51bea1767f8d195a538ec8f80).
+Adapt localized explicit actions, editor autofocus and destroy-on-dismiss into
+the existing HTML dialog, not another framework. Close labels now follow the
+caller's locale; descriptions have aria-describedby. Correction discard focuses
+Cancel and the palette focuses its search input. Async footer actions admit one
+owner, expose busy/disabled state, recover after failure and ignore callbacks
+from dismissed controls; programmatic peer-retirement close stays available.
+
+New tests execute the actual shared component: labels/description IDs, intended
+focus and restoration, duplicate actions, retained false result, retry after
+failure, late completion/retired controls and backdrop bounds. The initial tiny
+DOM fixture lacked SVG classList; corrected that fixture, then tests passed.
+Feature-workspace, canonical app/control/single-source and route tests pass.
+The new test is wired into quality CI; full CI was not run. Full/onboard builds
+match SHA25602cd620b98e81e6fce4ace17362a5d9feaf70f4fe511a135bf2c218143d0ef21,
+470074 raw /132630 gzip bytes;221 original IDs and292 functions retained.
+
+Canonical preview files are refreshed. No browser input/viewport retry after
+the recorded stalls; native Escape/focus trap, touch and Persian RTL rendering
+are still unverified. DOM tests are not rendered or physical acceptance. No
+board contact, firmware flash, native/APK build or production app replacement.
+Changes remain a local mixed-worktree candidate, not a new published source commit.
+
+## Canonical Web workspace fragment navigation
+
+Completely reread actual Pealayer App.tsx through EOF (live/inventory SHA256
+ba2d7a35e2f887ec556b681cca24aaa6f263295208cbc80678bc248b61949845).
+Adapted surfaceFromLocation/setActiveTab/followLocation into existing Studio:
+explicit allowlist, fragment-only pushState preserving path/query/state, identical
+URL skip, hashchange/popstate restore without adding history, and capability-safe
+pending selection while panels arrive. Existing card/draft/model/transport owners
+are retained. Generic player-tab storage is not another Pakar workspace store.
+Supported workspace routes: #/controls, #/diagnostics, #/effects, #/hardware,
+#/api and #/all. Network/Firmware settings may be guarded modals, so they are
+excluded until draft-safe modal history exists; no half-working routes advertised.
+
+New actual-helper/navigation/apply DOM tests pass allowlist rejection, path/query
+preservation, equal-history skip, Back/Forward callbacks, history-unavailable
+behavior, late capability arrival and no hidden-panel enablement. Wired this test
+into the existing quality phase, preserving concurrent CI edits. Existing Web
+feature/app/single-source checks pass; CI runner syntax checked, not full CI run.
+Full/onboard HTML identical SHA256
+f3d45e1a8ac382bf677e856621c305dff401642477bc7d356a60d4ec56e8f1d1,
+469180 raw /132356 gzip bytes;221 original IDs and292 named functions retained.
+
+Created fresh canonical http://localhost:63200/#/diagnostics preview (same app,
+not NG). It visibly selected Diagnostics with both original correction/diagnostic
+cards and current fixture state at1280x720. Screenshot:
+outputs/PakarController/web-routed-diagnostics-desktop.png SHA256
+e14a8a470f6ef6637d07aab03f665c2ee641245124a8ad94fac35f7febecb031.
+Captured first route candidate2695f007; final candidate only narrows modal-only
+allowlist and comments, with unchanged Diagnostics DOM/CSS. Add-rule input still
+did not change state, so no rule edit/save is claimed. Responsive viewport set
+timed out and reset also timed out; temporary-override restoration is unverified.
+Desktop route rendering is real fixture evidence, not click/history/touch/RTL or
+hardware acceptance. No board contact or unrelated build/deployment.
+
+## Canonical Web correction selected-cursor action
+
+Added a compact shared pointer-icon action per rule. It copies the current
+selected diagnostic OUTPUT cursor into that rule's local pixel field; it never
+guesses a lit/raw source, starts diagnostics, applies preview or writes flash.
+The accessible name/tooltip includes Selected cursor (n) and the target rule.
+It uses the existing model/probe and bounded numeric field rather than a second
+cursor owner or polling. Missing capability hides it; invalid/current-unavailable
+cursor disables it. Captured owner/model/row checks reject late callbacks after
+peer/boot replacement or row disposal.
+
+Read actual Flutter PixelCorrectionsPage.selectedDiagnosticPixel/importPixel and
+its compact action (file SHA256392cc722fcfcf4731c6ef8880d31d26ba52a4a926be32f8b415669e42a9513a0).
+Reread complete Pealayer NumericValueControl.tsx at unchanged6f1e99cd hash; retain
+its bounded local draft distinction. Fine/coarse/clipboard donor omissions remain
+explicitly pending; this action does not claim their import or cross-client parity.
+
+Focused DOM checks passed copied cursor21 rather than projected raw22, unsent
+selected34 surviving another client's newer observation, invalid input not copying
+an old value, capability-loss hiding and late old-row rejection after reboot.
+No diagnostic/configuration commands were sent by these operations. Existing
+revision/readback/navigation/stepper/draft tests passed. App contract and
+single-source checks pass; full/onboard HTML match SHA256
+a060ca166d746dc1efcea9312c6fa5abbced808c2ebe22e15d66559a6e687bf3,
+467596 raw /131809 gzip bytes;221 original IDs and292 named functions retained.
+
+Only Web assets built; preview fixture reads this canonical source per request.
+Known browser-input blocker remains, so actual new-action responsive/focus/touch/
+RTL acceptance is still open. No screenshot, real-board or physical acceptance
+is inferred. No production board contact, deployment or unrelated build.
+
+## Canonical Web pixel-tools navigation ownership
+
+Found an actual duplicate dispatch in feature-workspaces.js::reveal. It called
+the supplied callback with the target, then called Studio reveal without any
+target. Studio interprets that second call as All panels, overriding the requested
+Diagnostics/Corrections page. Now exactly one owner receives the exact target:
+the supplied callback, or the existing Studio fallback when no callback exists.
+The target scroll runs once. No new navigation state, API or framework was added.
+
+Read complete actual PCController card-layout-controls.tsx again. Get-FileHash
+matches inventory de67f2ac9dd8037e354b98227616ed8c207379dbc8205692587bc07a6392be83,
+although the generic lookup lacks its current live root. Its onShow(id)/owned
+callback convention is preserved. Pealayer's complete seven-line workspaces.ts
+was consulted; no duplicate WorkspaceSummary registry or helper was imported.
+Existing panel-move/focus/responsive parity omissions remain open.
+
+Focused DOM tests invoke actual pixel-tools link handlers: injected callback is
+called exactly once, fallback is not called afterward, fallback-only mode receives
+the exact card, and the target scrolls once. Existing correction controls, draft
+guards, peer fencing and diagnostics tests pass; canonical app and single-source
+checks pass. Full/onboard HTML match SHA256
+1767973a323defd91a260c76b0b688b4f9c69b3a03c68cafe85a00179b20730a,
+465654 raw /131282 gzip bytes;221 IDs and292 named functions retained.
+
+Browser preview was made visible for a bounded mouse/Enter comparison. Neither
+changed its selected Controls workspace or focus; that browser-input blocker
+remains separate and is NOT claimed solved by this source fix. No new screenshot
+is presented as an interaction result. Preview source is current per request;
+actual new-control responsive/RTL and board acceptance remain open. Only Web assets
+built; no production board contact, APK/native/firmware build or deployment.
+
+## Canonical Web correction address controls
+
+Reread the entire Pealayer NumericValueControl.tsx (inventory/live SHA256
+6f1e99cd5ae8ef0bae30d43a86f22a22371c6543498c5d8938e486cff151d218), the
+actual Flutter correction editor and pixel_correction_address.dart. Adapted
+bounded +/- for pixel and signed offset with named square icon buttons, disabled
+endpoints and recovery from invalid typed drafts. Actions remain local and never
+send diagnostics or write flash; Save remains the explicit persistent operation.
+Custom modifier steps/clipboard menus remain pending, not implicitly imported.
+
+Ported actual Flutter output-slot projection through preceding enabled draft
+rules, not a raw index assumption. Flutter address source SHA256:
+d746e76f0a761ff2db83a35bd182ee7ba65edb67ad3712a4a6015e91cd242aed;
+editor SHA256 8f2332519d2fbf57767e5999201172d1ffcd1be9010faf4b1bd2289093d5f80c.
+Hints show wire/raw/group/within-group and approximate logical cell or key
+box/button/indicator. Prior black/removal/shift, disabled rules and custom counts
+are respected; unknown/stale layouts/maps or invalid prior inputs cannot invent
+a cell. Existing canonical mapping owner is passed as a getter; no second read
+loop/transport/model. Logical names use textContent, not markup.
+
+Focused DOM/projection tests passed signed bounds, invalid draft recovery, no
+writes while stepping, positive/negative/removal projections, remapped cells,
+custom counts, stale/missing layouts and key box5 group distinction. Existing
+correction save/revision/flag/peer and diagnostics tests passed. Appearance10,
+canonical app contracts and single-source package checks passed. First build
+correctly rejected dynamically composed translation literals; changed to explicit
+labels, then full and onboard builds succeeded. New HTML SHA256:
+85de040bcd0a0706f78abf7fe3cdc3018dd6a469bcdac772e9515b366253ddf3,
+465627 raw /131278 gzip bytes;221 original IDs and292 named functions preserved.
+Address projection is cached by edits, peer/session, role, layout and mapping;
+unrelated high-rate status/RGB updates do not recompute or repaint every rule.
+
+Only affected Web assets built. Preview fixture serves canonical source per
+request, but the known browser-input stall leaves actual new-control layout and
+RTL/touch acceptance open; no screenshot or hardware claim is invented. No board
+contact, firmware/APK/native build or deployment. Concurrent edits preserved.
+
+## Canonical Web correction reload draft guard
+
+Replaced only the correction editor's blocking browser confirm with its existing
+shared WebUI.dialog. The actual Flutter PixelCorrectionsPage.reload Cancel/Reload
+guard and complete Pealayer EffectGroupDialog.tsx were read; donor live SHA256
+8c90f7a85286efada6d5a1e24212a03dd1ae14e51bea1767f8d195a538ec8f80 matches
+the inventory. Adapted retained draft, explicit localized actions, semantic icons
+and destroy-on-dismiss, not Ant/React or media-group business. Generic icon-picker
+and preview omissions remain pending in the same evidence ledger.
+
+Focused DOM tests passed Cancel preserving edits/no reads, explicit Reload,
+duplicate request suppression, stale peer/boot dismissal, original draft retention,
+disconnect/disposal cancellation and missing-dialog fail-closed behavior. No
+confirmation can silently replay a write. All existing correction revision,
+enabled flags, readback, diagnostics and custom-group tests passed too.
+Canonical app contracts and single-source checks passed. Full/onboard HTML match:
+SHA256 2c4cb8069c6a71746becc26b277d9ac1c67c118032b728888e83b10be320934f,
+457946 raw /129116 gzip bytes;221 original IDs and292 named functions preserved.
+Only affected Web assets built; no native/APK/firmware build or board contact.
+
+Existing preview fixture reads canonical Web source per request. Its old tab
+remained stalled after the prior browser confirmation. A fresh isolated desktop
+preview rendered the updated source, but navigation clicks did not change its
+pressed workspace or heading via either accessibility or DOM controls. Therefore
+the new dialog's actual rendered interaction/focus/RTL acceptance remains OPEN;
+no screenshot of an unrendered dialog is presented as proof. Production/hardware
+and real board readback remain separate. Mixed local work was preserved.
+
+## Canonical Web correction fixed actions
+
+Adapted the actual Flutter correction editor's fixed-controls / scrolling-rules
+split and reread PCController mobile/lib/unified/controller_dialog.dart in full,
+SHA256 c62924793bf719fc1a750e51e684bdf22c3ead78b03c1b6b2ea96cf493cf9fb1.
+The existing common controls and shared transport remain authoritative; no new
+runtime, polling, network owner or persistent write was added. Pealayer's complete
+DesignerFieldLabel source was consulted without inventing another label system.
+Save, Reload, Add and Apply corrections now sit before an independently scrollable
+rules region. The region is keyboard focusable and named, reserves scrollbar space,
+and has a short-viewport fallback. Persian region labeling uses shared copy.
+
+Focused web_feature_workspaces, web_app_contract and web_single_source passed.
+Full and onboard canonical HTML are identical: 455973 raw /128568 gzip bytes,
+SHA256 e93a475217a7b494a589891314bac3786d98bd3e7287a6be1b8037687bfb4683.
+The generator preserved 221 original control IDs and292 named functions.
+Only Web assets were built; no APK/native/firmware image build or deployment.
+
+Existing phone-width loopback preview added six disposable local rules. End moved
+the named rules region to its last rule (scrollTop1002.4, viewport168, total1169)
+while Save, Reload and Add remained visible. Actual screenshot:
+outputs/PakarController/web-corrections-fixed-actions-phone.png SHA256
+d3a749293cc5fc14c7ff6d8dc86fc5e058b02f8a83a4014fd5c2cc138192ec48.
+No Save was sent. Discard was requested, but browser focus commands then timed
+out; confirmation completion and clean-preview restoration are not verified.
+This is simulated UI evidence only. Desktop/tablet visual coverage, production
+save/readback and complete feature parity remain open. No board was contacted.
+
+## Canonical Web correction rule toggles
+
+Found a real parity/data-loss bug in assets/web/feature-workspaces.js:
+parseCorrections discarded rule.enabled, so saving another edit could re-enable
+a disabled rule. The parser now preserves strict booleans (only absence defaults
+true), save/readback compares enabled, and newly added rows explicitly set true.
+Each row has a keyboard-accessible checkbox; disabled rows use a dashed border
+with unchanged geometry. Checkbox edits and reorder remain local until Save.
+Numeric validation excludes checkbox values. Persian Enable-rule copy is shared
+through the existing localization generator.
+
+Read the actual PCController pwm_control.dart through EOF at its unchanged
+eda65965 hash and the actual Flutter correction editor/model and row checkbox.
+The donor's edit versus observed/commit distinction is retained. The actual
+Pealayer DesignerFieldLabel was also reread; existing common control assets stay
+the presentation owner, with no second framework or runtime. This is a narrow
+correction-editor parity fix, not completion of all donor or Web requirements.
+
+Focused web_feature_workspaces_test passed malformed flag rejection, old missing
+flag normalization, disabled-state reorder/save preservation and enabled-field
+readback mismatch. The test DOM's value setter now mirrors the browser's string
+coercion, exposing numeric-rule saves rather than only empty-rule tests. Existing
+peer/revision/disposal and diagnostics coverage passed too. Appearance10,
+web_app_contract and web_single_source checks passed. Full and onboard builds
+share exact HTML SHA256
+ed5e3a3481327163861041afb4f1b43497c6611b5d7eb4b1a9eec8f71e4bbcd5:
+454517 raw bytes /128262 gzip bytes;221 original control IDs and292 named
+functions retained. Only Web assets were built; no APK/native/firmware build.
+
+Existing preview http://localhost:63200 serves the updated canonical source.
+Actual phone-width interaction added two local rules, toggled rule2 Off and
+visually confirmed compact controls, icons and dashed disabled styling. The
+test draft was discarded using the editor's confirmation; Save was not sent.
+Screenshot outputs/PakarController/web-correction-row-toggle-phone.png SHA256
+8548050336f30ded7dd67c6c981ad9c5feea42f87422ed9cceaec72ae5e29654.
+The loopback peer remains visibly SIMULATED; its unsupported WebSocket reports
+retrying and is not a live-board connection failure. Real board writes, firmware
+delivery, physical behavior and broader responsive/parity acceptance remain open.
+Forty-six previously-current source/generated/test references were rebound only
+for this reviewed asset/generator change. No production board was contacted.
+
+## Keycontroller box5 winning-motion repair
+
+Live identity esp32s3-b81f3fbb0684, boot461e1707fdbc77b1eebfe8f8e013eae1,
+winner5, enabled_mask63. Actual saved groups1/3/5/7 had winning Ring; groups9
+and11 through17 retained the old winning Pulse defaults. Group10 (box5's second
+group) correctly had Pulse. Color overrides were false and correction rules
+were empty. This is a verified configuration cause for the reported two pulsing
+green groups, not evidence of an electrical fault.
+
+One identity-fenced POST /api/game/settings sparsely set win_motion2 for group
+IDs9,11,13,15,17. Accepted/saved/avr_applied were true. Readback confirmed all
+nine first groups Ring, second groups Pulse; winner5 and boot were unchanged.
+Colors, timing, enabled mask, audio and scene were not reset. A second narrow
+settings save also corrected those same first groups' old losing Solid defaults
+to Ring, matching existing boxes1-4. Exact readback confirms all nine first
+groups use Ring for win and loss; second groups retain Pulse winning and the
+previous SharedChase losing setting. That save again retained winner5 and boot.
+Five read-only /api/status?pixels=1 samples then showed all five box5 first-group
+frames spatially varied and changed over time. Its second group was uniform in
+all five frames and changed brightness over time (00a700,00c900,00ca00,00a200,
+00d900). LED driver failed0. Physical visual confirmation is requested separately.
+
+ASUS initially associated to the AP but had no gateway ARP response. A host-only
+disconnect/reconnect of the saved keycontroller profile restored access. The
+board's station profiles already contain dlink priority0, DRS Tether priority1
+and ledcontroller priority2; auto_switch=false. No credential/profile rewrite
+was necessary. A GET /api/peer/info relayed through keycontroller resolved
+ledcontroller.local and verified esp32s3-907069eaaf34, phase complete with no
+error. This proves peer reachability through the current network, not a forced
+station-failover/AP-association test.
+
+Source follow-up restores role defaults for all nine boxes: Ring first group,
+Pulse winning indicator, existing SharedChase losing indicator. Common-state
+motion changes affect matching illumination defaults only, preserving indicator
+motion and per-box deviations. Explicit per-group edits retain their own path.
+The actual PCController effect_editor.dart was reread completely at its recorded
+f6db1d70 hash; its selective changeStep/local-draft model informs preservation of
+independent entries. No C++ renderer is claimed imported from that Dart source.
+
+Canonical test-game-role.ps1 passed both compiled roles, all-nine winner frames,
+default roles and common-editor override preservation. The first compile hit a
+GCC optimized adjacent-byte store warning; whole-Group initialization replaced
+the adjacent member writes, without suppressing warnings. Source hashes:
+KeyPresentation.h a803f0bbbf415be558bc0a89bce0ba1633188f87d6a614f0242c9f25a5be489f;
+application.ino99b35b34dde5c187928d0468b26f9b09e8d3ad7314301fcdf187c49d6a2113ec;
+renderer test2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59.
+Only fourteen previously-current application and four renderer-proof hashes
+were rebound after the narrow changes. This source follow-up has not been
+flashed; the running fix is the saved configuration above and needs no reboot.
+
+## Compact diagnostic pixels: final tablet deployment
+
+The user's correction to the first installed layout is deployed: original25px
+circles and labelSmall typography, compact height, full available row width.
+The canonical warm-cache ApkPreview build completed in42.8 seconds with
+BoardProductionHold. Final0.2.8/build23 APK is62,923,649 bytes, SHA256
+`8a5a15ae1079fece640b05d48ff3af590ab40328359c80cc503df5fbf6eb0734`.
+Local artifact, ASUS staged APK and installed tablet base.apk hashes match.
+ADB install-r returned Success on the explicitly identified SM-X906B tablet;
+the separately attached phone was not touched. Settings and rollback artifacts
+were retained. ASUS Wi-Fi was found on keycontroller and left unchanged; the
+tablet independently remained connected to ledcontroller Wi-Fi.
+
+Actual final tablet checks: automatic ledcontroller reconnection; saved80-cell
+selection and LED-indicator setting retained; live white indicators restored
+without a toggle; compact diagnostic row for physical337-342; logical Cell73;
+long press on342 opens the four correction operations. The earlier same-source
+menu/editor check created an exact wire342 local draft, showed Cell73pixel6/6
+and the Cancel/Discard/Save exit guard, then discarded that draft. No new preview,
+Save-to-board, LED actuation, firmware update or reboot was requested by these
+checks. Final app PID16225 had zero E/flutter/FATAL/Unhandled lines in the bounded
+600-line process-filtered log check; this is not a soak or zero-bugs claim.
+
+Actual2960x1848 screenshots, viewed under outputs/PakarController:
+
+- tablet-diagnostics-compact-final.png: SHA256
+  `9cb608b2f651423e68e83fc111bbe63734f156b899dba5bd421e0172e2d87574`.
+- tablet-compact-long-press-final.png: SHA256
+  `38f8e17bbd34a9f551bb5cf21f6c34aad3bc13c4cd3900f218a29b0e4161d049`.
+- tablet-compact-connected.png: SHA256
+  `2daf967d44cb2f4ac5c981d17812165542d29a286350fcd95a4e778bd5599f39`.
+
+The final menu was closed with Back, leaving Diagnostics available with no new
+draft. The unrelated earlier ESP panic and wider production/donor backlog remain
+open; these app checks are not firmware stability or physical LED acceptance.
+
+## Full-width diagnostics and explicit correction shortcuts
+
+The diagnostic strip now uses its actual available width with balanced rows,
+the original 25px round indicators and compact labels. Slots fill each row;
+indicators do not grow with tablet width. Touch targets remain at least 44px
+wide and 48px high. Long press opens the existing
+imported ControllerDialog with Black, Remove, Shift forward and Shift backward
+actions. The title explicitly identifies an output slot; it does not mistake
+the projected logical source under preceding correction rules for a wire slot.
+
+An immutable PixelCorrectionRuleIntent is consumed once after a verified load
+on the active, original peer. It appends/selects a local draft without replacing
+existing edits. Rebuilds cannot duplicate it; stale peers, missing capability,
+invalid addresses and full rule lists reject it. Any existing owned preview is
+stopped first so the new draft cannot be transmitted by lease renewal. Save or
+enabling preview remains explicit. The parent route wiring preserves its peer
+fence before and after the menu and selects the linked Corrections tab.
+
+The actual PCController effect_editor.dart draft/addStep and responsive Wrap
+mechanisms, plus the already imported controller_dialog.dart, were reviewed and
+adapted. Exact donor/target/test hashes are bound in file-comparison-evidence.json.
+This does not claim complete donor feature parity.
+
+Canonical build-mobile.ps1 Test, runner34912, passed a clean full analyzer and
+30/30 focused tests: menu9 (including actual app navigation, zero POST), layout13,
+incoming intent5 and existing linked navigation3. Two first-run geometry checks
+were corrected for floating-point rect subtraction (56.000000000000014px), using
+the existing .01px geometry tolerance; UI geometry was not changed for that fix.
+The temporary aggregate was removed to avoid duplicate permanent registration.
+The preceding49 mapping/indicator/editor/exit/transport tests remain separately
+recorded below. Source is frozen and the runner handed to the parent for APK
+build/deployment. These tests are not installed-device or physical LED proof.
+
+The first installed candidate (SHA256
+`34da0e867d47a35b7236aa56f2bad573bc17a707868c9140e9df67b307e07a9a`)
+incorrectly enlarged the circles as well as spreading the slots; the user
+rejected that visual change. The original source dimensions were restored:
+25px circles, 4px label gap, 10px vertical padding and labelSmall typography.
+Canonical layout13 tests and full analyzer passed again for that narrow fix.
+The regression assertions now require fixed 25px circles and compact row height.
+The installed first candidate already verified the long-press menu, exact
+wire342 draft targeting, logical Cell73 pixel6/6 label and unsaved exit prompt.
+That test draft was discarded, not saved or previewed. Final compact-candidate
+deployment evidence follows separately; the rejected screenshot is not final
+visual acceptance.
+
+## Corrections logical-map recovery and initial indicator demand
+
+The parent observed the installed tablet showing a connected board but missing
+logical correction labels. Its read-only board check returned matching map and
+status group spans (revision0,80 groups,480 pixels) and the actual cable order;
+wire335 resolves to raw335, group56, logical cell64, pixel5/6. This was not a
+missing board mapping. The client mapping read still required two additional
+status reads and the corrections route depended entirely on parent hydration.
+
+Reread complete canonical PCController `mobile/lib/unified/transport.dart`
+(SHA256 `5263044d7abac3865b6dcc8887fa6c11ad9a1c89b8c4e2374ffcd3bcc72014c5`)
+and `effect_editor.dart`
+(`f6db1d7043b2363703f5c955d6b943cff669328a702c556048d6557f211cd821`), both
+revision `b0111ae0c80dc34149ea1044de7dd5488920301b`. Adapted PeerSession's
+single-flight, generation-fenced inventory reads, retaining the existing editor
+draft/commit separation. The producer-bound mapping GET now uses fresh full WS
+authority, not redundant status reads. Missing additive identity still requires
+status fencing; partial/foreign identity and retired configuration are rejected.
+
+Corrections independently hydrates the real map, validates custom-group spans,
+retries only failed metadata reads (maximum3,2 seconds apart), and provides a
+read-only explicit retry. Configuration events retire old maps/requests and
+trigger one fresh read. Healthy status frames cause no mapping polling. Dirty
+rules, cursor and selection are not reloaded, saved or previewed by hydration.
+The parent separately fixed restored/default indicator demand activation; these
+changes neither invent RGB nor renew full-state authority from pixel events.
+
+Canonical full analyzer and49 distinct focused tests passed: mapping transport5,
+mapping widgets6, indicator startup4, correction editor15, exit/address10,
+existing read/save2, real loopback pixel subscription1, connection lifecycle6.
+The temporary combined test entrypoint was removed after execution to avoid
+duplicate registration in the permanent suite. The six mapping widgets also
+passed individually. Independent source review found no correctness blocker.
+Scoped target hashes and additive provenance are recorded in the existing JSON
+ledger; comparison generation completed without widening any donor parity claim.
+These are source/fixture/loopback results only. Parent owns APK build, installed
+tablet hash verification and actual logical-label/RGB acceptance. No board
+configuration, LED output, firmware or device deployment was performed here.
+
+## Android asynchronous discovery failure ownership
+
+Actual installed-tablet logcat PID7058 reported UDP `Network is unreachable`
+errno101 escaping `PakarApi._discoverSsdp` and `DeviceDiscovery._udp`. Both
+listeners lacked `onError`, so surrounding awaited try/catch did not own those
+stream failures. The complete actual PCController discovery.dart and
+lanresolver/resolver.go were reread and their original hashes matched the
+inventory. The donor shares this stream-error omission; its scan-only socket
+ownership, identity probes and no-mutation policy were preserved.
+
+A shared collector now converts asynchronous socket and receive/parser errors
+to the awaited scan result, cancels its timer/subscription and closes the exact
+owned socket on success, send failure, early close or stream failure. No retry,
+new peer authority or process-wide network change is introduced. The parent
+separately observed a tablet/ASUS duplicate AP address; fixing exception handling
+does not claim to fix that DHCP conflict or prove network health.
+
+Canonical analyzer and twelve focused tests passed: datagram failures/cleanup5,
+existing discovery transport6, live pixel subscription1. Pixel events still
+cannot renew a full-status lease, authorize commands or trigger HTTP reads.
+Sibling read-only review found no regression; sustained packet-flood fairness
+of the preexisting receive-drain loop remains a separate hardening item.
+Only reviewed API/discovery target hashes and additive donor evidence changed.
+
+Canonical production-hold APK rebuilt successfully in 42.4 seconds after those
+tests. Candidate remains 0.2.8/build23, 62,890,733 bytes, SHA256
+`017f42ab2742dfca69f55eedee56c7ace2e70d9333108e93e04d54eb150fa126`.
+It includes the guarded-exit/address changes below and supersedes the d594
+candidate for the parent-owned tablet installation. This is not a claim of
+installed hash or runtime recovery; parent verifies those separately.
+
+## Flutter corrections guarded exit and logical address projection
+
+The complete PCController `mobile/lib/unified/effect_editor.dart` at
+`b0111ae0c80dc34149ea1044de7dd5488920301b` was reread along with its shared
+`controller_dialog.dart`. The actual dirty/dismiss/save/PopScope mechanism is
+adapted to the linked diagnostic workspace. Back, close and tab navigation share
+one Cancel/Save to board/Discard decision. A pending command blocks departure;
+Cancel preserves the current draft and RAM preview. Save leaves only after exact
+rules/enabled readback and a nondecreasing revision on the route's original
+connection, board and boot. Discard restores the local saved baseline and ends
+only this editor's preview lease; it does not save configuration.
+
+Each rule projects its wire address through preceding draft rules before naming
+the raw source, physical group and approximate logical cell/pixel. Custom group
+sizes and reverse physical-to-logical mapping are used, not fixed six-pixel math.
+Keycontroller uses box/button/indicator labels. Missing or stale mapping stays
+unknown; this software projection does not certify electrical wiring.
+
+Canonical `tools/build-mobile.ps1 -Mode Test -TestPath ...` passed full analyzer
+and all 30 focused tests: exit/address10, actual menu/tab integration3, corrections
+editor15, correction read/save2. The existing navigation test was updated to use
+the explicit TabBar controller and scoped tab labels (the compact editor also
+has a Corrections heading); its capability, order and no-output assertions remain.
+Two ownership tests cover boot change before the first deferred read and delayed
+tab construction after the route peer has changed. Additive donor evidence and
+comparison generation passed; unrelated donor gaps remain open. This is local
+source/test evidence, not tablet installation or physical output acceptance.
+
+Canonical `ApkPreview -BuildOnly -BoardProductionHold` completed in 48.9 seconds.
+The candidate `mobile/build/app/outputs/flutter-apk/app-release.apk` is
+62,890,733 bytes, SHA256
+`d59419e914f76e75340f64c85f939d09a52ca245700b040e0a7d3a3b87e180dc`.
+This candidate retains the board production hold and saved app preferences;
+parent deployment coordination owns tablet install and actual UI verification.
+
+## Flutter overview, hardware and settled command reads
+
+Local-only refinement uses existing shared WorkspaceHeader/WorkspaceSection
+presentation and current capability/navigation contracts. Overview exposes
+board-specific controls and connection/configuration entry points. Hardware
+uses content-sized actionable rows, expandable capabilities and bounded detail
+sheets; network choices separate title/subtitle with icons and scale-aware
+height. The footer gains semantic status color, wrapped bounded text and a
+connection settings action; Android status icons follow the application theme.
+
+Preserved low-level superseded-read fencing. Added bounded, same-owner
+read-only recovery for user-command preflight/readback and diagnostic refresh.
+The WS-first admission cancels unnecessary recovery reads when already settled;
+no write retry or fabricated fresh observation is added. Actual canonical donor
+connection_preferences.dart was read; its obsolete mandatory credentials and
+hardcoded defaults are not imported. Existing current preference ownership is
+retained. Analysis, eleven API tests, three transport admission tests and three
+phone-width/large-text/navigation widget tests passed. This is not deployed
+Android or audible AVR playback evidence; no push or deployment performed.
+
+## Flutter semantic color controls and retained selection, local source only
+
+Reread the actual Pealayer src/ui/workspace_profiles.rs stable-ID workspace
+ownership source. Reused Pakar's already adapted per-board TableWorkspace,
+coalesced save writer and semantic state commands, rather than adding a second
+preferences store or deriving state from RGB. Saved selections now take precedence
+over stale search drafts on reconstruction; all, none and subsets round-trip.
+Invalid saved selections remain empty. The naming dropdown defaults to Colors,
+persists per board, and changes labels only, including selection/lock labels.
+Configured state palette colors drive compact solid enabled actions and muted
+disabled actions; reserved borders and padded touch targets remain.
+
+Canonical mobile wrapper analysis passed. Six focused controls tests and fourteen
+workspace lifecycle tests passed, including process replacement, disconnect,
+background/resume, label persistence, count and no commands from label changes.
+Updated old button label/type test references and inspected affected comparison
+anchors; unrelated peer, identity and workspace writer contracts remain unchanged.
+This is local source/widget evidence, not an Android visual acceptance or package
+deployment. No push, board contact or device installation performed.
+
+## Keycontroller main-box controls, local source only
+
+Main Web boxes previously rendered state without a click handler. They now use
+the existing `/api/game/press` route: the ESP requests AVR `kGamePress`, whose
+handler calls the same `chooseWinner` as physical input. No client-side winner
+or color simulation was added. Removed the separate presentation test selector.
+Read-only defaults on and rearms on peer/boot loss or change; disabled boxes,
+unapplied key masks, latched rounds and pending commands cannot trigger presses.
+Read-only preserves live indicator colors instead of dimming every box.
+
+Focused Node key-game, Web context, peer HTTP and compressed-UI tests passed.
+The existing WebUi/localization comparison anchors were reviewed against this
+bounded change; unrelated mapped mechanisms and donor gap verdicts are unchanged.
+Regenerated embedded localization/compression and comparison target hashes;
+comparison generator Check passed. No push, device contact or deployment was
+performed, per the current source-only request. Physical acceptance remains open.
+
 ## PU850 verified backup-before-update actual consumer
 
 2026-10-19: actual Node/C# backup-before-write sequencing imported into existing

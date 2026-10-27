@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
-const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const source=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8');
 const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];
 // Execute the actual embedded Web application with a DOM/HTTP test double.
 // These fixtures are not hardware observations or live firmware proof.
 function element(){return {showModal(){this.open=true},close(){this.open=false},value:'',checked:false,hidden:false,textContent:'',className:'',children:[],get options(){return this.children},replaceChildren(...e){this.children=[...e]},dataset:{},style:{},listeners:{},classList:{toggle(){}},appendChild(e){this.children.push(e)},append(...e){this.children.push(...e)},setAttribute(){},addEventListener(type,handler){const previous=this.listeners[type];this.listeners[type]=(...args)=>{previous?.(...args);return handler(...args)}},querySelector(){return null},querySelectorAll(){return []}}}
 const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
+for(const node of Object.values(nodes))node.insertAdjacentElement=(_position,child)=>{nodes[child.id]=child;};
 nodes.workspace.hidden=true;
 let authEnabled=true,failStatus=false;
 let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0,hostname='test-fixture',displayName='Fixture table';

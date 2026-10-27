@@ -11,7 +11,7 @@ for(const source of ['fetch("/api/v1/status")','fetch("/api/v12")','{schemaVersi
 for(const source of ['"/api/status"','{"version":"0.2.7","revision":2,"acknowledged_features":["display"]}',
   'record_.schema = 2;', '{"jsonrpc":"2.0"}'])assert.equal(violations('fixture',source).length,0);
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const access=read('firmware/esp8266/src/WebAccess.h');
+const access=read('firmware/esp/src/WebAccess.h');
 assert(access.indexOf('ApiPolicy::numberedRoute')<access.indexOf('publicRead'));
 assert.match(access,/request->send\(404/);
 assert(!/redirect.*\/api/.test(access));

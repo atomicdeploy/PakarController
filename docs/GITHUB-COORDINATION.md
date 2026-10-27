@@ -1,5 +1,18 @@
 # Conversation-aware integration
 
+## Current checkpoint (supersedes historical empty-PR statements below)
+
+The fresh Pakar enumeration contains 23 complete records. Dependency PRs 21,
+22 and 23 are open; required CI is not green, so they are not merged or certified
+deployable. Their fetched conversations contain no comments, reviews or review
+threads; fetching release notes is not a completed dependency/source review.
+The refreshed conversation projection contains no stale-review decisions.
+The file comparison check also passes after rereviewing the 18 changed target
+files and PCController's current devices_page.dart. All 375 existing comparisons
+are hash-current; 4,322 pending comparisons and 275 known parity gaps remain
+explicitly unfinished. Neither zero stale records nor deployed packages closes
+the production acceptance issue.
+
 Adapted from the fully read Pealayer `docs/REVIEW-COMMENT-AUDIT.md`, original
 SHA-256 `7a91d9fa8778383ee37e33d861ceebc5ab210e46bedab6af8be82d56c27523cc`.
 The procedure is now executable in `tools/audit-github-conversations.mjs`.

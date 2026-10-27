@@ -10,8 +10,8 @@ $taskArguments=@('-std=c++17','-Wall','-Wextra','-Werror','-DARDUINOJSON_ENABLE_
   '-I',(Join-Path $taskRoot 'tests/management_stubs'),'-I',(Join-Path $taskRoot 'tests/cloud_stubs'),
   '-I',(Join-Path $taskRoot 'tests/network_stubs'),'-I',$taskJson,
   (Join-Path $taskRoot 'tests/cloud_management_test.cpp'),
-  (Join-Path $taskRoot 'firmware/esp8266/src/CloudConfig.cpp'),
-  (Join-Path $taskRoot 'firmware/esp8266/src/NetworkConfig.cpp'),'-o',$taskOutput)
+  (Join-Path $taskRoot 'firmware/esp/src/CloudConfig.cpp'),
+  (Join-Path $taskRoot 'firmware/esp/src/NetworkConfig.cpp'),'-o',$taskOutput)
 if($Plan){[pscustomobject]@{Executable='g++';Arguments=$taskArguments;Scope='Actual shared configuration handler/store fixture; not SDK/cloud/hardware acceptance'};return}
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
 foreach($taskPlatform in @(@('-DESP8266'),@('-DESP32','-DARDUINO_ARCH_ESP32'),@('-DESP32','-DARDUINO_ARCH_ESP32','-DPAKAR_S3_ETHERNET_ENABLED=1'))) {

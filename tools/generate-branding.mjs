@@ -9,7 +9,7 @@ const png = Buffer.from(asset, 'base64');
 assert.equal(png.subarray(0,8).toString('hex'), '89504e470d0a1a0a');
 assert.equal(png.readUInt32BE(16), 64);
 assert.equal(png.readUInt32BE(20), 64);
-const url = new URL('../firmware/esp8266/src/WebUi.h', import.meta.url);
+const url = new URL('../web/index.html', import.meta.url);
 let web = await readFile(url, 'utf8');
 const original = web;
 const data = `data:image/png;base64,${asset}`;
@@ -31,7 +31,7 @@ if (web !== original) {
   await writeFile(url, web);
   console.log('Updated shared Web branding only.');
 } else console.log('Shared Web branding is current; no file writes.');
-const applicationHeader = new URL('../firmware/esp8266/src/ApplicationArtwork.h', import.meta.url);
+const applicationHeader = new URL('../firmware/esp/src/ApplicationArtwork.h', import.meta.url);
 const artwork = `// Generated from the same cross-surface master; do not edit by hand.\n#pragma once\n#include <Arduino.h>\nstatic const char kApplicationIconPngBase64[] PROGMEM = "${asset}";\n`;
 let prior;
 try { prior = await readFile(applicationHeader, 'utf8'); } catch (error) { if (error.code !== 'ENOENT') throw error; }

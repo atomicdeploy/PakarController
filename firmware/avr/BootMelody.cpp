@@ -1,4 +1,5 @@
 #include "BootMelody.h"
+#include "WinnerPresentation.h"
 
 void playBootMelody(TonePlayer &player) {
   player.stop();
@@ -36,7 +37,12 @@ bool playAudioCue(BoardCore::Protocol::AudioCue cue, TonePlayer &player) {
     case kCueAttention:
       player.enqueue(NOTE_C6,90); player.pause(60); player.enqueue(NOTE_E6,90); break;
     case kCueError: player.error(); break;
-    case kCueWinner: player.enqueue(NOTE_C6,90); player.pause(35); player.enqueue(NOTE_G6,180); break;
+    case kCueWinner:
+      player.enqueue(NOTE_C6,BoardCore::WinnerPresentation::firstMs);
+      player.pause(BoardCore::WinnerPresentation::gapMs);
+      player.enqueue(NOTE_E6,BoardCore::WinnerPresentation::secondMs);
+      player.pause(BoardCore::WinnerPresentation::gapMs);
+      player.enqueue(NOTE_G6,BoardCore::WinnerPresentation::finalMs); break;
     case kCueFinish: player.enqueue(NOTE_E5,100); player.enqueue(NOTE_G5,100); player.enqueue(NOTE_A5,250); break;
     case kCueLost:
       player.enqueue(NOTE_G4,100); player.enqueue(NOTE_E4,100);

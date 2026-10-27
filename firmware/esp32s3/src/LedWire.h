@@ -7,6 +7,13 @@ namespace PakarS3 {
 #ifndef PAKAR_S3_LED_SWAP_RED_BLUE
 #define PAKAR_S3_LED_SWAP_RED_BLUE PAKAR_TABLE_SELECTION
 #endif
+#ifndef PAKAR_S3_LED_SWAP_RED_GREEN
+#define PAKAR_S3_LED_SWAP_RED_GREEN PAKAR_FIRST_WINS_ENABLED
+#endif
+static_assert(PAKAR_S3_LED_SWAP_RED_GREEN==0 || PAKAR_S3_LED_SWAP_RED_GREEN==1,"LED channel swap must be boolean");
+static_assert(!(PAKAR_S3_LED_SWAP_RED_GREEN && PAKAR_S3_LED_SWAP_RED_BLUE),"Select one calibrated channel order");
+inline constexpr size_t logicalWireChannel(size_t c){return PAKAR_S3_LED_SWAP_RED_GREEN?(c<2?1-c:c):(PAKAR_S3_LED_SWAP_RED_BLUE?2-c:c);}
+inline constexpr const char *wireChannelOrder=PAKAR_S3_LED_SWAP_RED_GREEN?"grb":(PAKAR_S3_LED_SWAP_RED_BLUE?"bgr":"rgb");
 static_assert(PAKAR_S3_LED_SWAP_RED_BLUE==0 || PAKAR_S3_LED_SWAP_RED_BLUE==1,"LED channel swap must be boolean");
 // Preserve API RGB exactly by default. The former implicit TypicalLEDStrip
 // attenuation (RGB255/176/240) is available only as an explicit calibrated
@@ -56,7 +63,7 @@ void encodeWireBytes(const Rgb *rgb,size_t count,uint8_t brightness,bool enabled
   for(size_t p=0;p<count;++p){
     const uint8_t raw[]={rgb[p].r,rgb[p].g,rgb[p].b};
     for(size_t c=0;c<3;++c){
-      const size_t logical=PAKAR_S3_LED_SWAP_RED_BLUE?2-c:c;
+      const size_t logical=logicalWireChannel(c);
       out[p*3+c]=enabled?wireChannel(raw[logical],brightness,channelGains[logical]):0;
     }
   }
@@ -67,7 +74,7 @@ void encodeWire(const Rgb *rgb,size_t count,uint8_t brightness,bool enabled,Symb
   for(size_t p=0;p<count;++p){
     const uint8_t raw[]={rgb[p].r,rgb[p].g,rgb[p].b};
     for(size_t c=0;c<3;++c){
-      const size_t logical=PAKAR_S3_LED_SWAP_RED_BLUE?2-c:c;
+      const size_t logical=logicalWireChannel(c);
       const uint8_t value=enabled?wireChannel(raw[logical],brightness,channelGains[logical]):0;
       for(uint8_t bit=0x80;bit;bit>>=1){auto &s=out[n++];const bool one=value&bit;
         s.level0=1;s.duration0=one?oneHigh:zeroHigh;s.level1=0;s.duration1=one?oneLow:zeroLow;}

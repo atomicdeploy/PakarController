@@ -20,7 +20,7 @@ assert.throws(()=>ctx.parseCellAssignmentFile('cells.xlsx','fake workbook'));
 assert.throws(()=>ctx.parseCellAssignmentFile('cells.csv',' '.repeat(65537)));
 assert.throws(()=>ctx.exportCellAssignments(cells.slice(1),'csv'));
 assert.throws(()=>ctx.exportCellAssignments([...cells.slice(1),'unknown'],'csv'));
-const web=await readFile(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const web=await readFile(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8');
 assert(web.includes(source.trim()),'Web must embed the tested canonical codec');
 assert(web.includes("peerHttp.assertOwner(assignmentImport.peer)"),'Import preview must retain the original board/boot owner');
 assert(web.includes("'/api/cells/assignments'"));

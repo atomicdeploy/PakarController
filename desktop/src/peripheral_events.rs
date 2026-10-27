@@ -1,7 +1,7 @@
 //! Confirmed AVR segment events stay separate from ESP requested presentation.
 //! Uses PCController source-generation retirement and selected-peer ownership;
 //! no forwarding, tones, command dispatch or capability creation is performed.
-use serde::{Deserialize,Serialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug)]
 pub struct Segments {
@@ -56,7 +56,7 @@ impl Segments {
         true // No status age, capability, clock, input or cell changes.
     }
 }
-#[derive(Clone,Deserialize,Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Observation {
     board_id: String,
     boot_id: String,

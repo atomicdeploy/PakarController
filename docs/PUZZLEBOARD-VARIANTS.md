@@ -47,19 +47,23 @@ cue names; framed USB uses opcode 0x11 and one byte. A 202 audio response means
 - [ ] Root active-buzzer `errorBeep` defaults to five timed toggles after initial
   silence. Choose a verified passive-buzzer adaptation rather than assuming it
   equals the existing pitched `error` cue. Its password/countdown game is excluded.
-- [ ] 40LED FINAL_TABLE vs RADIOGRAM: generic fractional progress interpolation,
-  blue hue oscillator, symmetric warm progress and manual output auto-override
-  need adaptation. Old score/bonus/fan/relay game logic is excluded, not these
-  potentially reusable primitives.
-- [ ] 40LED's old line commands use unchecked conversions and small buffers.
-  Keep bounded COBS/CRC and validated JSON commands; retain eligible command
-  semantics without copying unsafe parsing or unconditional serial forwarding.
-- [ ] `.ino.new` differs in two complete diff hunks: 165 input scan is disabled,
-  input mapping becomes start/clear/door, zero-value notifications are suppressed,
-  and beeping conditions differ. Complete separate manual reading/variant
-  decisions and tests; do not silently treat it as byte-identical to the base.
-- [ ] All remaining PuzzleBoard XS/tools/client/server files still require
-  individual review, integration/exclusion decisions and evidence.
+- [x] 40LED FINAL_TABLE vs RADIOGRAM was read through EOF. Generic fractional
+  progress and monotonic animation intent map to wall-clock grouped-cell fades,
+  a uniform indicator pulse and configurable neighbour-aware illumination chase.
+  Mode-aware owners replace its manual/automatic output split. The fixed blue
+  score gradient and symmetric warm bonus meter are presentations of excluded
+  score/radiogram business, not missing reusable hardware primitives.
+- [x] 40LED's old line commands use unchecked conversions and small buffers.
+  Eligible command/status semantics use bounded COBS/CRC and validated JSON;
+  unsafe parsing and unconditional serial forwarding were not copied.
+- [x] `.ino.new` has complete semantic coverage through the fully read base plus
+  its complete two-hunk diff, so no unchanged region or changed line is skipped.
+  Its disabled 165 scan becomes an explicit hardware-profile decision rather
+  than a shared-loop comment. Pakar preserves reset-to-zero events with a reset
+  revision and makes reset audio idempotent instead of suppressing zero updates.
+- [x] Every PuzzleBoard XS/tools/client/server file now has an individual
+  hash-bound read, integration/exclusion decision and target evidence. Hardware
+  acceptance remains open where the comparison rows say so.
 
 The root multiplex loop's digit-index increment can address element four of a
 four-element array. That bug is not imported. Commented confetti/sinelon/BPM/
@@ -83,4 +87,5 @@ toggles between zero and the previous action. The remote identifier is ignored.
 - [ ] If RF is retained, preserve the full unsigned receive value, validate
   remote identity, debounce without the blocking 200 ms loop delay, and test it.
 
-These reviewed-open decisions are deliberately not marked integrated.
+The RF comparison is now hash-bound as a scoped improvement. Physical RF
+receive/transmit and fitted-front-panel verification remain open.

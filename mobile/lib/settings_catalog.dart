@@ -57,10 +57,11 @@ const deviceSettingsCatalog = {
       "id": "leds",
       "label": "LEDs & cells",
       "icon": "GRID_FOUR",
-      "keywords": "table LED brightness effects mapping names logical physical modes games",
+      "keywords": "table LED brightness effects mapping names logical physical modes games pixel groups custom counts",
       "features": [
         "leds",
-        "table"
+        "table",
+        "pixel-group-layout"
       ]
     },
     {
@@ -102,7 +103,7 @@ const deviceSettingsCatalog = {
     "AVR clock and fuses",
     "pin ownership",
     "WS2811 chipset and channel order",
-    "pixel count"
+    "maximum pixel capacity and default group count"
   ],
   "network": {
     "station_enabled": "boolean",

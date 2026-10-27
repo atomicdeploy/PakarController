@@ -9,10 +9,10 @@ New-Item -ItemType Directory -Force (Split-Path -Parent $out) | Out-Null
 foreach($configuration in @('ESP8266','ESP32')) {
 & g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-D$configuration" `
   -I (Join-Path $root 'tests/cloud_service_stubs') -I $json `
-  -I (Join-Path $root 'libraries/BoardCore/src') -I (Join-Path $root 'firmware/esp8266/src') `
+  -I (Join-Path $root 'libraries/BoardCore/src') -I (Join-Path $root 'firmware/esp/src') `
   (Join-Path $root 'tests/cloud_services_test.cpp') `
-  (Join-Path $root 'firmware/esp8266/src/CloudServices.cpp') `
-  (Join-Path $root 'firmware/esp8266/src/CloudConfig.cpp') -o $out
+  (Join-Path $root 'firmware/esp/src/CloudServices.cpp') `
+  (Join-Path $root 'firmware/esp/src/CloudConfig.cpp') -o $out
 if($LASTEXITCODE){throw "Cloud service $configuration focused fixture compilation failed"}
 & $out
 if($LASTEXITCODE){throw "Cloud service $configuration focused assertions failed"}

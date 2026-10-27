@@ -55,7 +55,7 @@ class BleLifecyclePolicy {
 #include <FS.h>
 #include <BleWire.h>
 #include "BleStorage.h"
-#include "../../esp8266/src/ConfigurationChanges.h"
+#include "../../esp/src/ConfigurationChanges.h"
 #include <BLEDevice.h>
 #if defined(CONFIG_BLUEDROID_ENABLED)
 #include <BLE2902.h>

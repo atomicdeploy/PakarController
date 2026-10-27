@@ -6,9 +6,9 @@ function cellAssignmentFileAllowed(name) {
 function normalizeAssignedState(value) {
   if(typeof value!=='string')throw Error('Each assignment needs a color state');
   const token=value.trim().toLowerCase();
-  const aliases={'#ff0000':'red','#ffffff':'white','#000000':'off'};
+  const aliases={'#ff0000':'red','#ffffff':'white','#000000':'off',idle:'white',lost:'red'};
   const state=aliases[token]??token;
-  if(!['red','white','off'].includes(state))throw Error('Only red, white and off are supported by this board role');
+  if(!['red','white','won','off'].includes(state))throw Error('Expected idle, won, lost or off');
   return state;
 }
 function validateCellAssignments(rows) {
@@ -52,12 +52,12 @@ function parseCellAssignmentFile(name,text) {
   return validateCellAssignments(Array.isArray(value)?value:value?.assignments);
 }
 function exportCellAssignments(cells,format) {
-  if(!Array.isArray(cells)||cells.length!==80||!cells.every(v=>['white','red','off'].includes(v)))throw Error('Export needs all 80 observed cell states');
-  const assignments=cells.map((state,index)=>({cell:index+1,state}));
+  if(!Array.isArray(cells)||cells.length!==80||!cells.every(v=>['white','red','idle','lost','won','off'].includes(v)))throw Error('Export needs all 80 observed cell states');
+  const assignments=cells.map((state,index)=>({cell:index+1,state:({white:'idle',red:'lost'})[state]??state}));
   if(format==='csv')return 'cell,state\r\n'+assignments.map(row=>`${row.cell},${row.state}`).join('\r\n')+'\r\n';
   if(format==='json')return JSON.stringify({role:'table-selection',assignments},null,2)+'\n';
   throw Error('Unsupported export format');
 }
 function assignmentLockConflicts(assignments,cells,redLock) {
-  return redLock===true?assignments.filter(row=>row.state==='white'&&cells?.[row.cell-1]==='red').map(row=>row.cell):[];
+  return redLock===true?assignments.filter(row=>['white','idle'].includes(row.state)&&['red','lost'].includes(cells?.[row.cell-1])).map(row=>row.cell):[];
 }

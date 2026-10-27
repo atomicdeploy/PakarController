@@ -1,5 +1,5 @@
-#include "../firmware/esp8266/src/UpgradeLifecycle.h"
-#include "../firmware/esp8266/src/NtfyNotice.h"
+#include "../firmware/esp/src/UpgradeLifecycle.h"
+#include "../firmware/esp/src/NtfyNotice.h"
 #include <cassert>
 #include <cstdio>
 #include <initializer_list>
@@ -11,6 +11,7 @@ using PakarUpdate::Visual;
 static uint32_t after(uint32_t start, uint32_t elapsed) { return start + elapsed; }
 
 int main() {
+  { Lifecycle fast;fast.boot(100,false);assert(fast.visual(100)==Visual::None);assert(fast.visual(101)==Visual::None); }
   {
     Lifecycle l;PakarUpdate::NtfyNotice notices;PakarUpdate::NtfyNotice::Notice n;
     assert(!notices.observe(l,1) && !notices.take(n,1));

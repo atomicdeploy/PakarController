@@ -3,18 +3,25 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'icons.dart';
+import 'cell_controls.dart';
+import 'semantic_cells.dart';
+import 'state_appearance_page.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
 import 'board_sound_preferences.dart';
+import 'winner_notice.dart';
 import 'models.dart';
 import 'command_readback.dart';
 import 'table_layout.dart';
 import 'table_workspace.dart';
+import 'table_viewport.dart';
 import 'connection_preferences.dart';
+import 'header_controls.dart';
 import 'automatic_board_connection.dart';
 import 'discovery.dart';
 import 'device_registry.dart';
@@ -37,7 +44,13 @@ import 'app_support.dart';
 import 'presentation_assets.dart';
 import 'pixel_diagnostic.dart';
 import 'cell_pixel_preview.dart';
+import 'cell_pixel_dialog.dart';
 import 'pixel_diagnostic_page.dart';
+import 'pixel_corrections_page.dart';
+import 'pixel_corrections_editor.dart' show PixelCorrectionRuleIntent;
+import 'pixel_correction_menu.dart';
+import 'pixel_tools_navigation.dart';
+import 'pixel_groups_page.dart';
 import 'mirroring.dart';
 import 'app_theme.dart';
 import 'workspace_widgets.dart';
@@ -50,6 +63,7 @@ final bundledApplicationArtwork = base64Decode(applicationArtworkBase64);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await PeerIdentity.current.initialize();
+  await loadWinnerPreferences();
   await presentationAssets.load();
   final view = WidgetsBinding.instance.platformDispatcher.views.firstOrNull;
   if (view != null) {
@@ -107,6 +121,7 @@ class _ControlShellState extends State<ControlShell>
   bool restoredWanted = true;
   String? lastSavedNetworkRoute;
   final mirror = PeripheralMirror();
+  final winnerNotice = WinnerNotice();
   late final AppUpdateCoordinator appUpdates = AppUpdateCoordinator(
     approve: _approveAppUpdate,
     presentationOffer: presentationAssets.acceptNotice,
@@ -140,6 +155,8 @@ class _ControlShellState extends State<ControlShell>
   final panelInventory = PanelInventory();
   final workspaces = <String, TableWorkspace>{};
   final connectionDraft = ConnectionDraft();
+  HeaderLayout headerLayout = HeaderLayout();
+  bool connectionDialogOpen = false;
   String? workspaceBoard;
   WorkspaceCacheWriter? workspaceWriter;
   Timer? workspaceSave, workspaceSaveLimit;
@@ -153,6 +170,7 @@ class _ControlShellState extends State<ControlShell>
   CellMap mapping = CellMap(physical: const [], names: const []);
   bool mappingFresh = false;
   StreamSubscription<DeviceStatus>? live;
+  StreamSubscription<DeviceStatus>? pixelPreview;
   Timer? fallback;
   Timer? liveRetry;
   Timer? expiry;
@@ -201,6 +219,19 @@ class _ControlShellState extends State<ControlShell>
       unawaited(_connectLive());
     };
     api.onConfigurationChanged = () => unawaited(_refresh(silent: true));
+    pixelPreview = api.pixelUpdates.listen((value) {
+      if (!mounted ||
+          !foreground ||
+          !api.connectionWanted ||
+          presented?.json['board_id'] != value.json['board_id'] ||
+          presented?.json['boot_id'] != value.json['boot_id']) {
+        return;
+      }
+      setState(() {
+        presented = presented?.preservingNewerPixels(value);
+        status = status?.preservingNewerPixels(value);
+      }); // Paint only: no _observe, freshness renewal or workspace save.
+    });
     _restore();
   }
 
@@ -273,6 +304,7 @@ class _ControlShellState extends State<ControlShell>
         final cache = jsonDecode(saved);
         final entries = cache is Map ? cache['boards'] : null;
         if (cache is Map) {
+          headerLayout = HeaderLayout.restore(cache['header']);
           connectionDraft.restore(cache['connection_draft']);
           final connection = cache['connection'];
           if (connection is Map) {
@@ -491,8 +523,15 @@ class _ControlShellState extends State<ControlShell>
       }
       if (!mounted || owner != api.connectionRevision) return;
       setState(() {
-        if (!silent) message = 'Live device status received';
+        if (!silent && !commandPending && commandFailure == null) {
+          message = 'Connected';
+        }
       });
+    } on SupersededRead {
+      // A command or newer observation retired this read. It is not a peer
+      // failure: keep the workspace and let the existing freshness timer
+      // detect an actual loss of board updates.
+      return;
     } catch (error) {
       if (mounted &&
           owner == api.connectionRevision &&
@@ -627,6 +666,8 @@ class _ControlShellState extends State<ControlShell>
   void _observe(DeviceStatus value) {
     if (!mounted || !api.connectionWanted) return;
     if (value.olderThan(status)) return;
+    final winningKey = winnerNotice.observe(value);
+    if (winningKey != null && foreground) showWinner(context, winningKey);
     mirror.observe(value, api.connectionRevision);
     final route = api.networkRecovery;
     final routeSignature = route == null ? null : jsonEncode(route);
@@ -669,7 +710,7 @@ class _ControlShellState extends State<ControlShell>
       status = value;
       presented = value;
       if (incident != null && !commandPending) {
-        message = 'Live device status received';
+        message = 'Connected';
       }
       incident = null;
       if (changed) {
@@ -678,6 +719,10 @@ class _ControlShellState extends State<ControlShell>
       }
       if (changed || bootChanged || !value.peer.table) mappingFresh = false;
     });
+    // Restoring a workspace is not an edit. Bind its saved display preference
+    // to the live subscription immediately, without waiting for a UI toggle or
+    // scheduling a preference write for each telemetry frame.
+    _syncObservationDemand();
     _armExpiry();
     if (value.peer.table && (!mappingFresh || !mapping.valid) && foreground) {
       unawaited(_syncMapping());
@@ -706,6 +751,89 @@ class _ControlShellState extends State<ControlShell>
     _scheduleWorkspaceSave();
   }
 
+  Future<void> _configureHeader() async {
+    final chosen = await showDialog<HeaderLayout>(
+      context: context,
+      builder: (_) => HeaderLayoutEditor(initial: headerLayout),
+    );
+    if (!mounted || chosen == null) return;
+    setState(() => headerLayout = chosen);
+    _scheduleWorkspaceSave();
+  }
+
+  Future<void> _openConnection() async {
+    if (connectionDialogOpen) return;
+    connectionDialogOpen = true;
+    // Reuse the retained endpoint draft and selected-transport preferences;
+    // opening the connection pill never connects, resets or writes a board.
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: 680,
+            height: MediaQuery.sizeOf(dialogContext).height * .85,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.link),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Connection',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Close connection',
+                        onPressed: () => Navigator.pop(dialogContext),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SettingsPage(
+                    api: api,
+                    reconnect: _reconnect,
+                    draft: connectionDraft,
+                    connectionOnly: true,
+                    openDevices: () {
+                      Navigator.pop(dialogContext);
+                      _navigate('devices');
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } finally {
+      connectionDialogOpen = false;
+    }
+  }
+
+  void _headerAction(HeaderAction action) {
+    switch (action) {
+      case HeaderAction.connection:
+        unawaited(api.connectionWanted ? _disconnect() : _reconnect());
+      case HeaderAction.refresh:
+        unawaited(_refresh());
+      case HeaderAction.devices:
+        _navigate('devices');
+      case HeaderAction.settings:
+        _navigate('device-settings');
+    }
+  }
+
   void _mirrorPreferencesChanged() {
     final choices = (
       mirror.panelEnabled,
@@ -718,15 +846,21 @@ class _ControlShellState extends State<ControlShell>
     _scheduleWorkspaceSave();
   }
 
-  void _scheduleWorkspaceSave() {
+  void _syncObservationDemand() {
     final activeWorkspace = workspaces[workspaceBoard];
     api.setUsbObservations(
       panel: page == 'front-panel' && mirror.panelEnabled,
       peripheral:
           page == 'front-panel' &&
           (mirror.segmentsEnabled || mirror.buzzerEnabled),
-      pixels: page == 'table' && activeWorkspace?.showIndicators == true,
+      pixels:
+          (page == 'table' && activeWorkspace?.showIndicators == true) ||
+          (page == 'output' && presented?.peer.role == 'first-wins'),
     );
+  }
+
+  void _scheduleWorkspaceSave() {
+    _syncObservationDemand();
     if (!mounted || workspaceWriter == null) return;
     if (!foreground) {
       _flushWorkspaceSave();
@@ -760,6 +894,7 @@ class _ControlShellState extends State<ControlShell>
   Future<void> _saveWorkspaces() async {
     final encoded = jsonEncode({
       'activity': page,
+      'header': headerLayout.snapshot(),
       'connection_draft': connectionDraft.snapshot(),
       'connection': {
         'method': api.connectionMethod.name,
@@ -960,7 +1095,7 @@ class _ControlShellState extends State<ControlShell>
         actual = fast;
       } else {
         // Fresh preflight may discover a reboot, retiring the original intent.
-        final before = await api.status();
+        final before = await api.settledStatus();
         if (!mounted ||
             !api.connectionWanted ||
             owner != api.connectionRevision ||
@@ -985,7 +1120,7 @@ class _ControlShellState extends State<ControlShell>
           await api.post(path, values);
         }
         if (!mounted || owner != api.connectionRevision) return false;
-        actual = await api.status();
+        actual = await api.settledStatus();
       }
       if (!mounted ||
           !api.connectionWanted ||
@@ -1022,7 +1157,12 @@ class _ControlShellState extends State<ControlShell>
       if (attempt == commandAttempt) {
         setState(() {
           commandFailure = null;
-          message = 'Device acknowledged; fresh state read back (not physical output proof)';
+          message =
+              path == '/api/game/settings' &&
+                  values.containsKey('enabled_mask') &&
+                  actual.json['key_mask_applied'] != true
+              ? 'Settings saved; waiting for AVR to apply enabled boxes'
+              : 'Changes confirmed by device';
         });
       }
       return true;
@@ -1124,6 +1264,7 @@ class _ControlShellState extends State<ControlShell>
     api.onPeerChanged = null;
     api.onConfigurationChanged = null;
     live?.cancel();
+    pixelPreview?.cancel();
     fallback?.cancel();
     liveRetry?.cancel();
     expiry?.cancel();
@@ -1137,7 +1278,11 @@ class _ControlShellState extends State<ControlShell>
     super.dispose();
   }
 
-  Future<void> _openPixelDiagnostics() async {
+  Future<void> _openPixelDiagnostics({
+    bool corrections = false,
+    bool groups = false,
+    PixelProbe? initialProbe,
+  }) async {
     final board = status?.json['board_id'];
     if (!supportsPixelDiagnostic(status) ||
         status?.peer.has('command-ack') != true ||
@@ -1146,28 +1291,150 @@ class _ControlShellState extends State<ControlShell>
       return;
     }
     var locked = false;
+    final hasCorrections = status?.peer.has('pixel-corrections') == true;
+    final hasGroups = status?.peer.has('pixel-group-layout') == true;
+    final diagnosticTab = groups && hasGroups
+        ? (hasCorrections ? 2 : 1)
+        : corrections && hasCorrections
+        ? 1
+        : 0;
+    if (initialProbe != null) workspaces[board]?.pixels.probe = initialProbe;
+    final correctionPeer = (
+      connection: api.connectionRevision,
+      board: board,
+      boot: status?.json['boot_id'],
+    );
+    final correctionsKey = GlobalKey<PixelCorrectionsPageState>();
+    PixelCorrectionRuleIntent? correctionIntent;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) => StatefulBuilder(
-          builder: (context, update) => PopScope(
-            canPop: !locked,
-            child: Scaffold(
-              appBar: AppBar(
-                title: const Text('Pixel diagnostics'),
-                automaticallyImplyLeading: !locked,
-              ),
-              body: PixelDiagnosticPage(
-                api: api,
-                observed: () => status,
-                onObserved: _observe,
-                mapping: () => mappingFresh ? mapping : null,
-                workspace: workspaces[board]?.pixels,
-                busyChanged: (value) {
-                  commandPending = value;
-                  if (context.mounted) update(() => locked = value);
-                },
-              ),
-            ),
+          builder: (context, update) => PixelToolsNavigation(
+            length: 1 + (hasCorrections ? 1 : 0) + (hasGroups ? 1 : 0),
+            initialIndex: diagnosticTab,
+            blocked: locked,
+            beforeLeave: (_) async =>
+                await correctionsKey.currentState?.requestLeave() ?? true,
+            builder: (context, activeTab, controller, selectTab, close) =>
+                Scaffold(
+                  appBar: AppBar(
+                    title: const Text('Pixel diagnostics'),
+                    automaticallyImplyLeading: !locked,
+                    leading: BackButton(onPressed: locked ? null : close),
+                    bottom: hasCorrections || hasGroups
+                        ? TabBar(
+                            controller: controller,
+                            onTap: selectTab,
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            tabs: [
+                              const Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(pixelDiagnosticIcon, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Diagnostics'),
+                                  ],
+                                ),
+                              ),
+                              if (hasCorrections)
+                                const Tab(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(pixelCorrectionIcon, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Corrections'),
+                                    ],
+                                  ),
+                                ),
+                              if (hasGroups)
+                                const Tab(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.format_list_numbered,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text('Groups'),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          )
+                        : null,
+                  ),
+                  body: TabBarView(
+                    controller: controller,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      PixelDiagnosticPage(
+                        api: api,
+                        observed: () => status,
+                        onObserved: _observe,
+                        mapping: () => mappingFresh ? mapping : null,
+                        workspace: workspaces[board]?.pixels,
+                        initialProbe: initialProbe,
+                        onPixelLongPress: hasCorrections
+                            ? (pixel) async {
+                                bool current() =>
+                                    context.mounted &&
+                                    !locked &&
+                                    correctionPeer.connection ==
+                                        api.connectionRevision &&
+                                    correctionPeer.board ==
+                                        api.freshStatus?.json['board_id'] &&
+                                    correctionPeer.boot ==
+                                        api.freshStatus?.json['boot_id'] &&
+                                    api.freshStatus?.peer.has(
+                                          'pixel-corrections',
+                                        ) ==
+                                        true;
+                                if (!current()) return;
+                                final intent = await showPixelCorrectionMenu(
+                                  context,
+                                  pixel,
+                                );
+                                if (intent == null || !current()) return;
+                                update(() => correctionIntent = intent);
+                                selectTab(1);
+                              }
+                            : null,
+                        busyChanged: (value) {
+                          commandPending = value;
+                          if (context.mounted) update(() => locked = value);
+                        },
+                      ),
+                      if (hasCorrections)
+                        PixelCorrectionsPage(
+                          key: correctionsKey,
+                          api: api,
+                          expectedPeer: correctionPeer,
+                          incomingRule: correctionIntent,
+                          workspace: workspaces[board]?.pixels,
+                          mapping: () => mappingFresh ? mapping : null,
+                          active: activeTab == 1,
+                          busyChanged: (value) {
+                            commandPending = value;
+                            if (context.mounted) update(() => locked = value);
+                          },
+                        ),
+                      if (hasGroups)
+                        PixelGroupsPage(
+                          api: api,
+                          workspace: workspaces[board]?.pixels,
+                          mapping: () => mappingFresh ? mapping : null,
+                          busyChanged: (value) {
+                            commandPending = value;
+                            if (context.mounted) update(() => locked = value);
+                          },
+                        ),
+                    ],
+                  ),
+                ),
           ),
         ),
       ),
@@ -1223,6 +1490,36 @@ class _ControlShellState extends State<ControlShell>
               workspace: workspaces[workspaceBoard],
               mapping: mapping,
               command: scoped,
+              statusUpdates: api.statusUpdates,
+              openPixelDiagnostics:
+                  (probe, {corrections = false, groups = false}) =>
+                      _openPixelDiagnostics(
+                        corrections: corrections,
+                        groups: groups,
+                        initialProbe: probe,
+                      ),
+              sendPixelProbe: (probe) async {
+                if (owner != api.connectionRevision ||
+                    commandPending ||
+                    !foreground) {
+                  throw const StaleConnection();
+                }
+                setState(() => commandPending = true);
+                try {
+                  final actual = await api.pixelDiagnostic(
+                    probe,
+                    authorize: () =>
+                        mounted &&
+                        foreground &&
+                        owner == api.connectionRevision &&
+                        api.connectionWanted,
+                  );
+                  _observe(actual);
+                  return actual;
+                } finally {
+                  if (mounted) setState(() => commandPending = false);
+                }
+              },
               verifiedCommand: (path, values) => _command(
                 owner,
                 hostname,
@@ -1231,7 +1528,7 @@ class _ControlShellState extends State<ControlShell>
                 propagateFailure: true,
               ),
               readStatus: () async {
-                final observed = await api.status();
+                final observed = await api.settledStatus();
                 if (!mounted ||
                     owner != api.connectionRevision ||
                     observed.hostname != presented?.hostname ||
@@ -1252,6 +1549,23 @@ class _ControlShellState extends State<ControlShell>
               connected: status != null && foreground,
               workspace: workspaces[workspaceBoard],
               command: scoped,
+              verifiedCommand: (path, values) => _command(
+                owner,
+                hostname,
+                path,
+                values,
+                propagateFailure: true,
+              ),
+              readStatus: () async {
+                final observed = await api.settledStatus();
+                if (!mounted ||
+                    owner != api.connectionRevision ||
+                    !api.connectionWanted) {
+                  throw const StaleConnection();
+                }
+                _observe(observed);
+                return observed;
+              },
               openDiagnostics: () => _openPixelDiagnostics(),
             ),
             'front-panel' => IgnorePointer(
@@ -1270,6 +1584,15 @@ class _ControlShellState extends State<ControlShell>
               key: ValueKey('hardware:$workspaceBoard'),
               status: status,
               inventory: panelInventory,
+              navigate: _navigate,
+              connected: status != null && foreground,
+              verifiedCommand: (path, values) => _command(
+                owner,
+                hostname,
+                path,
+                values,
+                propagateFailure: true,
+              ),
             ),
             'device-settings' => IgnorePointer(
               key: ValueKey('device-settings:$owner:$workspaceBoard'),
@@ -1322,22 +1645,50 @@ class _ControlShellState extends State<ControlShell>
             _ => BoardOverview(
               key: ValueKey('overview:$workspaceBoard'),
               status: presented,
+              connected: status != null,
+              navigate: _navigate,
             ),
           },
       ],
     );
     final artwork = peer.application?.icon ?? bundledApplicationArtwork;
+    final headerActions = headerLayout.available(
+      wanted: api.connectionWanted,
+      fresh: status != null,
+      settingsAvailable: peer.has('settings'),
+    );
+    final headerSlots = MediaQuery.sizeOf(context).width < 400
+        ? 1
+        : MediaQuery.sizeOf(context).width < 700
+        ? 2
+        : 4;
+    String actionLabel(HeaderAction action) => action == HeaderAction.connection
+        ? connectionActionLabel(
+            wanted: api.connectionWanted,
+            fresh: status != null,
+          )
+        : action.label;
+    IconData actionIcon(HeaderAction action) =>
+        action == HeaderAction.connection
+        ? connectionActionIcon(
+            wanted: api.connectionWanted,
+            fresh: status != null,
+          )
+        : action.icon;
     return Title(
       title: peer.title,
       color: studioDark.surface,
       child: Scaffold(
         appBar: AppBar(
+          systemOverlayStyle: Theme.of(context).brightness == Brightness.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
           leading: Padding(
             padding: const EdgeInsets.all(12),
-            child: Image.memory(
-              artwork,
-              errorBuilder: (_, _, _) =>
-                  Image.memory(bundledApplicationArtwork),
+            child: StableApplicationIcon(
+              key: ValueKey(workspaceBoard),
+              bytes: artwork,
+              fallback: bundledApplicationArtwork,
             ),
           ),
           title: Column(
@@ -1360,16 +1711,36 @@ class _ControlShellState extends State<ControlShell>
             ],
           ),
           actions: [
-            IconButton(
-              onPressed: api.connectionWanted ? _disconnect : _reconnect,
-              tooltip: api.connectionWanted ? 'Disconnect' : 'Connect',
-              icon: Icon(
-                api.connectionWanted ? PakarIcons.check : PakarIcons.link,
+            for (final action in headerActions.take(headerSlots))
+              IconButton(
+                key: ValueKey('header-${action.name}'),
+                onPressed:
+                    action == HeaderAction.refresh &&
+                        (commandPending || manualMaintenanceBusy)
+                    ? null
+                    : () => _headerAction(action),
+                tooltip: actionLabel(action),
+                icon: Icon(actionIcon(action)),
               ),
-            ),
             PopupMenuButton<String>(
               tooltip: 'Device context menu',
+              icon: const Icon(Icons.more_vert),
+              constraints: const BoxConstraints(minWidth: 240, maxWidth: 320),
               onSelected: (target) async {
+                if (target == 'header-settings') {
+                  await _configureHeader();
+                  return;
+                }
+                if (target == 'connection') {
+                  await _openConnection();
+                  return;
+                }
+                if (target.startsWith('header:')) {
+                  _headerAction(
+                    HeaderAction.values.byName(target.substring(7)),
+                  );
+                  return;
+                }
                 if (target == 'devices') {
                   _navigate('devices');
                   return;
@@ -1399,8 +1770,10 @@ class _ControlShellState extends State<ControlShell>
                   );
                   return;
                 }
-                if (target == 'pixels') {
-                  await _openPixelDiagnostics();
+                if (target == 'pixels' || target == 'pixel-corrections') {
+                  await _openPixelDiagnostics(
+                    corrections: target == 'pixel-corrections',
+                  );
                   return;
                 }
                 var locked = false;
@@ -1443,45 +1816,58 @@ class _ControlShellState extends State<ControlShell>
                 );
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(
-                  value: 'updates',
-                  child: ListTile(
-                    dense: true,
-                    leading: Icon(PakarIcons.cloud),
-                    title: Text('Updates & support…'),
+                workspaceMenuItem('connection', 'Connection…', Icons.link),
+                workspaceMenuItem('devices', 'Devices…', PakarIcons.broadcast),
+                if (peer.has('settings'))
+                  workspaceMenuItem(
+                    'header:settings',
+                    'Board settings…',
+                    PakarIcons.gear,
                   ),
+                workspaceMenuItem(
+                  'header:connection',
+                  actionLabel(HeaderAction.connection),
+                  actionIcon(HeaderAction.connection),
                 ),
-                const PopupMenuItem(
-                  value: 'devices',
-                  child: ListTile(
-                    dense: true,
-                    leading: Icon(PakarIcons.broadcast),
-                    title: Text('Devices…'),
-                  ),
+                workspaceMenuItem(
+                  'header:refresh',
+                  'Refresh device state',
+                  PakarIcons.arrowClockwise,
+                  enabled:
+                      api.connectionWanted &&
+                      !commandPending &&
+                      !manualMaintenanceBusy,
                 ),
+                const PopupMenuDivider(),
                 if (supportsPixelDiagnostic(status) && peer.has('command-ack'))
-                  const PopupMenuItem(
-                    value: 'pixels',
-                    child: ListTile(
-                      dense: true,
-                      leading: Icon(PakarIcons.circuitry),
-                      title: Text('Pixel diagnostics…'),
-                    ),
+                  workspaceMenuItem(
+                    'pixels',
+                    'Pixel diagnostics…',
+                    pixelDiagnosticIcon,
                   ),
-                const PopupMenuItem(
-                  value: 'bridge',
-                  child: ListTile(
-                    dense: true,
-                    leading: Icon(PakarIcons.link),
-                    title: Text('Advanced MQTT / bridge…'),
+                if (peer.has('pixel-corrections'))
+                  workspaceMenuItem(
+                    'pixel-corrections',
+                    'Pixel corrections…',
+                    pixelCorrectionIcon,
                   ),
+                workspaceMenuItem(
+                  'bridge',
+                  'Advanced MQTT / bridge…',
+                  PakarIcons.link,
+                ),
+                const PopupMenuDivider(),
+                workspaceMenuItem(
+                  'header-settings',
+                  'Configure header…',
+                  Icons.dashboard_customize_outlined,
+                ),
+                workspaceMenuItem(
+                  'updates',
+                  'Updates & support…',
+                  PakarIcons.cloud,
                 ),
               ],
-            ),
-            IconButton(
-              onPressed: api.connectionWanted ? _refresh : null,
-              tooltip: 'Refresh device state',
-              icon: const Icon(PakarIcons.arrowClockwise),
             ),
           ],
         ),
@@ -1518,6 +1904,7 @@ class _ControlShellState extends State<ControlShell>
                         child: FirmwareProgressView(progress),
                       ),
                   StatusBar(
+                    onConnection: _openConnection,
                     status: status,
                     retained: presented,
                     endpoint: api.baseUrl,
@@ -1542,21 +1929,72 @@ class _ControlShellState extends State<ControlShell>
 }
 
 class BoardOverview extends StatelessWidget {
-  const BoardOverview({super.key, required this.status});
+  const BoardOverview({
+    super.key,
+    required this.status,
+    this.navigate,
+    this.connected = false,
+  });
   final DeviceStatus? status;
+  final ValueChanged<String>? navigate;
+  final bool connected;
   @override
   Widget build(BuildContext context) {
     final peer = status?.peer ?? PeerContext.unknown;
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return WorkspaceBody(
       children: [
-        Text(
-          peer.known ? peer.name : 'Connect to a board',
-          style: Theme.of(context).textTheme.headlineSmall,
+        WorkspaceHeader(
+          title: peer.known ? peer.name : 'Your boards',
+          icon: PakarIcons.cpu,
+          subtitle: peer.known ? peer.hostname : 'Choose a board to begin',
         ),
-        const SizedBox(height: 12),
-        Text(
-          peer.known ? '${peer.hostname}.local' : 'Use Connection to choose the hostname and credentials. Controls appear only after individual capability acknowledgment.',
+        WorkspaceGrid(
+          children: [
+            WorkspaceActionCard(
+              icon: connected ? Icons.check_circle_outline : Icons.link_off,
+              tone: connected ? Theme.of(context).colorScheme.secondary : null,
+              title: connected ? 'Connected' : 'Not connected',
+              subtitle: 'Discover and manage saved boards',
+              onTap: navigate == null ? null : () => navigate!('devices'),
+            ),
+            if (peer.table)
+              WorkspaceActionCard(
+                icon: PakarIcons.gridFour,
+                title: 'Table controls',
+                subtitle: 'Cells, colors and effects',
+                onTap: navigate == null ? null : () => navigate!('table'),
+              ),
+            if (peer.role == 'first-wins')
+              WorkspaceActionCard(
+                icon: PakarIcons.play,
+                title: 'Game controls',
+                subtitle: 'Boxes, winner and reset',
+                onTap: navigate == null ? null : () => navigate!('output'),
+              ),
+            if (peer.has('buzzer') || peer.has('display'))
+              WorkspaceActionCard(
+                icon: PakarIcons.musicNote,
+                title: 'Front panel',
+                subtitle: 'Display and melodies',
+                onTap: navigate == null ? null : () => navigate!('front-panel'),
+              ),
+            if (peer.known)
+              WorkspaceActionCard(
+                icon: PakarIcons.circuitry,
+                title: 'Hardware',
+                subtitle: 'Interfaces, live inputs and capabilities',
+                onTap: navigate == null ? null : () => navigate!('hardware'),
+              ),
+            if (peer.known)
+              WorkspaceActionCard(
+                icon: PakarIcons.gear,
+                title: 'Device settings',
+                subtitle: 'Network and board configuration',
+                onTap: navigate == null
+                    ? null
+                    : () => navigate!('device-settings'),
+              ),
+          ],
         ),
       ],
     );
@@ -1577,6 +2015,9 @@ class TablePage extends StatefulWidget {
     this.connected = true,
     this.mappingCurrent = true,
     this.layoutAcknowledged = false,
+    this.openPixelDiagnostics,
+    this.sendPixelProbe,
+    this.statusUpdates,
   });
   final DeviceStatus? status;
   final CellMap mapping;
@@ -1589,6 +2030,9 @@ class TablePage extends StatefulWidget {
   final bool connected;
   final bool mappingCurrent;
   final bool layoutAcknowledged;
+  final OpenPixelDiagnostics? openPixelDiagnostics;
+  final Future<DeviceStatus> Function(PixelProbe)? sendPixelProbe;
+  final Stream<DeviceStatus>? statusUpdates;
 
   @override
   State<TablePage> createState() => _TablePageState();
@@ -1621,11 +2065,9 @@ class _TablePageState extends State<TablePage> {
     searchFocus.addListener(() {
       if (!searchFocus.hasFocus) canonicalizeSearch();
     });
-    try {
-      selection = parseCellSearch(query.text);
-    } on FormatException catch (error) {
-      searchError = error.message;
-    }
+    // Workspace selection is authoritative, including an explicitly empty set.
+    // Opening a panel must not replace it with a stale search draft.
+    query.text = formatCellSelection(selection);
   }
 
   @override
@@ -1700,6 +2142,69 @@ class _TablePageState extends State<TablePage> {
     });
   }
 
+  Future<void> showTableDisplayPreferences() => showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, refreshDialog) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.tune, size: 22),
+            SizedBox(width: 10),
+            Expanded(child: Text('Table display')),
+          ],
+        ),
+        content: SizedBox(
+          width: 360,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SwitchListTile.adaptive(
+                  key: const ValueKey('table-led-indicators'),
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(PakarIcons.lightning, size: 22),
+                  title: const Text('LED indicators'),
+                  value: showIndicators,
+                  onChanged: (value) {
+                    if (!mounted) return;
+                    setState(() => showIndicators = value);
+                    refreshDialog(() {});
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<bool>(
+                  key: const ValueKey('cell-label-mode'),
+                  initialValue: workspace.colorLabels,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Action names',
+                    prefixIcon: Icon(Icons.label_outline, size: 20),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: true, child: Text('Colors')),
+                    DropdownMenuItem(value: false, child: Text('States')),
+                  ],
+                  onChanged: (value) {
+                    if (!mounted || value == null) return;
+                    setState(() => workspace.colorLabels = value);
+                    refreshDialog(() {});
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    ),
+  );
+
   Future<void> applySelection(String state) async {
     final send = widget.verifiedCommand;
     if (send == null ||
@@ -1750,7 +2255,40 @@ class _TablePageState extends State<TablePage> {
             primary: false,
             padding: const EdgeInsets.all(16),
             children: [
-              const WorkspaceHeader(title: 'Table', icon: PakarIcons.gridFour),
+              WorkspaceHeader(
+                title: 'Table',
+                icon: PakarIcons.gridFour,
+                actions: [
+                  Semantics(
+                    liveRegion: true,
+                    child: Container(
+                      key: const ValueKey('table-selection-count'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary
+                            .withValues(alpha: .10),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${selection.length} selected',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    key: const ValueKey('table-display-options'),
+                    tooltip: 'Table display preferences',
+                    onPressed: showTableDisplayPreferences,
+                    icon: const Icon(Icons.tune),
+                  ),
+                ],
+              ),
               if ((status?.peer.has('cell-lock') == true ||
                       status?.peer.has('cell-assignments') == true ||
                       widget.seenFeatures.contains('cell-lock') ||
@@ -1758,6 +2296,7 @@ class _TablePageState extends State<TablePage> {
                   widget.verifiedCommand != null &&
                   widget.readStatus != null)
                 CellAssignmentsActions(
+                  colorLabels: workspace.colorLabels,
                   key: ValueKey('cell-assignments:${status!.json['board_id']}'),
                   status: status!,
                   connected: widget.connected && !applying,
@@ -1765,6 +2304,10 @@ class _TablePageState extends State<TablePage> {
                   readStatus: widget.readStatus!,
                   ownerCurrent: widget.ownerCurrent,
                   seenFeatures: widget.seenFeatures,
+                  selectColor: (color) => replaceSelection({
+                    for (var i = 0; i < status!.cells.length; i++)
+                      if (sameCellState(status!.cells[i], color)) i + 1,
+                  }),
                 ),
               TextField(
                 controller: query,
@@ -1797,13 +2340,28 @@ class _TablePageState extends State<TablePage> {
                 onChanged: updateSearch,
                 onSubmitted: (_) => canonicalizeSearch(),
               ),
+              const SizedBox(height: 12),
               Wrap(
                 key: const ValueKey('table-colour-actions'),
                 spacing: 8,
                 runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  for (final value in ['white', 'red', 'off'])
-                    FilledButton.tonal(
+                  for (final value
+                      in status!.peer.has('state-presentation')
+                          ? ['idle', 'lost', 'won', 'off']
+                          : ['white', 'red', 'off'])
+                    CellColorAction(
+                      value: value,
+                      alreadyApplied:
+                          widget.connected &&
+                          selectionHasCellState(status!.json, selection, value),
+                      color: cellActionColor(value, status!.json),
+                      label: cellActionLabel(
+                        value,
+                        cellActionColor(value, status!.json),
+                        colors: workspace.colorLabels,
+                      ),
                       onPressed:
                           !widget.connected ||
                               selection.isEmpty ||
@@ -1813,8 +2371,68 @@ class _TablePageState extends State<TablePage> {
                               !status!.peer.has('cell-batch')
                           ? null
                           : () => applySelection(value),
-                      child: Text('Set $value'),
                     ),
+                  SizedBox(
+                    key: const ValueKey('table-transition'),
+                    width: 168,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: cellEffect,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Transition',
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'immediate',
+                          child: Text('Immediate'),
+                        ),
+                        DropdownMenuItem(value: 'fade', child: Text('Fade')),
+                        DropdownMenuItem(value: 'pulse', child: Text('Pulse')),
+                      ],
+                      onChanged: applying
+                          ? null
+                          : (value) {
+                              if (value != null) {
+                                setState(() => cellEffect = value);
+                              }
+                            },
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    tooltip: 'More colors',
+                    icon: const Icon(Icons.more_vert),
+                    enabled:
+                        widget.connected &&
+                        status!.peer.has('state-presentation') &&
+                        widget.verifiedCommand != null &&
+                        widget.readStatus != null,
+                    onSelected: (_) => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => StateAppearancePage(
+                          status: status!,
+                          command: widget.verifiedCommand!,
+                          readStatus: widget.readStatus!,
+                          ids: selection.isEmpty
+                              ? '1-80'
+                              : selection.toList().join(','),
+                        ),
+                      ),
+                    ),
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'appearance',
+                        child: ListTile(
+                          dense: true,
+                          leading: Icon(Icons.palette_outlined),
+                          title: Text('State colors, effects & preview…'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               Wrap(
@@ -1822,35 +2440,32 @@ class _TablePageState extends State<TablePage> {
                 spacing: 8,
                 runSpacing: 4,
                 children: [
-                  FilterChip(
-                    label: const Text('Multiple selection'),
+                  CellOption(
+                    label: 'Multiple selection',
+                    icon: PakarIcons.gridFour,
                     selected: multiple,
                     onSelected: (value) => setState(() => multiple = value),
                   ),
-                  FilterChip(
-                    label: const Text('LED indicators'),
-                    selected: showIndicators,
-                    onSelected: (value) =>
-                        setState(() => showIndicators = value),
-                  ),
-                  TextButton(
+                  TextButton.icon(
                     onPressed: applying
                         ? null
                         : () => replaceSelection({
                             for (var id = 1; id <= 80; id++) id,
                           }),
-                    child: const Text('Select all'),
+                    icon: const Icon(Icons.select_all, size: 18),
+                    label: const Text('Select all'),
                   ),
-                  TextButton(
+                  TextButton.icon(
                     onPressed: applying
                         ? null
                         : () => replaceSelection({
                             for (var id = 1; id <= 80; id++)
                               if (!selection.contains(id)) id,
                           }),
-                    child: const Text('Invert selection'),
+                    icon: const Icon(Icons.flip_to_front, size: 18),
+                    label: const Text('Invert selection'),
                   ),
-                  TextButton(
+                  TextButton.icon(
                     onPressed: applying
                         ? null
                         : () => setState(() {
@@ -1858,22 +2473,10 @@ class _TablePageState extends State<TablePage> {
                             query.clear();
                             searchError = null;
                           }),
-                    child: const Text('Clear selection'),
+                    icon: const Icon(Icons.deselect, size: 18),
+                    label: const Text('Clear selection'),
                   ),
                 ],
-              ),
-              DropdownButtonFormField<String>(
-                initialValue: cellEffect,
-                decoration: const InputDecoration(
-                  labelText: 'Cell transition · board-side',
-                ),
-                items: [
-                  for (final effect in const ['immediate', 'fade', 'pulse'])
-                    DropdownMenuItem(value: effect, child: Text(effect)),
-                ],
-                onChanged: applying
-                    ? null
-                    : (value) => setState(() => cellEffect = value!),
               ),
               if (!status!.peer.has('cell-batch'))
                 const Text(
@@ -1885,25 +2488,13 @@ class _TablePageState extends State<TablePage> {
                   padding: const EdgeInsets.all(12),
                   child: LayoutBuilder(
                     builder: (context, bounds) {
-                      // Keep 44px cell targets rather than squeezing 20 columns
-                      // onto a phone. Horizontal panning owns its own gestures.
-                      final minimumWidth = 48.0 * tableDisplayWidth;
-                      final width = bounds.maxWidth < minimumWidth
-                          ? minimumWidth
-                          : bounds.maxWidth;
+                      const width = 48.0 * tableDisplayWidth;
                       final pitch = width / tableDisplayWidth;
-                      return Scrollbar(
-                        controller: tableScroll,
-                        thumbVisibility: true,
-                        child: SingleChildScrollView(
-                          key: const ValueKey('table-cell-scroll'),
-                          controller: tableScroll,
-                          primary: false,
-                          scrollDirection: Axis.horizontal,
-                          // Physical cell order is left-to-right even when the
-                          // surrounding application is displayed in RTL.
-                          reverse:
-                              Directionality.of(context) == TextDirection.rtl,
+                      return TableViewport(
+                        key: const ValueKey('table-cell-scroll'),
+                        controller: workspace.viewport,
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
                           child: SizedBox(
                             key: const ValueKey('table-cell-canvas'),
                             width: width,
@@ -1948,7 +2539,7 @@ class _TablePageState extends State<TablePage> {
                                               !widget.mappingCurrent ||
                                               !mapping.valid
                                           ? null
-                                          : () => _editMapping(context, id),
+                                          : () => _inspectPixels(context, id),
                                     ),
                                   ),
                               ],
@@ -1972,6 +2563,39 @@ class _TablePageState extends State<TablePage> {
             ],
           ),
         );
+
+  Future<void> _inspectPixels(BuildContext context, int id) async {
+    if (!widget.connected || !widget.mappingCurrent || !mapping.valid) return;
+    if (widget.openPixelDiagnostics == null) {
+      await _editMapping(context, id);
+      return;
+    }
+    final board = status?.json['board_id'], boot = status?.json['boot_id'];
+    final physical = mapping.physical[id - 1];
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CellPixelDialog(
+        id: id,
+        mapping: mapping,
+        observed: () => status,
+        updates: widget.statusUpdates,
+        current: () =>
+            mounted &&
+            widget.connected &&
+            widget.mappingCurrent &&
+            widget.ownerCurrent?.call() != false &&
+            status?.json['board_id'] == board &&
+            status?.json['boot_id'] == boot &&
+            mapping.physical[id - 1] == physical,
+        sendProbe: widget.sendPixelProbe,
+        openDiagnostics: widget.openPixelDiagnostics!,
+        editMapping: () {
+          if (mounted) _editMapping(this.context, id);
+        },
+      ),
+    );
+  }
 
   Future<void> _editMapping(BuildContext context, int id) async {
     final physical = TextEditingController(
@@ -2109,7 +2733,11 @@ class _CellButtonState extends State<CellButton> {
                     bottom: 4,
                     child: Row(
                       children: [
-                        for (var pixel = 0; pixel < 6; ++pixel)
+                        for (
+                          var pixel = 0;
+                          pixel < (widget.pixels?.colors.length ?? 1);
+                          ++pixel
+                        )
                           Expanded(
                             child: Container(
                               key: ValueKey('cell-${widget.id}-pixel-$pixel'),
@@ -2176,6 +2804,25 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
   String? get selectedCue => workspace.selectedCue;
   set selectedCue(String? value) => workspace.selectedCue = value;
   bool audioPending = false;
+  bool displayPending = false;
+  int? numberDraft, holdDraft, intervalDraft, frequencyDraft, durationDraft;
+  bool get numberValid =>
+      numberDraft != null && numberDraft! >= -999 && numberDraft! <= 9999;
+  bool get textSettingsValid =>
+      holdDraft != null &&
+      holdDraft! >= 0 &&
+      holdDraft! <= 60000 &&
+      (repeat != 'interval' ||
+          intervalDraft != null &&
+              intervalDraft! >= 1 &&
+              intervalDraft! <= 255);
+  bool get toneValid =>
+      frequencyDraft != null &&
+      frequencyDraft! >= 20 &&
+      frequencyDraft! <= 12000 &&
+      durationDraft != null &&
+      durationDraft! >= 1 &&
+      durationDraft! <= 5000;
   List<String> seenCues = const [];
   bool seenPanelMirror = false,
       seenSegmentsMirror = false,
@@ -2190,6 +2837,11 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
   @override
   void initState() {
     super.initState();
+    numberDraft = workspace.number;
+    holdDraft = workspace.holdMs;
+    intervalDraft = workspace.intervalSeconds;
+    frequencyDraft = workspace.frequency;
+    durationDraft = workspace.durationMs;
     _rememberCues();
   }
 
@@ -2214,6 +2866,36 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
     }
   }
 
+  Future<void> sendDisplay(Map<String, String> values) async {
+    if (displayPending || !widget.connected) return;
+    if (numberValid) workspace.number = numberDraft!;
+    if (textSettingsValid) {
+      workspace.holdMs = holdDraft!;
+      workspace.intervalSeconds = intervalDraft ?? workspace.intervalSeconds;
+    }
+    setState(() => displayPending = true);
+    try {
+      await widget.command('/api/display', values);
+    } finally {
+      if (mounted) setState(() => displayPending = false);
+    }
+  }
+
+  Future<void> sendTone() async {
+    if (audioPending || !ready('buzzer') || !toneValid) return;
+    workspace.frequency = frequencyDraft!;
+    workspace.durationMs = durationDraft!;
+    setState(() => audioPending = true);
+    try {
+      await widget.command('/api/buzzer', {
+        'frequency': '$frequencyDraft',
+        'duration_ms': '$durationDraft',
+      });
+    } finally {
+      if (mounted) setState(() => audioPending = false);
+    }
+  }
+
   @override
   void dispose() {
     if (widget.workspace == null) workspace.dispose();
@@ -2228,253 +2910,408 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
           builder: (_, _) => _contents(context),
         );
 
-  Widget _contents(BuildContext context) => ListView(
-    controller: workspace.scroll,
-    padding: const EdgeInsets.all(16),
-    children: [
-      const Text(
-        'Front panel',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-      ),
-      const SizedBox(height: 12),
-      if (widget.mirror != null) _mirrorControls(widget.mirror!),
-      if (widget.mirror?.panelEnabled == true && seenPanelMirror)
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Live front panel',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  'Menu page ${widget.mirror!.panel['menu_page']} · '
-                  '${widget.mirror!.panel['menu_active'] == true ? 'Menu open' : 'Menu closed'} · '
-                  '${widget.mirror!.panel['running'] == true ? 'Running' : 'Stopped'}',
-                ),
-                Text(
-                  widget.mirror!.panel['captured'] == true
-                      ? 'Host owns key capture'
-                      : 'Board owns keys',
-                ),
-                const SizedBox(height: 12),
-                if (shown('inputs'))
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (var i = 0; i < 9; i++)
-                        Chip(
-                          avatar: Icon(
-                            !ready('inputs')
-                                ? Icons.help_outline
-                                : i == 8
-                                ? (widget.status?.json['input_9'] == true
-                                      ? Icons.radio_button_checked
-                                      : Icons.radio_button_unchecked)
-                                : ((widget.status!.activeInputs & (1 << i)) != 0
-                                      ? Icons.radio_button_checked
-                                      : Icons.radio_button_unchecked),
-                            size: 16,
-                          ),
-                          label: Text('Key ${i + 1}'),
-                        ),
-                    ],
-                  ),
-                if (shown('outputs'))
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      for (var i = 0; i < 8; i++)
-                        Chip(
-                          avatar: Icon(
-                            Icons.circle,
-                            size: 12,
-                            color:
-                                ready('outputs') &&
-                                    (widget.status!.activeOutputs & (1 << i)) !=
-                                        0
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context).colorScheme.outline,
-                          ),
-                          label: Text('LED ${i + 1}'),
-                        ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ),
-      if (shown('lcd'))
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'LCD display',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                for (final line
-                    in widget.status?.lcdLines.isNotEmpty == true
-                        ? widget.status!.lcdLines
-                        : const ['Display unavailable', '                '])
-                  Text(
-                    line,
-                    textDirection: TextDirection.ltr,
-                    style: const TextStyle(fontFamily: 'monospace'),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      if (shown('display') && widget.mirror?.segmentsEnabled != false)
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              height: 120,
-              child:
-                  (widget.mirror?.segments ??
-                              widget.status?.segments ??
-                              const [])
-                          .length ==
-                      4
-                  ? SevenSegmentPreview(
-                      segments:
-                          widget.mirror?.segments ?? widget.status!.segments,
-                      brightness:
-                          widget.mirror?.brightness ??
-                          widget.status!.segmentBrightness,
-                      active: ready('display'),
-                    )
-                  : const Center(
-                      child: Text('Waiting for a seven-segment frame'),
-                    ),
-            ),
-          ),
-        ),
-      if (shown('text'))
-        IgnorePointer(
-          ignoring: !ready('text'),
-          child: Opacity(
-            opacity: ready('text') ? 1 : .5,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
+  Widget _contents(BuildContext context) {
+    // Resolve remembered mirror capabilities before placing these secondary
+    // preferences below the board controls. A transient read must not hide them.
+    final mirrorControls = widget.mirror == null
+        ? null
+        : _mirrorControls(widget.mirror!);
+    final livePanel = widget.mirror?.panelEnabled == true && seenPanelMirror
+        ? WorkspaceSection(
+            title: 'Live front panel',
+            icon: PakarIcons.gauge,
+            children: [
+              Text(
+                'Menu page ${widget.mirror!.panel['menu_page']} · '
+                '${widget.mirror!.panel['menu_active'] == true ? 'Menu open' : 'Menu closed'} · '
+                '${widget.mirror!.panel['running'] == true ? 'Running' : 'Stopped'}',
+              ),
+              Text(
+                widget.mirror!.panel['captured'] == true
+                    ? 'Host owns key capture'
+                    : 'Board owns keys',
+              ),
+              const SizedBox(height: 12),
+              if (shown('inputs'))
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    TextField(
-                      controller: text,
-                      maxLength: 40,
-                      decoration: const InputDecoration(
-                        labelText: 'Marquee text',
+                    for (var i = 0; i < 9; i++)
+                      Chip(
+                        avatar: Icon(
+                          !ready('inputs')
+                              ? Icons.help_outline
+                              : i == 8
+                              ? (widget.status?.json['input_9'] == true
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_unchecked)
+                              : ((widget.status!.activeInputs & (1 << i)) != 0
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_unchecked),
+                          size: 16,
+                        ),
+                        label: Text('Key ${i + 1}'),
                       ),
-                    ),
-                    DropdownButtonFormField<String>(
-                      initialValue: repeat,
-                      decoration: const InputDecoration(labelText: 'Repeat'),
-                      items: const [
-                        DropdownMenuItem(value: 'once', child: Text('Once')),
-                        DropdownMenuItem(value: 'loop', child: Text('Loop')),
-                        DropdownMenuItem(
-                          value: 'interval',
-                          child: Text('Interval (5 seconds)'),
-                        ),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => repeat = value ?? 'once'),
-                    ),
-                    CheckboxListTile(
-                      title: const Text('Scroll short text'),
-                      value: forceScroll,
-                      onChanged: (value) =>
-                          setState(() => forceScroll = value ?? false),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Slider(
-                            value: speed,
-                            min: 80,
-                            max: 1000,
-                            divisions: 46,
-                            label: '${speed.round()} ms',
-                            onChanged: (value) => setState(() => speed = value),
-                          ),
-                        ),
-                        FilledButton.icon(
-                          onPressed: !ready('text')
-                              ? null
-                              : () => widget.command('/api/display', {
-                                  'text': text.text,
-                                  'speed_ms': '${speed.round()}',
-                                  'hold_ms': '1500',
-                                  'repeat': repeat,
-                                  'force_scroll': '$forceScroll',
-                                  'interval_seconds': '5',
-                                }),
-                          icon: const Icon(PakarIcons.play),
-                          label: const Text('Present'),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
+              if (shown('outputs'))
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (var i = 0; i < 8; i++)
+                      Chip(
+                        avatar: Icon(
+                          Icons.circle,
+                          size: 12,
+                          color:
+                              ready('outputs') &&
+                                  (widget.status!.activeOutputs & (1 << i)) != 0
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.outline,
+                        ),
+                        label: Text('LED ${i + 1}'),
+                      ),
+                  ],
+                ),
+            ],
+          )
+        : null;
+    return WorkspaceBody(
+      controller: workspace.scroll,
+      children: [
+        const WorkspaceHeader(title: 'Front panel', icon: PakarIcons.gauge),
+        WorkspaceGrid(
+          minimumWidth: 420,
+          children: [
+            if (shown('lcd'))
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'LCD display',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      for (final line
+                          in widget.status?.lcdLines.isNotEmpty == true
+                              ? widget.status!.lcdLines
+                              : const [
+                                  'Display unavailable',
+                                  '                ',
+                                ])
+                        Text(
+                          line,
+                          textDirection: TextDirection.ltr,
+                          style: const TextStyle(fontFamily: 'monospace'),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            if (shown('display') && widget.mirror?.segmentsEnabled != false)
+              WorkspaceSection(
+                title: '7-segment display',
+                icon: PakarIcons.gauge,
+                children: [
+                  SizedBox(
+                    height: 120,
+                    child:
+                        (widget.mirror?.segments ??
+                                    widget.status?.segments ??
+                                    const [])
+                                .length ==
+                            4
+                        ? SevenSegmentPreview(
+                            segments:
+                                widget.mirror?.segments ??
+                                widget.status!.segments,
+                            brightness:
+                                widget.mirror?.brightness ??
+                                widget.status!.segmentBrightness,
+                            active: ready('display'),
+                          )
+                        : const Center(
+                            child: Text('Waiting for a seven-segment frame'),
+                          ),
+                  ),
+                  const SizedBox(height: 12),
+                  WorkspaceGrid(
+                    minimumWidth: 240,
+                    children: [
+                      TextFormField(
+                        key: const ValueKey('front-panel-number'),
+                        initialValue: '${workspace.number}',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          signed: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+                        ],
+                        decoration: const InputDecoration(
+                          labelText: 'Number',
+                          helperText: '−999 to 9999',
+                        ),
+                        onChanged: (value) =>
+                            setState(() => numberDraft = int.tryParse(value)),
+                      ),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: FilledButton.tonalIcon(
+                          onPressed:
+                              ready('display') && numberValid && !displayPending
+                              ? () => sendDisplay({
+                                  'value': '${numberDraft ?? workspace.number}',
+                                })
+                              : null,
+                          icon: const Icon(PakarIcons.gauge),
+                          label: const Text('Show number'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            if (shown('text'))
+              IgnorePointer(
+                ignoring: !ready('text'),
+                child: Opacity(
+                  opacity: ready('text') ? 1 : .5,
+                  child: WorkspaceSection(
+                    title: 'Text',
+                    icon: Icons.text_fields,
+                    children: [
+                      TextField(
+                        controller: text,
+                        onChanged: (_) => setState(() {}),
+                        maxLength: 40,
+                        decoration: const InputDecoration(
+                          labelText: 'Marquee text',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      WorkspaceGrid(
+                        minimumWidth: 240,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            initialValue: repeat,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Repeat',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'once',
+                                child: Text('Once'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'loop',
+                                child: Text('Loop'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'interval',
+                                child: Text('Interval'),
+                              ),
+                            ],
+                            onChanged: (value) =>
+                                setState(() => repeat = value ?? 'once'),
+                          ),
+                          if (repeat == 'interval')
+                            TextFormField(
+                              key: const ValueKey('front-panel-interval'),
+                              initialValue: '${workspace.intervalSeconds}',
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Pause',
+                                suffixText: 's',
+                                helperText: '1–255',
+                              ),
+                              onChanged: (value) => setState(
+                                () => intervalDraft = int.tryParse(value),
+                              ),
+                            ),
+                          TextFormField(
+                            key: const ValueKey('front-panel-hold'),
+                            initialValue: '${workspace.holdMs}',
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            decoration: const InputDecoration(
+                              labelText: 'Hold',
+                              suffixText: 'ms',
+                              helperText: '0–60000',
+                            ),
+                            onChanged: (value) =>
+                                setState(() => holdDraft = int.tryParse(value)),
+                          ),
+                        ],
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Scroll short text'),
+                        value: forceScroll,
+                        onChanged: (value) =>
+                            setState(() => forceScroll = value ?? false),
+                      ),
+                      WorkspaceValueRow(
+                        label: 'Step',
+                        value: '${speed.round()} ms',
+                      ),
+                      Slider(
+                        value: speed,
+                        min: 80,
+                        max: 5000,
+                        divisions: 246,
+                        label: '${speed.round()} ms',
+                        onChanged: (value) => setState(() => speed = value),
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.icon(
+                            onPressed:
+                                !ready('text') ||
+                                    displayPending ||
+                                    !textSettingsValid ||
+                                    text.text.isEmpty
+                                ? null
+                                : () => sendDisplay({
+                                    'text': text.text,
+                                    'speed_ms': '${speed.round()}',
+                                    'hold_ms':
+                                        '${holdDraft ?? workspace.holdMs}',
+                                    'repeat': repeat,
+                                    'force_scroll': '$forceScroll',
+                                    'interval_seconds':
+                                        '${intervalDraft ?? workspace.intervalSeconds}',
+                                  }),
+                            icon: const Icon(PakarIcons.play),
+                            label: const Text('Present'),
+                          ),
+                          TextButton.icon(
+                            onPressed:
+                                ready('text') &&
+                                    !displayPending &&
+                                    widget.status?.json['tm1637_host_active'] ==
+                                        true
+                                ? () => sendDisplay({'release': 'true'})
+                                : null,
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: const Text('Stop text'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (shown('buzzer')) _melodyControls(),
+            ?livePanel,
+          ],
         ),
-      const SizedBox(height: 12),
-      if (shown('buzzer') && seenCues.isNotEmpty) _melodyControls(),
-    ],
-  );
+        ?mirrorControls,
+      ],
+    );
+  }
 
   Widget _melodyControls() {
     final cues = seenCues;
-    final cue = cues.contains(selectedCue) ? selectedCue! : cues.first;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final cue = cues.contains(selectedCue) ? selectedCue! : cues.firstOrNull;
+    return WorkspaceSection(
+      title: 'Board melody',
+      icon: PakarIcons.musicNote,
+      children: [
+        if (cue != null) ...[
+          DropdownButtonFormField<String>(
+            key: ValueKey('audio-cues:${cues.join(',')}:$cue'),
+            initialValue: cue,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Acknowledged AVR cue',
+            ),
+            items: [
+              for (final item in cues)
+                DropdownMenuItem(value: item, child: Text(item)),
+            ],
+            onChanged:
+                audioPending ||
+                    !ready('buzzer') ||
+                    widget.status?.audioCues.isNotEmpty != true
+                ? null
+                : (value) => setState(() => selectedCue = value),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed:
+                audioPending ||
+                    !ready('buzzer') ||
+                    widget.status?.audioCues.contains(cue) != true
+                ? null
+                : () => sendCue(cue),
+            icon: const Icon(PakarIcons.musicNote),
+            label: Text(audioPending ? 'Sending cue…' : 'Send melody'),
+          ),
+          const SizedBox(height: 12),
+        ],
+        ExpansionTile(
+          key: const PageStorageKey('front-panel-custom-tone'),
+          tilePadding: EdgeInsets.zero,
+          leading: const Icon(Icons.graphic_eq),
+          title: const Text('Custom tone'),
           children: [
-            const Text('Board melody'),
-            DropdownButtonFormField<String>(
-              key: ValueKey('audio-cues:${cues.join(',')}:$cue'),
-              initialValue: cue,
-              decoration: const InputDecoration(
-                labelText: 'Acknowledged AVR cue',
-              ),
-              items: [
-                for (final item in cues)
-                  DropdownMenuItem(value: item, child: Text(item)),
+            WorkspaceGrid(
+              minimumWidth: 220,
+              children: [
+                TextFormField(
+                  key: const PageStorageKey('front-panel-frequency'),
+                  initialValue: '${workspace.frequency}',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    labelText: 'Frequency',
+                    suffixText: 'Hz',
+                    helperText: '20–12000',
+                  ),
+                  onChanged: (value) =>
+                      setState(() => frequencyDraft = int.tryParse(value)),
+                ),
+                TextFormField(
+                  key: const PageStorageKey('front-panel-duration'),
+                  initialValue: '${workspace.durationMs}',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    labelText: 'Duration',
+                    suffixText: 'ms',
+                    helperText: '1–5000',
+                  ),
+                  onChanged: (value) =>
+                      setState(() => durationDraft = int.tryParse(value)),
+                ),
               ],
-              onChanged:
-                  audioPending ||
-                      !ready('buzzer') ||
-                      widget.status?.audioCues.isNotEmpty != true
-                  ? null
-                  : (value) => setState(() => selectedCue = value),
             ),
             const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed:
-                  audioPending ||
-                      !ready('buzzer') ||
-                      widget.status?.audioCues.contains(cue) != true
-                  ? null
-                  : () => sendCue(cue),
-              icon: const Icon(PakarIcons.musicNote),
-              label: Text(audioPending ? 'Sending cue…' : 'Send melody'),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FilledButton.tonalIcon(
+                onPressed: ready('buzzer') && toneValid && !audioPending
+                    ? sendTone
+                    : null,
+                icon: const Icon(PakarIcons.play),
+                label: const Text('Play tone'),
+              ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 
@@ -2482,58 +3319,32 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
     seenPanelMirror |= mirror.panelAvailable;
     seenSegmentsMirror |= mirror.segmentsAvailable;
     seenBuzzerMirror |= mirror.buzzerAvailable;
+    if (!seenPanelMirror && !seenSegmentsMirror && !seenBuzzerMirror) {
+      return const SizedBox.shrink();
+    }
     final requested = mirror.segmentsAvailable
         ? mirror.panelPresentation
         : null;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'Mirror on this phone',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
+    return WorkspaceSection(
+      title: 'Mirror on this device',
+      icon: Icons.devices,
+      children: [
+        if (mirror.panelEnabled && seenSegmentsMirror)
+          Tooltip(
+            message: requested == null
+                ? '—'
+                : '${requested.text}\n${requested.kind} · ${requested.blink} · ${requested.marquee}',
+            child: WorkspaceValueRow(
+              label: 'Requested',
+              value: requested?.preview ?? '—',
             ),
-            if (mirror.panelEnabled && seenSegmentsMirror)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  height: 40,
-                  child: Row(
-                    children: [
-                      Text(
-                        'Requested',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Tooltip(
-                          message: requested == null
-                              ? '—'
-                              : '${requested.text}\n${requested.kind} · ${requested.blink} · ${requested.marquee}',
-                          child: Text(
-                            requested?.preview ?? '—',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 22,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+          ),
+        WorkspaceGrid(
+          minimumWidth: 360,
+          children: [
             if (seenPanelMirror)
               SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Front panel'),
                 subtitle: const Text('Live menu, ownership and physical keys'),
                 value: mirror.panelEnabled,
@@ -2541,6 +3352,7 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
               ),
             if (seenSegmentsMirror)
               SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('7-segment display'),
                 subtitle: const Text(
                   'Actual segment masks, decimal points and brightness',
@@ -2548,8 +3360,9 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                 value: mirror.segmentsEnabled,
                 onChanged: mirror.setSegments,
               ),
-            if (seenBuzzerMirror) ...[
+            if (seenBuzzerMirror)
               SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Exact-tone buzzer'),
                 subtitle: const Text(
                   'Phone speaker · live AVR frequency and cadence · foreground only',
@@ -2557,7 +3370,9 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                 value: mirror.buzzerEnabled,
                 onChanged: mirror.setBuzzer,
               ),
+            if (seenBuzzerMirror)
               SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Follow board Silent mode'),
                 subtitle: const Text(
                   'Otherwise phone audio remains independent of the physical buzzer',
@@ -2565,50 +3380,38 @@ class _FrontPanelPageState extends State<FrontPanelPage> {
                 value: mirror.followBoardMute,
                 onChanged: mirror.setFollowBoardMute,
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    const Text('Phone volume'),
-                    Expanded(
-                      child: Slider(
-                        value: mirror.volume,
-                        label: '${(mirror.volume * 100).round()}%',
-                        divisions: 20,
-                        onChanged: mirror.setVolume,
-                      ),
-                    ),
-                    Text('${(mirror.volume * 100).round()}%'),
-                  ],
-                ),
-              ),
-              if (mirror.buzzerEnabled)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextButton.icon(
-                    onPressed: () => mirror.setBuzzer(false),
-                    icon: const Icon(Icons.volume_off_outlined),
-                    label: const Text('Stop phone audio'),
-                  ),
-                ),
-            ] else if (shown('buzzer'))
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Exact-tone mirroring awaits the AVR timestamp capability acknowledgment.',
-                ),
-              ),
-            if (mirror.failure != null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  mirror.failure!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
           ],
         ),
-      ),
+        if (seenBuzzerMirror) ...[
+          WorkspaceValueRow(
+            label: 'Device volume',
+            value: '${(mirror.volume * 100).round()}%',
+          ),
+          Slider(
+            value: mirror.volume,
+            label: '${(mirror.volume * 100).round()}%',
+            divisions: 20,
+            onChanged: mirror.setVolume,
+          ),
+          if (mirror.buzzerEnabled)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextButton.icon(
+                onPressed: () => mirror.setBuzzer(false),
+                icon: const Icon(Icons.volume_off_outlined),
+                label: const Text('Stop phone audio'),
+              ),
+            ),
+        ],
+        if (mirror.failure != null)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              mirror.failure!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -2696,9 +3499,19 @@ class SegmentPainter extends CustomPainter {
 }
 
 class HardwarePage extends StatelessWidget {
-  const HardwarePage({super.key, required this.status, this.inventory});
+  const HardwarePage({
+    super.key,
+    required this.status,
+    this.inventory,
+    this.navigate,
+    this.connected = true,
+    this.verifiedCommand,
+  });
   final DeviceStatus? status;
   final PanelInventory? inventory;
+  final ValueChanged<String>? navigate;
+  final bool connected;
+  final VerifiedCommand? verifiedCommand;
 
   @override
   Widget build(BuildContext context) {
@@ -2749,96 +3562,322 @@ class HardwarePage extends StatelessWidget {
         ('Outputs', mask('active_outputs'), PakarIcons.lightning),
     ];
     if (values.isEmpty && features.isEmpty) {
-      return const Center(child: Text('No acknowledged hardware measurements'));
+      return WorkspaceBody(
+        children: [
+          const WorkspaceHeader(title: 'Hardware', icon: PakarIcons.circuitry),
+          WorkspaceActionCard(
+            title: 'No acknowledged hardware measurements',
+            subtitle: 'Choose a board',
+            icon: PakarIcons.circuitry,
+            onTap: navigate == null ? null : () => navigate!('devices'),
+          ),
+        ],
+      );
     }
-    return ListView(
+    return WorkspaceBody(
       key: PageStorageKey('hardware:${inventory?.ownerKey ?? peer.hostname}'),
-      padding: const EdgeInsets.all(16),
       children: [
+        const WorkspaceHeader(title: 'Hardware', icon: PakarIcons.circuitry),
+        WorkspaceActionCard(
+          icon: PakarIcons.gear,
+          title: 'Configure hardware',
+          subtitle: 'Board parameters and interfaces',
+          onTap: navigate == null
+              ? null
+              : () => navigate!(status == null ? 'devices' : 'device-settings'),
+        ),
+        const SizedBox(height: 16),
+        if (features.contains('inputs') || features.contains('outputs'))
+          HardwareIoSection(
+            status: status,
+            connected: connected,
+            features: features.toSet(),
+            command: verifiedCommand,
+          ),
         if (features.isNotEmpty)
           Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Capabilities',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final feature in features)
-                        Tooltip(
-                          message: peer.has(feature)
-                              ? 'Currently acknowledged'
-                              : 'Previously acknowledged; currently unavailable',
-                          child: Opacity(
-                            opacity: peer.has(feature) ? 1 : 0.45,
-                            child: Chip(
-                              key: ValueKey('capability:$feature'),
-                              label: Text(feature),
-                            ),
+            child: ExpansionTile(
+              leading: const Icon(Icons.extension_outlined),
+              title: const Text('Capabilities'),
+              subtitle: Text('${features.where(peer.has).length} acknowledged'),
+              childrenPadding: const EdgeInsets.all(16),
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final feature in features)
+                      Tooltip(
+                        message: peer.has(feature)
+                            ? 'Currently acknowledged'
+                            : 'Previously acknowledged; currently unavailable',
+                        child: Opacity(
+                          opacity: peer.has(feature) ? 1 : 0.45,
+                          child: Chip(
+                            key: ValueKey('capability:$feature'),
+                            label: Text(feature),
                           ),
                         ),
-                    ],
-                  ),
-                ],
-              ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
-        if (values.isNotEmpty)
-          GridView(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 280,
-              mainAxisExtent:
-                  56 + MediaQuery.textScalerOf(context).scale(18) * 4,
-            ),
-            children: [
-              for (final value in values)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Icon(value.$3, size: 30),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                value.$1,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xff909baa),
+        if (values.isNotEmpty) const SizedBox(height: 12),
+        WorkspaceGrid(
+          children: [
+            for (final value in values)
+              WorkspaceActionCard(
+                icon: value.$3,
+                title: value.$1,
+                value: value.$2,
+                tone: switch (value.$2) {
+                  'Ready' ||
+                  'Online' ||
+                  'Started' ||
+                  'Connected' ||
+                  'Synchronized' => Theme.of(context).colorScheme.secondary,
+                  'Offline' ||
+                  'No ACK' ||
+                  'Stopped' => Theme.of(context).colorScheme.error,
+                  _ => Theme.of(context).colorScheme.onSurfaceVariant,
+                },
+                onTap: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (context) => SafeArea(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.sizeOf(context).height * .85,
+                        maxWidth: 640,
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            WorkspaceHeader(
+                              title: value.$1,
+                              icon: value.$3,
+                              subtitle: value.$2,
+                            ),
+                            WorkspaceValueRow(
+                              label: 'Board',
+                              value: peer.hostname,
+                            ),
+                            for (final field in switch (value.$1) {
+                              'AVR' => [
+                                'avr_version',
+                                'avr_online',
+                                'uart_mode',
+                                'active_inputs',
+                                'active_outputs',
+                              ],
+                              'TM1637' => [
+                                'tm1637_ack',
+                                'display_text',
+                                'display_brightness',
+                              ],
+                              'MQTT' => ['mqtt_connected', 'mqtt_enabled'],
+                              'NTP' => ['ntp_synced', 'uptime_ms'],
+                              'Inputs' => [
+                                'active_inputs',
+                                'input_9',
+                                'winner',
+                              ],
+                              'Outputs' => ['active_outputs', 'winner'],
+                              _ => [
+                                'hostname',
+                                'station_ip',
+                                'ap_ip',
+                                'rssi',
+                                'mdns_started',
+                                'ssdp_started',
+                              ],
+                            })
+                              if (status?.json[field] != null)
+                                WorkspaceValueRow(
+                                  label: field.replaceAll('_', ' '),
+                                  value: '${status!.json[field]}',
                                 ),
+                            const SizedBox(height: 16),
+                            if (navigate != null)
+                              FilledButton.icon(
+                                icon: const Icon(PakarIcons.gear),
+                                label: const Text('Open configuration'),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  navigate?.call(
+                                    status == null
+                                        ? 'devices'
+                                        : 'device-settings',
+                                  );
+                                },
                               ),
-                              Text(
-                                value.$2,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Same mask operation as native Hardware. The displayed mask is only the
+/// selected board's observation: pending and successful sends never toggle it.
+class HardwareIoSection extends StatefulWidget {
+  const HardwareIoSection({
+    super.key,
+    required this.status,
+    required this.connected,
+    required this.features,
+    this.command,
+  });
+  final DeviceStatus? status;
+  final bool connected;
+  final Set<String> features;
+  final VerifiedCommand? command;
+  @override
+  State<HardwareIoSection> createState() => _HardwareIoSectionState();
+}
+
+class _HardwareIoSectionState extends State<HardwareIoSection> {
+  bool pending = false;
+  String? failure;
+  int? mask(String key) {
+    final value = widget.status?.json[key];
+    return value is int && value >= 0 && value <= 255 ? value : null;
+  }
+
+  bool get writable =>
+      widget.connected &&
+      !pending &&
+      widget.command != null &&
+      widget.status?.peer.has('outputs') == true &&
+      widget.status?.avrOnline == true &&
+      widget.status?.json['programming_latch'] == false &&
+      mask('active_outputs') != null;
+  Future<void> toggle(int bit) async {
+    if (!writable) return;
+    final desired = mask('active_outputs')! ^ (1 << bit);
+    setState(() {
+      pending = true;
+      failure = null;
+    });
+    try {
+      final applied = await widget.command!('/api/outputs', {
+        'mask': '$desired',
+      });
+      if (mounted && !applied) {
+        setState(() => failure = 'Output change was not confirmed.');
+      }
+    } catch (error) {
+      if (mounted) setState(() => failure = error.toString());
+    } finally {
+      if (mounted) setState(() => pending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final input = widget.status?.peer.has('inputs') == true
+        ? mask('active_inputs')
+        : null;
+    final output = widget.status?.peer.has('outputs') == true
+        ? mask('active_outputs')
+        : null;
+    return WorkspaceSection(
+      title: 'Inputs & outputs',
+      icon: PakarIcons.circuitry,
+      children: [
+        if (widget.features.contains('inputs')) ...[
+          Text('Inputs', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var bit = 0; bit < 9; bit++)
+                Builder(
+                  builder: (context) {
+                    final active = bit == 8
+                        ? widget.status?.peer.has('inputs') == true &&
+                                  widget.status?.json['input_9'] is bool
+                              ? widget.status!.json['input_9'] as bool
+                              : null
+                        : input == null
+                        ? null
+                        : (input & (1 << bit)) != 0;
+                    return WorkspaceBadge(
+                      '${bit + 1} · ${active == null
+                          ? '—'
+                          : active
+                          ? 'On'
+                          : 'Off'}',
+                      key: ValueKey('hardware-input-${bit + 1}'),
+                      active: active == true,
+                      icon: active == null
+                          ? Icons.help_outline
+                          : active
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                    );
+                  },
+                ),
             ],
           ),
+        ],
+        if (widget.features.contains('outputs')) ...[
+          const SizedBox(height: 14),
+          Text(
+            'Shift-register outputs',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var bit = 0; bit < 8; bit++)
+                FilterChip(
+                  key: ValueKey('hardware-output-${bit + 1}'),
+                  avatar: Icon(
+                    output == null
+                        ? Icons.help_outline
+                        : Icons.lightbulb_outline,
+                    size: 18,
+                  ),
+                  label: Text('${bit + 1}'),
+                  selected: output != null && (output & (1 << bit)) != 0,
+                  onSelected: writable ? (_) => toggle(bit) : null,
+                ),
+            ],
+          ),
+          SizedBox(
+            height: 10,
+            child: pending
+                ? const Align(
+                    alignment: Alignment.bottomCenter,
+                    child: LinearProgressIndicator(minHeight: 2),
+                  )
+                : null,
+          ),
+          if (failure != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                failure!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
       ],
     );
   }
@@ -2852,12 +3891,14 @@ class SettingsPage extends StatefulWidget {
     this.active = true,
     this.draft,
     this.openDevices,
+    this.connectionOnly = false,
   });
   final PakarApi api;
   final Future<void> Function() reconnect;
   final bool active;
   final ConnectionDraft? draft;
   final VoidCallback? openDevices;
+  final bool connectionOnly;
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
@@ -2913,11 +3954,12 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) => WorkspaceBody(
     children: [
-      const WorkspaceHeader(
-        title: 'Preferences',
-        icon: PakarIcons.gear,
-        subtitle: 'Application connection',
-      ),
+      if (!widget.connectionOnly)
+        const WorkspaceHeader(
+          title: 'Preferences',
+          icon: PakarIcons.gear,
+          subtitle: 'Application connection',
+        ),
       WorkspaceSection(
         title: 'Board connection',
         icon: PakarIcons.link,
@@ -2925,21 +3967,40 @@ class _SettingsPageState extends State<SettingsPage> {
           DropdownButtonFormField<ConnectionMethod>(
             key: ValueKey(widget.api.connectionMethod),
             initialValue: widget.api.connectionMethod,
+            isExpanded: true,
+            isDense: false,
+            itemHeight: 24 + MediaQuery.textScalerOf(context).scale(16) * 3,
             decoration: const InputDecoration(
-              labelText: 'One selected transport',
+              labelText: 'Connection method',
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 16,
+              ),
             ),
             items: const [
               DropdownMenuItem(
                 value: ConnectionMethod.usb,
-                child: Text('USB OTG · offline direct board'),
+                child: ConnectionChoice(
+                  title: 'USB OTG',
+                  detail: 'Direct connection, no network needed',
+                  icon: Icons.usb,
+                ),
               ),
               DropdownMenuItem(
                 value: ConnectionMethod.network,
-                child: Text('Network · Wi-Fi / Ethernet'),
+                child: ConnectionChoice(
+                  title: 'Network',
+                  detail: 'Wi-Fi or Ethernet',
+                  icon: Icons.wifi,
+                ),
               ),
               DropdownMenuItem(
                 value: ConnectionMethod.bluetooth,
-                child: Text('Bluetooth LE · offline board control'),
+                child: ConnectionChoice(
+                  title: 'Bluetooth LE',
+                  detail: 'Nearby board, no network needed',
+                  icon: Icons.bluetooth,
+                ),
               ),
             ],
             onChanged: saving
@@ -3116,7 +4177,11 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ],
       ),
-      BoardSoundPreferences(api: widget.api, active: widget.active),
+      if (!widget.connectionOnly)
+        BoardSoundPreferences(api: widget.api, active: widget.active),
+      if (!widget.connectionOnly &&
+          widget.api.latestStatus?.peer.role == 'first-wins')
+        const WinnerPreferences(),
     ],
   );
 }
@@ -3147,34 +4212,126 @@ class StatusBar extends StatelessWidget {
     this.retained,
     this.endpoint = '',
     this.commandFailed = false,
+    this.onConnection,
   });
   final DeviceStatus? status;
   final DeviceStatus? retained;
   final String endpoint;
   final String message;
   final bool commandFailed;
+  final VoidCallback? onConnection;
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: const BoxDecoration(
-      color: Color(0xff0d1016),
-      border: Border(top: BorderSide(color: Color(0xff29313d))),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-    child: Row(
-      children: [
-        Icon(
-          !commandFailed && status?.peer.known == true
-              ? PakarIcons.check
-              : PakarIcons.warning,
-          size: 16,
-          color: commandFailed ? Theme.of(context).colorScheme.error : null,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: InkWell(
-            key: const Key('command-status-details'),
-            onTap: commandFailed
-                ? () => showDialog<void>(
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final connected = status?.peer.known == true;
+    final statusText =
+        !commandFailed && connected && message == 'Live device status received'
+        ? 'Connected'
+        : message;
+    final peerDetails = status == null
+        ? (retained?.hostname.isNotEmpty == true
+              ? '${retained!.hostname} · awaiting fresh state'
+              : Uri.tryParse(endpoint)?.host ?? '')
+        : [
+            if (status!.hostname.isNotEmpty) status!.hostname,
+            if (status!.json['ethernet'] is Map &&
+                status!.json['ethernet']['ipv4_ready'] == true &&
+                status!.json['ethernet']['ip'] is String)
+              'Ethernet ${status!.json['ethernet']['ip']}',
+            if (status!.json['station_connected'] == true &&
+                status!.stationIp.isNotEmpty)
+              status!.stationIp,
+            if (status!.json['station_connected'] == true &&
+                status!.rssi != null)
+              '${status!.rssi} dBm',
+          ].join(' · ');
+    // Keep the donor workspace chrome's 48px touch target, not 48px plus
+    // another 16px of footer padding. Safe insets belong to the workspace.
+    // A single line stays stable during telemetry changes; full details remain
+    // available to tooltips, screen readers and the command-error dialog.
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xff0d1016),
+        border: Border(top: BorderSide(color: Color(0xff29313d))),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: InkWell(
+                key: const Key('connection-status-area'),
+                borderRadius: BorderRadius.circular(8),
+                onTap: onConnection,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          connected
+                              ? Icons.check_circle_outline
+                              : Icons.link_off,
+                          size: 18,
+                          color: connected
+                              ? colors.secondary
+                              : colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Tooltip(
+                            message: statusText,
+                            child: Text(
+                              statusText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: commandFailed
+                                        ? colors.error
+                                        : colors.onSurfaceVariant,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (peerDetails.isNotEmpty) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: InkWell(
+                  key: const Key('status-peer-details'),
+                  onTap: onConnection,
+                  child: Tooltip(
+                    message: peerDetails,
+                    child: Text(
+                      peerDetails,
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: colors.onSurfaceVariant),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            if (commandFailed)
+              SizedBox.square(
+                dimension: 48,
+                child: IconButton(
+                  key: const Key('command-status-details'),
+                  tooltip: 'Command error details',
+                  color: colors.error,
+                  icon: const Icon(PakarIcons.warning, size: 18),
+                  onPressed: () => showDialog<void>(
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('Command not completed'),
@@ -3186,45 +4343,20 @@ class StatusBar extends StatelessWidget {
                         ),
                       ],
                     ),
-                  )
-                : null,
-            child: Tooltip(
-              message: message,
-              child: Text(
-                message,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: commandFailed
-                    ? TextStyle(color: Theme.of(context).colorScheme.error)
-                    : null,
+                  ),
+                ),
+              ),
+            SizedBox.square(
+              dimension: 48,
+              child: IconButton(
+                tooltip: 'Connection settings',
+                onPressed: onConnection,
+                icon: const Icon(Icons.settings_ethernet, size: 18),
               ),
             ),
-          ),
+          ],
         ),
-        Flexible(
-          child: Text(
-            status == null
-                ? (retained?.hostname.isNotEmpty == true
-                      ? '${retained!.hostname} · awaiting fresh state'
-                      : Uri.tryParse(endpoint)?.host ?? '')
-                : [
-                    if (status!.hostname.isNotEmpty) status!.hostname,
-                    if (status!.json['ethernet'] is Map &&
-                        status!.json['ethernet']['ipv4_ready'] == true &&
-                        status!.json['ethernet']['ip'] is String)
-                      'Ethernet ${status!.json['ethernet']['ip']}',
-                    if (status!.json['station_connected'] == true &&
-                        status!.stationIp.isNotEmpty)
-                      status!.stationIp,
-                    if (status!.json['station_connected'] == true &&
-                        status!.rssi != null)
-                      '${status!.rssi} dBm',
-                  ].join(' · '),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }

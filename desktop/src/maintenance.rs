@@ -67,8 +67,12 @@ impl Operation {
             Self::UpdateEsp(_) => {
                 "Replace ESP firmware and reboot. Confirm this binary is built for this exact ESP board/module and preserves its pin mapping. A lost connection does not prove failure; reconnect before retrying."
             }
-            Self::SourceImage {esp:true,..} => "Verify this exact local/downloaded ESP binary, upload once to the selected board and reboot it. Transfer progress is not flash completion. Reconnect and inspect running firmware; no uncertain write is replayed.",
-            Self::SourceImage {..} => "Verify and upload a complete 32768-byte AVR image to ESP storage. It is NOT programmed automatically. Existing staged image is replaced; final programming remains explicit.",
+            Self::SourceImage { esp: true, .. } => {
+                "Verify this exact local/downloaded ESP binary, upload once to the selected board and reboot it. Transfer progress is not flash completion. Reconnect and inspect running firmware; no uncertain write is replayed."
+            }
+            Self::SourceImage { .. } => {
+                "Verify and upload a complete 32768-byte AVR image to ESP storage. It is NOT programmed automatically. Existing staged image is replaced; final programming remains explicit."
+            }
             Self::Download { .. } => {
                 "Export the existing backup. No board write is performed and existing PC files will not be overwritten."
             }
@@ -103,18 +107,35 @@ fn validate_esp_image(bytes: &[u8], expected_s3: Option<bool>) -> Result<(), Str
     Ok(())
 }
 pub fn validate_image(esp: bool, bytes: &[u8]) -> Result<(), String> {
-    if esp { validate_esp_image(bytes, None) }
-    else if bytes.len() != 32768 {
+    if esp {
+        validate_esp_image(bytes, None)
+    } else if bytes.len() != 32768 {
         Err("AVR staging requires exactly 32768 bytes; Intel HEX and partial application images are not accepted".into())
-    } else { Ok(()) }
+    } else {
+        Ok(())
+    }
 }
-pub fn validate_image_for_board(esp: bool, bytes: &[u8], board: &crate::DeviceStatus) -> Result<(), String> {
-    if !esp { return validate_image(false, bytes); }
-    let s3 = if board.board_id.starts_with("esp32s3-") { Some(true) }
-        else if board.board_id.starts_with("esp8266-") { Some(false) } else { None };
+pub fn validate_image_for_board(
+    esp: bool,
+    bytes: &[u8],
+    board: &crate::DeviceStatus,
+) -> Result<(), String> {
+    if !esp {
+        return validate_image(false, bytes);
+    }
+    let s3 = if board.board_id.starts_with("esp32s3-") {
+        Some(true)
+    } else if board.board_id.starts_with("esp8266-") {
+        Some(false)
+    } else {
+        None
+    };
     validate_esp_image(bytes, s3)?;
     if !board.ota_capacity_bytes.is_null() {
-        let capacity = board.ota_capacity_bytes.as_u64().filter(|n| *n>0)
+        let capacity = board
+            .ota_capacity_bytes
+            .as_u64()
+            .filter(|n| *n > 0)
             .ok_or("Board advertised an invalid OTA capacity; no firmware sent")?;
         if bytes.len() as u64 >= capacity {
             return Err("Firmware does not fit the board's advertised inactive OTA partition; no firmware sent".into());
@@ -126,15 +147,24 @@ pub fn read_image_file(path: &std::path::Path, esp: bool) -> Result<Vec<u8>, Str
     let file = std::fs::File::open(path).map_err(|error| error.to_string())?;
     let metadata = file.metadata().map_err(|error| error.to_string())?;
     let maximum = maximum_image_bytes(esp);
-    if !metadata.is_file() || metadata.len()>maximum { return Err("Firmware file exceeds the supported image-slot bound".into()); }
+    if !metadata.is_file() || metadata.len() > maximum {
+        return Err("Firmware file exceeds the supported image-slot bound".into());
+    }
     let mut bytes = Vec::new();
-    file.take(maximum+1).read_to_end(&mut bytes).map_err(|error|error.to_string())?;
+    file.take(maximum + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|error| error.to_string())?;
     validate_image(esp, &bytes)?;
     Ok(bytes)
 }
 pub fn run(client: &Client, endpoint: &Endpoint, operation: Operation) -> Result<String, String> {
-    if let Operation::SourceImage {source,esp,progress}=operation {
-        return crate::firmware_source::run(client,endpoint,source,esp,&progress);
+    if let Operation::SourceImage {
+        source,
+        esp,
+        progress,
+    } = operation
+    {
+        return crate::firmware_source::run(client, endpoint, source, esp, &progress);
     }
     if matches!(
         operation,
@@ -301,7 +331,11 @@ pub fn parse_job(value: serde_json::Value) -> Result<RemoteJob, String> {
         || job.boot_id.is_empty()
         || job.boot_id.len() > 80
         || job.boot_id.bytes().any(|b| !(33..=126).contains(&b))
-        || job.error.len()>1024 || job.error.chars().any(|c|c.is_control() && c!='\n' && c!='\t')
+        || job.error.len() > 1024
+        || job
+            .error
+            .chars()
+            .any(|c| c.is_control() && c != '\n' && c != '\t')
         || job.received_bytes > job.expected_bytes
         || (job.job_id > 0 && !valid_hash(&job.manifest_sha256))
         || ![
@@ -326,12 +360,20 @@ pub fn parse_job(value: serde_json::Value) -> Result<RemoteJob, String> {
     }
     Ok(job)
 }
-pub fn result_severity(result: &Result<String,String>) -> crate::messaging::Severity {
+pub fn result_severity(result: &Result<String, String>) -> crate::messaging::Severity {
     use crate::messaging::Severity;
-    let Ok(text)=result else {return Severity::Error;};
-    if text.starts_with("ESP accepted firmware") || text.starts_with("AVR image uploaded and stored") {return Severity::Info;}
-    let job=serde_json::from_str(text).ok().and_then(|v|parse_job(v).ok());
-    match job.as_ref().map(|j|j.phase.as_str()) {
+    let Ok(text) = result else {
+        return Severity::Error;
+    };
+    if text.starts_with("ESP accepted firmware")
+        || text.starts_with("AVR image uploaded and stored")
+    {
+        return Severity::Info;
+    }
+    let job = serde_json::from_str(text)
+        .ok()
+        .and_then(|v| parse_job(v).ok());
+    match job.as_ref().map(|j| j.phase.as_str()) {
         Some("complete") => Severity::Success,
         Some("failed") => Severity::Error,
         Some(_) => Severity::Info, // Accepted/staged/applying is NOT completion.
@@ -448,67 +490,141 @@ mod tests {
     use super::*;
     #[test]
     fn rejects_untrusted_urls_hashes_and_unobserved_jobs() {
-        let sha="a".repeat(64);
-        assert!(validate_remote("https://firmware.example/PakarController/manifest.json",&sha,3).is_ok());
-        for url in ["http://firmware.example/file","https://user:pass@firmware.example/file",
-                    "https://firmware.example/file#fragment","https://firmware.example/ bad"] {
-            assert!(validate_remote(url,&sha,3).is_err());
+        let sha = "a".repeat(64);
+        assert!(
+            validate_remote(
+                "https://firmware.example/PakarController/manifest.json",
+                &sha,
+                3
+            )
+            .is_ok()
+        );
+        for url in [
+            "http://firmware.example/file",
+            "https://user:pass@firmware.example/file",
+            "https://firmware.example/file#fragment",
+            "https://firmware.example/ bad",
+        ] {
+            assert!(validate_remote(url, &sha, 3).is_err());
         }
-        assert!(validate_remote("https://host/file",&"A".repeat(64),3).is_err());
-        assert!(validate_remote("https://host/file",&sha,4).is_err());
+        assert!(validate_remote("https://host/file", &"A".repeat(64), 3).is_err());
+        assert!(validate_remote("https://host/file", &sha, 4).is_err());
         assert!(parse_job(serde_json::json!({})).is_err());
     }
     #[test]
     fn remote_requests_pin_identity_and_never_replay_lost_or_wrong_ack() {
         use std::net::TcpListener;
-        let listener=TcpListener::bind("127.0.0.1:0").unwrap();
-        let address=listener.local_addr().unwrap();
-        let sha="b".repeat(64);
-        let ready=RemoteJob{job_id:7,boot_id:"observed-boot".into(),phase:"ready".into(),targets:3,
-            manifest_sha256:sha.clone(),busy:false,cancellable:false,received_bytes:32768,expected_bytes:32768,error:String::new()};
-        let job=ready.clone();
-        let server=std::thread::spawn(move|| {
-            for (i,stream) in listener.incoming().take(2).enumerate() {
-                let mut stream=stream.unwrap();stream.set_read_timeout(Some(Duration::from_secs(3))).unwrap();
-                let mut request=Vec::new();let mut chunk=[0;1024];
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let sha = "b".repeat(64);
+        let ready = RemoteJob {
+            job_id: 7,
+            boot_id: "observed-boot".into(),
+            phase: "ready".into(),
+            targets: 3,
+            manifest_sha256: sha.clone(),
+            busy: false,
+            cancellable: false,
+            received_bytes: 32768,
+            expected_bytes: 32768,
+            error: String::new(),
+        };
+        let job = ready.clone();
+        let server = std::thread::spawn(move || {
+            for (i, stream) in listener.incoming().take(2).enumerate() {
+                let mut stream = stream.unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(3)))
+                    .unwrap();
+                let mut request = Vec::new();
+                let mut chunk = [0; 1024];
                 loop {
-                    let n=stream.read(&mut chunk).unwrap();assert!(n>0);request.extend_from_slice(&chunk[..n]);
-                    if let Some(end)=request.windows(4).position(|p|p==b"\r\n\r\n") {
-                        let header=String::from_utf8_lossy(&request[..end]).to_lowercase();
-                        let length=header.lines().find_map(|s|s.strip_prefix("content-length: ").and_then(|v|v.parse::<usize>().ok())).unwrap_or(0);
-                        if request.len()>=end+4+length {break;}
+                    let n = stream.read(&mut chunk).unwrap();
+                    assert!(n > 0);
+                    request.extend_from_slice(&chunk[..n]);
+                    if let Some(end) = request.windows(4).position(|p| p == b"\r\n\r\n") {
+                        let header = String::from_utf8_lossy(&request[..end]).to_lowercase();
+                        let length = header
+                            .lines()
+                            .find_map(|s| {
+                                s.strip_prefix("content-length: ")
+                                    .and_then(|v| v.parse::<usize>().ok())
+                            })
+                            .unwrap_or(0);
+                        if request.len() >= end + 4 + length {
+                            break;
+                        }
                     }
                 }
-                let text=String::from_utf8(request).unwrap();
-                assert!(text.starts_with(if i==0{"POST /api/firmware/fetch"}else{"POST /api/firmware/apply"}));
+                let text = String::from_utf8(request).unwrap();
+                assert!(text.starts_with(if i == 0 {
+                    "POST /api/firmware/fetch"
+                } else {
+                    "POST /api/firmware/apply"
+                }));
                 assert!(text.to_lowercase().contains("authorization: basic "));
-                let body=text.split("\r\n\r\n").nth(1).unwrap();
-                let form:std::collections::HashMap<_,_>=reqwest::Url::parse(&format!("http://fixture/?{body}")).unwrap().query_pairs().into_owned().collect();
-                if i==0 {assert_eq!(form.get("apply").unwrap(),"false");assert_eq!(form.get("sha256").unwrap(),&job.manifest_sha256);}
-                else {assert_eq!(form.get("job_id").unwrap(),"7");assert_eq!(form.get("boot_id").unwrap(),"observed-boot");}
-                let mut reply=job.clone();reply.phase=if i==0{"manifest"}else{"prepare"}.into();
-                if i==1 {reply.boot_id="wrong-boot".into();}
-                let bytes=serde_json::to_vec(&reply).unwrap();
+                let body = text.split("\r\n\r\n").nth(1).unwrap();
+                let form: std::collections::HashMap<_, _> =
+                    reqwest::Url::parse(&format!("http://fixture/?{body}"))
+                        .unwrap()
+                        .query_pairs()
+                        .into_owned()
+                        .collect();
+                if i == 0 {
+                    assert_eq!(form.get("apply").unwrap(), "false");
+                    assert_eq!(form.get("sha256").unwrap(), &job.manifest_sha256);
+                } else {
+                    assert_eq!(form.get("job_id").unwrap(), "7");
+                    assert_eq!(form.get("boot_id").unwrap(), "observed-boot");
+                }
+                let mut reply = job.clone();
+                reply.phase = if i == 0 { "manifest" } else { "prepare" }.into();
+                if i == 1 {
+                    reply.boot_id = "wrong-boot".into();
+                }
+                let bytes = serde_json::to_vec(&reply).unwrap();
                 write!(stream,"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",bytes.len()).unwrap();
                 stream.write_all(&bytes).unwrap();
             }
         });
-        let endpoint=Endpoint{base:format!("http://{address}"),user:"fixture".into(),password:"fixture-private".into()};
-        let client=Client::builder().no_proxy().build().unwrap();
-        assert!(run(&client,&endpoint,Operation::RemoteStage{url:"https://firmware.example/manifest.json".into(),sha256:sha,targets:3,bearer:String::new()}).is_ok());
-        assert!(run(&client,&endpoint,Operation::RemoteApply(ready)).unwrap_err().contains("exact job"));
+        let endpoint = Endpoint {
+            base: format!("http://{address}"),
+            user: "fixture".into(),
+            password: "fixture-private".into(),
+        };
+        let client = Client::builder().no_proxy().build().unwrap();
+        assert!(
+            run(
+                &client,
+                &endpoint,
+                Operation::RemoteStage {
+                    url: "https://firmware.example/manifest.json".into(),
+                    sha256: sha,
+                    targets: 3,
+                    bearer: String::new()
+                }
+            )
+            .is_ok()
+        );
+        assert!(
+            run(&client, &endpoint, Operation::RemoteApply(ready))
+                .unwrap_err()
+                .contains("exact job")
+        );
         server.join().unwrap();
     }
     #[test]
     fn accepted_update_is_not_reported_as_completion() {
         use crate::messaging::Severity;
-        let mut value=serde_json::json!({"job_id":1,"boot_id":"observed",
+        let mut value = serde_json::json!({"job_id":1,"boot_id":"observed",
             "phase":"prepare","targets":3,"manifest_sha256":"a".repeat(64),
             "busy":true,"cancellable":false,"received_bytes":0,"expected_bytes":0,"error":""});
-        assert_eq!(result_severity(&Ok(value.to_string())),Severity::Info);
-        value["phase"]="complete".into();assert_eq!(result_severity(&Ok(value.to_string())),Severity::Success);
-        value["phase"]="failed".into();assert_eq!(result_severity(&Ok(value.to_string())),Severity::Error);
-        assert_eq!(result_severity(&Err("ACK lost".into())),Severity::Error);
+        assert_eq!(result_severity(&Ok(value.to_string())), Severity::Info);
+        value["phase"] = "complete".into();
+        assert_eq!(result_severity(&Ok(value.to_string())), Severity::Success);
+        value["phase"] = "failed".into();
+        assert_eq!(result_severity(&Ok(value.to_string())), Severity::Error);
+        assert_eq!(result_severity(&Err("ACK lost".into())), Severity::Error);
     }
     #[test]
     fn rejects_wrong_target_or_partial_images() {
@@ -524,44 +640,94 @@ mod tests {
     #[test]
     fn s3_image_policy_accepts_actual_large_raw_image_but_not_slot_or_header_mismatch() {
         let mut image = vec![0; 2_220_352];
-        image[0]=0xe9;image[1]=4;image[12]=9;image[23]=1;
-        assert!(image.len()>2*1024*1024);
-        assert!(validate_image(true,&image).is_ok());
-        let board = crate::DeviceStatus {board_id:"esp32s3-fixture".into(), ..Default::default()};
-        assert!(validate_image_for_board(true,&image,&board).is_ok());
-        for size in [S3_OTA_SLOT, S3_OTA_SLOT+1] {
-            let mut oversized=image.clone();oversized.resize(size as usize,0);
-            assert!(validate_image(true,&oversized).is_err());
+        image[0] = 0xe9;
+        image[1] = 4;
+        image[12] = 9;
+        image[23] = 1;
+        assert!(image.len() > 2 * 1024 * 1024);
+        assert!(validate_image(true, &image).is_ok());
+        let board = crate::DeviceStatus {
+            board_id: "esp32s3-fixture".into(),
+            ..Default::default()
+        };
+        assert!(validate_image_for_board(true, &image, &board).is_ok());
+        for size in [S3_OTA_SLOT, S3_OTA_SLOT + 1] {
+            let mut oversized = image.clone();
+            oversized.resize(size as usize, 0);
+            assert!(validate_image(true, &oversized).is_err());
         }
-        for (offset,value) in [(0,0),(1,0),(1,17),(12,0),(12,5),(13,1),(23,0),(23,2)] {
-            let mut invalid=image.clone();invalid[offset]=value;
-            assert!(validate_image_for_board(true,&invalid,&board).is_err(),"Invalid S3 header byte{offset}={value}");
+        for (offset, value) in [
+            (0, 0),
+            (1, 0),
+            (1, 17),
+            (12, 0),
+            (12, 5),
+            (13, 1),
+            (23, 0),
+            (23, 2),
+        ] {
+            let mut invalid = image.clone();
+            invalid[offset] = value;
+            assert!(
+                validate_image_for_board(true, &invalid, &board).is_err(),
+                "Invalid S3 header byte{offset}={value}"
+            );
         }
-        let mut wrong_small=image[..1024].to_vec();wrong_small[12]=5;
-        assert!(validate_image_for_board(true,&wrong_small,&board).is_err());
-        assert!(validate_image_for_board(true,&image,&crate::DeviceStatus{board_id:"esp8266-fixture".into(),..Default::default()}).is_err());
-        assert!(validate_image(false,&image).is_err());
-        assert!(validate_image(false,&vec![0;32768]).is_ok());
-        for size in [0,32767,32769] {assert!(validate_image(false,&vec![0;size]).is_err());}
-        assert_eq!(maximum_image_bytes(true),S3_OTA_SLOT-1);
-        assert_eq!(maximum_image_bytes(false),32768);
+        let mut wrong_small = image[..1024].to_vec();
+        wrong_small[12] = 5;
+        assert!(validate_image_for_board(true, &wrong_small, &board).is_err());
+        assert!(
+            validate_image_for_board(
+                true,
+                &image,
+                &crate::DeviceStatus {
+                    board_id: "esp8266-fixture".into(),
+                    ..Default::default()
+                }
+            )
+            .is_err()
+        );
+        assert!(validate_image(false, &image).is_err());
+        assert!(validate_image(false, &vec![0; 32768]).is_ok());
+        for size in [0, 32767, 32769] {
+            assert!(validate_image(false, &vec![0; size]).is_err());
+        }
+        assert_eq!(maximum_image_bytes(true), S3_OTA_SLOT - 1);
+        assert_eq!(maximum_image_bytes(false), 32768);
     }
     #[test]
     fn s3_image_policy_respects_smaller_advertised_capacity_without_inventing_it() {
-        let mut image=vec![0;2_220_352];image[0]=0xe9;image[1]=1;image[12]=9;image[23]=1;
-        let mut board=crate::DeviceStatus{board_id:"esp32s3-fixture".into(),..Default::default()};
-        assert!(validate_image_for_board(true,&image,&board).is_ok());
-        board.ota_capacity_bytes=serde_json::json!(image.len());
-        assert!(validate_image_for_board(true,&image,&board).is_err());
-        board.ota_capacity_bytes=serde_json::json!(image.len()+1);
-        assert!(validate_image_for_board(true,&image,&board).is_ok());
-        for capacity in [serde_json::json!(0),serde_json::json!(-1),serde_json::json!("bad")] {
-            board.ota_capacity_bytes=capacity;
-            assert!(validate_image_for_board(true,&image,&board).is_err());
+        let mut image = vec![0; 2_220_352];
+        image[0] = 0xe9;
+        image[1] = 1;
+        image[12] = 9;
+        image[23] = 1;
+        let mut board = crate::DeviceStatus {
+            board_id: "esp32s3-fixture".into(),
+            ..Default::default()
+        };
+        assert!(validate_image_for_board(true, &image, &board).is_ok());
+        board.ota_capacity_bytes = serde_json::json!(image.len());
+        assert!(validate_image_for_board(true, &image, &board).is_err());
+        board.ota_capacity_bytes = serde_json::json!(image.len() + 1);
+        assert!(validate_image_for_board(true, &image, &board).is_ok());
+        for capacity in [
+            serde_json::json!(0),
+            serde_json::json!(-1),
+            serde_json::json!("bad"),
+        ] {
+            board.ota_capacity_bytes = capacity;
+            assert!(validate_image_for_board(true, &image, &board).is_err());
         }
-        let mut legacy=vec![0;1024];legacy[0]=0xe9;legacy[1]=1;legacy[23]=0xfe;
-        assert!(validate_image(true,&legacy).is_ok(),"ESP8266 body byte23 is not an ESP32 hash flag");
-        legacy.resize(ESP8266_IMAGE_LIMIT,0);
-        assert!(validate_image(true,&legacy).is_err());
+        let mut legacy = vec![0; 1024];
+        legacy[0] = 0xe9;
+        legacy[1] = 1;
+        legacy[23] = 0xfe;
+        assert!(
+            validate_image(true, &legacy).is_ok(),
+            "ESP8266 body byte23 is not an ESP32 hash flag"
+        );
+        legacy.resize(ESP8266_IMAGE_LIMIT, 0);
+        assert!(validate_image(true, &legacy).is_err());
     }
 }

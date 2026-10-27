@@ -24,7 +24,7 @@ DeviceStatus peer(String board, {String boot = 'first'}) => DeviceStatus({
 Finder get canvas => find.byKey(const ValueKey('table-cell-canvas'));
 Finder get search => find.widgetWithText(TextField, 'Find logical cell');
 FilledButton red(WidgetTester tester) =>
-    tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Set red'));
+    tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Red'));
 bool selected(WidgetTester tester, int id) =>
     tester.widget<CellButton>(find.byKey(ValueKey('cell-$id'))).highlighted;
 String queryText(WidgetTester tester) =>
@@ -277,12 +277,23 @@ void main() {
       final workspace = tester
           .widget<TablePage>(find.byType(TablePage))
           .workspace!;
-      workspace.pageScroll.jumpTo(200);
+      // The display action now belongs to the table header. A lazy ListView
+      // cannot ensureVisible a header already retired outside its cache.
+      FocusManager.instance.primaryFocus?.unfocus();
+      workspace.pageScroll.jumpTo(0);
       await tester.pumpAndSettle();
-      final indicators = find.widgetWithText(FilterChip, 'LED indicators');
-      await tester.tap(indicators);
+      final displayOptions = find.byKey(
+        const ValueKey('table-display-options'),
+      );
+      await tester.ensureVisible(displayOptions);
+      await tester.tap(displayOptions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('table-led-indicators')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Done'));
       await tester.pumpAndSettle();
       final multiple = find.widgetWithText(FilterChip, 'Multiple selection');
+      await tester.ensureVisible(multiple);
       await tester.tap(multiple);
       await tester.pumpAndSettle();
       workspace.cellEffect = 'fade';
@@ -319,7 +330,7 @@ void main() {
       expect(restored.multiple, true);
       expect(restored.cellEffect, 'fade');
       expect(restored.selection, {1, 2, 3, 80});
-      expect(queryText(tester), '1-3,80');
+      expect(queryText(tester), '1-3, 80');
       expect(restored.pageScroll.offset, y);
       expect(restored.tableScroll.offset, x);
       expect(selected(tester, 80), true);
@@ -338,11 +349,15 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Table').last);
       await tester.pumpAndSettle();
-      await tester.enterText(search, '4-6');
-      await tester.pumpAndSettle();
       final workspace = tester
           .widget<TablePage>(find.byType(TablePage))
           .workspace!;
+      // Navigate to the retained workspace's input before editing; restoration
+      // correctly keeps its old scroll offset instead of forcing it to zero.
+      workspace.pageScroll.jumpTo(0);
+      await tester.pumpAndSettle();
+      await tester.enterText(search, '4-6');
+      await tester.pumpAndSettle();
       workspace.showIndicators = true;
       final sockets = api.subscriptions;
       final reads = api.reads;
@@ -391,7 +406,7 @@ void main() {
       lessThanOrEqualTo(tester.getRect(selection).top),
     );
     expect(
-      find.descendant(of: colours, matching: find.text('Set red')),
+      find.descendant(of: colours, matching: find.text('Red')),
       findsOneWidget,
     );
     expect(
@@ -553,7 +568,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(selected(tester, 80), true);
       expect(selected(tester, 20), true);
-      expect(queryText(tester), '1,20,80');
+      expect(queryText(tester), '1, 20, 80');
       expect(next.writes, 0);
       await tester.pumpWidget(const SizedBox());
       await tester.pump();

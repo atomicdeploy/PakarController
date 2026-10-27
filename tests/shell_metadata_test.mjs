@@ -3,7 +3,7 @@
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {resolve,dirname} from 'node:path';
-const source=readFileSync('firmware/esp8266/src/ShellService.h','utf8');
+const source=readFileSync('firmware/esp/src/ShellService.h','utf8');
 const start=source.indexOf('String shellGet(const ShellProperty &p){');
 const end=source.indexOf('  if(key=="hostname")',start);
 if(start<0||end<start)throw Error('Actual metadata getter extraction markers changed');
@@ -32,7 +32,7 @@ let prior;try{prior=readFileSync(generated,'utf8')}catch(error){if(error.code!==
 if(prior!==fixture)writeFileSync(generated,fixture);
 for(const platform of ['ESP8266','ESP32']){
   const args=['-std=c++17','-Wall','-Wextra','-Werror','-DARDUINO_ARCH_'+platform,
-    '-I',resolve('firmware/esp8266/src'),'-I',resolve('tests/shell_properties_stubs'),generated,'-o',output];
+    '-I',resolve('firmware/esp/src'),'-I',resolve('tests/shell_properties_stubs'),generated,'-o',output];
   const compile=spawnSync(process.env.CXX||'g++',args,{stdio:'inherit',timeout:60000});
   if(compile.error||compile.status!==0)throw Error('Actual metadata getter fixture compilation failed');
   const run=spawnSync(output,[],{stdio:'inherit',timeout:10000});

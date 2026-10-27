@@ -40,7 +40,7 @@ See [board roles, lock semantics and assignment APIs](docs/CELL-ASSIGNMENTS.md).
 <details>
 <summary><b>Web device-settings preview</b> — actual embedded UI, simulated device state</summary>
 
-![Device settings](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/screenshots/web-device-settings.png)
+![Device settings](docs/screenshots/web-device-settings.png)
 
 This screenshot is from a read-only HTTP fixture. It is not a live board or a
 claim that every requested native/mobile setting is complete.
@@ -53,13 +53,20 @@ claim that every requested native/mobile setting is complete.
 flowchart LR
     Desktop[Windows · egui / CLI / TUI] <-->|JSON / WebSocket / USB| ESP[ESP32-S3 · retained ESP8266 target]
     Web[Embedded Web interface] <-->|Shared API state| ESP
-    Mobile[Android preview] <-->|Wi-Fi API / BLE on S3| ESP
+    Mobile[Android preview] <-->|IP API / BLE / native USB CDC subset| ESP
     ESP --> LEDs[Addressable LED cells]
     ESP <-->|COBS + CRC · UART| AVR[ATmega328P]
     ESP -->|ISP recovery / updates| AVR
     AVR --> Panel[Keys · shift registers · TM1637 · buzzer]
     ESP <-->|Configurable TLS links| Cloud[MQTT / WebSocket]
 ```
+
+Read [the current architecture and explicit gap register](docs/ARCHITECTURE.md)
+for source ownership, the 480-pixel Table versus 216-pixel Keys profiles, selected
+transports, rendering/queues, discovery, updates and remaining acceptance. The
+shared application lives under `firmware/esp`; S3 compiles it with
+its own adapters, not an ESP8266 binary. App-package distribution is a separate
+service from the MQTT board-control relay.
 
 ## Access and recovery
 
@@ -91,12 +98,12 @@ PCController peer-RPC parity remain pending; real LAN acceptance stays open in i
 Authentication defaults off in the current firmware; older installations can
 retain persisted credentials. Inspect **Device access** or use the explicit USB
 recovery utility rather than guessing a factory password.
-See [Access and recovery](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/ACCESS.md) and the explicit
-[PU850 parity audit](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/PU850-PARITY.md). ESPAsyncWebServer now hosts the
+See [Access and recovery](docs/ACCESS.md) and the explicit
+[PU850 parity audit](docs/PU850-PARITY.md). ESPAsyncWebServer now hosts the
 Web UI/API/WebSocket, ESP OTA and AVR ISP in the same firmware.
 
-Version 0.2.7 adds [pinned remote two-board updates and full operational telemetry](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/REMOTE-MAINTENANCE.md).
-The [50-route PU850 mapping](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/PU850-ROUTE-PARITY.md) records exact adaptations and exclusions.
+Version 0.2.7 adds [pinned remote two-board updates and full operational telemetry](docs/REMOTE-MAINTENANCE.md).
+The [50-route PU850 mapping](docs/PU850-ROUTE-PARITY.md) records exact adaptations and exclusions.
 Physical and publisher acceptance remain open in [issue #7](https://github.com/atomicdeploy/PakarController/issues/7); no production deployment is implied by a passing build.
 
 PakarController is a two-controller game platform built from the reusable parts of
@@ -108,6 +115,7 @@ and Pealayer work.
 - The ESP32-S3 owns the MT16703/WS2811-compatible LED field, Wi-Fi/API/UI,
   streaming, self-OTA, AVR ISP recovery, and LittleFS firmware backups.
 - The retained ESP8266 target shares the integrated firmware; Bluetooth is S3-only.
+  Legacy memory/OTA acceptance remains separate from the primary S3 target.
 - Both use the PCController COBS + CRC-8/ATM UART envelope at 38400 baud. The
   AVR uses its hardware UART; S3 uses a separate hardware UART (ESP8266 uses
   SoftwareSerial), while the USB UART
@@ -122,7 +130,8 @@ and Pealayer work.
 - The PU850-derived network toolbox also includes mDNS discovery and a
   password-authenticated Telnet command shell without taking over either UART.
 
-No I2C peripheral is enabled or required.
+No I2C peripheral is required. Optional S3 character-LCD support is capability
+gated; the AVR A4/A5 TM1637 connection is not I2C and must not be shared with it.
 
 See `docs/HARDWARE.md`, `docs/HARDWARE-VERIFICATION.md`,
 `docs/ARCHITECTURE.md`, `docs/API.md`, `docs/TOOLCHAIN.md`, and
@@ -149,7 +158,8 @@ cd PakarController
 ```
 
 Windows and Bash entrypoints share one dispatcher, staged output, validated
-arguments and guarded build wrappers. Node 20.19+ and PowerShell 7 are required.
+arguments and guarded build wrappers. Local tooling requires Node 20.19+ and
+PowerShell 7; the Node services require Node 24+ (management uses node:sqlite).
 The central [firmware pins](tools/firmware-dependencies.json) are unchanged by
 builds; installation and dependency updates are explicit:
 
@@ -180,7 +190,7 @@ Build the Windows application with:
 .\tools\build-desktop.ps1 -Mode Release   # Only when an app update is needed
 ```
 
-Build storage policy: [docs/BUILD-STORAGE.md](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/BUILD-STORAGE.md). Native
+Build storage policy: [docs/BUILD-STORAGE.md](docs/BUILD-STORAGE.md). Native
 debug/test symbols are disabled by default, with incremental reuse retained.
 Build scripts refuse low free space or an oversized canonical Cargo cache.
 Firmware compilation is incremental; use `-Target avr` or `-Target esp8266` for
@@ -189,7 +199,7 @@ Linux supports `bash build.sh busy-wire esp8266` (optional `--clean`).
 Use one stable staging directory and `tools/stage-desktop.ps1`; identical builds
 skip copying. Fixtures can run directly from the canonical built executable.
 
-Before any task or tool failure, follow [donor-first preflight](https://github.com/atomicdeploy/PakarController/blob/feature/pealayer-desktop-foundation/docs/REUSE-PREFLIGHT.md):
+Before any task or tool failure, follow [donor-first preflight](docs/REUSE-PREFLIGHT.md):
 `./tools/consult-reuse.ps1 -Concern build-storage` (or capture, ui-shell, preferences,
 windows-desktop, network-cloud, firmware-hardware, updates-telemetry, games-streaming).
 Read actual matched donor code before a replacement or unsupported claim. Build,
@@ -202,13 +212,15 @@ The same executable provides scriptable CLI and interactive TUI surfaces. Set
 ```powershell
 PakarController.exe --status
 PakarController.exe --command cell 17 red fade
-PakarController.exe --command mode snake
+PakarController.exe --command effect rainbow
 PakarController.exe --tui
 ```
 
-Logical IDs are row-major: 1 is upper-left, 2 is next to it, and 11 begins the
-second row. Graphical tables offset one-based odd columns by half a cell in Y;
-each cell contains six LEDs. Physical strip order is a separate editable map.
+Logical IDs retain their 10×8 indexing, but the current visual table has 20
+interleaved columns and four rows: `1,11,2,12,...,10,20`. The first column is
+`1,21,41,61`; the next is `11,31,51,71`, half a cell lower. Cell1 is not offset
+downward. Each table cell has six LEDs; physical strip order is a separate
+editable permutation. Snake is currently compiled out, not a selectable game.
 The interactive terminal now has contextual pages, shared Find/selection,
 explicit bulk white/red/off actions and the shared CLI command palette.
 See [terminal controls and remaining acceptance](docs/TERMINAL-UI.md).

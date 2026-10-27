@@ -14,34 +14,73 @@ use std::{
 #[serde(tag = "command", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Command {
     DeviceSettings,
-    DeviceSettingsPage { page: String },
+    DeviceSettingsPage {
+        page: String,
+    },
     Show,
     Minimize,
     Connect,
     Preferences,
-    PreferencesPage { page: String },
+    PreferencesPage {
+        page: String,
+    },
+    CellBackgrounds {
+        value: String,
+    },
     Refresh,
     Fullscreen,
     About,
     Workspaces,
-    Panel { name: String },
-    FindCell { query: String },
+    Panel {
+        name: String,
+    },
+    FindCell {
+        query: String,
+    },
     CellManager,
-    Screenshot { path: String },
+    Screenshot {
+        path: String,
+    },
     Quit,
-    Status { #[serde(default)] pixels: bool },
+    Status {
+        #[serde(default)]
+        pixels: bool,
+    },
     NotificationTest,
-    UseWifi { endpoint: Option<String> },
-    UseUsb { port: Option<String> },
+    UseWifi {
+        endpoint: Option<String>,
+    },
+    UseUsb {
+        port: Option<String>,
+    },
     Disconnect,
-    LedEffect { value: String },
-    LedOutput { value: String },
+    LedEffect {
+        value: String,
+    },
+    LedOutput {
+        value: String,
+    },
     PixelArm,
-    PixelShow { index: u16 },
-    LedMode { value: String },
-    LedCell { id: u8, state: String, effect: String },
-    LedCells { ids: String, state: String, effect: String },
-    UpdateEsp { path: String, confirmed: bool },
+    PixelShow {
+        index: u16,
+    },
+    LedMode {
+        value: String,
+    },
+    LedCell {
+        id: u8,
+        state: String,
+        effect: String,
+    },
+    LedCells {
+        ids: String,
+        state: String,
+        effect: String,
+    },
+    UpdateEsp {
+        path: String,
+        confirmed: bool,
+    },
 }
 fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     let value: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
@@ -53,6 +92,7 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
         Some("screenshot") => &["command", "path"][..],
         Some("device_settings_page") => &["command", "page"][..],
         Some("preferences_page") => &["command", "page"][..],
+        Some("cell_backgrounds") => &["command", "value"][..],
         Some("use_wifi") => &["command", "endpoint"][..],
         Some("use_usb") => &["command", "port"][..],
         Some("led_effect") | Some("led_mode") | Some("led_output") => &["command", "value"][..],
@@ -67,31 +107,66 @@ fn parse_command(bytes: &[u8]) -> Result<Command, String> {
     }
     let command: Command = serde_json::from_value(value).map_err(|e| e.to_string())?;
     match &command {
-        Command::UpdateEsp { path, confirmed } if !confirmed || !std::path::Path::new(path).is_absolute()
-            || path.len() > 2048 || path.chars().any(char::is_control) => {
+        Command::CellBackgrounds { value } if !matches!(value.as_str(), "on" | "off") => {
+            return Err("Cell backgrounds require on or off".into());
+        }
+        Command::UpdateEsp { path, confirmed }
+            if !confirmed
+                || !std::path::Path::new(path).is_absolute()
+                || path.len() > 2048
+                || path.chars().any(char::is_control) =>
+        {
             return Err("An absolute firmware path and explicit confirmation are required".into());
         }
-        Command::UseWifi { endpoint: Some(value) } => {
+        Command::UseWifi {
+            endpoint: Some(value),
+        } => {
             let url = reqwest::Url::parse(value).map_err(|_| "Invalid Wi-Fi endpoint")?;
-            if value.len() > 512 || !matches!(url.scheme(), "http" | "https") || url.host_str().is_none()
-                || !url.username().is_empty() || url.password().is_some() || url.query().is_some()
-                || url.fragment().is_some() || !matches!(url.path(), "" | "/") {
-                return Err("Expected http(s)://hostname[:port] without credentials or a path".into());
+            if value.len() > 512
+                || !matches!(url.scheme(), "http" | "https")
+                || url.host_str().is_none()
+                || !url.username().is_empty()
+                || url.password().is_some()
+                || url.query().is_some()
+                || url.fragment().is_some()
+                || !matches!(url.path(), "" | "/")
+            {
+                return Err(
+                    "Expected http(s)://hostname[:port] without credentials or a path".into(),
+                );
             }
         }
-        Command::UseUsb { port: Some(value) } if value.trim().is_empty() || value.len() > 512 || value.chars().any(char::is_control) => {
+        Command::UseUsb { port: Some(value) }
+            if value.trim().is_empty()
+                || value.len() > 512
+                || value.chars().any(char::is_control) =>
+        {
             return Err("Select a valid OS serial port/path".into());
         }
-        Command::LedEffect { value } if !matches!(value.as_str(), "none" | "rainbow" | "fire") => return Err("Unknown LED effect".into()),
-        Command::LedOutput { value } if !matches!(value.as_str(), "on" | "off" | "static" | "effects") => return Err("LED output requires on, off, static or effects".into()),
-        Command::PixelShow { index } if !(1..=480).contains(index) => return Err("Physical pixel requires 1..480".into()),
-        Command::LedMode { value } if !matches!(value.as_str(), "cell" | "snake") => return Err("Unknown LED mode".into()),
-        Command::LedCells { ids,state,effect } => {
-            crate::cell_batch::Request::new(&crate::ui::cell_search::parse(ids)?,state,effect)?;
+        Command::LedEffect { value } if !matches!(value.as_str(), "none" | "rainbow" | "fire") => {
+            return Err("Unknown LED effect".into());
         }
-        Command::LedCell { id, state, effect } if !(1..=80).contains(id)
-            || !matches!(state.as_str(), "white" | "red" | "off")
-            || !matches!(effect.as_str(), "immediate" | "fade" | "pulse") => return Err("Invalid LED cell operation".into()),
+        Command::LedOutput { value }
+            if !matches!(value.as_str(), "on" | "off" | "static" | "effects" | "gpio-static" | "rmt-dma") =>
+        {
+            return Err("LED output requires on, off, static, effects, gpio-static or rmt-dma".into());
+        }
+        Command::PixelShow { index } if !(1..=480).contains(index) => {
+            return Err("Physical pixel requires 1..480".into());
+        }
+        Command::LedMode { value } if !matches!(value.as_str(), "cell" | "snake") => {
+            return Err("Unknown LED mode".into());
+        }
+        Command::LedCells { ids, state, effect } => {
+            crate::cell_batch::Request::new(&crate::ui::cell_search::parse(ids)?, state, effect)?;
+        }
+        Command::LedCell { id, state, effect }
+            if !(1..=80).contains(id)
+                || !matches!(state.as_str(), "white" | "red" | "off")
+                || !matches!(effect.as_str(), "immediate" | "fade" | "pulse") =>
+        {
+            return Err("Invalid LED cell operation".into());
+        }
         _ => {}
     }
     if let Command::Screenshot { path } = &command {
@@ -227,12 +302,18 @@ pub fn start(ctx: eframe::egui::Context, enable_listener: bool) -> Control {
     let snapshot = Arc::new(Mutex::new(
         serde_json::json!({"process_id":std::process::id(),"application":"PakarController","ready":true}),
     ));
-    let demand=Arc::new(crate::usb_demand::Watchers::default());
+    let demand = Arc::new(crate::usb_demand::Watchers::default());
     #[cfg(windows)]
-    if enable_listener {listener(tx, ctx, snapshot.clone(),demand.clone());}
+    if enable_listener {
+        listener(tx, ctx, snapshot.clone(), demand.clone());
+    }
     #[cfg(not(windows))]
     let _ = (tx, ctx, enable_listener);
-    Control { rx, snapshot, demand }
+    Control {
+        rx,
+        snapshot,
+        demand,
+    }
 }
 #[cfg(windows)]
 fn listener(
@@ -289,8 +370,14 @@ mod tests {
     use super::*;
     #[test]
     fn connection_and_led_ipc_are_explicit_typed_and_bounded() {
-        assert!(matches!(parse_command(br#"{"command":"status"}"#),Ok(Command::Status{pixels:false})));
-        assert!(matches!(parse_command(br#"{"command":"status","pixels":true}"#),Ok(Command::Status{pixels:true})));
+        assert!(matches!(
+            parse_command(br#"{"command":"status"}"#),
+            Ok(Command::Status { pixels: false })
+        ));
+        assert!(matches!(
+            parse_command(br#"{"command":"status","pixels":true}"#),
+            Ok(Command::Status { pixels: true })
+        ));
         assert!(parse_command(br#"{"command":"status","pixels":"true"}"#).is_err());
         for bytes in [
             br#"{"command":"disconnect"}"#.as_slice(),
@@ -306,7 +393,9 @@ mod tests {
             br#"{"command":"pixel_show","index":480}"#,
             br#"{"command":"led_cell","id":80,"state":"red","effect":"fade"}"#,
             br#"{"command":"led_cells","ids":"1,8-12,80","state":"red","effect":"fade"}"#,
-        ] { assert!(parse_command(bytes).is_ok()); }
+        ] {
+            assert!(parse_command(bytes).is_ok());
+        }
         for bytes in [
             br#"{"command":"use_wifi","endpoint":"http://user:secret@host"}"#.as_slice(),
             br#"{"command":"use_wifi","endpoint":"http://ledboard.local/api/status"}"#,
@@ -323,10 +412,20 @@ mod tests {
             br#"{"command":"led_cells","ids":"","state":"red","effect":"fade"}"#,
             br#"{"command":"update_esp","path":"relative.bin","confirmed":true}"#,
             br#"{"command":"disconnect","endpoint":"other"}"#,
-        ] { assert!(parse_command(bytes).is_err()); }
+        ] {
+            assert!(parse_command(bytes).is_err());
+        }
     }
     #[test]
     fn launch_requests_use_only_known_typed_commands() {
+        assert!(parse_command(br#"{"command":"cell_backgrounds","value":"on"}"#).is_ok());
+        assert!(parse_command(br#"{"command":"cell_backgrounds","value":"off"}"#).is_ok());
+        for bytes in [br#"{"command":"cell_backgrounds","value":"toggle"}"#.as_slice(),
+            br#"{"command":"cell_backgrounds","value":true}"#,
+            br#"{"command":"cell_backgrounds"}"#,
+            br#"{"command":"cell_backgrounds","value":"on","board":true}"#] {
+            assert!(parse_command(bytes).is_err());
+        }
         assert!(serde_json::from_str::<Command>(r#"{"command":"preferences"}"#).is_ok());
         assert!(parse_command(br#"{"command":"minimize"}"#).is_ok());
         assert!(parse_command(br#"{"command":"minimize","inject":"x"}"#).is_err());

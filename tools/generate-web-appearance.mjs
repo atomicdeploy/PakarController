@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile, writeFile} from 'node:fs/promises';
 import {webPeerSource} from './web-peer-build.mjs';
 
-const webUrl = new URL('../firmware/esp8266/src/WebUi.h', import.meta.url);
+const webUrl = new URL('../web/index.html', import.meta.url);
 const palette = JSON.parse(await readFile(new URL('../assets/themes/palettes.json', import.meta.url), 'utf8'));
 const module = await readFile(new URL('../assets/themes/appearance.js', import.meta.url), 'utf8');
 const browser = await readFile(new URL('../assets/themes/browser-appearance.js', import.meta.url), 'utf8');

@@ -66,6 +66,8 @@ jobs:
           arduino-cli lib install ('ArduinoJson@' + $taskJson[0].version)
           if ($LASTEXITCODE -ne 0) { throw 'Pinned host-test headers failed' }
       - run: node tools/ci-checks.mjs quality
+      - run: node tests/led_backend_integration_test.mjs
+      - run: node tests/web_led_backend_test.mjs
   tooling:
     name: "🧰 Scripts · ${{ matrix.os }}"
     needs: lint
@@ -122,10 +124,10 @@ jobs:
           bash build.sh buffered avr
           # Compile the optional RX-only SDK adapter, then restore the canonical
           # normal image in the SAME cache/output before any artifact upload.
-          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -PauseAvrLink -Jobs 2
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -PauseAvrLink -Jobs 2
           # Exercise the optional native W5500/LLDP input-hook linkage before
           # restoring the generic image in that same canonical cache.
-          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3Ethernet -Jobs 2
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -S3Ethernet -Jobs 2
           bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi
           bash tools/test-protocol.sh
           bash tools/test-pc-flags.sh

@@ -12,6 +12,16 @@
 using namespace BoardCore::Protocol;
 
 int main() {
+  BoardCore::AvrAdmissionRecovery admission;
+  assert(!admission.needsHello(3000,0));
+  admission.sent();admission.sent();
+  assert(!admission.needsHello(3000,0));
+  admission.sent();
+  assert(!admission.needsHello(1999,0));
+  assert(admission.needsHello(2000,0));
+  admission.confirmed();assert(!admission.needsHello(3000,0));
+  admission.sent();admission.sent();admission.sent();
+  assert(admission.needsHello(1000,UINT32_MAX-1000));
   Frame peer{};
   peer.opcode = kPong;
   assert(!BoardCore::validAvrObservation(peer, false));
@@ -41,6 +51,11 @@ int main() {
   assert(BoardCore::parseLedOutputControl(on,1,output)&&!output.modeOnly&&output.value);
   assert(BoardCore::parseLedOutputControl(statik,2,output)&&output.modeOnly&&!output.value);
   assert(BoardCore::parseLedOutputControl(effects,2,output)&&output.modeOnly&&output.value);
+    const uint8_t gpioBackend[]={3,1},rmtBackend[]={3,2},badBackend[]={3,0};
+    assert(BoardCore::parseLedOutputControl(gpioBackend,2,output)&&output.backend==1&&!output.modeOnly);
+    assert(BoardCore::parseLedOutputControl(rmtBackend,2,output)&&output.backend==2&&!output.modeOnly);
+    assert(!BoardCore::parseLedOutputControl(badBackend,2,output));
+    assert(BoardCore::parseLedOutputControl(off,1,output)&&output.backend==0);
   for(const auto length:{size_t(0),size_t(1),size_t(2),size_t(3)})assert(!BoardCore::parseLedOutputControl(bad,length,output));
   assert(!BoardCore::parseLedOutputControl(nullptr,1,output));
   assert(!BoardCore::parseLedOutputControl(on,2,output));

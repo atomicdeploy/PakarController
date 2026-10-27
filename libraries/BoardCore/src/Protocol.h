@@ -22,6 +22,8 @@ enum Opcode : uint8_t {
   kSetStreamPeriod = 0x03,
   kBuzzer = 0x10,
   kAudioCue = 0x11,
+  kAudioStream = 0x12, // Bounded AVR tone ring: action,id16,offset16,packed steps.
+  kAudioStreamResponse = 0xBC, // error,id16,nextOffset16,credits,state,muted.
   kDisplayText = 0x38,
   kSetMode = 0x4B,
   kCellAction = 0x4C,
@@ -50,7 +52,12 @@ enum Opcode : uint8_t {
   kCellLock = 0x63, // ESP table-selection: enabled boolean; persistent red-to-white guard.
   kHostDemand = 0x64, // ESP USB: [flagsLE16,leaseMsLE16]; zero pair releases optional observations.
   kPixelDiagnostic = 0x65, // Boot-fenced table inner: [indexLE16,count,R,G,B,off]; one pixel or six aligned pixels.
-  kKeyMask = 0x66, // Paired first-wins AVR: enabled keys LE16 (bits0..8), ACK then new round.
+  kKeyMask = 0x66, // Paired first-wins AVR: keys LE16, optional winner/reset cue bytes when HELLO[16] ACKs support; 255=silent.
+  kKeySettings = 0x67, // ESP fenced patch: mask8, keys16, RGB24 x3, effects8, autoReset32; optional winner/reset bytes17/18 via mask64/128.
+  kGamePress = 0x68, // One enabled key (1..9), same first-winner latch as physical Down.
+  kKeyPresentation = 0x69, // Fenced ESP patch: global [0,count,on16,gap16,fade16,pulse16,chase16] or group [1,id,override,winRGB24,loseRGB24,winMotion,loseMotion].
+  kUsbApi = 0x6A, // Bounded boot-fenced API transaction; see UsbApiRequest.h.
+  kUsbApiResponse = 0xBD, // [action,token32,total16,offset16,<=39 response bytes].
   kHostDemandResponse = 0xBA, // Correlated [effectiveFlagsLE16,remainingMsLE16], not an actuator ACK.
   kShellResponse = 0xB9, // Encapsulated terminal output; no raw bytes interleaved with COBS.
   kTableSnapshotResponse = 0xB6, // [nonce,token32,total16,offset16,<=39 immutable JSON bytes].
@@ -103,7 +110,9 @@ enum GameMode : uint8_t {
   kModeFirstWins = 2,
   kModeSnake = 3,
 };
-enum CellState : uint8_t { kCellWhite = 0, kCellRed = 1, kCellOff = 2 };
+// Existing stored codes remain stable; appearance is independent of identity.
+enum CellState : uint8_t { kCellWhite = 0, kCellRed = 1, kCellOff = 2,
+  kCellWon = 3, kCellIdle = kCellWhite, kCellLost = kCellRed };
 enum Effect : uint8_t { kEffectImmediate = 0, kEffectFade = 1, kEffectPulse = 2 };
 
 enum AudioCue : uint8_t {

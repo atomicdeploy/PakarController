@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 const root=new URL('../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root),'utf8').replaceAll('\r\n','\n');
-const module=read('assets/web/browser-console.js'),web=read('firmware/esp8266/src/WebUi.h');
+const module=read('assets/web/browser-console.js'),web=read('firmware/esp/src/WebUi.h');
 const calls=[],sink=Object.fromEntries(['debug','info','log','warn','error','groupCollapsed','groupEnd'].map(method=>[method,(...args)=>calls.push({method,args})]));
 let clock=100;
 const context=vm.createContext({console:sink,clock:()=>clock,

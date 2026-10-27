@@ -36,7 +36,7 @@ struct CellBatch {
     out=next;return true;
   }
   static bool decode(const uint8_t *payload,uint8_t length,CellBatch &out){
-    if(!payload||length!=12||payload[0]>2||payload[1]>2)return false;
+    if(!payload||length!=12||payload[0]>3||payload[1]>2)return false;
     CellBatch next;memcpy(next.mask,payload+2,bytes);
     if(!next.count())return false;
     out=next;return true;

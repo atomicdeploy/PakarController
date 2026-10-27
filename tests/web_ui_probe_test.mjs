@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {gzipSync} from 'node:zlib';
+import {assertWebUi} from '../tools/check-ethernet-live.mjs';
+const html=Buffer.from('<!doctype html><html lang="en"><title>Pakar</title></html>');
+assertWebUi({headers:{},body:html});
+assertWebUi({headers:{'content-encoding':'gzip'},body:gzipSync(html)});
+assert.throws(()=>assertWebUi({headers:{'content-encoding':'gzip'},body:html}));
+assert.throws(()=>assertWebUi({headers:{'content-encoding':'gzip'},body:gzipSync(Buffer.alloc(600*1024))}));
+assert.throws(()=>assertWebUi({headers:{},body:Buffer.from('{}')}));
+assert.throws(()=>assertWebUi({headers:{'content-encoding':'br'},body:html}));
+console.log('Plain/gzip Web UI probes, invalid encoding and expansion bounds passed.');

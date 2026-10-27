@@ -47,7 +47,7 @@ void main() {
         expect(encoded.length, lessThan(CellAssignments.maximumFileBytes));
         if (format == 'xlsx') expect(encoded.take(4), [80, 75, 3, 4]);
         final decoded = CellAssignments.decode('Cells.$format', encoded);
-        expect(decoded.values, {1: 'red', 15: 'white', 80: 'off'});
+        expect(decoded.values, {1: 'lost', 15: 'idle', 80: 'off'});
         expect(decoded.values.keys.toList(), [1, 15, 80]);
         expect(() => decoded.values[3] = 'red', throwsUnsupportedError);
       });
@@ -83,7 +83,7 @@ void main() {
           ),
         ),
       );
-      expect(document.values, {1: 'red', 2: 'white', 3: 'off'});
+      expect(document.values, {1: 'lost', 2: 'idle', 3: 'off'});
       expect(
         () => CellAssignments.decode(
           'colors.json',
@@ -135,7 +135,7 @@ void main() {
           utf8.encode('\ufeff"cell","state"\r\n"01","#ff0000"\r\n80,off\r\n'),
         ),
       );
-      expect(cells.values, {1: 'red', 80: 'off'});
+      expect(cells.values, {1: 'lost', 80: 'off'});
       for (final text in [
         'cell,state\n1,red,off',
         'cell,state\n1,"red',
@@ -184,7 +184,7 @@ void main() {
         'xl/worksheets/sheet1.xml',
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row><row r="2"><c r="A2" t="n"><v>80</v></c><c r="B2" t="s"><v>2</v></c></row></sheetData></worksheet>',
       );
-      expect(CellAssignments.decode('colors.xlsx', bytes).values, {80: 'red'});
+      expect(CellAssignments.decode('colors.xlsx', bytes).values, {80: 'lost'});
     });
     test('Workbook relationship resolves a custom sheet path', () {
       var bytes = sample().encode('xlsx');

@@ -8,6 +8,8 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 
 import 'api.dart';
 import 'command_failure.dart';
+import 'command_readback.dart';
+import 'command_wire.dart';
 import 'device_registry.dart';
 import 'firmware.dart';
 import 'models.dart';
@@ -425,7 +427,11 @@ class AndroidBridge extends ChangeNotifier {
           'brightness',
           'winner',
           'active_inputs',
+          'input_9',
           'active_outputs',
+          'key_mask_applied',
+          'game_audio_applied',
+          'auto_reset_state',
           'ntp_synced',
           'station_rssi',
           'selected_cell',
@@ -441,6 +447,14 @@ class AndroidBridge extends ChangeNotifier {
           'cells': s.cells,
         if (s.segments.length == 4) 'tm1637_segments': s.segments,
         'tm1637_brightness': s.segmentBrightness,
+        if (s.peer.role == 'first-wins' && s.json['key_game'] is Map)
+          'key_game': _safeFields(s.json['key_game'] as Map, [
+            'enabled_mask', 'enabled_count', 'active_pixels', 'span_pixels',
+            'capacity_pixels', 'idle_rgb', 'win_rgb', 'lose_rgb',
+            'extended_effects', 'auto_reset_ms', 'chase_period_ms',
+            'chase_neighbors', 'chase_invert', 'winner_cue', 'reset_cue',
+            'presentation',
+          ]),
         if (s.json['led_output'] is Map)
           'led_output': {
             ..._safeFields(s.json['led_output'] as Map, [
@@ -449,7 +463,16 @@ class AndroidBridge extends ChangeNotifier {
               'backend',
               'rmt',
               'dma',
+              'backend_saved',
+              'backend_settings_error',
             ]),
+            if ((s.json['led_output'] as Map)['driver'] is Map)
+              'driver': _safeFields(
+                (s.json['led_output'] as Map)['driver'] as Map,
+                ['backend', 'available_backends', 'requested_backend',
+                  'switch_pending', 'switch_error', 'error_code', 'ready',
+                  'rmt', 'dma'],
+              ),
             if ((s.json['led_output'] as Map)['diagnostic'] is Map)
               'diagnostic': _safeFields(
                 (s.json['led_output'] as Map)['diagnostic'] as Map,
@@ -674,6 +697,27 @@ class AndroidBridge extends ChangeNotifier {
           final values = Map<String, String>.from(rawValues);
           if (!s.peer.allows(path, values)) {
             throw const FormatException('Unacknowledged capability or path');
+          }
+          if (s.peer.role == 'first-wins' && commandNames.containsKey(path)) {
+            if (!s.peer.has('command-ack') ||
+                (path == '/api/game/reset' && !s.peer.has('reset-ack'))) {
+              throw const FormatException('Correlated game command unavailable');
+            }
+            dispatched = true;
+            final actual = await api.fastCommand(path, values,
+                authorize: () => generation == epoch && running &&
+                    !closed && current().peer.allows(path, values));
+            if (actual == null || !commandReadbackMatches(actual, path, values)) {
+              throw const OperationUncertain(
+                'Board command readback unavailable; no intent replayed.',
+              );
+            }
+            if (generation != epoch) {
+              return result(false, 'uncertain: bridge session retired after dispatch');
+            }
+            current();
+            return result(true, 'Correlated board receipt and matching state readback',
+                extra: {'board': snapshot(actual)['board']});
           }
           dispatched = true;
           await api.post(path, values);

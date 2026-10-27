@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const routes=readFileSync(new URL('../firmware/esp8266/src/MaintenanceRoutes.h',import.meta.url),'utf8');
-const main=readFileSync(new URL('../firmware/esp8266/esp8266.ino',import.meta.url),'utf8');
-const platform=readFileSync(new URL('../firmware/esp8266/src/FirmwarePlatform.h',import.meta.url),'utf8');
+const routes=readFileSync(new URL('../firmware/esp/src/MaintenanceRoutes.h',import.meta.url),'utf8');
+const main=readFileSync(new URL('../firmware/esp/application.ino',import.meta.url),'utf8');
+const platform=readFileSync(new URL('../firmware/esp/src/FirmwarePlatform.h',import.meta.url),'utf8');
 function cachedTelemetry(source,sketch) {
   const begin=source.indexOf('String buildTelemetryJson()'),end=source.indexOf('bool prepareRemotePair(');
   assert.ok(begin>=0&&end>begin);

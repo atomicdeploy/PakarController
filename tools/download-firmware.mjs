@@ -9,6 +9,9 @@ import {pathToFileURL} from 'node:url';
 import {deviceOrigin,deviceRequest} from './check-ethernet-live.mjs';
 import {boardPeer} from './peer-identity.mjs';
 export const maxDownloadSize=64*1024*1024;
+// Post-reboot verification shares the proven low-heap range size. Backup
+// transfers retain their separate 64 KiB policy below; do not conflate them.
+export const verificationRangeBytes=16*1024;
 const md5Pattern=/^[a-f0-9]{32}$/i;
 export function parseContentMD5(value) {
   if(typeof value!=='string')throw Error('Invalid Content-MD5');

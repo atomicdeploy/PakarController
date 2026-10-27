@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-const main=read('firmware/esp8266/esp8266.ino');
-const panel=read('firmware/esp8266/src/SemanticPanelService.h');
-const serial=read('firmware/esp8266/src/HostSerial.h');
+const main=read('firmware/esp/application.ino');
+const panel=read('firmware/esp/src/SemanticPanelService.h');
+const serial=read('firmware/esp/src/HostSerial.h');
 const build=read('tools/build-firmware.ps1');
 assert(!panel.includes('hostLink.framesReceived()!=0'),'historical traffic is not a current subscription');
 assert(panel.includes('hostDemand.wants(BoardCore::Protocol::UsbDemand::Panel,now)'));
@@ -17,7 +17,7 @@ assert(disconnected.includes('hostLink.discardInput();hostLink.begin(115200,onHo
 assert(disconnected.indexOf('hostLink.discardInput()')<disconnected.indexOf('hostLink.begin('));
 assert(!disconnected.includes('PakarHost::begin()'),'Reconnect retires framing without restarting USB hardware');
 const snapshot=main.slice(main.indexOf('String buildUsbTableSnapshot(bool includePixels) {'),main.indexOf('void configureNtp()'));
-assert(snapshot.includes('if(includePixels)body+=grid.pixelFrameJson();else body+=F("null")'));
+assert(snapshot.includes('if(includePixels)suffix+=grid.pixelFrameJson();else suffix+=F("null")'));
 assert(main.includes('(capturedPixels&&!hostDemand.wants(UsbDemand::Pixels,millis()))'));
 assert(main.includes('offset+count==total)'),'last chunk retires the retained capture');
 assert(main.includes('inner==kPixelDiagnostic'));
@@ -27,7 +27,8 @@ assert(main.includes('hostLink.ack(frame.sequence,kPixelDiagnostic)'));
 const helper=main.slice(main.indexOf('bool applyPixelDiagnostic('),main.indexOf('void sendHostStatus('));
 for(const fence of ['programmingLatched','otaActive','otaRebootAt','urbootBusy.get()','avrUploadOwner','remoteFirmware.busy()','networkApplyPending','cloudApplyPending'])
   assert(helper.includes(fence),fence);
-assert(helper.includes('grid.diagnostic(index,count,rgb,off)')&&!helper.includes('mode ='));
+assert(helper.includes('grid.diagnostic(index,count,rgb,off,options)')&&!helper.includes('mode ='));
+assert(helper.includes('BoardCore::PixelDiagnostic{}')&&!helper.includes('winner=0'),'Binary basic and advanced JSON share guarded, non-destructive renderer');
 assert(serial.indexOf('serial.enableReboot(false)')<serial.indexOf('serial.begin(115200)'));
 assert(serial.indexOf('serial.enableReboot(false)')<serial.indexOf('USB.begin()'));
 assert(serial.indexOf('USB.productName("PakarController")')<serial.indexOf('serial.begin(115200)'));

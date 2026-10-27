@@ -71,7 +71,7 @@ capability advertisement, not just a new Web card.
 
 The paired source extension now lives in `PcControllerRuntime::{observeEspPanel,
 espKey,requestEspAction}` and `FrontPanel::{setEspMenu,showEspMenu}`, with ESP
-owner adapter `firmware/esp8266/src/EspFrontPanel.h`. It does not pretend to
+owner adapter `firmware/esp/src/EspFrontPanel.h`. It does not pretend to
 implement the unrelated generic donor HostMenu opcodes. The living contract
 adds `kEspPanel`, `kEspPanelResponse` and explicit `kCapEspPanel` instead.
 

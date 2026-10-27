@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const source=read('firmware/esp8266/src/WebUi.h');
+const source=read('firmware/esp/src/WebUi.h');
 const master=read('assets/branding/app-icon.png.base64').trim();
 const fallback='data:image/png;base64,'+master;
 const images=[{getAttribute:()=>fallback},{getAttribute:()=>fallback}];

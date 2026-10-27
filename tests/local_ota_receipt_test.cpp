@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/LocalOtaReceipt.h"
+#include "../firmware/esp/src/LocalOtaReceipt.h"
 #include "FS.h"
 #include <cassert>
 #include <cstdio>

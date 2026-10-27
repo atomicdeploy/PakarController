@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const source=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8');
 const lcd={configured:true,started:true,detection_known:true,backpack_ack:true,initialized:true,
   available:true,columns:16,rows:2,address:0x27,lines:['ledboard        ','Cell 1 white    ']};
 const root={textContent:'old'},context=vm.createContext({document:{getElementById:()=>root}});

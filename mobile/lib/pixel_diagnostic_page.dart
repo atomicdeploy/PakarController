@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'api.dart';
+import 'controller_dialog.dart';
 import 'icons.dart';
 import 'models.dart';
 import 'pixel_diagnostic.dart';
@@ -19,6 +20,8 @@ class PixelDiagnosticPage extends StatefulWidget {
     this.onObserved,
     this.workspace,
     this.mapping,
+    this.initialProbe,
+    this.onPixelLongPress,
   });
   final PakarApi api;
   final DeviceStatus? Function() observed;
@@ -26,6 +29,13 @@ class PixelDiagnosticPage extends StatefulWidget {
   final void Function(DeviceStatus)? onObserved;
   final PixelDiagnosticWorkspace? workspace;
   final CellMap? Function()? mapping;
+
+  /// A deliberate navigation target, never permission to send on opening.
+  final PixelProbe? initialProbe;
+
+  /// Opens a peer-fenced action menu for one zero-based physical pixel. Merely
+  /// opening the menu is not permission to send a probe or save a correction.
+  final Future<void> Function(int physicalIndex)? onPixelLongPress;
   @override
   State<PixelDiagnosticPage> createState() => _PixelDiagnosticPageState();
 }
@@ -72,6 +82,19 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     workspace.addListener(workspaceChanged);
     final initial = widget.api.freshStatus ?? widget.observed();
     if (initial != null) observe(initial);
+    final requested = widget.initialProbe;
+    if (requested != null &&
+        requested.valid &&
+        (initial == null ||
+            requested.pixels == diagnosticPixelCount(initial) &&
+                requested.groupSize == diagnosticGroupSize(initial) &&
+                (initial.peer.has('pixel-group-layout')
+                    ? requested.layout != null &&
+                          initial.pixelGroups?.sameAs(requested.layout!) == true
+                    : requested.layout == null))) {
+      probe = requested.copyWith(enabled: true);
+      position.text = '${probe.first + 1}';
+    }
     statusSubscription = widget.api.statusUpdates.listen(observe);
     connectionSubscription = widget.api.connectionUpdates.listen((_) {
       if (mounted) {
@@ -222,7 +245,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
     try {
       // Join the API's bounded, coalesced read; this is not a command retry,
       // discovery, firmware job or permission to adopt a replacement peer.
-      final actual = await widget.api.status();
+      final actual = await widget.api.settledStatus();
       if (!mounted ||
           owner != widget.api.connectionRevision ||
           !widget.api.connectionWanted ||
@@ -277,10 +300,21 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
       );
       return;
     }
+    final unavailable = next.unavailableReason(widget.api.freshStatus);
+    if (unavailable != null) {
+      setState(() => message = '$unavailable Nothing was sent.');
+      return;
+    }
     FocusScope.of(context).unfocus();
     setState(() {
       working = true;
-      message = off ? 'Clearing all ${next.pixels} pixels…' : 'Showing ${next.range}…';
+      message = !next.enabled
+          ? 'Restoring the board scene…'
+          : off
+          ? next.overlay
+                ? 'Masking ${next.range} off…'
+                : 'Clearing all ${next.pixels} pixels…'
+          : 'Showing ${next.range}…';
       applied = null;
     });
     widget.busyChanged(true);
@@ -305,8 +339,13 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
               : off
               ? 'Last verified: all ${next.pixels} pixels off'
               : 'Last verified: ${next.range} · #${next.hex}';
-          message =
-              'Board RGB readback matched. Please check the physical LEDs.';
+          message = !next.enabled
+              ? 'Board scene restored'
+              : off && next.overlay
+              ? 'Device confirmed ${next.range} masked off'
+              : off
+              ? 'Device confirmed all ${next.pixels} pixels off'
+              : 'Device confirmed ${next.range} · ${next.effectLabel} · #${next.hex}';
         });
       }
     } catch (error) {
@@ -326,6 +365,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   }
 
   void change(PixelProbe next) {
+    next = next.copyWith(enabled: true);
     if ((applied != null || workspace.observation?.active == true) && !allOff) {
       unawaited(send(next));
     } else {
@@ -338,11 +378,104 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
 
   PixelProbe? readPosition() {
     final index = int.tryParse(position.text.trim());
-    if (index == null || index < 1 || index > probe.pixels) {
-      setState(() => message = 'Enter a physical pixel number from 1 to ${probe.pixels}.');
+    if (index == null || index < 1 || index > probe.limit) {
+      setState(
+        () =>
+            message = 'Enter a physical pixel number from 1 to ${probe.limit}.',
+      );
       return null;
     }
-    return probe.copyWith(index: index - 1);
+    return probe.copyWith(index: index - 1, enabled: true);
+  }
+
+  Future<void> editTiming() async {
+    // PCController effect_editor's numberDrafts/numberError pattern: typing
+    // remains local, bounded whole numbers are validated before one commit,
+    // and live status cannot overwrite the focused draft or reset a slider.
+    final draftProbe = probe;
+    final fields = [
+      ('period_ms', 'Period · ms', draftProbe.periodMs, 100, 10000),
+      ('duty_percent', 'Flash on · %', draftProbe.dutyPercent, 1, 99),
+      ('min_brightness', 'Minimum · 0–255', draftProbe.minBrightness, 0, 255),
+      ('max_brightness', 'Maximum · 0–255', draftProbe.maxBrightness, 0, 255),
+    ];
+    final drafts = {for (final field in fields) field.$1: '${field.$3}'};
+    final form = GlobalKey<FormState>();
+    final result = await showDialog<PixelProbe>(
+      context: context,
+      builder: (context) => ControllerDialog(
+        title: 'Diagnostic timing',
+        icon: PakarIcons.clock,
+        maxWidth: 520,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const Key('diagnostic-timing-apply'),
+            onPressed: () {
+              if (form.currentState!.validate()) {
+                Navigator.pop(
+                  context,
+                  draftProbe.copyWith(
+                    periodMs: int.parse(drafts['period_ms']!.trim()),
+                    dutyPercent: int.parse(drafts['duty_percent']!.trim()),
+                    minBrightness: int.parse(drafts['min_brightness']!.trim()),
+                    maxBrightness: int.parse(drafts['max_brightness']!.trim()),
+                    enabled: true,
+                  ),
+                );
+              }
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+        child: Form(
+          key: form,
+          child: LayoutBuilder(
+            builder: (context, bounds) => Wrap(
+              spacing: 12,
+              runSpacing: 14,
+              children: [
+                for (final field in fields)
+                  SizedBox(
+                    width: bounds.maxWidth < 360
+                        ? bounds.maxWidth
+                        : (bounds.maxWidth - 12) / 2,
+                    child: TextFormField(
+                      key: Key('diagnostic-${field.$1}'),
+                      initialValue: drafts[field.$1],
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) => drafts[field.$1] = value,
+                      decoration: InputDecoration(
+                        labelText: field.$2,
+                        helperText: '${field.$4}–${field.$5}',
+                      ),
+                      validator: (text) {
+                        final value = int.tryParse(text?.trim() ?? '');
+                        if (value == null ||
+                            value < field.$4 ||
+                            value > field.$5) {
+                          return 'Enter ${field.$4}–${field.$5}';
+                        }
+                        if (field.$1 == 'max_brightness' &&
+                            value <
+                                (int.tryParse(drafts['min_brightness']!) ??
+                                    0)) {
+                          return 'Must be at least minimum';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (result != null && mounted) change(result);
   }
 
   Future<void> chooseColor() async {
@@ -433,28 +566,39 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
   Widget build(BuildContext context) {
     final enabled = authorized && !working && !refreshing;
     final colours = Theme.of(context).colorScheme;
+    final peer = (widget.api.freshStatus ?? widget.observed())?.peer;
+    final effectCapable = peer?.has('pixel-diagnostic-effects') == true;
+    final overlayCapable = peer?.has('pixel-diagnostic-overlay') == true;
+    final correctionsCapable = peer?.has('pixel-corrections') == true;
     final map = widget.mapping?.call();
-    final group = probe.first ~/ probe.groupSize + 1;
+    final group = probe.physicalGroup;
     final logical = probe.pixels == 480 && map?.valid == true
         ? map!.physical.indexOf(group) + 1
         : null;
-    final first = probe.index ~/ probe.groupSize * probe.groupSize;
+    final first = probe.groupFirst;
     return WorkspaceBody(
       controller: scroll,
       children: [
-        const WorkspaceHeader(
+        WorkspaceHeader(
           title: 'Pixel diagnostics',
           icon: PakarIcons.circuitry,
-          subtitle: 'Physical wire order · all other pixels cleared',
+          subtitle: probe.overlay
+              ? 'Physical wire order · scene overlay'
+              : 'Physical wire order · solo output',
         ),
         WorkspaceSection(
-          title: probe.group ? '${probe.groupSize}-pixel probe' : 'Single-pixel probe',
+          title: probe.group
+              ? '${probe.currentGroupSize}-pixel probe'
+              : 'Single-pixel probe',
           icon: PakarIcons.gridFour,
           children: [
             SegmentedButton<bool>(
               segments: [
                 const ButtonSegment(value: false, label: Text('1 pixel')),
-                ButtonSegment(value: true, label: Text('${probe.groupSize}-pixel group')),
+                ButtonSegment(
+                  value: true,
+                  label: Text('${probe.currentGroupSize}-pixel group'),
+                ),
               ],
               selected: {probe.group},
               onSelectionChanged: enabled
@@ -473,60 +617,140 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             Text(
-              'Physical group $group of ${probe.pixels ~/ probe.groupSize}${logical != null ? ' · logical cell $logical' : ''}',
+              'Physical group $group of ${probe.groupCount}${logical != null ? ' · logical cell $logical' : ''}',
               style: TextStyle(color: colours.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
-            // Tap a sector to inspect any of the six physical pixels directly.
-            Row(
-              children: [
-                for (var sector = 0; sector < probe.groupSize; sector++)
-                  Expanded(
-                    child: Tooltip(
-                      message: 'Physical pixel ${first + sector + 1}',
-                      child: InkWell(
-                        key: Key('pixel-sector-$sector'),
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: enabled
-                            ? () => send(
-                                probe.copyWith(
-                                  index: first + sector,
-                                  group: false,
-                                  rgb: probe.rgb,
+            // Adapt the donor EffectEditor's available-width Wrap: each row
+            // fills its actual card, not a fixed 44px strip on a wide tablet.
+            // Larger physical groups wrap without shrinking touch targets;
+            // the original 25px circles stay fixed while their slots expand.
+            LayoutBuilder(
+              key: const Key('pixel-sector-strip'),
+              builder: (context, bounds) {
+                const gap = 8.0;
+                final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+                final minimum = 44.0 * scale.clamp(1.0, 1.6);
+                final maximumColumns =
+                    ((bounds.maxWidth + gap) / (minimum + gap)).floor().clamp(
+                      1,
+                      12,
+                    );
+                final rows = (probe.currentGroupSize / maximumColumns).ceil();
+                final columns = (probe.currentGroupSize / rows).ceil();
+                final width = (bounds.maxWidth - gap * (columns - 1)) / columns;
+                final color = Color(0xff000000 | probe.rgb);
+                return Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: [
+                      for (
+                        var sector = 0;
+                        sector < probe.currentGroupSize;
+                        sector++
+                      )
+                        SizedBox(
+                          width: width,
+                          child: Semantics(
+                            button: true,
+                            selected:
+                                probe.group || first + sector == probe.index,
+                            label: 'Physical pixel ${first + sector + 1}',
+                            child: Tooltip(
+                              message: 'Physical pixel ${first + sector + 1}',
+                              child: Material(
+                                color:
+                                    !allOff &&
+                                        (probe.group ||
+                                            first + sector == probe.index)
+                                    ? color.withValues(alpha: .10)
+                                    : colours.surfaceContainerLow,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: colours.outlineVariant.withValues(
+                                      alpha: .45,
+                                    ),
+                                  ),
                                 ),
-                              )
-                            : null,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Column(
-                            children: [
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 120),
-                                height: 25,
-                                width: 25,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color:
-                                      !allOff &&
-                                          (probe.group ||
-                                              first + sector == probe.index)
-                                      ? Color(0xff000000 | probe.rgb)
-                                      : colours.surfaceContainerHigh,
-                                  border: Border.all(color: colours.outline),
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  key: Key('pixel-sector-$sector'),
+                                  onTap: enabled
+                                      ? () => send(
+                                          probe.copyWith(
+                                            index: first + sector,
+                                            group: false,
+                                            rgb: probe.rgb,
+                                          ),
+                                        )
+                                      : null,
+                                  onLongPress:
+                                      enabled &&
+                                          correctionsCapable &&
+                                          widget.onPixelLongPress != null
+                                      ? () => widget.onPixelLongPress!(
+                                          first + sector,
+                                        )
+                                      : null,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 10,
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        AnimatedContainer(
+                                          key: Key(
+                                            'pixel-sector-circle-$sector',
+                                          ),
+                                          duration: const Duration(
+                                            milliseconds: 120,
+                                          ),
+                                          height: 25,
+                                          width: 25,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color:
+                                                !allOff &&
+                                                    (probe.group ||
+                                                        first + sector ==
+                                                            probe.index)
+                                                ? color
+                                                : colours.surfaceContainerHigh,
+                                            border: Border.all(
+                                              color: colours.outlineVariant,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${first + sector + 1}',
+                                          maxLines: 1,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                fontFeatures: const [
+                                                  FontFeature.tabularFigures(),
+                                                ],
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${first + sector + 1}',
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
-              ],
+                );
+              },
             ),
             const SizedBox(height: 8),
             Row(
@@ -538,7 +762,11 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                         ? () => send(probe.move(-1))
                         : null,
                     icon: const Icon(Icons.arrow_back),
-                    label: Text('−${probe.count}'),
+                    label: Text(
+                      probe.group && probe.layout != null
+                          ? 'Previous group'
+                          : '−${probe.count}',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -549,7 +777,11 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                         ? () => send(probe.move(1))
                         : null,
                     icon: const Icon(Icons.arrow_forward),
-                    label: Text('+${probe.count}'),
+                    label: Text(
+                      probe.group && probe.layout != null
+                          ? 'Next group'
+                          : '+${probe.count}',
+                    ),
                   ),
                 ),
               ],
@@ -567,7 +799,7 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
                     style: TextStyle(color: colours.onSurface),
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Physical pixel · 1–${probe.pixels}',
+                      labelText: 'Physical pixel · 1–${probe.limit}',
                     ),
                     onSubmitted: enabled
                         ? (_) {
@@ -627,7 +859,11 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
             OutlinedButton.icon(
               key: const Key('pixel-off'),
               icon: const Icon(PakarIcons.circle),
-              label: Text('All off · clear ${probe.pixels} pixels'),
+              label: Text(
+                probe.overlay
+                    ? 'Mask off · ${probe.range}'
+                    : 'All off · clear ${probe.pixels} pixels',
+              ),
               onPressed: enabled ? () => send(probe, off: true) : null,
             ),
             const SizedBox(height: 12),
@@ -674,6 +910,139 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
           ],
         ),
         WorkspaceSection(
+          title: 'Probe effect',
+          icon: Icons.auto_awesome_outlined,
+          children: [
+            LayoutBuilder(
+              builder: (context, bounds) => Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SizedBox(
+                    width: bounds.maxWidth < 460 ? bounds.maxWidth : 220,
+                    child: DropdownButtonFormField<String>(
+                      key: ValueKey('diagnostic-effect-${probe.effect}'),
+                      initialValue: probe.effect,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: 'Effect'),
+                      items: [
+                        for (final effect in diagnosticEffects)
+                          DropdownMenuItem(
+                            value: effect,
+                            enabled: effect == 'solid' || effectCapable,
+                            child: Row(
+                              children: [
+                                Icon(switch (effect) {
+                                  'blink' => Icons.flash_on_outlined,
+                                  'breathe' => Icons.waves,
+                                  'rainbow' => Icons.gradient,
+                                  _ => Icons.circle_outlined,
+                                }, size: 18),
+                                const SizedBox(width: 10),
+                                Text(PixelProbe(effect: effect).effectLabel),
+                              ],
+                            ),
+                          ),
+                      ],
+                      onChanged: enabled
+                          ? (value) {
+                              if (value == null) return;
+                              change(
+                                probe.copyWith(
+                                  effect: value,
+                                  enabled: true,
+                                  periodMs: effectCapable
+                                      ? probe.periodMs
+                                      : 1000,
+                                  dutyPercent: effectCapable
+                                      ? probe.dutyPercent
+                                      : 50,
+                                  minBrightness: effectCapable
+                                      ? probe.minBrightness
+                                      : 0,
+                                  maxBrightness: effectCapable
+                                      ? probe.maxBrightness
+                                      : 255,
+                                ),
+                              );
+                            }
+                          : null,
+                    ),
+                  ),
+                  SegmentedButton<bool>(
+                    key: const Key('diagnostic-composite'),
+                    segments: [
+                      const ButtonSegment(
+                        value: false,
+                        icon: Icon(Icons.center_focus_strong_outlined),
+                        label: Text('Solo'),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        enabled: overlayCapable,
+                        icon: const Icon(Icons.layers_outlined),
+                        label: const Text('Overlay'),
+                      ),
+                    ],
+                    selected: {probe.overlay},
+                    onSelectionChanged: enabled
+                        ? (values) =>
+                              change(probe.copyWith(overlay: values.single))
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('diagnostic-timing'),
+                  onPressed: enabled && effectCapable ? editTiming : null,
+                  icon: const Icon(Icons.tune),
+                  label: const Text('Timing & brightness'),
+                ),
+                if (effectCapable)
+                  Text(
+                    '${probe.periodMs} ms · ${probe.dutyPercent}% on · ${probe.minBrightness}–${probe.maxBrightness}',
+                    style: TextStyle(color: colours.onSurfaceVariant),
+                  ),
+                if (effectCapable)
+                  TextButton.icon(
+                    key: const Key('diagnostic-restore'),
+                    onPressed: enabled
+                        ? () => send(probe.copyWith(enabled: false))
+                        : null,
+                    icon: const Icon(Icons.undo),
+                    label: const Text('Restore scene'),
+                  ),
+              ],
+            ),
+            if (!effectCapable || !overlayCapable)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  !effectCapable && !overlayCapable
+                      ? 'This firmware supports solid solo diagnostics. Update it for effects and overlay.'
+                      : !effectCapable
+                      ? 'Diagnostic effects are not available on this firmware.'
+                      : 'Overlay is not available on this firmware.',
+                  style: TextStyle(color: colours.onSurfaceVariant),
+                ),
+              ),
+            if (probe.unavailableReason(widget.api.freshStatus)
+                case final String problem)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(problem, style: TextStyle(color: colours.error)),
+              ),
+          ],
+        ),
+        WorkspaceSection(
           title: 'Wire reference',
           icon: PakarIcons.circuitry,
           children: [
@@ -684,8 +1053,10 @@ class _PixelDiagnosticPageState extends State<PixelDiagnosticPage> {
               'RGB #${probe.hex} · R ${probe.rgb >> 16 & 255} · G ${probe.rgb >> 8 & 255} · B ${probe.rgb & 255}',
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Show clears every other pixel. After Show, colour and group changes apply immediately. All off keeps your cursor. Closing leaves the last frame on the board.',
+            Text(
+              effectCapable
+                  ? 'Solo clears surrounding output; Overlay keeps the scene running outside this span. Changes apply after Show. Restore scene ends the temporary test. Closing does not send a command.'
+                  : 'Show clears every other pixel. After Show, colour and group changes apply immediately. All off keeps your cursor. Closing leaves the last frame on the board.',
             ),
             if (widget.observed()?.peer.has('pixel-diagnostic') != true)
               const Padding(

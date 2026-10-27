@@ -2,8 +2,6 @@
 //! Shared native dropdown focus, full-width choices and stable color lanes.
 use eframe::egui;
 
-pub const ROW_HEIGHT: f32 = 32.0;
-
 #[derive(Clone)]
 struct Entry {
     id: egui::Id,
@@ -34,14 +32,18 @@ impl ComboBox {
         let label = label.into();
         let salt = egui::IdSalt::new(label.text());
         Self {
-            inner: egui::ComboBox::from_label(label),
+            inner: egui::ComboBox::from_label(label).icon(|ui, rect, visuals, _| {
+                crate::ui::control_density::paint_chevron(ui, rect, visuals.text_color());
+            }),
             salt,
         }
     }
     pub fn from_id_salt(salt: impl egui::AsIdSalt) -> Self {
         let hashed_salt = egui::IdSalt::new(&salt);
         Self {
-            inner: egui::ComboBox::from_id_salt(salt),
+            inner: egui::ComboBox::from_id_salt(salt).icon(|ui, rect, visuals, _| {
+                crate::ui::control_density::paint_chevron(ui, rect, visuals.text_color());
+            }),
             salt: hashed_salt,
         }
     }
@@ -86,10 +88,18 @@ impl ComboBox {
         body: impl FnOnce(&mut egui::Ui) -> R,
     ) -> egui::InnerResponse<Option<R>> {
         let button = ui.make_persistent_id(self.salt);
+        let previous_height = ui.spacing().interact_size.y;
+        let height = crate::ui::control_density::height(ui);
+        if height != previous_height {
+            ui.spacing_mut().interact_size.y = height;
+        }
         let result = self
             .inner
             .popup_style(egui::style::StyleModifier::new(dropdown_style))
             .show_ui(ui, |ui| menu_ui(ui, button, body));
+        if height != previous_height {
+            ui.spacing_mut().interact_size.y = previous_height;
+        }
         if result.inner.is_none() {
             clear_menu(ui.ctx(), button);
         }
@@ -99,7 +109,6 @@ impl ComboBox {
 
 fn dropdown_style(style: &mut egui::Style) {
     style.interaction.selectable_labels = false;
-    style.spacing.interact_size.y = ROW_HEIGHT;
     for widget in [
         &mut style.visuals.widgets.inactive,
         &mut style.visuals.widgets.hovered,
@@ -135,7 +144,14 @@ pub fn menu_ui<R>(ui: &mut egui::Ui, button: egui::Id, body: impl FnOnce(&mut eg
         .unwrap_or_default();
     let mut target = None;
     let mut activate = None;
-    if owns_focus && !entries.is_empty() {
+    let navigating = focused.is_none()
+        || focused == Some(button)
+        || entries.iter().any(|entry| Some(entry.id) == focused)
+        || previous
+            .as_ref()
+            .and_then(|frame| frame.search)
+            .is_some_and(|search| Some(search) == focused);
+    if owns_focus && navigating && !entries.is_empty() {
         let focused_choice = entries.iter().position(|entry| Some(entry.id) == focused);
         let current = focused_choice
             .or_else(|| entries.iter().position(|entry| entry.selected))
@@ -316,10 +332,24 @@ pub fn choice(
     text: impl Into<egui::WidgetText>,
     color: Option<egui::Color32>,
 ) -> egui::Response {
+    choice_with_close(ui, selected, text, color, true)
+}
+
+/// Expansion rows own content inside the current popup and therefore must be
+/// able to keep that popup open while the inline editor is active.
+pub fn choice_with_close(
+    ui: &mut egui::Ui,
+    selected: bool,
+    text: impl Into<egui::WidgetText>,
+    color: Option<egui::Color32>,
+    close_on_click: bool,
+) -> egui::Response {
     let text = text.into();
     let width = ui.available_width();
-    let (rect, response) =
-        ui.allocate_exact_size(egui::vec2(width, ROW_HEIGHT), egui::Sense::click());
+    let (rect, response) = ui.allocate_exact_size(
+        egui::vec2(width, crate::ui::control_density::height(ui)),
+        egui::Sense::click(),
+    );
     let response = register_choice(ui, response, selected);
     response.widget_info(|| {
         egui::WidgetInfo::selected(
@@ -329,7 +359,7 @@ pub fn choice(
             text.text(),
         )
     });
-    if response.clicked() {
+    if response.clicked() && close_on_click {
         ui.close();
     }
     if ui.is_rect_visible(rect) {
@@ -540,6 +570,7 @@ mod tests {
                             .selected_text("Search")
                             .show_ui(ui, |ui| {
                                 let edit = ui.text_edit_singleline(&mut search);
+                                register_search(ui, &edit);
                                 if search.is_empty() {
                                     edit.request_focus();
                                 }
@@ -582,6 +613,63 @@ mod tests {
     }
 
     #[test]
+    fn dropdown_unregistered_editor_retains_arrow_keys() {
+        let ctx = egui::Context::default();
+        let mut draft = String::new();
+        let mut value = 0;
+        let mut frame = |events| {
+            let mut trigger = None;
+            let mut editor = None;
+            let mut editor_saw_arrow = false;
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(500.0, 500.0),
+                    )),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    trigger = Some(
+                        ComboBox::from_id_salt("editor-dropdown")
+                            .width(240.0)
+                            .selected_text("Editor")
+                            .show_ui(ui, |ui| {
+                                editor_saw_arrow = ui.input_mut(|input| {
+                                    input.consume_key(egui::Modifiers::NONE, egui::Key::ArrowDown)
+                                });
+                                let edit = ui.text_edit_singleline(&mut draft);
+                                if draft.is_empty() {
+                                    edit.request_focus();
+                                }
+                                editor = Some(edit);
+                                for index in 0..3 {
+                                    ui.dropdown_value(&mut value, index, format!("Choice {index}"));
+                                }
+                            })
+                            .response,
+                    );
+                },
+            );
+            output.textures_delta.clear();
+            (trigger.unwrap(), editor, value, editor_saw_arrow)
+        };
+        let (trigger, _, _, _) = frame(vec![]);
+        egui::Popup::open_id(&ctx, trigger.id.with("popup"));
+        frame(vec![]);
+        let (_, editor, before, _) = frame(vec![]);
+        let editor = editor.expect("editor rendered in open popup");
+        assert_eq!(ctx.memory(|memory| memory.focused()), Some(editor.id));
+        let (_, _, after, editor_saw_arrow) = frame(vec![key(egui::Key::ArrowDown)]);
+        assert_eq!(before, after);
+        assert!(
+            editor_saw_arrow,
+            "dropdown must not steal the editor's arrow"
+        );
+    }
+
+    #[test]
     fn dropdown_color_rows_are_full_width_equal_height_and_hover_stable() {
         for dark in [false, true] {
             for scale in [1.0, 1.25, 1.5, 2.0] {
@@ -594,6 +682,7 @@ mod tests {
                 });
                 let frame = |pointer| {
                     let mut rows = Vec::new();
+                    let mut row_height = 0.0;
                     let mut output = ctx.run_ui(
                         egui::RawInput {
                             screen_rect: Some(egui::Rect::from_min_size(
@@ -605,6 +694,7 @@ mod tests {
                         },
                         |ui| {
                             ui.set_width(310.0);
+                            row_height = crate::ui::control_density::height(ui);
                             rows.push(
                                 choice(ui, true, "System accent", Some(egui::Color32::BLUE)).rect,
                             );
@@ -629,7 +719,7 @@ mod tests {
                     output.textures_delta.clear();
                     for row in &rows {
                         assert_eq!(row.width(), 310.0);
-                        assert_eq!(row.height(), ROW_HEIGHT);
+                        assert_eq!(row.height(), row_height);
                     }
                     let inset = output
                         .shapes

@@ -501,21 +501,37 @@ impl crate::PakarControllerApp {
     pub fn firmware_observation(&self) -> Option<crate::firmware_progress::Observation> {
         // A current scoped progress event can sustain this read-only display
         // while OTA pauses ordinary status. It never renews command authority.
-        let status = self.live_status().or_else(||{
-            (self.connection_enabled && self.transport==crate::Transport::WiFi && self.websocket_live)
-                .then(||self.status.as_ref()).flatten().filter(|status|
-                    status.upgrade.as_ref().is_some_and(|upgrade|upgrade.fresh()&&upgrade.belongs(status)))
-        }).filter(|s| {
-            s.capabilities
-                .as_ref()
-                .is_some_and(|c| c.has("ota") || c.has("isp"))
-        });
+        let status = self
+            .live_status()
+            .or_else(|| {
+                (self.connection_enabled
+                    && self.transport == crate::Transport::WiFi
+                    && self.websocket_live)
+                    .then(|| self.status.as_ref())
+                    .flatten()
+                    .filter(|status| {
+                        status
+                            .upgrade
+                            .as_ref()
+                            .is_some_and(|upgrade| upgrade.fresh() && upgrade.belongs(status))
+                    })
+            })
+            .filter(|s| {
+                s.capabilities
+                    .as_ref()
+                    .is_some_and(|c| c.has("ota") || c.has("isp"))
+            });
         let local = self
             .firmware_transfer
             .as_ref()
             .and_then(|v| v.snapshot(status));
         let board = status.and_then(crate::firmware_progress::observed);
-        if status.and_then(crate::firmware_progress::lifecycle_observed).is_some(){return board;}
+        if status
+            .and_then(crate::firmware_progress::lifecycle_observed)
+            .is_some()
+        {
+            return board;
+        }
         local.filter(|v| v.active).or(board).or_else(|| {
             self.firmware_transfer
                 .as_ref()

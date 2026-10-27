@@ -11,8 +11,8 @@ $taskArguments=@('-std=c++17','-Wall','-Wextra','-Werror','-DESP32','-DARDUINO_A
   '-I',(Join-Path $taskRoot 'tests/management_stubs'),'-I',(Join-Path $taskRoot 'tests/ethernet_config_stubs'),
   '-I',(Join-Path $taskRoot 'tests/network_stubs'),'-I',$taskJson,
   (Join-Path $taskRoot 'tests/ethernet_management_test.cpp'),
-  (Join-Path $taskRoot 'firmware/esp8266/src/CloudConfig.cpp'),
-  (Join-Path $taskRoot 'firmware/esp8266/src/NetworkConfig.cpp'),'-o',$taskOutput)
+  (Join-Path $taskRoot 'firmware/esp/src/CloudConfig.cpp'),
+  (Join-Path $taskRoot 'firmware/esp/src/NetworkConfig.cpp'),'-o',$taskOutput)
 if($Plan){[pscustomobject]@{Executable='g++';Arguments=$taskArguments;Scope='Actual shared Ethernet management/store fixture, not SDK/W5500/network acceptance'};return}
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
 foreach($taskEnabled in 0,1) {

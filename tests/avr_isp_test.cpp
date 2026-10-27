@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/AvrIsp.h"
+#include "../firmware/esp/src/AvrIsp.h"
 #include <cassert>
 #include <cstdio>
 static unsigned serviceCalls=0;

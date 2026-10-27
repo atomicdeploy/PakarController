@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
 import 'package:pakarcontroller/table_layout.dart';
+import 'package:pakarcontroller/table_viewport.dart';
+import 'package:pakarcontroller/cell_controls.dart';
 
 import 'peer_fixture.dart';
 
@@ -87,21 +89,23 @@ void main() {
           )
           .controller!;
       final horizontal = tester
-          .widget<SingleChildScrollView>(
+          .widget<TableViewport>(
             find.byKey(const ValueKey('table-cell-scroll')),
           )
-          .controller!;
+          .controller;
       vertical.jumpTo(vertical.position.maxScrollExtent - 20);
-      horizontal.jumpTo(400);
+      horizontal.change(2, const Offset(-100, 0));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('cell-7')));
+      tester
+          .widget<CellButton>(find.byKey(const ValueKey('cell-7')))
+          .onPressed!();
       await tester.pumpAndSettle();
-      final y = vertical.offset, x = horizontal.offset;
+      final y = vertical.offset, x = horizontal.pan;
       final canvas = tester.getRect(
         find.byKey(const ValueKey('table-cell-canvas')),
       );
       tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Set red'))
+          .widget<CellColorAction>(find.widgetWithText(CellColorAction, 'Red'))
           .onPressed!();
       await tester.pump();
       update(
@@ -114,7 +118,7 @@ void main() {
       reply.complete(true);
       await tester.pumpAndSettle();
       expect(vertical.offset, y);
-      expect(horizontal.offset, x);
+      expect(horizontal.pan, x);
       expect(
         tester.getRect(find.byKey(const ValueKey('table-cell-canvas'))),
         canvas,
@@ -191,22 +195,34 @@ void main() {
       final a = tester.getRect(first),
           b = tester.getRect(eleven),
           c = tester.getRect(second);
-      expect(b.left - a.left, 48);
-      expect(b.top - a.top, 24);
-      expect(c.left - b.left, 48);
+      final pitch = b.left - a.left;
+      expect(pitch, lessThan(48));
+      expect(b.top - a.top, closeTo(pitch / 2, .01));
+      expect(c.left - b.left, closeTo(pitch, .01));
       expect(c.top, a.top);
       expect(
         a.top,
-        tester.getRect(find.byKey(const ValueKey('table-cell-canvas'))).top + 2,
+        closeTo(
+          tester.getRect(find.byKey(const ValueKey('table-cell-canvas'))).top +
+              pitch / 24,
+          .01,
+        ),
       );
       expect(tester.widget<CellButton>(first).physical, 80);
       expect(tester.widget<CellButton>(eleven).physical, 70);
       await tester.tap(eleven);
       await tester.pumpAndSettle();
       expect(tester.widget<CellButton>(eleven).highlighted, true);
-      final scroll = find.byKey(const ValueKey('table-cell-scroll'));
+      await tester.tap(find.byTooltip('Zoom in'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(eleven);
+      await tester.pumpAndSettle();
       final before = tester.getRect(first).left;
-      await tester.drag(scroll, const Offset(-500, 0));
+      await tester.timedDragFrom(
+        tester.getCenter(find.byKey(const ValueKey('cell-5'))),
+        const Offset(-100, 0),
+        const Duration(milliseconds: 300),
+      );
       await tester.pumpAndSettle();
       expect(tester.getRect(first).left, lessThan(before));
       expect(tester.takeException(), isNull);
@@ -244,8 +260,8 @@ void main() {
           );
           Rect cell(int id) => tester.getRect(find.byKey(ValueKey('cell-$id')));
           final first = cell(1), pitch = cell(11).left - first.left;
-          expect(first.top, canvas.top + 2);
-          expect(first.left, canvas.left + 2);
+          expect(first.top, closeTo(canvas.top + pitch / 24, .001));
+          expect(first.left, closeTo(canvas.left + pitch / 24, .001));
           expect(cell(11).top - first.top, closeTo(pitch / 2, .001));
           expect(cell(2).top, first.top);
           for (var row = 0; row < 4; ++row) {

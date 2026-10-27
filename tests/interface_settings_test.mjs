@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const catalog=JSON.parse(read('assets/contracts/device-settings.json'));
-const source=read('assets/web/device-settings.js'),web=read('firmware/esp8266/src/WebUi.h');
+const source=read('assets/web/device-settings.js'),web=read('firmware/esp/src/WebUi.h');
 assert(web.includes(source.trim()),'Production uses the actual shared settings module');
 assert(!web.includes('<span>UART mode</span>'));assert(!web.includes("s.link_mode||'polling'"));
 const native=read('desktop/src/ui/device_settings.rs');assert(native.includes('include!("settings_catalog.rs")'));
@@ -74,7 +74,7 @@ nodes.rgbBrightness.value='64';run('settingsState()');assert.match(nodes.setting
 context.confirm=()=>false;assert.equal(run('settingsCanClose()'),false,'RGB draft participates in dialog-close protection');
 rgbCalls=[];await run('settingsReload()');assert.equal(rgbCalls.length,0,'Reload cannot discard an RGB draft without confirmation');assert.equal(nodes.rgbBrightness.value,'64');
 context.confirm=()=>true;rgbCalls=[];await run('statusRgbSettingsLoad(true)');
-assert.equal(rgbCalls.filter(c=>c.method==='POST').length,1);assert.equal(rgbCalls.length,3);assert.equal(rgbSaved.brightness,64);assert.match(nodes.settingsMessage.textContent,/persisted and read back/);
+assert.equal(rgbCalls.filter(c=>c.method==='POST').length,1);assert.equal(rgbCalls.length,3);assert.equal(rgbSaved.brightness,64);assert.equal(nodes.settingsMessage.textContent,'Status LED settings saved on device');
 assert(!nodes.mqttHost.disabled,'Completing RGB work releases the shared pending lock');assert.equal(run('statusRgbDirty()'),false);
 for(const failure of ['negative','mismatch','uncertain','not-persisted']){
  rgbBehavior=failure;rgbCalls=[];nodes.rgbBrightness.value=String(Number(nodes.rgbBrightness.value)+1);

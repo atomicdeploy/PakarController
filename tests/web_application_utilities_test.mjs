@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+const source=await readFile(new URL('../assets/web/application-utilities.js',import.meta.url),'utf8');
+const context=vm.createContext({});vm.runInContext(source,context);
+const helpers=context.PakarApplicationUtilities,plain=value=>JSON.parse(JSON.stringify(value));
+assert.deepEqual(plain(helpers.normalizePreferences(null)),{density:'comfortable',labels:'colors',autoHideErrors:true,httpFallback:true});
+assert.deepEqual(plain(helpers.normalizePreferences({density:'compact',labels:'states',autoHideErrors:false,httpFallback:false,unknown:'discard'})),{density:'compact',labels:'states',autoHideErrors:false,httpFallback:false});
+assert.deepEqual(plain(helpers.normalizePreferences({density:'huge',labels:'random',autoHideErrors:'false',httpFallback:0})),{density:'comfortable',labels:'colors',autoHideErrors:true,httpFallback:true});
+for(const [state,color,semantic]of [['white','White','Idle'],['idle','White','Idle'],['red','Red','Lost'],['lost','Red','Lost'],['won','Green','Won'],['off','Off','Off']]){
+  assert.equal(helpers.stateCaption(state),color);assert.equal(helpers.stateCaption(state,'states'),semantic);
+}
+assert.equal(helpers.stateCaption(0xff0000),'Unknown','Rendered RGB is never semantic identity');
+assert.equal(helpers.stateCaption('unknown'),'Unknown');
+let events=helpers.appendActivity([],'Disconnected','error',100),original=events;
+events=helpers.appendActivity(events,'Disconnected','error',200);
+assert.equal(events.length,1);assert.equal(events[0].count,2);assert.equal(events[0].time,200);assert.equal(original[0].count,1,'Activity reduction is immutable');
+events=helpers.appendActivity(events,'Disconnected','info',300);assert.equal(events.length,2,'Different events remain distinct');
+assert.equal(helpers.appendActivity(events,'   '),events);
+for(let index=0;index<90;index++)events=helpers.appendActivity(events,'Event '+index,'info',index);
+assert.equal(events.length,60);assert.equal(events[0].message,'Event 89');assert.equal(events[59].message,'Event 30');
+events=helpers.appendActivity(events,'\u0000'+'x'.repeat(2000),'error',1000);assert.equal(events[0].message.length,1024);assert(!events[0].message.includes('\u0000'));
+assert.equal(helpers.install(),null,'No implicit DOM or network bootstrap');
+assert(!/\bfetch\s*\(|new WebSocket|setInterval\s*\(/.test(source),'Utilities must not become another device/transport owner');
+assert(source.includes('if(!form.checkValidity())return'),'Invalid preference draft is not persisted');
+assert(source.includes("form.addEventListener('submit',onSubmit)"),'Only explicit valid submit saves preferences');
+assert(source.includes("if(tone==='error')drawer.open=true"));
+assert(source.includes('if(preferences.autoHideErrors)drawer.open=false'));
+assert(!source.includes('innerHTML'),'Activity and panel labels remain text, never board-provided markup');
+console.log('Canonical Web utility contracts passed: semantic labels, preference validation/defaults, bounded distinct activity, dedupe and no second transport owner.');

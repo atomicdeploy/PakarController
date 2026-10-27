@@ -1,5 +1,453 @@
 # Donor-first preflight receipt
 
+## Preview contract checked before Web integration
+
+Consulted pixel-workbench and the exact donor-audit pwm_control mapping; read
+the full matching canonical installed donor, full existing Flutter preview
+controller and actual firmware store plus scoped HTTP/USB/command contracts.
+The Web controller is staged behind injected transport functions, not a new
+socket or invented WebSocket command. Original saved revision, peer/boot/route
+and lease determine all readback/cleanup. Clock/transport race tests and syntax
+checks pass; CI registration is not full-CI execution. UI integration remains
+open and no production device was contacted or modified.
+
+A receipt-refresh command mistakenly tried root REUSE-PREFLIGHT.md. The actual
+AGENTS path docs/REUSE-PREFLIGHT.md was then read and pixel-workbench/exact-file
+donor-audit rerun; no fallback source or exclusion was guessed from that error.
+
+Publication is pending: the scoped issue2 comment failed during CLI GraphQL
+through the authorized localhost8118 proxy. Consulted github-coordination and
+read docs/GITHUB-COORDINATION.md; verified the proxy listener, then a read-only
+REST comments check failed with the same forcibly closed connection. No blind
+comment replay or security bypass. Recheck comments before publishing after
+recovery. This does not undo the earlier successfully published checkpoint.
+
+## Consolidated Web checkpoint published
+
+Using the previously authorized local HTTP proxy, verified prior comments then
+successfully published the circle, rule-window and pixel-tool persistence
+checkpoint: https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6405340227.
+This resolves only the historical GitHub-comment publication blocker below.
+It does not publish the mixed source as a commit or deploy it to any board/app.
+Local ledger generation and focused tests/builds passed; expanded browser input,
+RTL/touch and actual-browser restore acceptance remain open.
+
+## Shared presentation persistence and GitHub route recovery
+
+Reverified unchanged stable-ID workspace donor, consulted preferences and its
+exact donor-audit record, then extended only the existing writer. Matching fresh
+rule fingerprints retain presentation without reconstructing configuration.
+Passive restoration/equal-event and peer-isolation regressions pass.
+
+Read-only inventory confirmed the user's previously authorized HTTP proxy on
+localhost8118. Using it in the child CLI process restored issue-comment reads;
+no global proxy setting, credential change or TLS-verification bypass. Fresh
+comments establish the circle and rule-window checkpoints remain unpublished.
+Those historical pending-publication notes below are superseded by this route
+recovery; final publication receipt will be recorded after ledger validation.
+Expanded browser input acceptance remains independently blocked.
+
+## Rule-window continuation remains local
+
+Consulted complete pixel-workbench mappings/pending actions and exact Pealayer
+NumericValueControl entry. Actual current Flutter operationOption/diagram slices
+were reread at unchanged hashes before adapting the six-slot prefix window.
+The full map's existing renderer and current published-RGB validator remain the
+owners. Explicit local disclosure requires no device request or command, and
+presentation state is excluded from configuration payloads. Tests/builds pass.
+Read-only GitHub REST issue refresh still failed TLS handshake; there was no new
+comment submission. The pending-publication and expanded-browser blockers below
+remain, not claimed resolved by DOM tests.
+
+## Circle-diagram GitHub publication pending network recovery
+
+The scoped issue#2 checkpoint could not be published: GitHub CLI failed its
+GraphQL request with TLS handshake timeout. A read-only CLI check failed the
+same way. Consulted github-coordination; the independent GitHub connector's
+read-only issue-comments fetch also failed its transport to the service.
+No second comment submission was attempted; no GitHub synchronization is claimed.
+Publish the circle-diagram checkpoint from FILE-COMPARISON-RECEIPTS.md after
+first checking whether an earlier attempt exists. Local ledger generation and
+focused tests/builds succeeded; source remains an uncommitted mixed candidate.
+This network blocker is separate from the existing browser-input/expanded-map
+visual acceptance blocker. No production board contact or policy workaround.
+
+## Circular diagram source and observation ownership
+
+Consulted ui-shell and exact NumericValueControl/PCController pwm donor entries.
+Read actual complete donors (canonical installed PC source matches inventory),
+complete Flutter correction editor, relevant page methods and firmware raw-scene
+publication slices. The existing source projection and peer lifecycle are reused;
+unknown/pending colors are neutral, never optimistic previews. Frame updates
+reuse DOM circles and do not create another transport/renderer/loop.
+
+One patch was rejected because a CSS selector was embedded in a longer minified
+line; inspected the actual source and appended a scoped override instead. A test
+initially expected absent style after clearing a color; the actual in-place CSS
+reset correctly uses the empty string, and the assertion now verifies that
+explicit clearing. Source lookup glob/escaping errors were resolved by rg file
+inventory and literal-pattern lookup, not guessed replacements. No guard disabled.
+
+## Diagnostic persistence and packaging-order recovery
+
+Initial exact donor lookup mistakenly used src/workspace_profiles.rs. The
+inventory resolved the correct src/ui/workspace_profiles.rs; its complete source
+was reread and original-byte hash verified before adapting stable workspace
+ownership. Actual Flutter constructor/snapshot slices were read too. The existing
+Web storage writer remains the only owner; sanitized user drafts are separate
+from fresh board observations and pending command authority.
+
+Single-source check first rejected the old onboard package after only the full
+profile had been rebuilt. Consulted build-storage, read the actual equality test
+and canonical build pipeline; built the missing onboard profile from the same
+source, then reran equality successfully. No guard relaxation, clean, extra cache,
+native/APK/firmware build or production deployment. Preview refresh and screenshot
+work; existing input blocker remains pending rather than silently waived.
+
+## Advanced diagnostic dictionary binding
+
+Comparison generation correctly rejected stale localization target bindings
+after the final frame-publication translation was added. Consulted localization
+and inspected generate-font-assets.mjs controller-copy/dictionary validation;
+the final generated dictionary includes that exact newly added copy. Rebound
+only the five previous-current localization hashes, preserving other sources
+and all guards. No blind regeneration waiver or broad stale-record refresh.
+
+## Advertised disclosure action remains nonresponsive
+
+Canonical preview refresh works and shows current Wire map copy. The observed
+Expand secondary action was invoked once through the supported browser API;
+fresh AX state showed no expansion. No repeated locator/coordinate/viewport
+action or alternative driver used. Actual Flutter local projection/preview code
+was read and reused for the source feature; expanded visual acceptance now has
+one outstanding manual-opening request, distinct from passing DOM tests.
+
+## Retired row ownership and read-only browser recovery
+
+Consulted ui-shell and exact PC pwm donor; original indexed path unavailable,
+so read the actual canonical installed checkout and verified its full SHA256
+matches the inventory. Complete Pealayer NumericValueControl reread too. The
+new regression failed before implementation by removing a replacement-peer row;
+captured model/peer/render/row fencing fixes that failure without weakening it.
+Read-only browser inventory, AX and screenshot now respond, but no stalled
+input/viewport action was retried and no alternate driver/native input used.
+Inspected the Windows automation skill only; native automation was not needed.
+
+## Pixel-group confirmation continuation
+
+Consulted ui-shell/exact donor-audit and actual EffectGroupDialog plus Flutter
+group editor/correction reload before adapting the existing shared modal.
+Located test ownership through rg --files after guessed Web test names did not
+exist; actual group coverage is in web_feature_workspaces_test.mjs. Corrected
+fixture-only dirty accessor/duplicate-group assumptions, retained the actual
+ownership assertions and passed focused checks. No browser-control retries or
+alternate browser driver used to hide the still-open rendered acceptance gate.
+
+## Shared dialog bounded verification
+
+Consulted ui-shell and exact donor-audit EffectGroupDialog.tsx, reread its actual
+complete source and adapted only localized actions, deliberate focus and modal
+lifecycle to the existing shared HTML dialog. New actual-component test first
+exposed missing classList in its tiny SVG fixture, not an application failure;
+added that DOM method and reran focused tests successfully. Existing browser
+input/viewport failure was not blindly retried or bypassed. Rendered keyboard,
+touch and RTL acceptance remains open in the same ledger and production issue.
+
+## Canonical route rendering and browser viewport timeout
+
+Pealayer App.tsx was fully reread before adapting its actual allowlisted fragment
+and history lifecycle into Studio. Fresh canonical #/diagnostics rendered the
+expected current workspace at1280px and a screenshot was inspected/saved. This
+does not certify click input: Add rule still left the empty rule list unchanged.
+The documented browser viewport capability timed out during a442x800 responsive
+check, resetting the tool session; the documented reset attempt also timed out.
+Stop retries; viewport restoration remains unverified. No alternate browser
+driver, hidden-state mutation or board command was used. Existing screenshot
+and browser input mechanisms were consulted; future responsive/click acceptance
+remains open in the same ledger/receipt and production issue.
+
+## Web correction stepper localization build guard
+
+The canonical font/localization generator rejected dynamically constructed
+Decrease/Increase offset labels as unused dictionary entries. Consulted the
+localization route and existing DesignerFieldLabel mapping; inspected the actual
+generator source before changing code. Kept its first-pass unused-copy guard and
+used explicit translatable labels instead of weakening validation or adding
+dummy copy. Full/onboard Web builds then passed. Actual complete
+NumericValueControl and Flutter editor/address projection reads and useful
+remaining omissions are hash-bound in the existing comparison ledger/receipt.
+Known browser-input stall still prevents rendered control acceptance; no blind
+browser retry, board contact or unrelated build was used to hide that limitation.
+
+## Web correction confirmation and browser-input failure
+
+The prior correction Reload browser confirmation stalled the preview tab's
+focus/input commands. Before replacement, consulted ui-shell and the exact donor
+inventory. There is no inventoried web_ui/src/components/ConfirmDialog.tsx;
+selected and completely read the actual EffectGroupDialog.tsx instead (live hash
+matches snapshot), plus Flutter PixelCorrectionsPage.reload and the existing
+WebUI.dialog implementation. Adapted their local draft / explicit cancel/commit
+lifecycle using the existing HTML dialog, not a fabricated donor or second
+framework. Unknown/missing dialog support preserves edits and fails closed.
+
+The stale tab could not be recovered with supported dialog observation; a fresh
+isolated preview rendered, but its workspace clicks left state unchanged. Stop
+blind browser retries. New guard's DOM contract tests and shared full/onboard
+packaging passed, but actual dialog keyboard/focus/responsive acceptance remains
+pending. No board commands, save, deployment or hardware acceptance was inferred.
+Exact source/proof hashes and useful omitted icon-picker behavior are recorded in
+file-comparison-evidence.json and the comparison receipt, not silently excluded.
+
+## Configurable physical-group pixel counts — board, tablet and native checkpoints delivered
+
+This checkpoint adds optional per-group counts; unconfigured groups
+retain the board's six-pixel table or twelve-pixel key-group default. Physical
+cable groups own their cumulative start/count, independently of logical cell
+names/order. Positive overrides are bounded to 1–255; omitted/zero uses the
+default, and the complete layout must fit the compiled 480/216-pixel capacity.
+Unused tail pixels are explicitly black. Pixel corrections remain a separate
+post-render subsystem, not a second copy of the scene/effects engine.
+
+`/api/pixels/groups` reads/replaces the revisioned layout through the existing
+HTTP/USB API owner. Settings persist in a separate checksum-validated board file;
+unchanged saves avoid flash writes, invalid requests do not partially apply, and
+failed mount/read never triggers formatting. Configuration import/export includes
+the layout. Diagnostics and published RGB carry layout revision/counts/starts so
+clients cannot reinterpret old pixels using new addresses. Explicit USB partial
+snapshots may omit optional icon bytes/RGB, never silently truncate the frame.
+
+The existing Flutter, Rust and Web diagnostic workspaces gain physical-group
+editors with bounded numeric drafts, address previews and explicit save/readback.
+Custom groups affect sector previews, group stepping and rendering; advertised
+but missing/invalid layout metadata does not silently fall back to six/twelve.
+The donor-first ledger binds the actual PCController SettingsStore/AddressableLeds,
+ControllerDialog/PWM/effect-editor and Pealayer NumericValueControl reuse to exact
+target/test hashes. Custom fine/coarse steps and clipboard menus remain an
+explicit pending donor omission; this is not a claim of full donor parity.
+
+Firmware model/store/renderer tests pass for table and first-wins builds, including
+persistence faults, captured layout consistency and full tail clearing. The
+canonical LED pipeline and USB envelope budget tests pass. The canonical S3
+candidate is 2,279,280 bytes, SHA256
+`e4bbdf31ab92855581de23b3424b70d473ea56c821faefe5ab718f70e1ae11b5`.
+Final Web gzip `cdd30c73c926dcee8aefdd94cad062279377e54299862712ba9606bafb777bd9`
+is embedded byte-for-byte. The existing 16 MB/OPI/buffered/verified-ISP profile,
+disabled BLE, dual output drivers and preserved AVR recovery image are retained.
+Flutter analysis is clean and 85 focused tests pass: group models/editor (8),
+group USB integration (4), existing workbench (53), generic diagnostic USB (8)
+and existing USB transport (12). The tests caught and fixed normalized no-op
+saves, delayed older telemetry falsely invalidating a saved layout, unsupported
+effect drafts being replaced with solid, and malformed compact metadata.
+Eight targeted Web suites pass, including real module/DOM-double editing,
+variable-sector rendering, command transport, settings and gzip/localization.
+These are source/host tests, not an installed-tablet or browser visual sign-off.
+
+End-to-end review additionally found and corrected fixed six-pixel addressing in
+the existing device TUI and native screen sampler. The TUI now emits exact spans
+and layout revisions; its rendering never issues a command. The sampler fills
+validated physical spans and leaves unused output black. The native bridge's
+matching route/diagnostic acceptance passes 28 focused pixel tests and 25 bridge
+tests. Two older fixtures were corrected to require diagnostic-state evidence
+alongside matching RGB and to include additive backend capability defaults;
+production validation was not weakened. Native correction rules now retain their
+enabled flags through edits/reordering/save and expose bounded pixel/offset steps.
+
+Direct authorization for delivery: "Finish up the pixel correction stuff and
+deploy first then work on the rest." ASUS verified the exact board identity
+esp32s3-907069eaaf34, saved the previous running image (SHA f1d71fb9...2be19)
+and correction/scene/mapping exports, then performed one local HTTP OTA upload
+in 25.307 seconds. No AVR programming or filesystem formatting occurred.
+ASUS required reassociation to its existing ledcontroller AP profile after
+reboot. The original updater's 64 KiB readback timed out; no firmware upload
+was repeated. The new read-only verifier checked all 2,279,280 running bytes
+using 140 bounded 16 KiB ranges with zero transport retries in 73.213 seconds.
+SHA256/MD5 match, selected/running slot 3407872 is VALID, and the same-board
+WebSocket snapshot completed in 98 ms. Receipt: outputs/PakarController/
+pixel-groups-running-image.json. Boot: 0a23bebe91f1b4c033bb637e21e9f94e.
+The verifier reuses existing peer, download-integrity and updater owners;
+23 mocked cases pass. It never writes firmware or an additional binary copy.
+
+Saved correction revision31 and rules survived; RMT remains selected, ready and
+reports zero failed transmissions. Group configuration reports default6, groups80,
+used480, revision0. The change from one red cell to all-off was confirmed by David
+as an intentional concurrent action, not restored over his choice. No optical
+claim follows from these digital observations, and no new group override was
+applied to production merely for testing.
+
+Tablet SM-X906B/R52T60C6V9B was discovered on the AP and independently identified
+before installation. Its previous installed APK was pulled and checksum-verified;
+settings/data were retained. Installed 0.2.8/build23 SHA256
+2368945317057ceb950e34ebcd1527785f62dccf3b485f4c3a0de4daabe53d17
+was verified from the actual installed package. This includes group counts and
+smooth tablet pinch/pan (6 focused tests), hiding only tablet zoom buttons.
+The attached phone was untouched. The subsequent final tablet package is
+62,890,597 bytes, SHA256
+`0cfec25c48bc4a47a621bc8b1dffbc795990457b1e353c519a18dcc2bc10cc10`,
+also 0.2.8/build23 with BoardProductionHold. It was installed without clearing
+data, and its actual installed base.apk has the identical hash. Its correction
+editor keeps Save/Reload/Apply/Preview and Add rule outside the rules scroller,
+uses compact horizontal tablet rows and phone cards, one selected-cursor action,
+and fixed-diameter pixel diagrams with current wire/source numbers and observed
+raw RGB. The large diagnostics card and user-facing countdown were removed.
+Explicit live preview renews its same-peer lease while foreground-owned;
+disconnect, stale ownership, uncertain receipts or leaving the page stop renewal.
+The board safety TTL remains, and only explicit Save persists correction rules.
+
+Final analyzer and 15 editor + 2 existing persistence tests pass; 7 preview
+lifecycle tests pass. Phone/tablet fixtures were inspected. Wireless ADB dropped
+during the first actual screenshot (a 62-byte partial PNG is preserved as failure
+evidence); reconnecting only the tablet endpoint restored it. Actual installed
+tablet screenshots `tablet-corrections-final.png` and
+`tablet-corrections-operation.png` were captured and inspected. They show the
+compact live editor, retained rule pixel336 and cursor343, true circular diagram
+pixels and correct observed white/black values. No rule Save or output-changing
+preview was sent for the visual inspection. The page is ready for David's test;
+this does not claim human acceptance or a physical preview-duration soak.
+
+David explicitly authorized discarding desktop drafts and replacing the exact
+ASUS PakarController process. Native release SHA256
+`96844a47b27a568259bcba810caeab74f55d92174a1e1950611ee14134fb2048`
+passed the canonical release/stage/probe path and replaced only PID5592 after
+preserving its executable and saved profile. New PID23444/session2 reports ready
+and the exact ledcontroller peer over Wi-Fi/WebSocket; USB is not selected.
+Saved profile hashes match before/after. Actual internal-framebuffer screenshot
+`asus-pixel-workbench-corrections.png` was inspected with Corrections open.
+Two startup HTTP timeout incidents remained at one occurrence each; the later
+bounded observation found no new incidents. Full pixel RGB was unavailable.
+Source/runtime correlation found the precise capability gap: `pixel-events` was
+advertised only inside the first-wins role branch although subscription/publishing
+was shared. Native correctly refused to subscribe without the capability; its
+healthy general WebSocket also suppressed ordinary HTTP polling. David approved
+the narrow fix with one brief reboot. Shared Network+Leds availability now governs
+advertisement, admission and publication; driverless/network-disabled builds do
+not advertise it. Both-role tests and the focused integration guard pass.
+
+The final running firmware is 2,279,360 bytes, SHA256
+`0908c56d45bf7103b44e74e0debf9d580a170f9eb855e0406dc47d2529a6874f`.
+One upload took21.651 seconds after the prior e4bbdf31 image was backed up and
+verified. ASUS required reassociation to the same saved AP profile. A 64 KiB
+readback timed out; no write was replayed. Independent 140-range16 KiB readback
+verified the full image in78.187 seconds with zero retries and59 ms WebSocket
+status. Running/selected slot65536 is VALID; boot
+`ccfc1af16026c1e43132da93bcf53041`. Receipt:
+`outputs/PakarController/pixel-events-running-image.json`. Correction revision31,
+rules, all group counts/starts, saved assignments and RMT backend survived.
+Whole group JSON differs only in its expected boot identity after reboot.
+
+The unchanged installed Rust process automatically reconnected, observed the
+capability and received fresh RGB frame606 (312 ms old); pixel preview is
+available/recent and all active incidents recovered through real observations.
+The actual framebuffer `asus-pixel-workbench-rgb.png` shows six RGB sectors and
+Live pixel colors; Corrections remains open. This verifies native consumption,
+not physical LEDs. To prevent repeated verification failures, both updater and
+standalone verifier now share16 KiB postboot ranges; backup stays64 KiB. Focused
+fixtures cover >1 MiB, final short range, one pinned read retry and rejection
+without upload replay. No second board update was performed for that tool fix.
+Native live correction preview and USB correction editor parity remain open.
+
+## Pixel correction workbench and board-rendered diagnostics
+
+Direct user authorization: "complete approval" covers this ledcontroller firmware
+update, tablet replacement, brief correction/diagnostic verification and restoration
+of the previous scene. It is not a PBX approval receipt, AVR programming authority,
+or an update to keycontroller. Tablet builds retain BoardProductionHold so saved
+automatic firmware jobs cannot silently start during app replacement.
+
+The new pixel-workbench concern maps complete donor reads of PCController
+controller_dialog.dart, pwm_control.dart and effect_editor.dart, plus Pealayer
+NumericValueControl.tsx. Actual shared dialog code is imported; bounded numeric
+steps, local drafts/explicit commits and responsive timing fields are adapted.
+The existing AddressableLeds and SettingsStore comparisons additionally map
+board-owned diagnostics, correction leases and durable rule validation. Concrete
+omissions and cross-client gaps remain in the same hash-bound ledger.
+
+Flutter now provides per-rule enable checkboxes, both reorder arrows, selected/lit
+diagnostic shortcuts, address/offset step controls, operation diagrams, local map
+preview and opt-in expiring board preview. Holding a table cell opens physical
+pixel inspection and explicit single/group actions. Advanced diagnostics offer
+solid/flash/breathe/rainbow and overlay without replacing saved cell states.
+Only explicit correction Save writes the board's configuration. Temporary
+preview ownership expires and is not automatically replayed across reconnects.
+
+Verification: canonical mobile analysis is clean; 53 focused model/widget cases
+and 34 separate real-loopback/USB transport cases pass. Testing found and fixed
+a small phone bottom-sheet overflow and a real tablet AlertDialog intrinsic-layout
+exception; both now use constrained/shared scrolling. The actual screenshot
+fixtures were inspected at phone and tablet sizes and remain labelled simulated,
+not installed-device or optical evidence. USB snapshots now accept semantic Won
+states and valid first-wins snapshots without weakening malformed-state checks.
+
+Firmware correction, role, LED pipeline, route and USB tests passed. Captured
+production status verifies exact complete USB envelopes under the unchanged
+16384-byte cap (worst escaped-name case 16371 bytes); advanced USB diagnostics use
+an explicit same-peer partial receipt, never truncated JSON. The final canonical
+S3 build includes both output backends, 16 MB/OPI, buffered AVR link, acknowledged
+ISP wiring and preserved AVR recovery image; BLE remains disabled. No AVR image
+was programmed by this checkpoint.
+
+Candidate identities from the preserved shared working tree on base 8ce8f29:
+
+- ESP image: 2265456 bytes, SHA256
+  f1d71fb9461c58b0e09bd612f58be7a21ac3135ddff2c66d729fffcfbdb2be19.
+- Android APK: 62546133 bytes, SHA256
+  236751a5ac8118d71ee31e2652291aa271727411411879c4473860d2b1f038ac.
+- Tablet rollback APK was read from the actual installed package and verified:
+  368830460dcb587a4c535a62415787fa8f9b53b03df7df9f0ce158129fd451c6.
+- Before OTA the current ESP image was downloaded and verified:
+  e70b3984d0fc812a373da1f00b8b87190724c62ac708c39c27a20a58797a769c.
+
+Delivery is tracked separately below; build/upload acceptance alone does not
+establish the running image. Rust parity for the new workbench controls, Flutter
+correction-editor USB/BLE configuration and localization of new strings remain
+open. Physical LED correctness and human usability acceptance are not inferred
+from host tests, counters or screenshots.
+
+Installed ledcontroller evidence: board esp32s3-907069eaaf34, new boot
+57ca379848c71e33ff5b582305ce866d. Local HTTP OTA accepted the image in 20.537 s
+after the verified backup. ASUS retained a stale AP association after reboot;
+reconnecting the same saved ledcontroller profile restored DHCP/ARP/DNS/HTTP,
+without changing its tethered Internet route. The first updater verification
+then hit a firmware-range read deadline. No upload was repeated. A separate
+read-only verification hashed all 2265456 running bytes in RAM in 19.747 s,
+without retry or an extra binary copy: SHA256 and MD5 match the candidate,
+running/selected offset 65536 is VALID, and the same-peer WebSocket status took
+170 ms. ASUS retains the small running-image-check.json receipt.
+
+The prior image had compile-time RMT but no runtime backend preference. The
+new dual-driver image started with its GPIO default; one explicit runtime API
+selection restored and persisted rmt-dma. Readback confirms requested/active RMT,
+ready=true, no pending switch/error and no driver failure. This is digital
+runtime evidence, not an optical acceptance claim or proof of GPIO/Wi-Fi causality.
+
+The commissioning probe initially used a hyphenated UUID that the actual
+32-hex command-receipt contract correctly rejected; diagnostics remained at
+revision 0/inactive. The probe now uses the real ID format, retains the original
+failure and does not send cleanup after a correlated rejection. Its corrected
+live run verified disabled-row bypass, enabled-row blackout, lease expiry,
+board-rendered breathing overlay, explicit stop and restoration, without flash
+writes. Correction revision31 and its existing black-pixel335 rule were preserved.
+Post-update comparison also confirms identical mode, effect, winner, brightness,
+cells, cell_states, state_presentation and red_lock. Both preview and diagnostic
+are inactive after the check; RMT reports zero failed frames.
+
+Tablet delivery is not complete: the exact final APK was transferred to ASUS
+and SHA256-verified, but install never started because SM-X906B left the AP.
+After reassociation ASUS owns 192.168.4.2 (the tablet's old address), so that
+cached ADB target was not reused. AP reports one client, ASUS; ADB mDNS and a
+bounded known-AP discovery found no tablet. The user was asked to reconnect
+tablet Wi-Fi or USB. Prior package, app settings and rollback remain intact;
+no phone package was changed. This blocker does not undo the verified ESP update.
+
+The commissioning tool's regression test executes its actual source in an
+isolated VM with only in-memory adapters. All 14 bounded cases pass, including
+32-hex correlation IDs, rejection/unknown outcomes, no blind cleanup, competing
+preview ownership and semantic scene changes. It is registered in the existing
+CI quality phase. This test does not contact a device or replace the live receipt.
+
+The scoped checklist is recorded at
+https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6402359405.
+Use that exact comment ID for follow-up; issue #2 remains open.
+
 ## Preserve the compact Flutter footer on phone and tablet
 
 Compared the actual previous Pakar NavigationBar before a7d69ce with the complete
@@ -527,6 +975,144 @@ watcher, gzip/paired manifest/backup-before-upload, remaining client/UART and
 fresh previous-certificate rereads remain open. No donor/SDK build, new cache,
 live board/app/server/relay/network mutation, reboot, LED/audio/PBX action or
 physical/human acceptance occurred. Current policy/rainbow/relay are untouched.
+
+## ControllerBoardMini/Puzzles editor-profile closure for four-box provisioning
+
+Consulted `donor-audit -Origin ControllerBoardMini/Puzzles` and read the final
+three pending donor files completely through EOF: `.vscode/arduino.json` (8
+lines), `.vscode/c_cpp_properties.json` (539 lines) and `.vscode/settings.json`
+(15 lines), with their original-byte ledger hashes unchanged. The useful
+MiniCore ATmega328P/Urboot/EEPROM/BOD/LTO/16 MHz profile is retained in
+`tools/build-firmware.ps1`; portable Arduino/C/C++ associations and generated
+tree exclusions are retained and extended in `.vscode/settings.json`; guarded
+plan tasks remain in `.vscode/tasks.json`.
+
+Fixed COM12/USBasp selection was replaced with device inventory plus explicit
+deployment, editor-owned `build` output with the canonical low-write build
+owner, and the 539-line absolute Arduino15/compiler-macro snapshot with the
+actual pinned compiler invocation. The donor's `gcc-x64` IntelliSense choice
+and copied `USBCON` macro were not imported because they misdescribe an
+ATmega328P and become stale with toolchain/package changes. A future generated
+compile database remains useful only if it comes from the canonical build
+without machine paths or another cache. These are reviewed replacements, not
+silent exclusions. No serial port was present on David-ASUS during this review,
+so it establishes no backup, flash, UART, optical or physical acceptance.
+
+The sibling `ControllerBoardMini/Timer` editor profile was then read with the
+same full-file discipline. Its 539-line `c_cpp_properties.json` and 15-line
+`settings.json` are byte-identical to the Puzzles files; `arduino.json` differs
+only by its retired `Puzzle_WithTimer.ino` sketch name. The same portable build,
+editor and deployment decisions therefore apply, with independent source hashes
+and ledger rows. This closes three Timer pending comparisons without claiming
+the remaining Timer firmware files or physical board behavior.
+
+For the active first-wins hardware path, Timer `Keys.h/.cpp` and
+`ShiftRegisters.h/.cpp` were also read completely and compared byte-for-byte to
+the reviewed Puzzles copies. Their independent source hashes now bind the same
+mode-aware classifier, typed active-low shift owner, direct-port wire sequence
+and role-specific 1 ms service proofs. This avoids duplicate runtime code while
+leaving physical key order, bounce, relay bits, signal integrity and end-to-end
+UART latency explicitly open for the connected four-box board.
+
+Timer `SevenSegments.h`, `TonePlayer.h/.cpp` and `WS2811.h/.cpp` were then read
+completely and confirmed byte-identical to the reviewed Puzzles files. Their
+independent rows now point to the existing A4/A5 front-panel driver,
+nonblocking PB1 hardware-timer queue and S3-owned grouped LED renderer. The
+blocking buzzer wait, global timer state and fixed eleven-pixel AVR BRG scene
+remain deliberately replaced. Physical TM1637 ACK, audible timing/flash sync,
+channel order and all96-pixel four-box output remain explicit commissioning
+gates rather than inferred from source fixtures.
+
+The final Timer files were also read through EOF. `RotaryEncoder.h/.cpp` remains
+an explicit optional gap because its D2/D3 interrupt ownership conflicts with
+feature-gated RC hardware and no encoder is confirmed. `LooseTestCodes.txt` is
+replaced by the bounded, editable, secret-redacting shell TUI rather than copied
+as non-compilable private scheduler dumps. `program.cmd` is replaced by the
+identity-fenced, backup-first, hash/readback-verified update owner instead of
+unauthenticated curl, hard-coded COM5/host paths and avrdude `-V`.
+`Puzzle_WithTimer.ino` was read all 483 lines: generic display animation,
+melodies, cooperative scheduler, input/relay and serial intent are mapped to
+current owners; its 15-minute countdown, rotary adjustment and six-key timer
+puzzle are explicitly excluded business logic. This closes the Timer inventory,
+not its remaining physical front-panel/audio/relay/UART acceptance.
+
+## PuzzleBoard front-panel and controller integration review
+
+Consulted the PuzzleBoard donor audit and read all 1223 lines of
+`PuzzleBoard.ino` through EOF at its recorded original-byte hash. The reusable
+12-step four-digit perimeter animation, active-low input/relay service, status
+color/audio distinction, serial diagnostics and cooperative-service intent map
+to the existing FrontPanel, TM1637, ShiftRegisters and TonePlayer owners. The
+target animation is bounded and semantic rather than permanently repeating.
+
+The donor's ATmega32-style PC6/PC7/PC3-PC5, PD6/PB4 and LCD A1-A7 map is not the
+confirmed ATmega328P ControllerBoardMini hardware and was not copied. Its 2231
+puzzle, countdown modes and relay sequence are excluded business logic.
+Blocking beeps/five-second delay and single-byte 9600 commands are replaced by
+nonblocking queued audio and framed 38400 UART. Its multiplex loop's
+`digitIndex++ == 4` reads `displayData[4]` before resetting; the cached TM1637
+driver removes that overrun. LCD/expanded16-input hardware and all physical
+display/key/relay/audio/UART acceptance remain explicit open gates.
+
+`XS/7Seg_Remote.ino` was also read all 192 lines through EOF. Its useful
+RCSwitch receive/reset lifecycle maps to the current cooperative RadioAdapter,
+which forwards the complete raw code, bit count, protocol and pulse length to
+ESP for learning and configurable action policy. The donor's fixed low-byte
+action table, blocking 200 ms delay and dedicated 74HC595 display pins are
+replaced by typed raw forwarding, nonblocking service and the confirmed TM1637
+A4/A5 owner. Physical RF receive/transmit and receive-restoration acceptance
+remain open until the fitted radio is exercised.
+
+The 1,523-line `XS/40LED.ino` was then read through EOF at its recorded hash.
+Its exact 590 ms welcome variation, fractional progress interpolation,
+monotonic animation intent, changed-state reporting and automatic/manual output
+ownership are retained through the nonblocking Timer1 cue, grouped wall-clock
+LED transitions, indicator pulse/configurable neighbour chase, cooperative
+register owner and framed hardware UART. Fixed FINAL_TABLE/RADIOGRAM score,
+bonus, fan/countdown and analog-meter rules are excluded business/hardware.
+Incompatible A0/D8/A1-A5 pins, unchecked ASCII/`atoi` parsing, unconditional
+9600-baud forwarding, blocking delays/watchdog reset and the explicitly rejected
+confetti/sinelon/BPM/juggle examples were not copied. Optical channel/order,
+effect cadence and audible 590 ms verification remain live hardware gates.
+
+`XS/40LED.ino.new` received complete semantic coverage using that fully read
+base plus its complete two-hunk no-index diff; no unchanged region or changed
+line was skipped. Its disabled 74HC165 scan/direct-button remap is an explicit
+hardware-profile choice in Pakar rather than a shared-loop comment. Its
+suppressed zero-value notices are replaced by authoritative winner-zero and
+reset-revision events, and reset audio is semantic/idempotent: ready-to-ready
+retries repair state without replaying a cue. The newly connected four-box
+pair still needs physical input, UART, LED and reset verification.
+
+The root PuzzleBoard `.vscode/arduino.json`, `c_cpp_properties.json` and
+`settings.json` were read completely (8, 536 and 19 lines). The portable build
+retains external 16 MHz, UART bootloader, EEPROM retention, 2.7 V BOD, Arduino
+language ownership and generated-tree hygiene. The donor's wrong-MCU MightyCore
+ATmega32 profile, fixed COM1/USBasp, absolute Arduino15 paths, stale ATmega32 and
+USBCON macro dump, false gcc-x64 mode and duplicate editor Build directory are
+replaced by the actual MiniCore ATmega328P arduino-cli owner, inventoried
+backup-first deployment and reusable low-write caches. These editor mappings do
+not establish a live build or flash.
+
+`Loose Code.txt` was read completely. Its raw-edge timestamp and stable-state
+press action map to the shared key classifier, which uses a configurable 20 ms
+rollover-safe debounce and emits the primary Down action immediately after that
+interval while classifying Up/click/double-click/hold separately. This replaces
+the fragment's unspecified initialization and fixed 50 ms press-only behavior;
+actual switch bounce and first-wins latency remain physical measurements.
+
+The PuzzleBoard `Tools` update slice was read through EOF: `Client.js` (193
+lines), `Server.js` (96), `run.cmd` (18), `package.json` (10), and the complete
+836-line npm v2 lockfile. Remote notification/update intent is retained through
+immutable HTTPS manifests, the durable ESP update state machine and native
+client updater. Fixed COM6/AVR_HOME, shell-composed avrdude `-V`, anonymous
+`fileModified` flash triggers, raw image broadcast, mtime identity and the
+infinite curl/overwrite/execute loop are replaced by explicit plan/run/apply,
+backup-first board/boot/address fencing, exact size/hash/profile/version checks,
+post-boot running-image verification and no mutation replay. The unused 2023
+Node watcher dependency graph is replaced by the actually linked native and
+embedded transport stacks. Live USB/OTA/ISP and power-loss recovery remain
+hardware acceptance gates.
 
 ## PU850 exhaustive continuation: foundation source checkpoint
 
@@ -7665,3 +8251,1622 @@ build13 was merely read/verified, not updated or claimed current. The temporary
 root upload copy was byte-compared to the immutable registered package and removed;
 the registered package and local canonical build remain recoverable. Final ASUS
 and local ADB probes are unchanged/unavailable; no actual tablet install claimed.
+
+## Current architecture documentation reconciliation
+
+Documentation-only inspection used source commit
+8ce8f29eee01a979bbd42e7d3573a6e3ace9eba2 plus preserved concurrent local edits.
+Read the reuse procedure, master acceptance issue, current role/pin/renderer/
+transport/network/client/update source and the complete PCController donor
+Tools/Controller/docs/Go-Embedding-API.md. The donor's single-owner and lifecycle
+contracts informed the architecture explanation; this is not a new assertion of
+complete donor parity.
+
+Updated ARCHITECTURE.md and the root, S3, mobile, toolchain, identity, context,
+client-management and acceptance introductions. Corrected ESP8266-first wording,
+runtime role switching, table geometry, native-USB scope and current source
+release/build information. Historical deployment receipts remain historical.
+Recorded the failed exact-head CI include path, unresolved LED/AVR/client gates
+and partial donor coverage rather than treating source support as deployment.
+
+Only the changed README and DEVICE-CONTEXT document target hashes were rebound
+in the existing comparison evidence; unrelated evidence edits were preserved.
+Comparison regeneration stopped at a concurrent change to tools/test-game-role.ps1
+for ControllerBoardMini/Puzzles|Puzzles.ino. That source/proof pair was not
+reviewed or rebound by this documentation pass. Generated-ledger validation is
+therefore blocked, not passed. No compilation, deployment, board connection,
+firmware update, client replacement or GitHub mutation was performed by this
+documentation reconciliation.
+
+## PCController gap comparison and future AVR convergence
+
+Read owning issue #6, firmware-hardware and donor-audit routes. The reference
+is the clean installed donor b0111ae0c80dc34149ea1044de7dd5488920301b,
+not the older work/repos/PCController checkout. Fully read entrypoint/config,
+feature bundles, pins, EEPROM layout, settings header, codec/generated contract,
+front-panel model, UART, event producers and shared-production/host-lifecycle
+documentation. ProtocolRuntime was read through EOF; other named implementation
+differences were inspected without certifying their entire dependency trees.
+
+Added nine complete-file, hash-bound parity-gap records to the existing ledger
+and avr-convergence routing to issue #6. Their target is the explicit design/
+comparison report, not a claimed new code import. Existing macro-ring/header
+text equality was checked read-only with LF normalization. Recorded exact baud,
+reserved-byte/opcode, ACK/tone timing, pins and EEPROM incompatibilities; corrected
+stale five-byte-only mirroring and old-profile wording in contract docs.
+
+Focused consultation with the real donor root and -Gate passed: 12 matched
+records, zero pending/stale comparisons, all 12 retaining known parity gaps.
+The main work concurrently relocated shared ESP sources to firmware/esp and
+updated its source/evidence references. Those edits were preserved. After that
+reconciliation, generate-file-comparison.ps1 -Check passed with 328 total records,
+including 105 PCController comparisons; this supersedes the earlier blocked
+documentation-check observation, not any unperformed code/hardware test.
+No new build, app/board contact, firmware change, donor edit, Git commit or GitHub
+mutation was performed by this comparison. Physical migration remains pending.
+
+## First-wins raw RF continuation
+
+Read PCController `Project/Runtime/RadioRuntime.inc.h` fully at b0111ae0,
+including actual receive, learning, mapped actions and transmit flow. Adapted
+raw receive/transmit only in `firmware/avr/RadioAdapter.h`; inspected rc-switch
+2.6.4 ISR and synchronous transmission implementation. This dependency's TX
+blocks input scanning, so the opt-in adapter rejects TX during an armed game.
+Persistent learning/mapping and nonblocking TX remain explicit gaps in the
+existing file-comparison ledger, not accepted exclusions. The enabled AVR
+candidate compiled with only 411 bytes left for stack/local state; this is a
+warning and a physical stack/latency acceptance gate, not production approval.
+
+The build-profile regression fixture initially failed its obsolete direct USB
+compiler-define assertion. Consulted `usb-otg` and the current canonical build
+owner: USB CDC/recovery is selected by FQBN, while the command path defaults to
+UART0. Updated the assertion to inspect both actual selections; no USB firmware
+policy was changed to satisfy a test. Focused RF mocks pass; they do not prove
+RF reception, transmission, wiring or end-to-end client delivery.
+# GPIO47 keycontroller isolation
+
+User requested another LED pin after GPIO4 remained white with both RMT/DMA and
+the static transmitter. The common DevKitC-1 GPIO47 (J3-17) mapping was reviewed
+against Espressif's pin table and Pakar's UART/ISP/W5500/LCD/reset/RGB ownership.
+The existing transmitter is retained; `-S3LedDataPin 47` selects only its output,
+with GPIO4 still the default. The application-only header preserves SDK cache
+flags. Driver telemetry now reports `data_gpio`.
+
+Reread PU850 `sketch.yaml` and the canonical build wrapper. Exact dependency pins,
+FQBNs, cache ownership and flash gates remain unchanged. The reviewed target
+hashes were refreshed without marking additional donor features complete.
+The existing actual-worker fixture now covers GPIO47's upper GPIO register bank;
+its static/color/off/initialization/queue/flash-hold cases passed. An omitted
+BoardCore include path in the fixture runner was corrected. This is host evidence,
+not electrical or optical proof; deployment and user visual feedback remain required.
+
+## Fresh first-wins profile default, 2026-10-21
+
+- Failed lookup: `game-role` and `device-settings` are not indexed concerns. Stopped the guessed route instead of bypassing donor review; selected the existing `games-streaming` and `firmware-hardware` routes for the first-wins/key-mask profile.
+- Scope: make a newly provisioned `keycontroller4` image start with boxes 1-4 enabled before a runtime settings file exists. Runtime `enabled_mask` remains authoritative and persisted; this does not create another game mode or protocol generation.
+- Physical boundary: David-ASUS currently reports no present COM/USB-serial/JTAG device after a PnP rescan, so no flash or UART acceptance is claimed.
+- CI follow-up: the latest release workflow failed in `tools/test-led-pipeline.ps1` because the committed scheduler compile lacked the shared `libraries/BoardCore/src` include path required by `LedWire.h`/`GameRole.h`. The current source migration already adds that include and points the runner at `firmware/esp/src`; the exact focused wrapper now passes all three queue profiles plus renderer, persistence, stress and chase wiring checks. This is host/CI evidence, not device timing or optical proof.
+- Preflight lookup: guessed concern `led-pipeline` was rejected as unknown. Registered `firmware-hardware` and `games-streaming` routes were consulted without `-Gate` after their routing-only status correctly rejected acceptance gating. Their pending rows and parity gaps remain open; this repair does not claim donor parity.
+- Full repository-health follow-up reached the peer-fence guard and exposed a stale formatting-sensitive assertion: production code still unwraps only a current route/scope and updates remote progress from both peer-bound network status and the selected USB snapshot, but rustfmt moved the assignment across lines. After consulting the registered `updates-telemetry` route, the guard now compares a whitespace-normalized source view while retaining its negative ownership and unrelated-USB mutations. This changes no transport behavior and makes the safety assertion follow semantics rather than one formatting layout.
+- The next full-run failure was another formatting-sensitive source guard in `native_dropdown_test.mjs`. The Pealayer-derived Preferences draft still synchronizes method, enabled state, endpoint, user and serial port into all owner baselines before drawing and saving; its call is now multiline. After consulting the registered `preferences` route, the assertion now normalizes whitespace while continuing to require that exact single-owner call. No Preferences or connection behavior was weakened.
+- The subsequent `web_cell_table_test.mjs` failure was the same class: the native shell still synchronizes the one shared selection/search concept after dialogs and requests repaint only when it changes, but rustfmt expanded the block. The existing `web-presentation` consultation had already passed immediately before this test. The assertion now normalizes whitespace and still requires the exact synchronization/repaint branch; it does not accept a missing or unconditional replacement.
+- The remaining ordered CI slice then reached `connection_controls_test.mjs`. Production still validates the connection-change guard before releasing the selected USB owner, refuses to mutate the port if release fails, and persists the port only afterward; rustfmt made both guards multiline. Reused the already-passed `native-dropdowns`/Preferences review and changed the source guard plus its mutation-negative cases to whitespace-tolerant regular expressions. The ordering assertion remains exact and no dual/fallback transport behavior was introduced.
+## Four-box first-wins profile build guard
+
+The new ESP32-S3 first-wins build accepts a bounded initial key mask so a fresh
+four-box controller can boot with boxes one through four enabled instead of the
+nine-box default. The first focused storage test correctly stopped at its
+hash-bound Pealayer `scripts/run-windows.ps1` proof after the test file changed.
+Re-read `docs/REUSE-PREFLIGHT.md`, the complete donor runner and Pakar's complete
+`tools/build-desktop.ps1`; retained the donor's canonical locked-cache/explicit
+build-mode contract and added only plan-time assertions for game role, mask 15
+and the unique `keycontroller4` hostname. Updated the four exact proof hashes;
+no build cache, compiler output, board firmware or deployed application changed.
+
+## Puzzles shift-register review and first-wins latency
+
+Read the complete ControllerBoardMini/Puzzles LocalLib/ShiftRegisters.h/.cpp,
+Puzzles call sites, Pakar BoardPins.h, and both complete Pakar shift-register
+sources. The first attempted test patch failed because the expected tail had
+already gained virtual-input coverage; it made no change. Re-read the actual
+file and extended that existing fixture instead of overwriting it. The executable
+fixture now covers both game-role input orders, virtual inputs, invalid indices,
+active-low single/batch outputs and the exact shifted byte.
+
+The donor serviced the shared register every loop, while Pakar imposed a 5 ms
+interval. First-wins now uses a 1 ms interval before its existing debounce/UART
+path; the table role retains 5 ms. Source guards and both role fixtures pass.
+Added exact hash-bound comparisons for the two donor files: Puzzles pending
+comparisons fell from five to three and scoped improvements rose from four to
+six. Physical input/relay identity, bounce, clock integrity and measured
+switch-to-UART latency remain live-board acceptance gates.
+
+## PuzzleBoard residual XS closure and four-box hardware boundary
+
+Read the remaining nine PuzzleBoard source files through EOF, including the
+byte-identical XS/XSS UART pairs, finite Timer2 blink sketch, direct segment
+demo, 623-line Bluetooth/power controller, 468-line Android/RTC controller and
+447-line relay/input controller. Every PuzzleBoard inventory row now has an
+individual hash-bound decision: 7 equivalent-behavior, 14 scoped-improvement
+and 1 parity-gap, with zero generic pending comparisons. Applicable silent
+settings, input lifecycle, relay ownership, finite indication, color damping,
+audio and serial intent map to the shared role-aware owners. Unsafe/unframed
+ASCII parsing, SoftwareSerial, RTC/I2C, invalid ADC6/ADC7 pull-up assumptions,
+incompatible pins, blocking delays and donor product business remain explicitly
+replaced or not applicable with reasons.
+
+The generated comparison now accounts for all 4,697 donor files with 375
+hash-bound comparisons, 4,322 pending in other donors and 275 known parity
+gaps. Generator and JSON/diff checks pass. The legacy evidence-binding checker
+still stops first at the pre-existing ControllerBoardMini
+`Timer/.vscode/arduino.json` row because its manual CSV evidence is absent; this
+was not relabelled as a success.
+
+David-ASUS was queried through both Win32 serial and present Plug-and-Play
+inventory. It currently exposes only built-in COM1 and no ESP32-S3 USB/JTAG,
+CP210x, CH34, FTDI or other new serial device; neither `keycontroller.local`
+nor `ledboard.local` resolves there. Prepared four-box ESP/AVR images therefore
+remain staged and untouched. Physical backup, flash/readback, 38,400 UART,
+buttons 1-4, relay/audio/LED behavior and human acceptance remain open.
+
+## Keycontroller rename and command-admission recovery
+
+Live ASUS COM27 identified ESP32-S3 revision 0.2, MAC 7c:e8:b1:b0:61:10,
+16 MB flash and 8 MB PSRAM. The instance was renamed through its fenced API
+to keycontroller; ASUS resolved keycontroller.local to the same peer. Enabled
+mask 15, extended effects, 700 ms chase and adjacent-pixel fade were saved.
+An unconfirmed key mask and timed-out AVR settings read recovered after one
+ESP restart. Subsequent mask/audio ACKs and settings GET/SET/GET succeeded:
+Silent=false, persisted=true, unchanged other settings; two API resets both
+received AVR ACK and retained winner=0. This proves two-way UART, not physical
+button/optical/GPIO acceptance. The ASUS tunnel subsequently became unavailable.
+
+Reread complete PCController UartProtocol.cpp and link/discovery.go. Adapted
+bounded HELLO readmission after three unconfirmed idempotent mask exchanges;
+no reset/key/melody replay. First-wins boot now clears its old winner and
+diagnostic while retaining palette, enabled boxes and effects. Protocol and
+first-wins renderer fixtures pass; candidate compilation/deployment and human
+feedback are separate pending gates. S3 identity now includes its generated
+application profile, so hostname defaults no longer depend on SDK-wide flags.
+Build cache selection retains an existing exact FQBN/compiler-flags match
+without copying it and isolates other hardware profiles.
+
+Physical follow-up: David confirmed a deliberate power cycle and then confirmed
+rainbow working. The next boot retained UART telemetry but not mask admission;
+auto_reset_ms remained 0. Added bounded HELLO recovery, current AVR reset revision
+and GPIO21 assertion telemetry. Reset-counter synchronization now preserves a
+winner contained in the same observation. Restating the active baked role via
+USB, REST, cloud/WebSocket or AVR SetMode ACKs without clearing the round.
+Explicit reset remains separate. No new delayed network-boot reset was retained.
+Scene fixtures, boot/reset source guards and radio fixtures passed; both actual
+firmware builds passed. These do not prove the physical hold/reset sequence.
+The full comparison-report regeneration hit an unrelated stale bridge_events.rs
+mapping; it was not rehashed or relabeled as reviewed to bypass that boundary.
+
+ESP local Async OTA completed with full running-image SHA256
+868831269524dd13a88d718df10cdae71f062f3fcd67074afdff751c8c27dabb,
+2312704 bytes, VALID selected/running slot and same-peer WebSocket. Boot
+fcee210a6c6a7dd16b49bfa001d67557 automatically confirmed mask/audio; GPIO21
+observed released, auto-reset 0, silent Off. AVR candidate
+95ff7cb02d308a03dc3556432ba0ef34228118b8f1e36a89066caff02449db6c
+was verified on ASUS. Urboot job1 stopped before any flash write at Prog ACK
+admission; AVR boot count advanced and BORF was reported. No blind write retry
+or protection/fuse downgrade. AVR returned online, Prog clear and mask confirmed.
+Rainbow reselected; new-image optical/winner-hold acceptance remains pending.
+
+Four-box audio isolation: user confirmed Silent winner remains latched. A single
+1032 Hz / 70 ms API tone then reproduced AVR restart (27803 -> 27804, BORF=4),
+with ESP boot unchanged. GPIO21 release has no audio-stop handler; only Down
+requests reset. Keep winner Silent pending unloaded-buzzer/power diagnosis; do
+not disable BOD or claim production audio fixed. Reread PCController LocalLib/
+TonePlayer.cpp and Project/BootMelody.cpp completely; the Timer1 hardware driver
+is retained. Prepared a shared WinnerPresentation schedule: 240/120/240/120/360
+ms, three pure-color pulses and corresponding ascending notes, then existing
+ring/pulse effects. Renderer fixtures pass; these source changes are not deployed.
+
+Subsequent user-requested unmute was applied and ACKed over ASUS Wi-Fi. A
+70 ms tone still caused boot 27805 -> 27806/BORF; do not describe the running
+board as silent or sound-stable. No further audible test/deployment in this pass.
+
+Requested configurable presentation supersedes the fixed three-pulse draft:
+ESP default is two 500 ms winner-button flashes with 250 ms gaps, 750 ms loser
+fade, per-group colors/motion, pulse and a shared chase over enabled losing
+indicator groups. KeyPresentation is used by the renderer; KeyGameSettings
+stores validated settings with the existing staged/readback/rename persistence.
+ESP schedules finite AVR notes from the flash clock and sends Silent as the
+AVR's cached autonomous winner cue. Other named cues remain selectable but
+their internal notes do not follow arbitrary custom flash timings. Settings
+changes preserve the active presentation epoch. GPIO21 remains Down-only.
+HTTP/WS game-settings accept presentation patches; fenced USB opcode 0x69
+accepts one global or group patch. Remote press opcode 0x68 requires new AVR
+HELLO support, uses chooseWinner, rejects disabled/conflicting winners and has
+HTTP /api/game/press and WS game-press dispatch. Web includes parameter/group
+editors and a test-press selector. Rust/Flutter now implement timing/group editors,
+capability-gated remote test presses and selected-field post-ACK readback. Existing
+native/mobile live pixel previews are retained; Web live per-pixel group preview
+is still pending. None of these new client controls has on-device acceptance.
+Renderer fixtures for both roles and embedded Web JS syntax pass. AVR builds
+at 31502 flash / 1642 static SRAM; only 406 bytes remain for stack/locals, so
+physical stack and audio acceptance remain open. No AVR flash was attempted.
+
+Flutter analysis reports no issues and both focused presentation validation/readback
+tests pass. Native compile found a missing eframe::egui import in the new editor;
+fixed without adding a dependency; focused native build and both tests pass. Native USB
+encoding now validates inherited settings before narrowing integer casts, with
+regressions for malformed timing/motion/RGB readback. Formatting-only evidence
+refreshes were checked against recorded HEAD hashes and independently identical
+rustfmt output. The separate table_workspace change adds bounded saved key
+positions, not command authority; reviewed before refreshing its evidence.
+
+Final ESP candidate build passes at 2323131 bytes flash and 116788 static RAM.
+Both role renderer fixtures pass again, including requested flash boundaries,
+loser colors, disabled groups and non-restarting presentation on settings refresh.
+Full comparison report generation remains blocked by a pre-existing changed
+desktop/src/bridge_events.rs mapping; no blind whole-ledger refresh performed.
+Issue #2 checkpoint: https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6336793222
+
+Client/network deployment attempt: actual ASUS keycontroller was reachable by
+hostname, but old build23 Keys pixel preview was stale. Added explicit on-demand
+pixel-subscribe / pixel-frame WS observations to ESP, Rust and Flutter, with
+same-board/boot validation, latest-frame backpressure and no command-clock renewal.
+Native/UI/bridge demand and Flutter foreground/view demand govern subscriptions.
+Static subscribers receive a repeated frame confirmation every two seconds;
+animation observation is bounded independently of LED rendering. Flutter analysis
+and focused foreground/reconnect test pass; native release and focused frame
+identity test pass. ESP builds at 2324195 flash / 116916 static RAM.
+
+Actual AVR silent setting was read false, set On, then read true through ASUS
+Rust network CLI. No audible tests followed. Current image backup verified at
+868831269524dd13a88d718df10cdae71f062f3fcd67074afdff751c8c27dabb.
+First Wi-Fi upload lost the SSH tunnel: subsequent /update/info proved aborted
+at 2274624/2324320 bytes, unchanged boot and running-image MD5. No blind replay.
+Background updater/downloader launch was explicitly blocked by execution policy;
+no alternate launch was attempted. Current ESP remains old, without pixel-events
+or game-presentation. Current ASUS PID5416 remains old; final observation had
+network/WS offline despite board HTTP working, and stale pixel preview. No claim
+that the requested runtime repair is deployed or production accepted.
+
+Verified ASUS staged APK: staging/key-presentation/PakarController.apk,
+61246653 bytes, SHA256 a932b71ad114b08b275a187e5fc97f87ed8dc4fe46fe809248e689a01abbc4e1.
+Verified staged ESP: esp32s3.ino.bin,2324336 bytes,
+SHA256 be34c0fec48b88f73ae7c25c0fdadc8b5f91087e9d9d276515b6e42062215a4d.
+Native staged release SHA256 3f507719c4e84bf72b275f656994d34e676703f3f0d1846f442db1178894ec56,
+31897088 bytes, also verified at office HTTPS /pakarcontroller/pakarcontroller-presentation.exe.
+ASUS and local ADB listed no authorized device. Android install/launch and actual
+client network command/live-pixel acceptance remain open; user action requested.
+
+Follow-up: ASUS and authorized Samsung R5CT44LZ42K are now reachable. Existing
+Rust build23 connected with live WebSocket; existing Android received board
+state. Actual screenshots exposed a SupersededRead message and disappearing
+contextual controls. The refresh handler now ignores only SupersededRead, leaving
+the existing expiry/authentication/connection fencing intact. Re-read the actual
+PCController peripheral-availability.ts ready-and-advertised rule; no capability
+is fabricated to keep controls enabled. Inline artwork now reuses the last
+validated PNG buffer (one bounded entry), avoiding MemoryImage cache churn on
+identical telemetry. The icon identity regression and all six peer-context tests
+pass; all six connection lifecycle tests pass; Flutter analysis is clean.
+Selectively refreshed only main.dart, peer_context.dart and peer_context_test.dart
+hash references after reviewing their changes. No whole-ledger refresh.
+Android still has only 560 MB free; prior install failed for insufficient storage.
+The board still reports the old image and aborted OTA. The prior policy-denied
+updater launch has not been rerouted. No firmware, effect configuration or sound
+changes were deployed during this follow-up. Direct HTTP/WS buzzer handlers call
+sendToAvr without a deliberate wait; actual audible latency remains unmeasured.
+
+Keycontroller AP handoff: ASUS Wi-Fi joined the existing keycontroller profile;
+USB tether Ethernet 12 metric is 10, Wi-Fi metric 500 (previous automatic metrics
+25 and 55). SSH returned after the interface transition. Both hostname HTTP and
+direct AP 192.168.4.1 identify esp32s3-7ce8b1b06110, AVR online. Root UI returned
+200; /update/info exposes AsyncWebServer /update and the user-deployed candidate
+MD5 5888f6c9e4a99cb838c11dba3a8f7579. This is API/path proof, not a second OTA.
+Ten finite tones from a short opening phrase of Robson Couto's 2019
+arduino-songs/pinkpanther/pinkpanther.ino were accepted via /api/buzzer, with
+unchanged ESP boot and AVR online afterward. Attribution source:
+https://github.com/robsoncouto/arduino-songs/blob/master/pinkpanther/pinkpanther.ino
+Sequential HTTP requests took 312-500 ms and stretched the phrase; no claim of
+accurate melody timing or physical audibility. Human feedback requested.
+Added optional last_flash_on_ms (zero inherits the regular flash width), shared
+renderer/audio phase calculations, and boundary tests for three 120 ms flashes
+plus a fourth 400 ms flash separated by 100 ms. Both role fixture suites pass.
+Only affected application/test hash bindings were refreshed; route registrations
+are unchanged. Candidate build pending; running settings remain two 500 ms flashes.
+
+## USB provisioning and maintenance draft
+
+Read PU850 LocalLib/AsyncOTA.cpp and .h, the existing FirmwareTransfer platform
+boundary, ShellWire exact-duplicate admission, serial-wire.ps1, and
+SystemPlatform mount policy. Reused shared command/configuration dispatch and
+firmware-read helpers instead of copying the donor's automatic final boot
+selection or filesystem-upload path. Normal ESP32 startup now never formats,
+including when an obsolete commissioning flag is supplied; the build wrapper
+rejects that obsolete switch with the replacement tool path.
+
+Added UsbApiRequest and FilesystemInitialization bounded guards, UsbApiService,
+invoke-usb-api.ps1 and initialize-device-filesystem.ps1. Only completely erased,
+unmounted storage can be initialized, with physical USB, explicit output disable,
+an expiring consumed confirmation and separate reboot request. This is not a
+corrupt-filesystem erase/repair command. Shared API envelope provides existing
+commands, redacted network/cloud/Ethernet export, single-section typed import,
+bounded firmware reads and restricted user-file reads with chunk SHA-256.
+
+Native guard tests and PowerShell syntax checks pass. Full firmware compilation
+stops at the pre-existing review gate: PCController LocalLib/I2cLcd.h target
+firmware/esp/src/WebUi.h changed. No gate bypass, board action, candidate binary
+or physical acceptance. The USB adapter itself is NOT compile/device verified.
+Remaining: installer integration/postboot mount verification, USB staged firmware
+upload/apply with shared ownership, file writes/listing and immutable snapshots,
+atomic complete settings restore including explicit secret policy, opt-in cloud
+sync, clients/progress, interruption/reconnect/security tests. No production claim.
+
+### Flutter cell actions and stable header artwork
+
+Read the complete PCController mobile/lib/unified/workspace_chrome.dart donor:
+adapted its 48px targets, reserved one-pixel outlines, muted accent surfaces and
+explicit selected state into mobile/lib/cell_controls.dart. Main table commands
+retain their existing connection/capability/pending guards. Options keep their
+existing persisted workspace values. Header artwork now compares bytes before
+changing MemoryImage identity, uses gapless playback, and is keyed per board so
+another board cannot inherit the previous icon. No command or board mutation.
+
+Canonical build-mobile Test with test/cell_controls_test.dart: analyzer clean,
+two widget tests passed (accessible icon actions/disabled guard; unchanged image
+bytes retained across telemetry rebuild). This is source/widget evidence, not
+an installed APK or observed on-device flicker acceptance. Reviewed main.dart
+references refreshed without changing their retained capability/ownership anchors.
+Full comparison generation remains blocked by a separate changed target:
+PCController Tools/Controller/internal/localdevice/events.go ->
+desktop/src/bridge_events.rs. Its hash was not blindly refreshed; full ledger
+acceptance remains open pending that independent source review.
+
+## ESP LAN peer relay checkpoint
+
+Consulted bridge-repeater and network-cloud; reread PCController
+Tools/Controller/internal/hostbridge/peer_response.go and its tests plus
+internal/netpolicy/http_url.go. Adapted request/receipt identity, uncertain
+outcome handling and restricted destination policy into PeerRelay.h and
+PeerRoutePolicy.h; existing target/test hashes remain in the same file ledger.
+This does not close the mesh, streaming, discovery or peer firmware/file gaps.
+
+Real probe caught missing JSON body ownership for the new peer endpoint.
+Extended the existing AsyncHttpService allowlist (also fixing its maintenance
+JSON endpoint), not a second HTTP server. Fragmented-body regression in
+web_access_fence_test.cpp and async queue tests passed. Corrected S3 build and
+OTA followed; full image readback SHA256 independently matched after the inline
+updater readback timed out. ASUS AP reassociation recovered post-reboot access.
+Evidence: outputs/PakarController/recovery/keycontroller/peer-deployment.json.
+Keycontroller relayed identity/status GETs to the actual ledcontroller, whose
+AVR was online. No cross-board actuation, reverse relay, BLE, ESP-NOW, USB-host,
+file forwarding or physical LED acceptance is claimed.
+
+## Native button geometry and key-box workspace checkpoint
+
+The regression review traced actual donor history, not an inferred visual style:
+PCController `f2260e30525de82a95b00adddd2ebb3eda8d8443` keeps the CSS button
+border/padding fixed and transitions only color; `a304c3ec366b0e9c11634526587ee9e5575acdff`
+removes the active `clip-path: inset(1px)` geometry change. Pealayer
+`5b3d5c150d714a3f951378867791b06855155094`, `hardware_action_button` in
+`src/ui/layout.rs`, pins colored RichText to the Button font and recolors the
+inherited stroke width instead of inserting a new one-pixel layout margin.
+The accompanying hardware-status-interaction verification explains the observed
+two-point caption-height shift. These are scoped donor function/history reviews;
+they do not certify the complete Designer or every native control consumer.
+
+Pakar adapts those invariants in `desktop/src/ui/dialog.rs`, `palette.rs` and
+`control_density.rs`: hover/press/focus change color, not allocated geometry, and
+semantic actions respect a zero-stroke menu context. The new production-helper
+regressions live in `button_geometry_tests.rs`; its checkpoint SHA256 is
+`2930a5e706fa835f704f097c44e664903aeed7f11b63557408ae2a8411d66219`.
+
+The contextual key workspace now delegates to `desktop/src/ui/key_boxes.rs`.
+Its drag grab-point/source-rectangle mechanics adapt Pealayer `layout.rs`
+`remember_drag_offset_on_press` and `drag_translation`, traced through history
+`e47f77392c35cb8f5d8177445c688c345ca5fa63` and
+`d71c88d6dfa670339dbfc808c9724c52ac12c821`. Pakar keeps its own per-board
+normalized layout owner and game authorization: fixed inside strokes, snapped
+nonoverlapping cards, pointer-distance grid illumination, valid/invalid drop
+previews, release-only persistence, keyboard nudging, Escape cancellation and
+disabled-box dimming do not dispatch game commands while editing. The two group
+previews use received RGB samples, not inferred output success.
+
+The mandatory native gates initially rejected stale mapped targets. Scoped
+rereads covered PCController session admission/write/close ownership and the
+current mobile lifecycle/readback paths; Pealayer dropdown production wrappers
+and their consumers; translation input alignment; color-picker Recent colors;
+workspace icon picker; and shared Web localization. Only those affected records
+were rebound to reviewed current target hashes. Historical complete-file claims
+remain historical; pending parity items and omissions remain open. Localization,
+native-dropdowns and peer-binding gates now pass. The shared localization test
+also passes; this is not native runtime, board or deployed-client acceptance.
+
+`tools/native-key-workspace-fixture.mjs` reuses the existing peer fixture identity
+and request contracts to expose a loopback-only SIMULATED first-wins peer. It
+uses a new isolated config, disabled production IPC/tray and four explicit
+ready/winner/pressed/all-box scenarios. Hardware POSTs are rejected, WebSocket
+actuation is never acknowledged or forwarded, and Ctrl+C retires only its own
+spawned fixture child. The receipt records executable hash, PID, endpoint and
+profile; native capture must target that exact PID and a new output file. Node
+syntax checking passed. Production ASUS SSH still refused the banner exchange
+on localhost:8022 during this checkpoint. Native build/test, inspected captures,
+ASUS replacement and human visual acceptance are pending the root checkpoint.
+
+Root's subsequent canonical native Test checkpoint passed 121 tests selected by
+the `ui::` filter (including its `terminal_ui::` matches), with zero failures.
+This includes the new button/menu geometry regressions and the key-box drag,
+collision, cancellation and command-isolation tests. Both complete small donor
+files `control_density.rs` and `palette.rs` were reread, their reviewed current
+target hashes refreshed, and the actual new button-test hashes/anchors bound to
+their existing records. Active/open stock chrome is now explicit semantic color
+with constant width rather than egui's default white two-pixel pressed border.
+Release compilation, inspected native captures and actual ASUS replacement are
+still pending; test success does not close those gates.
+
+Subsequent release/visual checkpoint: canonical `build-desktop.ps1 -Mode Release
+-Jobs 8` passed, and `stage-desktop.ps1 -Probe` verified the stable candidate.
+Executable SHA256 is
+`4702ec91a55084f07451b011012af4242f0b1d29914d94f1ddc921974a2e0a54`.
+This package includes the preserved current working tree, not a newly claimed
+clean source commit. No firmware or Android build was needed for this native fix.
+
+The isolated native fixture's initial WebSocket handshake omitted the requested
+`arduino` subprotocol. Only the fixture was corrected; supported negotiation and
+all 18 twelve-pixel group slices were checked. The inspected actual framebuffer
+at `build/native/key-workspace-reviewed/startup.png` shows WS live, both winner
+group previews green, enabled losers red, disabled boxes dimmed, and aligned
+fixed-size cards. `arrange.png` in the same folder is a read-only Win32 capture of
+that exact fixture PID; its name does not imply arrangement mode was activated.
+The external Windows input helper could not supply trustworthy coordinate
+geometry, so no manual pointer-drag acceptance is claimed. Drag/drop, overlap,
+cancel, keyboard and release-only persistence remain covered by the passing
+native tests. Captures are simulated peer evidence, not physical-board evidence.
+
+ASUS subsequently became reachable again. Production replacement remains a
+separate same-session lifecycle/draft-checked operation; the successful local
+build, stage and fixture are not an installed-ASUS claim. No board command,
+firmware update, reset or LED change was used for this UI review.
+
+ASUS replacement then completed through the existing reviewed
+`replace-desktop.ps1` in David's interactive session. Its fresh guard confirmed
+all drafts closed before gracefully retiring PID 19500 (old executable SHA256
+`489404dc08fd3d04e527d86252bc05dc6504ca0d9d36231272c93c3b9334ca4e`).
+New PID 23104 is ready with the candidate hash above. Settings and the previous
+executable were preserved. Evidence is in the task workspace's
+`outputs/PakarController/verification/key-grid-replacement.json`.
+
+The first observation helper incorrectly treated the UI-launch CLI acceptance
+line as JSON. The failed observation was preserved; the helper was corrected
+against `main.rs`'s actual control-only versus forwarded-launch contract, without
+replacing or rebuilding the app again. The subsequent same-session observation
+completed: Wi-Fi online, WebSocket live, zero active diagnostic incidents,
+`ledcontroller.local` selected and its acknowledged AVR online. The correlated
+1125x750 framebuffer capture `key-grid-ASUS.png` was retrieved and inspected.
+This shows the actual deployed table workspace; the new key-box design remains
+the separately labelled simulated native capture, not an assertion that ASUS
+was switched to or physically tested with keycontroller. No board actuation.
+
+## Tablet footer density and already-applied cell actions
+
+The requested Flutter correction reread the complete canonical PCController
+`mobile/lib/unified/relay_style.dart` and `workspace_chrome.dart`, not just their
+mapping descriptions. Their live original-byte hashes still match the recorded
+`a473cc74124b998689c69e1dc92422ce603d5ac488a706b86f0a8c906731a9d7`
+and `f00ed672c1f72f1a66fb65cff1cfe0a89dea5f7b6222f154db00a7c52c2e1a82`.
+The former's actual tonal variant is now adapted for a satisfied cell action:
+transparent semantic fill, contrasting semantic ink, unchanged hit/paint
+geometry and a check icon. The donor relay palette and unrelated presentation
+preference are not copied. Complete selected semantic state plus a live
+connection determines satisfaction; rendered RGB, a successful send, partial
+observations and empty selections cannot mark it applied. Explicit taps remain
+available to replay a requested effect. Pending outlined/relay-wide parity is
+not silently closed by the newly reused tonal variant.
+
+The footer retains the donor's minimum 48px touch-control rule but removes the
+additional outside vertical padding which previously produced a 64px row.
+One-line message/peer details keep ordinary telemetry from changing its height;
+tooltips, screen-reader text and the existing error dialog retain full details.
+Large accessibility text can still grow when needed. Safe insets are owned by
+the parent workspace and not duplicated by the status row. Existing activity
+strip/rail navigation and selection ownership were reviewed, not replaced.
+
+Scoped source proof is bound to `cell_action_application_test.dart` and
+`status_bar_layout_test.dart`: semantic aliases/mixed/missing states, readback
+rather than optimistic send success, contrast and invariant geometry, 48px
+tablet row, long live details, error-detail action and phone/tablet large-text
+LTR/RTL coverage. Their addition is not a test-execution or installation claim;
+the root checkpoint will record those outcomes separately.
+
+The mandatory mobile gate also exposed stale whole-file hashes for two existing
+consumer slices. PCController's complete `peripheral-availability.ts` was reread
+at unchanged source hash `fcf2e397564c843711fd64db2bd2d820552180ac4f5abdf0d44ccbbb86be7a84`;
+Flutter `_command` still rechecks selected owner, fresh advertised capability
+and correlated post-ACK readback. Pealayer's complete 1280-line `board_info.rs`
+was reread at unchanged source hash
+`ab1c99e674e902e37626963e2dd5cf7d993965334411d5e33dafd1ea2bf79e51`;
+the actual native `synchronize_context` slice still separates retained workspace
+presentation from live command authority, retires intents on peer/boot changes
+and keeps capability projection out of durable hide intent. The prior native
+box redesign did not change that mapped contract. Only these reviewed consumer
+hashes and the two Flutter UI mapping records were rebound. No unrelated stale
+source, firmware, comparison report or pending omission was mass-refreshed.
+All nine mandatory mobile build concerns now pass their current reviewed gates.
+Production board firmware, LED output and commands were not touched for this
+source-review checkpoint.
+
+The next canonical mobile test hit the shared-font generation guard because the
+preceding native key-grid work added seven translations which were not yet
+regenerated into the shared Web dictionary. The complete canonical Pealayer Web
+`i18n.ts`, current `localization.js` runtime, font generator, HTML-source decoder,
+portable-gzip helper and canonical Web packaging functions were read before
+repair. `build-web.mjs` regenerated only owned static packaging/embedded regions;
+branding, interface and appearance generators reported no changes. Comparing the
+localization module in memory before/after proved its handwritten runtime was
+identical; the dictionary added only Box, Column, Row, Button, Indicator, Winner
+and Lost. Canonical HTML, its C++ header, portable gzip and worker content
+revision were refreshed together. This is generated static asset work, not a
+firmware build or board deployment.
+
+`generate-font-assets.mjs --check`, `generate-web-compressed.mjs --check` and
+`tests/localization_test.mjs` passed. The existing localization mapping and the
+two already-reviewed device-context Web consumer hashes were rebound after
+checking their current ready/capability and board-sound ACK/readback guards.
+Device-context and localization gates pass. Other stale historical mappings
+were not silently rewritten. The generated full Web application is 410127 raw
+bytes, 117246 gzip bytes, revision
+`184ee67a97e49eb0d36034dfe3cec207c93b00a4329993e694f8d5eb121136bc`;
+this does not certify unrelated Web feature parity or installed firmware.
+
+Root's subsequent canonical focused Flutter test checkpoint passed all three
+`cell_action_application_test.dart` cases and all four
+`status_bar_layout_test.dart` cases; analysis was clean. The applied-state test's
+final Dart-format change was checked as indentation-only and its proof hashes
+rebound. Existing button-style regression execution, APK packaging, actual
+tablet installation and visual/touch acceptance remain pending at this point.
+
+Final local tablet-UI checkpoint: all five existing cell-control style regressions
+also passed, for 12 focused Flutter tests total with clean analysis. Canonical
+APK generation with `-BuildOnly -BoardProductionHold` succeeded; package SHA256
+is `6aaa098338d44d47a4a10b1af08d6e4f31ac2b8a385028947633cf0dfcda370e`.
+The preserved dirty working tree is based on
+`8ce8f29eee01a979bbd42e7d3573a6e3ace9eba2`; this is not a new clean-commit claim.
+ASUS staging completed at
+`C:\Users\David\Documents\PakarController\staging\PakarController.apk`;
+the remote 61723797-byte candidate matched the complete local SHA256 before
+replacing the previous staging candidate. The final ADB inventory still listed
+only phone `R5CT44LZ42K`, not tablet `R52T60C6V9B`. Nothing was installed on the
+phone. Tablet installation and actual visual/touch acceptance remain open.
+Production hold remains active; no board command,
+firmware update or output change was performed for this client-only correction.
+
+## Native semantic lamp backgrounds and stable hover contrast
+
+This correction uses the existing Pealayer-derived Preferences draft,
+Preview/Save/Discard lifecycle and fixed-geometry painting contracts. The
+canonical donor Preferences draft helpers, dialog controls, dropdown wrapper,
+control density, localization, icon wrappers, CLI output and native startup
+were reread against the actual affected consumers. Pealayer's update download,
+integrity and staged apply slices were also reread for the existing
+`app_management` Preferences mapping; the new workspace preference does not
+change that updater or introduce a replacement path. PCController's full
+`session.go` and request-admission regression source were reviewed for the
+current peer-owner, correlated-operation and non-replay boundaries. This is a
+scoped extension of existing records, not a claim that unrelated pending donor
+features were completed.
+
+`color_cell_backgrounds` remains opt-in for existing configurations. The new
+Workspace preference paints the acknowledged semantic state color on the lamp
+surface; sampled individual-pixel RGB remains its separate live preview. The
+palette accepts known idle/white, lost/red, won and off states, rejects malformed
+or unknown state values, and avoids falsely naming a custom lost-blue palette
+as RED. Hover strengthens the resting edge toward a contrasting ink while
+preserving selected/focused identity, fixed hit rectangles and inside-painted
+stroke geometry. The final reviewed render consumers are
+`cell_table.rs` at
+`cde79ae213c75757a8e248672feeddaa8a7b36ea33c70e09dca8810e0922a8e6`
+and `cell_pixels.rs` at
+`489c81021c648bdf0d21558ab0c27077345bbc9e6047fc3812f750d1b983df66`.
+
+The app-only typed `CellBackgrounds on/off` IPC/CLI operation refuses to modify
+an open Preferences draft, saves a cloned configuration before changing live
+state, and exposes readback in app status. It neither focuses the window nor
+issues a board command. Configuration round-trip, Preferences preview/discard,
+typed IPC/CLI validation, semantic palette/caption and stable hover/preview
+geometry regression anchors are recorded as source proof; their execution and
+the requested live-user preference application belong to the root checkpoint.
+
+Only reviewed consumer/proof hashes were rebound. Mandatory native concerns
+`api-contract`, `client-app-updates`, `pu-tooling`, `build-storage`,
+`localization`, `native-dropdowns`, `peer-binding` and `windows-startup` all
+pass their current gates. The earlier shared Flutter peer-lifecycle mapping was
+checked against its selected-owner retirement and correlated readback code;
+later Flutter work must bind its own final source hash. No broad stale-record
+refresh, firmware update, board actuation, app replacement or test/build
+execution was performed by this source-review checkpoint.
+
+The missing Flutter Pixel corrections entry was then traced to the acknowledged
+feature allowlist, not missing page implementation. The complete canonical
+PCController `peripheral-availability.ts`, actual Flutter parser, existing menu
+and linked-tab navigation, and new navigation regression were read. Adding the
+explicit `pixel-corrections` feature preserves ready/advertised and selected-peer
+validation; it does not infer capability or expose it on unsupported boards.
+The actual menu regression covers supported and unsupported manifests, mixed
+hostname rejection, tab switching and zero writes while opening the tools.
+The final parser hash is
+`561c3b3e40d668ec302bca8fab546fa52ce47d21be6beee7dbd88cf6ed291043`;
+the new regression hash is
+`dd2af453296e262dbc08627b3b5b2a79652ed31dac16a7d627e792a6ab41a77f`.
+
+The mobile gates also covered native files changed by the lamp preference.
+Pealayer's current board-info advertised-capability, draft and board-settings
+slices were compared with `synchronize_context` and `board_controls`; preserved
+workspace state still cannot grant live authority or replay commands. The full
+PCController LAN resolver was reread against native verified-response routing:
+actual successful TCP endpoints are remembered only after peer validation,
+while only connect failures request relookup. These existing mapped consumers
+were rebound after review; no networking behavior was changed. All nine
+canonical mobile reuse concerns pass. Test execution, builds and installation
+remain separate root-owned evidence.
+
+Root's focused source checkpoint completed successfully: the canonical native
+`ui::` filter passed 127 tests (including `terminal_ui`), instance validation
+passed 3, config locale tests passed 2, and CLI console tests passed 4, for 136
+native tests total. Flutter analysis was clean and all 3
+`pixel_tools_navigation_test.dart` cases passed. Canonical native Release and
+Android APK packaging were started next; package hashes, installation, runtime
+readback and visual acceptance were not yet available at this checkpoint.
+These focused results do not close broader production or physical acceptance.
+
+Both canonical packages subsequently completed. The native candidate SHA256 is
+`876ad59544c6e3910c80da53407abb3dcc224f855482c3787578cf3f2d7f1370`.
+Root's authorized, exact-process graceful ASUS replacement changed PID 23104
+to PID 2452, preserving the prior executable and preferences. The saved
+preference and actual app-status readback both report lamp backgrounds enabled;
+Wi-Fi and WebSocket are online with zero active diagnostic incidents. The
+workspace-root receipts
+`outputs/PakarController/verification/lamp-background-replacement.json` and
+`lamp-background-applied.json` were reread for these values. The actual
+1920x991 framebuffer `lamp-background-after.png`, SHA256
+`d9667ae334c43d0ca18c2252b7b44e7539fbb562392c572e4db76dd196a78b29`,
+was viewed: white semantic lamp faces have readable black labels. That capture
+also contains the startup mapping-read message; it is not proof of completed
+mapping refresh or new physical LED behavior. No board actuation was required.
+
+Root reported the production-hold Android candidate as 61723797 bytes with
+SHA256 `a05cbfcd14f44081470c9561d31a86b50e564ede9108f71e8100651c5e92e4c2`.
+It was replace-installed only on tablet `R52T60C6V9B`; installed base-APK hash
+matches, and package identity is 0.2.8/build 23. Menu/tab screenshots and actual
+tablet visual verification were still pending at this checkpoint. This package
+installation alone does not establish complete mobile or production acceptance.
+
+The later settled ASUS receipt `lamp-background-settled.json` resolves that
+startup mapping caveat: all 80 mappings are confirmed, pending is false and
+mapping error is null. The same PID 2452 still reports backgrounds enabled,
+WebSocket live and zero active incidents. Its framebuffer hash is
+`86438547d9e54e3d0b03a2a9679b252f1e6782e2bab514b756c6d9738097f256`.
+The retained layout hash changed from `48c365...` to `b0a67b...` while visible
+slots and split fractions remained unchanged; hidden Events/Streaming subtree
+normalization is under investigation. No byte-exact layout preservation claim
+is made.
+
+The actual tablet captures at workspace-root
+`outputs/PakarController/flutter-tablet-corrections-updated.png` and
+`flutter-tablet-pixel-menu.png` were viewed. They show the retained 80-cell
+selection and canonical `1-80` search, checkmarked tonal White action versus
+solid Red/Green actions, the compact status footer, and both Pixel diagnostics
+and Pixel corrections in the header overflow menu. Loaded corrections-page/tab
+verification is still pending; screenshots do not substitute for exercising a
+board mutation or physical pixel acceptance.
+
+Tablet navigation verification subsequently completed on the same installed
+build. Actual `flutter-tablet-corrections-tab.png` and
+`flutter-tablet-diagnostics-tab.png` were viewed: Corrections loads the board's
+applied mapping at revision 0, and the linked Diagnostics tab presents the
+480-pixel range with board diagnostics explicitly inactive. Returning to Table
+retained 80 selected cells, `1-80` search and live status. The delivery agent
+reports no Save, Show, color or other board-write action during this check;
+application data was preserved and phone `R5CT44LZ42K` was untouched. This closes
+the scoped menu/loading/navigation inspection, not physical pixel actuation,
+human acceptance or the full production checklist.
+
+## Cross-client panel refinement and contextual control parity
+
+The actual ten native dock-panel bodies and corresponding Flutter activity,
+diagnostic and settings implementations were compared by function. The existing
+`INTERFACE-CONTRACT.md` now records that inventory and corrects stale claims that
+the mobile network/cloud and identity editors were absent. This is not a new
+donor exclusion ledger or a claim of full feature parity.
+
+Native panel rendering reuses the actual Pealayer-derived `dialog::section`,
+action/setting rows, bounded scrolling and shared density/dropdown helpers. The
+current Pealayer `src/ui/dialog.rs` was fully reread by the root/native agent;
+new `effect_controls.rs`, `panel_details.rs` and the reorganized
+`state_appearance.rs` are scoped consumers of those helpers. Fixed-role boards
+allocate no mode-picker card or spacer, while first-wins reset remains available
+independently. Correction rules use styled bounded controls and virtualized
+mapping rows; network/hardware details use compact actionable groups without
+turning display state into command authority. Responsive geometry regression
+tests must pass before the candidate is called source-verified.
+
+Flutter refinement reuses its existing workspace components and the actual
+PCController `workspace_chrome.dart` Material/InkWell, semantic surface and
+directional-affordance pattern, fully read by the Flutter agent. New card/grid
+consumers are source mappings, not automatic certification of every donor
+activity or preference. Numeric display, custom tones, configurable marquee
+hold/interval and LED brightness/effect actions are aligned with existing native
+API commands; command completion cannot fabricate observed board state.
+
+For authentication parity, the complete actual firmware `AccessConfig.h/.cpp`
+and `WebAccess.h`, native `access.rs`/`AccessChange` behavior, and the full donor
+PCController `mobile/lib/device_settings.dart` were read. The latter's SHA256 is
+`16c5f8ec88c242baa279bc42bdf4c81024f4473eccc62ec8e317267937a9ab2c`.
+Mobile now has an explicit auth-enabled toggle and contextual credentials:
+enabling from disabled does not require an old password; protected changes use
+an entered current password or the existing connection secret; disabling does
+not require new credentials. An exact ACK plus public readback precedes the
+credential handoff. Conflicting public metadata preserves drafts and blocks a
+write; a retired connection cannot receive a late handoff. First-wins LED
+settings route to Output rather than the absent table-selection workspace.
+
+The first canonical focused mobile test attempt stopped before Flutter at the
+device-context gate because concurrent `peer_context.dart` changes made its
+existing mapped hash stale. No direct test/build bypass was used. Root's initial
+native UI test run passed 131 tests but found one new narrow-panel overflow; its
+helper was corrected and the canonical rerun is pending in this checkpoint.
+Final reviewed hashes and test results will be appended after source freeze.
+One current ASUS SSH8022 attempt refused the connection; no app replacement or
+board action is claimed by this source checkpoint.
+
+Explicit remaining parity includes mobile streaming/screen-capture and event
+history, native Urboot maintenance-method selection, Flutter snapped
+collision-safe box placement/grid feedback, and platform-specific mirroring and
+workspace preference differences. Installed visual/touch acceptance and physical
+effects remain separate. Production board updates or output-changing tests were
+not authorized by this panel-only request and were not performed.
+
+The canonical Flutter follow-up passed a clean analyzer and the actual
+`panel_refinement_test.dart` 10/10, `device_settings_page_test.dart` 13/13 and
+`overview_hardware_test.dart` 3/3. These tests caught and drove the real custom-tone
+PageStorage-key collision fix: nested TextField scroll storage must not inherit
+the expansion's boolean key. The output-panel suite separately exposed a stale
+test expectation (`1,21` instead of the established canonical `1, 21`); only that
+expectation was corrected. No shipping selection normalization was changed to
+make a test pass. Output-suite rerun and installed screenshots are separate.
+
+Root's canonical native `workspace_layout` run passed 10/10, including hidden
+Events/Streaming split preservation across focus/restart, view-only collapse/tab
+scroll, and real split/tab edits. No native UI deployment is implied. Existing
+reviewed shell references were rebound to
+`c44f721fc91170d7c89cd1c06d2e80e6625ce8cb6972ca87669f6b835fd776d9` only after
+the actual Streaming/read-on-open/shared-cell-action changes and anchors were
+reviewed. The detailed panel/helper follow-up retains its independent gate.
+
+The maintenance comparison uncovered more than a cosmetic selector gap:
+native observes ISP/Urboot progress but still initiates legacy ISP operations.
+It needs typed `/api/avr/maintenance` admission and exact boot/request/hash/expiry
+receipt validation before exposing a truthful method control. Flutter already
+implements ordinary ISP/Urboot probe/backup/program admission, but its receipt
+parser and both client editors do not yet expose the newer explicit EEPROM
+write/initialize operations. These gaps remain open in the existing ledger.
+Android screen capture separately requires MediaProjection consent and runtime
+lifecycle support; ordinary mobile event-history, host-stream controls and
+collision-safe box-grid parity must not be excluded as platform limitations.
+
+Full comparison generation was attempted through
+`tools/generate-file-comparison.ps1` and stopped at the pre-existing/concurrent
+`ControllerBoardMini|Timer/.vscode/arduino.json -> tools/build-firmware.ps1`
+target-hash mismatch. A read-only audit found eighteen distinct stale target
+paths, including this pass's owned interface document and unrelated
+firmware/Web/build/theme/settings changes. This pass updates only its reviewed
+UI source/proof references and final interface-document references. It does not
+mass-refresh untouched records or certify unknown donor work. The global
+comparison reports remain stale until their owning changes are actually reviewed;
+no successful full-ledger regeneration is claimed.
+
+After screenshot-driven hierarchy refinement, the final canonical Flutter
+panel suite passed 11/11 with a clean analyzer. Actual board controls now precede
+mirror preferences, use a responsive tablet grid and retain one instance of each
+mirror toggle. The new test uses the real FrontPanelPage and an inert tone
+fixture, not a source-text assertion. Fixture-only follow-ups retired the mirror
+lease before invariant checks and settled scrolling before hit-tested taps;
+invalid-tone/no-command assertions were retained. Other focused suites passed
+settings 13/13, overview/hardware 3/3 and Output 6/6. Frozen mobile main SHA256 is
+`44ff20603518e54a9fa117ea3087bff85166539e10828820fa64fc517ca83b94`; panel test
+SHA256 is `ece795def39cd4e56bb00e3a7a5fc19aba8f9f68cc03c3f51b3ae320d15d8606`.
+These are source/widget results; installed tablet and physical board acceptance
+remain distinct.
+
+The new `outputs/PakarController/mobile-panel-parity-front-tablet-controls-first.png`
+(1200x1100) and `mobile-panel-parity-front-phone-controls-first.png` (390x1500)
+were opened and visually inspected. Their visible SIMULATED fixture banner is
+retained. They show number/text/melody controls before mirror preferences,
+two aligned tablet columns versus one phone column, readable field labels and
+bounded cards without visible text overflow. They do not establish installed
+tablet state, an active board connection, tone playback or physical LEDs.
+
+The final visual refinement moved acknowledged Live front panel into the fourth
+responsive grid slot beside Board melody and reused the same WorkspaceSection
+heading/icon/divider. Frozen main SHA256 is now
+`0d65c17c84f76ae7880cec90802e2a5fba281052d4a30502c71640cc905488a9`, and final
+panel-test SHA256 is
+`1724b0b5a1229f68e251a6129401fe45060c1c23a17ff063af853510e87a4a7e`.
+The canonical final rerun again passed 11/11 with a clean analyzer, including
+both tablet row-alignment assertions. Final `mobile-panel-parity-front-tablet-final.png`
+and `mobile-panel-parity-front-phone-final.png` were opened and inspected: the
+tablet pairs display/text and melody/live status, while the phone stacks these
+cards and keeps mirror preferences later. These final captures supersede the
+intermediate layout illustration, not its source-test history.
+
+Root reports four current ASUS SSH8022 refusals. No production board command,
+firmware update or installed-device acceptance is claimed. The native isolated
+capture uses a normal per-simulated-peer saved dock because startup panel IPC can
+precede capability ACK; client auto-update is disabled only in that fixture.
+This is not a production configuration change or an IPC authorization bypass.
+
+Native focused checks passed the two Network/Corrections tests after fixing
+inherited text wrapping and the actual Ethernet `link_up` field. Subsequent
+inspection found that scoped action buttons cannot be reliably wrapped after
+egui discovers their minimum width; a shared measured action row now selects
+horizontal versus stacked layout before rendering. Present/Stop text,
+correction read/save/discard and remote-settings actions use that helper.
+The independent StateAppearance test then found a real 346px content extent in
+a 220px panel. Its correction keeps the motion selector on its own row, uses
+explicit local wrapping and the same responsive preview-action row. The strict
+220px regression bound was not relaxed; final reruns remain recorded separately.
+
+Flutter's final canonical `-Mode ApkPreview -BuildOnly -BoardProductionHold`
+completed successfully. The final candidate is
+`mobile/build/app/outputs/flutter-apk/app-release.apk` (reported 59.0 MB), SHA256
+`af974a2cc77bfec2440ee1d5d274c2f7933cf07c352ad09e8025927c950de7ae`.
+It uses preview signing and has not been claimed installed on ASUS's tablet;
+package creation and screenshot fixtures do not close Android or production
+acceptance. No board operation was part of this build.
+
+Final native canonical focused reruns passed `panel_details` 3/3 and
+`state_appearance` 2/2. The unchanged strict width bounds include 220px, both
+themes, measured action-row layout, real Ethernet `link_up` observations and
+render-without-command behavior. The previously reported `workspace_layout`
+10/10 remains separate; no full native UI-suite rerun is inferred. Final helper
+SHA256 is `0203bce2e25a7256187717be43fcf1fc11cd186aebcf7fdd6c389179fa55b8f6`,
+appearance SHA256 is
+`7543073f2dcf59cdb6beb31235c77bed0b575011857e8a5e155f353f7ba4cf02`, and reviewed
+shell SHA256 is
+`d70156f38160e1c81e44aa5a8444ed37cf3eb65ffb917372a12cdfee20f20301`.
+The final panel audit retains ordinary parity gaps and platform-specific work;
+the scoped reviewed evidence does not certify unrelated concurrent sources.
+
+Root's subsequent canonical native `ui::` suite passed 134/134. Native Release
+initially stopped at the expected stale Flutter-main evidence gate after the
+last shared-source edit; no direct build bypass was used. The actual final
+Flutter edit keeps Stop text allocated while inactive, enabling it only for a
+fresh admitted text capability, no pending display command and explicit active
+host-text state. The added geometry test covers unknown/off/on/pending/off at
+390px and 1100px and checks a single release command. Reviewed main SHA256 is
+`19afa076114d5e5eef8f2823de0d96af7a89d9010b0cc8a26f7b11ad5c886f81`; panel-test
+SHA256 is `3bec5e0a800d4732cb99ad1dba61f7c9f8e2150f6ab8429448868e988aff26df`.
+The prior APK is superseded pending the canonical test/package results, not
+silently relabeled as current or installed.
+
+The final source-admission pass found stale `desktop/src/main.rs` references at
+the canonical wrapper gate. Rather than treating a new DTO field as grounds to
+certify the entire file, all seven owning donor sources were fully reread:
+Pealayer `src/main.rs`, `src/diagnostics.rs` and
+`docs/superpowers/plans/2026-09-28-windows-taskbar-and-tray-suite.md`; PCController
+`Tools/Controller/internal/hostbridge/lifecycle.go`, `link/session.go`,
+`link/request_admission_test.go` and `lanresolver/resolver.go`. Their original-byte
+SHA256 values still match the existing ledger. The default PCController lookup
+reported live-unavailable, so the canonical installed source checkout was read
+directly and its bytes checked; the lookup was not misreported as a live pass.
+
+The corresponding nine target/proof anchors were examined in the current main,
+with the actual `cli_console.rs` and `peer_http.rs` dependencies: GUI startup
+does not allocate a console; explicit CLI attaches only an existing parent while
+preserving redirection. HTTP scopes bind owner/boot/capability and never retry
+uncertain mutations. Successful validated responses cache the real TCP address,
+not an advertised foreign address; original hostname/SNI and TLS checks remain.
+Connection failures request a fresh resolution without treating HTTP errors as
+DNS changes. Read-only saved-route recovery revalidates the exact board, and
+disconnect/method changes retire the route. USB ownership is checked at admission
+and immediately before transmission, drops the old port before changing paths,
+and preserves uncertain ACK/readback outcomes without replay. The existing
+USB-selected/no-network-listener test and observed tray error reporting remain.
+Only these nine references were rebound to main SHA256
+`394784f6bc82cd1bd1fe8e29cf42468f7ab5c26459197dcc82fc4fb06748411a`.
+Existing lifecycle, reset/electrical, panic-journal, full tray and physical
+DNS/DHCP/TLS acceptance gaps were retained, not converted into complete parity.
+
+Framebuffer inspection then exposed a real Hardware capability-chip overflow:
+the final label could become a vertical column inside a late-sized Frame.
+`panel_details::feature_chips` now reserves each measured single-line slot before
+wrapping, clips exceptionally long labels, provides the complete tooltip and
+accessible Label metadata. Its strict 220/300/600px test checks every feature,
+one-line text and bounds. Controller actions reuse the same measured action-row
+helper. Reviewed helper SHA256 is
+`7aa67a431e46732ae5961ffce75621ee5bd4d4877e4ef8026c4311e0ee5acd1f`; shell SHA256 is
+`7300ff3a1241edec21770d7d715c6bf0d5e84ec2a7f47919cfdb1af15bb6ed52`.
+Native appearance/preview observations stay visible but commands are disabled
+when the current transport cannot execute them; this is not USB feature parity.
+Remote key admission now requires an explicitly applied mask, not an absent
+Boolean default. Current USB table snapshots include that same mask through
+`buildStatusJson(true)` and full `DeviceStatus` deserialization; legacy binary
+status cannot manufacture an acknowledgement.
+
+Flutter Stop-text stability passed the canonical 12-test panel suite with a
+clean analyzer. The later output correction adds an explicit Off/reassert-black
+action and one shared fresh LED-capability guard for output, mode, patterns and
+brightness; Rainbow requires observed enabled output rather than silently
+enabling it. The new eight-test Output suite is pending after source freeze at
+this receipt. Source SHA256 is
+`5cfaf88d1d511146d1fc265fd5bccd3f615868edd65a4e6c60b214158b535b92`; test SHA256 is
+`8e5c47473a4d3fa6c48da9e6eebc1d77a2b860c2a2ffce228accb7a292acf607`.
+The final native and APK rebuilds must follow these fixes; older passing tests,
+packages and captures are not relabeled as acceptance of the new source.
+
+After all reviewed hashes were current, the canonical native combined run passed
+`ui::` 136/136 and `state_appearance::` 3/3. This includes unknown/false/true
+applied-mask admission, strict whole-slot capability-chip layout and actual
+disabled/enabled pointer interaction for state appearance and preview. The full
+test binary compiled the current DeviceStatus constructors. This clears those
+source-test gates, not installed runtime, USB actuation or physical outputs.
+A fresh full target-hash scan leaves sixteen unrelated stale paths unchanged;
+the owned interface document and actually rereviewed main references account
+for the reduction from eighteen. Full comparison generation remains blocked
+at the pre-existing `tools/build-firmware.ps1` reference, not silently bypassed.
+
+The final canonical mobile Output suite passed 8/8 with a clean analyzer at the
+recorded frozen hash. Together with panel 12/12, settings 13/13 and
+overview/hardware 3/3, this is 36 focused source/widget tests. New
+`mobile-panel-parity-front-tablet-stable-controls.png` and
+`mobile-panel-parity-front-phone-stable-controls.png` in the existing outputs
+directory were generated and opened: persistent disabled Stop text occupies
+the same action row, actual board controls lead, tablet columns remain aligned
+and phone cards remain bounded. These explicitly simulated fixtures supersede
+the previous captures only for current layout proof. They do not establish
+Android installation or any board command. The ASUS connection subsequently
+recovered and the tablet was found; deployment remains a separate authorized
+step with its own package/hash/runtime receipt.
+
+The final canonical Flutter `ApkPreview -BuildOnly -BoardProductionHold` build
+completed with exit 0 in 53.1 seconds. The 59.0 MB preview-signed package at
+`mobile/build/app/outputs/flutter-apk/app-release.apk` has SHA256
+`6149e8a52595e29bde315c9be201b398d96a56e397fe032defd658479a3aec8d` and includes
+the stable Stop-text, explicit Off/readback and current LED admission changes.
+It supersedes the earlier package hashes; transfer to the authorized tablet is
+in progress and is not yet recorded as successful installation or acceptance.
+
+A final read-only parity check found the native brightness slider used a field
+updated by HTTP status but not USB snapshots, and a status refresh could replace
+an in-progress drag. The bounded correction changes only the shared helper and
+its existing LED-output setting row: live snapshots own the value outside a
+gesture; a peer/boot/route/epoch-bound draft owns it during dragging. Release or
+keyboard emits one existing command, while disconnect, owner change, Escape,
+focus loss or a missed panel frame cancels. Main transport workers remain
+unchanged. Reviewed helper SHA256 is
+`bab8101d067b05e642be29cd28002aa9c102cc7c9c77c7a8a0242f8924c6a060`; shell SHA256 is
+`f51b94dd6b3ab712d70b77c26c1dcdb4d852be26bfdabf92acf508faf98f72f0`.
+Three actual pointer/keyboard/ownership tests were added; canonical results
+remain pending here rather than being inferred from the earlier 136-test run.
+
+The first brightness test compile found an FnMut ownership error in its new
+offscreen harness: egui may rerun the frame closure, so it must clone the optional
+owner when calling the helper. Only that test call was corrected; production
+logic and shell stayed unchanged. Helper source/proof SHA256 is now
+`71964b7c013434d3e7941081971061e6bda0d5d3a2c6a628176fd51c48330ef6`.
+
+Tablet-only delivery then completed on authorized device `R52T60C6V9B`:
+`adb install -r` returned Success, package version is 0.2.8/build23, and the
+installed `base.apk` SHA256 exactly matched final candidate
+`6149e8a52595e29bde315c9be201b398d96a56e397fe032defd658479a3aec8d`.
+The canonical Android helper launched it after verifying an unsecured swipe
+lock. Actual `outputs/PakarController/tablet-panels-live-launch.png` was opened:
+the landscape shell is visible, but it reports no acknowledged board and waits
+for fresh state. This is installed-package/foreground evidence only, not proof
+that connected panels, commands or physical LEDs work. No board mutation,
+firmware job or other Android device was part of this delivery.
+
+The final canonical native `ui::` suite passed 139/139 with zero failures at
+helper `71964b7c...` and shell `f51b94dd...`, including all three brightness
+pointer/keyboard/ownership regressions. The separate `state_appearance::` 3/3
+pass remains at unchanged source. Brightness's stale USB/refresh-during-drag gap
+is therefore source-fixed and regression-tested; installed runtime and physical
+brightness actuation are not inferred. Final Release/capture/deployment evidence
+must name this later candidate, not the earlier pre-brightness executable.
+
+Actual tablet navigation exposed an empty Flutter Scene wrapper for a fixed-mode
+table, despite the individual mode choices being hidden. The bounded correction
+projects that card out when no contextual content exists, retains its saved
+position, and maps visible reorder indices back to stored card identities. A
+first-wins board still retains its actionable game card. Transient missing state
+preserves the known presentation without granting command authority. New source
+SHA256 is `4af5131433c400eb8233ad4765fe7c36685d1cae2a0f85604427302ba2e9005e`;
+test SHA256 is `48a2e554d9458892b6f6a82df46ac1a271b404ddda4b562662c980f62e63bffc`.
+The added real widget regression covers one/multiple/null mode observations and
+hidden-card reordering without commands. Its canonical test/package/deployment
+results remain pending; installed package `6149e8a5...` is not relabeled as
+containing this later correction.
+
+The initial nine-test Output rerun correctly rejected an invented unsupported
+fixture mode and a test's stale pre-reorder callback. The test now uses the
+actual supported `first-wins` mode and obtains the current rendered reorder
+callback before the second drag; shipping source is unchanged. Reviewed test
+SHA256 is `d40cd2b5189af50d1e862629cae0facd6169d7151fbccb0325564a368312b4b6`.
+
+Native final Release then completed and canonical staging with `-Probe` passed.
+The candidate executable SHA256 is
+`69f8c41c8f450d99c66af1e833b60a367d1bdcb32cf523f622d74536a11245d2`.
+This is the post-brightness candidate; owner-safe ASUS replacement and current
+runtime confirmation remain separate steps. The root also viewed later actual
+tablet Hardware/Front/Output screens with ledcontroller.local connected,
+22 individually acknowledged capabilities, AVR online and NTP synchronized.
+Those later observations supersede the initial launch/no-ACK state, not the
+need to install and verify the later empty-Scene correction.
+
+The corrected canonical Output suite passed 9/9 with a clean analyzer, bringing
+the scoped Flutter suite total to 37. Actual installed captures
+`tablet-panels-live-hardware.png`, `tablet-panels-live-front.png` and
+`tablet-panels-live-output.png` were also opened for the comparison record.
+Hardware shows the observed 22 ACKs, AVR online and NTP synchronized; Front panel
+correctly omits unacknowledged display/text controls while retaining acknowledged
+melody and live inputs. The old Output capture is the evidence of the empty
+Scene wrapper, not proof of its fix. A distinct final screenshot after the
+replacement package is still required to close that visual defect.
+
+Canonical ASUS replacement succeeded after owner/draft checks: old PID2452 was
+replaced by PID5592 in session2, executable SHA256
+`69f8c41c8f450d99c66af1e833b60a367d1bdcb32cf523f622d74536a11245d2`.
+The receipt `outputs/PakarController/panel-review-replacement.json` reports
+`replaced=true`, `error=null` and `ready=true`; old executable `876ad595...` and
+settings backup were preserved. This establishes safe runtime replacement and
+startup, not connected-state or physical acceptance. Final native framebuffer
+and connected status were still pending at this checkpoint.
+
+The replaced native process subsequently reported Wi-Fi online and the same
+retained layout SHA256 before/after replacement:
+`48c3650257a585e835b2122fd70b8ad512530390a41f319565ee926533b94091`.
+An output-folder inspection wrapper initially expected JSON from `--panel`, but
+the actual app branch returns `Forwarded to active PakarController`. The root
+reconsulted the capture gate and donor package probe, then corrected only that
+wrapper's exact text acknowledgement handling and rechecks the owner. A panel
+acknowledgement is not screenshot completion: correlated request/path/result
+and image inspection remain required. No application rebuild or claim that
+Windows capture is unavailable was used to work around this tooling mismatch.
+
+Actual final native `outputs/PakarController/panel-review-hardware.png` and
+`panel-review-native-hardware.json` were verified and the PNG opened. Capture
+SHA256 is `f1ae80946994c34cab69ca7825c57b110eb13d337044071807945c47405628a3`;
+owner PID5592 runs executable `69f8c41c...`, Wi-Fi is online to
+ledcontroller.local, WebSocket and AVR are live. The user's actual Table,
+Network, Hardware and Effect controls split layout remains, not a fixture
+projection. Capability chips are below the visible Hardware viewport, so this
+capture alone does not prove their final visual layout. Panel navigation changes
+view state, not the separately verified replacement-preserved layout topology.
+The package was built from the shared dirty workspace based on
+`8ce8f29eee01a979bbd42e7d3573a6e3ace9eba2`; no new commit or clean-tree claim is
+made. No board firmware or physical output was changed by this UI delivery.
+
+The final contextual Flutter package completed the canonical production-hold
+build in 42.7 seconds: 61,839,005 bytes, SHA256
+`5db85ea054539076e6daa08d80d56001eef5e1adb0330665b94f932116760431`.
+ASUS's staged `panel-review/panel-review-contextual.apk` and authorized tablet
+`R52T60C6V9B` installed `base.apk` matched exactly; `install -r` returned Success,
+version0.2.8/build23, foreground PID7497. A bounded log query found no
+Flutter/AndroidRuntime errors. Actual `tablet-panels-final-connected.png` was
+opened: ledcontroller.local automatically reconnected, Output was restored,
+the empty Scene wrapper is absent, LED/diagnostic controls are aligned and
+live status is received. The earlier Hardware/Front captures remain evidence
+for unchanged pages, not mislabeled as newly captured. This completes the
+scoped client package/runtime/visual delivery, not physical actuation, a soak,
+complete donor parity or a guarantee against all future bugs.
+
+Publishing the scoped checkpoint to GitHub issue #3 was attempted through the
+GitHub connector and rejected with HTTP403, `Resource not accessible by
+integration`. No comment was published and no alternate-auth bypass was used.
+The workspace remains dirty/uncommitted; the client package/runtime evidence
+above must not be described as a pushed or published source checkpoint.
+
+Final native Hardware and EffectControls fixtures used exact executable
+`69f8c41c...` through the repository harness; both exited 0 and their owned
+PIDs142672/246692 were absent afterwards. Both PNGs were opened:
+`outputs/PakarController/panel-parity-review/hardware-final/startup.png`, SHA256
+`33f35674793e7ba3629749d1425614d090998663b51955d44fcc00db2f907da2`, shows every
+acknowledged capability chip fitting as a complete single-line slot with aligned
+Controller details; `effects-final/startup.png`, SHA256
+`18de066f7162a9dc1ae38b737090dc60651734bc2260021eec94bcc83f087525`, shows no
+single-mode Board modes card, independent Reset and bounded output/brightness/
+state controls in the visible viewport. Each folder retains fixture/request
+receipts. Traffic was only GET status/auth and local client-report POST.
+These are actual native framebuffers over clearly SIMULATED loopback data,
+not device or physical-output evidence. No source changes followed these views.
+
+## Flutter contextual header and connection modal
+
+Scope: client-only header/status work. No board write, firmware deployment,
+reset, audio or LED command. The retained production-hold APK flag prevents
+saved automatic board-update jobs from starting after client replacement.
+
+Reread complete donor sources: Pealayer `web_ui/src/components/HeaderBar.tsx`,
+`src/ui/workspace_profiles.rs`, `src/branding.rs`; PCController
+`mobile/lib/unified/workspace_chrome.dart`, `mobile/lib/unified/preferences.dart`,
+`mobile/lib/connection_preferences.dart`, `mobile/lib/unified/relay_style.dart`,
+`Tools/Controller/internal/link/session.go`, and
+`Tools/Controller/web/src/peripheral-availability.ts`. Current donor hashes
+matched the ledger. Existing unrelated omissions/stale references remain open.
+
+Adapted the retained connection-modal/overflow lifecycle using the existing
+SettingsPage and ConnectionDraft, not another transport or speculative replay.
+The entire footer status icon/text opens Connection. Fresh ordinary telemetry
+reads Connected; command failures remain inspectable through their separate
+details action. Connect/unlink/cancel icons describe the action, not peer status.
+Refresh is visible in the toolbar only while stale and connection is desired;
+manual refresh remains in overflow. Reset remains a separate board action.
+Header visibility/order is sanitized and stored by the existing coalesced local
+workspace writer. Overflow cannot be hidden; defaults show connection plus
+stale-only refresh. Editor supports drag handles and accessible move commands;
+wide rows are compact, narrow/large-text rows wrap without shrinking targets.
+
+Canonical build-mobile analysis passed. Six header tests, five status/layout
+tests and six connection lifecycle tests passed, including zero mock board
+writes on dialog/customization, reordered persistence after restart, all-hidden
+recovery, stale/new-event transitions, USB isolation and failed-command retention.
+Two stale global-text test matchers were scoped to their actual footer/dialog,
+and the old OutlinedButton test now checks the real CellColorAction owner.
+
+ASUS SSH and tablet R52T60C6V9B (SM-X906B) were rechecked. Final install -r and
+launch succeeded for 0.2.8/build23; installed base.apk and local release SHA256
+both equal `503d443f9e3f57f761be090b8eff3a40b4be3b213948be79ff3393827c73a638`.
+User settings/data retained, phone untouched. Actual tablet screenshots under
+outputs/PakarController show the live Connected footer, hidden fresh refresh,
+and connection modal without disconnecting ledcontroller.local. Initial editor
+capture revealed excessive tablet row height; this was corrected and rebuilt.
+This is client/runtime evidence, not physical output or full donor parity.
+
+Issue #3 progress-comment attempt was rejected HTTP403 Resource not accessible
+by integration. No alternate-auth bypass, published comment or source commit
+is claimed. Human touch/visual acceptance and phone deployment remain open.
+
+## Table viewport: fit, anchored zoom and pan
+
+Read Pealayer web_ui/src/timelineWheel.ts completely, source hash
+1910311a3acba2f1d22d9d4fb57d43e08bcf6ee91f3ea567e381ae90e8a487cd.
+Adapted its exponential pointer-anchor calculation to a two-dimensional table
+in Flutter and the canonical Web UI. Native uses locked egui 0.36.2 Scene,
+with global-to-local pointer conversion for marquee and order dragging.
+Pealayer layout.rs gesture sections were inspected, not the entire file; its
+pending full-file comparison remains pending. Media timing/gutter behavior is
+not applicable; configurable modifier policies remain a documented omission.
+
+Fit is the default and tracks available panel size. Manual view survives live
+updates. Fit and bounded +/- controls complement pinch and Ctrl-wheel. Mobile
+ordinary wheel input remains page scrolling; pinch must not activate cells.
+Web wrapper consumers and marquee geometry now account for transformed bounds.
+Final browser inspection confirmed compact square zoom buttons and all80 cells
+visible after Fit; outputs/PakarController/web-table-fit.png is explicitly a
+read-only simulated UI screenshot, not device evidence.
+
+Canonical verification: Rust two scene/footer tests plus23 cell-table tests;
+Flutter three viewport tests plus eight phone/tablet LTR/RTL table tests and
+analysis; Web zoom math, cell-selection and canonical application contracts
+passed. The Flutter pan test initially started on a clipped cell after zoom;
+it now exercises a visible cell and confirms actual translation. An earlier
+anchor recentering defect was fixed in both Flutter and Web. Generated Web
+assets were refreshed through build-web after source changes; no gate bypass.
+
+Only affected target hashes were rebound after checking retained anchors and
+the scoped viewport changes. Full comparison-report regeneration remains
+blocked by unrelated stale Timer/.vscode/arduino.json -> tools/build-firmware.ps1
+evidence, which was not overwritten or certified. The table-viewport donor
+gate passes with no stale references in this slice. No production firmware,
+installed client, device scene, settings or actuator was changed in this pass.
+Real installed touch/trackpad acceptance and client deployment remain open.
+
+Final actual-device captures `tablet-header-editor-final.png` and
+`tablet-header-final.png` were opened and inspected. All four editor rows fit
+with aligned 48px move/drag controls; cancel restored the live Output workspace
+without changing preferences or board state. PID11417 remained foreground,
+Connected was visible with live RSSI, and bounded Flutter/AndroidRuntime error
+log inspection returned no entries. All 15 affected hash/anchor references
+validated; scoped diff whitespace check passed. These observations are bounded,
+not a claim of long-term/network/physical fault freedom.
+
+## Tablet chrome alignment and pixel-tool menu
+
+Reread complete Pealayer HeaderBar.tsx and PCController relay_style.dart.
+Retained the existing capability-gated grouped overflow and connection-modal
+ownership rather than another navigation system. Flutter now uses one 48px
+menu row with a consistent 20px icon gutter, a themed outline, and explicit
+connection/device, diagnostic/advanced, and application/support groups.
+Devices is no longer duplicated through header overflow. Header customization
+and user settings remain intact; the corrected menu is the default on existing
+instances as well. Corrections uses a tuning/sliders icon, distinct from the
+diagnostic focus-frame icon; both are shown alongside their tab labels.
+
+WorkspaceHeader trailing groups now fill their allocated alignment area and
+align to the directional end. Badge, action and title rows are vertically
+centered; narrow/large-text layouts wrap deliberately. The status detail area
+fills its share and end-aligns text, keeping its trailing control at the edge.
+Analysis and22 focused tests passed: eight table toolbar, five status bar,
+three pixel navigation and six header customization tests. Added exact edge,
+center, icon and ordering assertions with no board writes. Only affected
+hash/anchor references were rebound; unrelated incomplete donor evidence was
+preserved. Tablet deployment/runtime evidence is recorded separately below.
+
+Tablet installation completed through ASUS ADB on SM-X906B serial
+R52T60C6V9B, explicitly targeting wireless endpoint192.168.4.2:5555; the
+connected phone was untouched. Canonical ApkPreview/BuildOnly build used
+BoardProductionHold. Local APK, ASUS staging APK and installed base.apk all
+matched SHA256
+`368830460dcb587a4c535a62415787fa8f9b53b03df7df9f0ce158129fd451c6`.
+Android reported install Success, version0.2.8/build23. Existing preferences
+and80 selected cells survived. Actual screenshots inspected:
+`outputs/PakarController/tablet-chrome-before.png`,
+`tablet-chrome-settled.png`, `tablet-chrome-menu.png` and
+`tablet-chrome-tabs.png` in the parent task's outputs directory. They show
+trailing header/footer alignment, grouped overflow and both outlined tab icons.
+After returning from Corrections without modifying any rules, live accessibility
+state confirmed Table,80 selected and Connected to ledcontroller.local.
+Bounded Flutter/AndroidRuntime logs showed no error entry; this is not a soak or
+blanket fault-free claim. No board command, firmware update or LED mutation was
+performed for this UI verification.
+
+## LED fade and production RMT handoff
+
+User explicitly requested smoother GPIO fallback and switching the production
+ledcontroller to RMT/DMA. Live ASUS hostname access identified only
+esp32s3-907069eaaf34, 16MB flash/8MB PSRAM,480 pixels/GPIO4/BGR, buffered AVR,
+BLE disabled and optional Ethernet disabled at runtime. Keycontroller is outside
+this action. The application-only rollback was downloaded and fully verified:
+2194112 bytes, SHA256
+`8bc2a22ceb40c437afb742abe23cb9c2c326f0fbc135c5b5d7199629ec1dc23f`.
+Bundled AVR recovery remains32768 bytes, SHA256
+`785ff080a43341632143d11348ad1d48e88e6102d6305c86c7112a2f5b1b9b60`;
+its availability is preserved, not an authorization to program AVR.
+
+Reread complete esp32WS2811 driver/header, Effect and Colour implementation and
+headers. Keep the existing immutable mailbox and native IDF5.5.5 driver rather
+than donor per-effect tasks/legacy driver. GPIO now shares latest-complete-frame
+adoption after flash holds and measured completion/start-interval telemetry;
+the necessary scheduling tick remains because bit-banging masks core1 IRQs.
+Repeated identical Fade commands retain their origin/deadline; new targets,
+Pulse and Immediate retain their semantics. Interpolation rounds once from
+full wall-clock precision in either color direction. Neither change overclocks
+WS2811 or claims to remove its8-bit brightness quantization.
+
+Actual worker doubles pass all seven wire/backend profiles, including new
+shared cadence/latest-after-hold checks. Renderer, persistence, queue,20000
+cross-thread publications, two10000-batch stress runs, pinned IDF full480 ring
+and supported/unsupported DMA ownership guards pass. These are host proofs,
+not physical FPS. Fixed the test wrapper's case-insensitive Profile/loop-variable
+collision. Build gates exposed existing stale Web route/appearance bindings;
+only actual rereviewed target bindings are updated, never blanket certification.
+Runtime deployment and optical feedback remain separate evidence below.
+
+The final renderer review added an explicit previous-effect byte per cell so
+Pulse-to-Fade on the same target starts a new transition; only Fade-to-Fade
+retains its deadline. The renderer suite passes this case and clock rollover.
+Consolidated buffered/table-selection S3 build passed:2243427 program bytes,
+133684 global RAM bytes. Application image2243568 bytes, SHA256
+`e70b3984d0fc812a373da1f00b8b87190724c62ac708c39c27a20a58797a769c`.
+Only this application image was transferred; AVR was not flashed.
+
+Canonical hostname-first local OTA uploaded once in20937ms. Automatic post-reboot
+verification expired while ASUS retained a nonresponsive AP association; the
+board's prior station address was also unreachable from that route. Reconnecting
+ASUS's existing ledcontroller Wi-Fi profile restored HTTP without another board
+upload/reboot. Separate read-only verification reused canonical peer/request and
+WebSocket helpers: same board ID, new boot
+`a4df4075cb3c9b0c2b246abd80d70c69`, full running-image SHA256 matched, selected and
+running slot3407872 both VALID(state2), same-peer WebSocket status passed.
+Do not relabel the original updater invocation as successful; recovery/readback
+completed independently after its deadline. Station and AP both report connected.
+
+Live backend is rmt-dma,480 pixels/GPIO4/BGR, neutral gains, brightness255,
+cache-safe refill IRQ witnessed on core1/level3,11521 of11521 symbols completed,
+zero driver failures and zero AVR/ESP UART errors. Last full-frame completion
+14972us;250ms start intervals reflect unchanged-white repair frames, not an
+animation FPS cap. One explicitly requested GPIO loopback capture compared all
+11520 data bits with match=true, timing_errors=0 and capture error0. This is a
+digital all-white signal check, not an optical or mixed-color fade acceptance.
+All80 idle/white states, physical mapping and empty enabled corrections revision0
+survived. User could not visually inspect now; no color-changing test was run.
+
+Read-only follow-up review found no hidden RMT FPS cap. Optional synchronous
+cloud connection/read calls can still stall the renderer loop; MQTT/cloud WS
+are disabled on this board. That separate scheduling limitation remains open,
+not evidence of a regression or reason to claim arbitrary cloud-load smoothness.
+
+Issue #2 checkpoint publication was attempted through the GitHub connector and
+rejected403 Resource not accessible by integration. The evidence above remains
+local; no published comment, source commit or acceptance closure is claimed.
+
+## Runtime GPIO and RMT/DMA backend checkpoint
+
+User-requested independent inclusion flags replace the old DMA build selector.
+Canonical dual-driver builds pass `-S3LedGpio -S3LedRmtDma`; GPIO is the generic
+fresh-board default. No flags deliberately creates no matrix pin/task/heap owner.
+One shared renderer, correction/mapping path and immutable-frame worker remain.
+The worker finishes/latches, releases the previous resources, initializes the
+chosen driver, and completes a full resend before declaring the switch applied.
+Failed DMA release retains potentially owned resources and fails closed. Safe
+RMT initialization failure can fall back to GPIO while reporting the failure.
+
+Board-saved choice is independent of actual driver readiness. Fresh valid
+defaults are saved once; corrupt/unmounted storage is never auto-repaired or
+formatted. Atomic stage/readback/rename and unchanged-write avoidance adapt the
+actual PCController SettingsStore and existing LittleFS ownership. Four existing
+donor rows were extended (109 additive lines), including esp32WS2811, Pealayer
+PreferencesTab and actual native dropdown controls. No whole-file donor-read
+claim or unrelated stale-hash acceptance was made.
+
+Web, Rust and Flutter Output controls report compiled choices, actual/requested
+driver, pending handover, error and persistence separately from Static/Effects.
+HTTP/WebSocket/MQTT share loop-owned selection; USB adds `0x5c [3,1|2]` and the
+general API route. One mutation is followed by bounded read-only observation;
+USB never requires Wi-Fi. An accepted receipt is not physical output proof.
+
+Verification: ten actual-worker host variants passed, including dual-driver,
+PM-lock, absent-driver, allocation/quiescence faults and pending-until-resend.
+Scene/backend persistence faults, corrupt bytes, one-time default initialization,
+the renderer pipeline, five native tests, twenty Flutter tests and Web backend/
+context/transport tests passed. Build-plan storage tests passed. The broader
+protocol run passed changed protocol/LED cases but stopped on an Ethernet
+fixture's missing BoardCore include; affected Ethernet/NetworkPath wrappers were
+repaired and passed separately. This is not an all-suite or exact-head CI claim.
+
+Built candidates (not deployed):
+
+- ESP32-S3 dual-driver GPIO-default application:2252080 bytes,
+  SHA256 `56abd631f2b227c70e10417f35d38044a18f3dcb25dba0bafb7cf96d072e3305`;
+  linked code2251927 bytes/67%, static RAM133740 bytes/40%. Profile retains16MB,
+  OPI, GPIO4, buffered UART, UART0 host, BLE excluded, verified ISP and optional
+  Ethernet; bundled AVR recovery retained. Current production RMT preference
+  must be preserved explicitly during first migration before live switching.
+- Windows Release:32431616 bytes,
+  SHA256 `92a65c7453f58ad8e7d662d6e9ee84e2b86e62c7ec591447ccc87670103b62b1`;
+  canonical stage/probe passed, running app unchanged.
+- Android APK:62167209 bytes,
+  SHA256 `b4e0f9a4df468106c6c9e4b443a2ee8328fab588f21a310c32bc4a6af6773559`;
+  build-only production-hold profile, no installation or automatic board job.
+
+All three are0.2.8 local dirty-tree candidates based on main8ce8f29, not a new
+published release. Physical both-direction switching, reboot preference and
+all480 optical acceptance remain open. Production board/settings were untouched.
+Full report generation remains blocked by ten unrelated/concurrent stale refs:
+mobile/test/capture_test.dart, desktop/src/ui/cell_pixels.rs,
+desktop/src/ui/preferences.rs, tools/ci-checks.mjs, assets/web/device-settings.js,
+tools/generate-branding.mjs, desktop/src/config.rs, desktop/src/ui/palette.rs,
+tests/web_cell_table_test.mjs and mobile/test/workspace_lifecycle_test.dart.
+Their existing anchors remain; owners must rereview their changed bytes.
+Issue #2 can be read, but this checkpoint's comment attempt also returned403
+Resource not accessible by integration. No GitHub publication or closure claimed.
+
+## Web and native control refinement acceptance
+
+This checklist extends the existing reuse ledger; donor/source/target hashes
+remain in `file-comparison-evidence.json`. It is not a second provenance ledger.
+The scope is presentation and interaction, not production-board changes.
+
+- [x] Web controls contain their labels at narrow and wide widths, including
+  translated/long labels; icon-only controls stay square.
+- [x] Static and dynamically updated actions retain meaningful icons and names.
+- [x] Web adopts the apps' green accent and explicit semantic success, danger,
+  warning and muted roles, with light/dark contrast and stable focus geometry.
+- [x] Rust Find icon is centered; controls use available width, helper text is
+  muted, real cautions have an icon, and helper space does not jump.
+- [x] Rust default fit includes the entire staggered cell table and margins.
+- [x] Rust table context menus expose relevant selection, state, management and
+  view actions through the shared donor-derived menu implementation.
+- [x] Preferences footer stays adjacent to the bounded content area without a
+  second unused expansion region below it.
+- [x] Exact Pealayer and PCController donor files/adaptations/omissions are
+  recorded with source and current target/test hashes.
+- [x] Focused regression tests, canonical Web package and native Release build.
+- [x] Actual local browser and native framebuffer renders inspected; findings
+  corrected. Fixture renders are explicitly not live-device acceptance.
+- [ ] Installed-user-app and physical-display acceptance (separate from source
+  and local preview; production settings and boards remain untouched here).
+
+Pre-change observation: the existing loopback Web preview at a narrow width
+renders Device settings, Preferences, Select all and Manage cells without action
+icons, while its selection badge/navigation use blue rather than the app accent.
+No production commands were sent while inspecting this visibly simulated peer.
+
+### Exact adaptations and verification boundary
+
+The hash-bound ledger adds seven complete-read donor rows for this pass and
+extends the previously reviewed rows. It records 35 new target/proof references;
+all current anchors and normalized target hashes were checked. This is scoped
+reuse, **not** certification that every feature of either donor is imported.
+
+| Donor source | Pakar adaptation |
+| --- | --- |
+| Pealayer `src/ui/controls.rs` | Fixed editor/icon slots, contextual availability and dispatch in `desktop/src/ui/cell_table.rs`; full-width Find row and fit geometry in `shell.rs`. |
+| Pealayer `src/ui/preferences.rs`, `dialog.rs`, `dropdown.rs` | Bottom-first footer allocation, shared actions and category controls; one bounded body for embedded/native Preferences. |
+| Pealayer `web_ui/src/components/PlaybackButton.tsx`, `ControlBar.tsx`, `DesignerFieldLabel.tsx` | Stable icon/label slots, contextual control hierarchy and optical alignment in canonical Web components and styles. Media-specific playback behavior is not imported into board controls. |
+| PCController `Tools/Controller/web/src/components.tsx`, `card-layout-controls.tsx` | Icon-bearing actions, square card controls, contextual panel menu and accessible collapsed navigation. |
+| PCController `Tools/Controller/web/src/app-preferences-dialog.tsx` and test | Dialog content/action ownership and host-vs-board settings separation; React DOM focus mechanics are not copied into egui. |
+| PCController `mobile/lib/unified/relay_style.dart` | Semantic enabled/disabled emphasis, adapted to Web state actions without inferring states from RGB. |
+
+CSS inspection was sectional, not whole-file certification: PCController
+`styles.css` lines379–415/625–632 and Pealayer `styles.css` lines77–102/521–552.
+Exact source revisions, hashes, exclusions and remaining work are in the existing
+JSON ledger, rather than another unbound inventory.
+
+The Web fixes address two actual causes: localization used to replace a complete
+button's `textContent` (destroying icons), and a legacy column header combined
+with wrapping/100% flex-basis pushed actions into an offscreen column. Stable
+SVG/label slots and explicit responsive flex ownership now replace those paths.
+Semantic actions use explicit state attributes; arbitrary text matching does not
+assign a device state or a red/green intent.
+
+Executed verification:
+
+- 22 focused Web test cases passed across controls, appearance, semantic
+  presentation, utilities, zoom, shared app contracts and LED backend controls.
+- Native `table_` filter:17 passed; `find_`:3 passed (one overlap);
+  `preferences`:15 passed. Includes actual egui geometry at narrow/wide sizes,
+  density variations, RTL/LTR and1.5 display scaling, exact helper alignment,
+  stable warning slots and all80 transformed staggered cell bounds.
+- Browser DOM geometry: no visible-button content overflow at320,442,768 and1280
+  CSS-pixel widths. English/Persian and light/dark inspected; SVG icons survive
+  localization, collapsed navigation retains accessible labels, and state
+  captions honor Colors/States naming while selection remains state-based.
+- Full and onboard Web packages contain the same UI, revision
+  `6018e436ebd006ae21936484852021bd6569c132209c93ac1a275f614c0f44d9`;
+  HTML437822 bytes, gzip124274. No second UI or disabled-feature substitute.
+- Native framebuffer evidence captured through the repository harness, with an
+  isolated configuration, synthetic loopback peer, no production IPC and no
+  board forwarding. The first rendered pass exposed centered helper text and a
+  width cap; both were corrected instead of accepting the first screenshot.
+- Windows interactive menu verification is still open: the supported desktop
+  input tool returned `GetCursorPos failed: Access is denied (0x80070005)`.
+  No alternate input-injection mechanism was used. Internal screenshots work;
+  context-menu source/availability tests are not a claim of manual click proof.
+
+The whole-repository comparison report remains blocked by unrelated stale
+records; `generate-file-comparison.ps1 -Check` first reports
+`PCController|mobile/lib/firmware_page.dart -> mobile/test/capture_test.dart`.
+Unrelated HeaderBar/App mappings affected by shared-file edits were not silently
+re-certified. The seven new comparisons and this pass's references are current;
+the global CSV/Markdown reports are not claimed fully regenerated or complete.
+
+Final native Release compiled and canonical stage/probe passed:32680960 bytes,
+SHA256 `ff8119940f15f0309ff4f432720d32600ac63516f7bfa34bc0de6233ba17de0b`.
+The stable candidate is `../../outputs/PakarController/staging/PakarController.exe`.
+No installed production executable was replaced. Current local screenshot proof:
+`../../outputs/PakarController/ui-table-final.png`,
+`ui-preferences-final.png`, `ui-web-controls-final.png`,
+`ui-web-mobile-final.png`, and `ui-web-persian-phone-final.png` in that same output
+directory. Final native captures bind the exact candidate hash in each adjacent
+fixture receipt. All owned fixture processes exited after capture.
+
+Owning production issue remains open; scoped progress and explicit remaining
+gates posted at https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6401766350.
+Use that explicit comment ID for follow-up edits. The CLI's `--edit-last` selected
+older comment6259946867; its exact prior body was recovered from GitHub edit
+record `UCE_lALOVDBl_c8AAAABdR81c88AAAABNVql9A`, restored and equality-verified.
+The current checkpoint was then updated through its exact REST comment ID.
+
+## Native status-bar donor integration
+
+Preflight: read `AGENTS.md` and `docs/REUSE-PREFLIGHT.md`, consult `ui-shell`
+and the exact `Pealayer|src/ui/status_bar.rs` donor. Independently read the
+entire actual 1737-line source through EOF at
+`C:/Users/David/AppData/Local/Programs/Pealayer/source/Pealayer`, revision
+`5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`, SHA256
+`e407025a1ee959230634f8350de20d58432313d6dd0f734ada735b8fc9fec4db`.
+The complete-read ledger row remains `parity-gap`, not full status-bar parity.
+
+Supporting source reads were deliberately scoped, not promoted to full-file
+coverage: `src/config.rs` status widget/configuration/normalization sections
+(SHA256 `a318f05844f617ba908aa08c79c35ff91b5d73fdd833c6f5d06c47ea30b17f8e`);
+`src/app.rs` `PendingBarSave`, `poll_bar_save`, and status-save request/flush
+(SHA256 `41e50c2188ef281b5afcce8a6c5ff46b5bb478ab4ecb65d0d62a4aee0bcadbfe`);
+`src/downloads.rs::progress_if_initialized`
+(`7db32d2df4f9e5a15a56d523ca131272768c8ce3874a37313f65b1807f0a3fb7`);
+and `crates/download-core/src/lib.rs::JobProgress/active_progress`
+(`d06c69f6b38ac2f764e7f2489c92fd6c865a232c8f0cbf3d3225a4f9efb41303`).
+Those helpers established the no-service-initialization/no-per-frame-probe
+boundary; their full download manager or remote configuration runtime was not
+copied into the footer.
+
+Actual adaptations:
+
+- Eight board-contextual widgets have fixed-height geometry, independent
+  visibility, normalized order and start/end placement. Compact icon controls
+  and a keyboard-owned overflow preserve actions at narrow widths; captions,
+  counts and progress do not set widths. Borders are constant and inside-only.
+- All sixteen old four-boolean preference combinations are explicitly migrated.
+  A formerly hidden telemetry group keeps its new Network child hidden; later
+  independent child toggles do not re-enable siblings. Unknown/duplicate order
+  IDs normalize without dropping valid items.
+- Current-route authority gates connection and measured RGB. Cached peer data
+  cannot turn a disconnected RGB mirror into live output. Actual emitted RGB
+  is not brightness-scaled again; unsupported peripheral values are not invented.
+- Firmware progress reuses the existing peer/boot-scoped observation and its
+  real counters/optional fraction. Unknown is distinct from zero, and transfer
+  percentage does not verify reboot or update completion. Render code has no
+  filesystem/network/device/probe calls and passive telemetry returns no Save.
+- Context menus support persistent move earlier/later, start/end, hide/restore
+  and relevant panel navigation. Persistence occurs after draw, modifies only
+  saved `status_items`, and does not serialize the dock or commit another
+  Preferences draft. Save errors are reported; the requested in-memory layout
+  is retained for retry, without a false Saved claim.
+- `PreferencesDraft::sync_status_owner` applies the actual donor's
+  `sync_external_appearance` triple-baseline rule. Footer customization survives
+  later Preferences Save/Discard while unrelated dirty fields remain dirty.
+
+The first compile exposed an ambiguous float accumulator; source review exposed
+a possible old-group index panic after start/end placement. Both were fixed
+before candidate acceptance, including an actual egui menu-click regression for
+moving in both directions and issuing one Save. The overflow popup also uses an
+explicit ID shared by open/close/focus ownership, rather than clearing keyboard
+state under an unrelated popup ID.
+
+Scoped proof references bind the nine new status tests plus existing RGB and
+serde tests, the Preferences-owner regression, and the shell projection/save
+anchors. The initial frozen status target hash is
+`05bc4ac2c26be679e931afb179d62044d357cb910ff6a220e5c9cdb4b54b9d02`.
+Canonical native tests, build and framebuffer review are owned by the parent
+task and are reported separately when they finish. This source receipt does
+not claim deployed Windows acceptance, live-board output or human testing.
+
+Preservation hash refresh was limited to reviewed anchors: fifteen existing
+shell references, nine main references, nineteen already-reviewed Preferences
+references, four localization references and two screenshot-source-guard
+references. The source guard's change only tolerates rustfmt whitespace; the
+actual screenshot threshold is unchanged. Older unrelated Preferences and Web
+review records remain stale, not silently re-certified. No global comparison
+report regeneration or unrelated donor-read claim was made.
+
+Still pending from this donor: direct pointer drag-and-drop/drag-out hide,
+OSD-message lifetime, fullscreen policy, footer workspace selector, configurable
+font/mono/divider/metric-range controls, bounded sensor charts and measured
+UI/LED FPS presentation, and complete host/download operation inventory.
+Media/timeline/cue-specific behavior remains excluded from the mpv-free
+controller, not used as a reason to omit generic monitoring capabilities.
+
+### Native status-bar final build and visual evidence
+
+The source phase above is now followed by actual native verification. All 15
+focused `status_bar` tests passed; the isolated screenshot-viewport guard passed
+separately. Coverage includes migration, keyboard and pointer actions, overflow,
+RTL/scaled/narrow geometry, Preferences draft preservation, no passive saves,
+authoritative connection/RGB and measured progress. The screenshot source guard
+and scoped `git diff --check` also passed. Existing compiler warnings remain.
+
+Actual intermediate framebuffer review exposed three additional presentation
+issues, now fixed and captured again: progress/focus used the theme's dark
+selection text instead of its green background accent; the hardware warning
+caption was truncated; and a disconnected startup could say Connecting. The
+actual dark-palette and disconnected-startup cases have regression tests.
+
+Final status source SHA256 is
+`4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465`;
+main source SHA256 is
+`e830e4b2dc62e34b638dcda401a5c9692ae65f55e94f3bcb2f1b2b8343b6575b`.
+Canonical Release and `stage-desktop.ps1 -Probe` passed. Both built and staged
+executables are 32647680 bytes, SHA256
+`02505274f29498991b2f9e693274f73e4b4cbe7b44738d1d03e2a547e3e00aab`.
+Candidate: `../../outputs/PakarController/staging/PakarController.exe`.
+The warm release cache was reused; no obsolete artifact cleanup or dependency
+reinstallation was needed. The build contains the preserved concurrent working
+tree on base `8ce8f29`, not a claimed new published commit.
+
+Final actual native-renderer captures, all inspected, are under
+`../../outputs/PakarController/`:
+
+| Capture | Logical viewport | PNG SHA256 |
+| --- | --- | --- |
+| statusbar-connected-reviewed.png | 1280 x 800 | 0dd4aba08e677801fab71f295f948e709a305542bdd3d42caee1440244ecd67c |
+| statusbar-progress-reviewed.png | 900 x 600 | b41f52419d41b224d66f2732b5c41c2f7ae113957f720ee6f480957f4134bbc6 |
+| statusbar-offline-reviewed.png | 900 x 600 | 80cf35dfe70032a8017924c67a5144a2e353eb3bdcc323bc6b85e249e67a9f5c |
+| statusbar-warning-reviewed.png | 1280 x 800 | f52ed151b7820aad8c652851b936b4cec5ea80e2e558b5790e97e844bc96bea8 |
+
+Each adjacent fixture directory records its exact executable hash, owned PID,
+loopback endpoint and isolated Preferences path. Captures use native rendering
+at 125 percent Windows scale, but their peer/progress data is explicitly
+simulated. All four owned fixture processes exited after capture. No production
+device was contacted, no installed Windows app was replaced, and no Android,
+firmware, physical LED or human acceptance is claimed by this UI checkpoint.
+
+Scoped checklist published at
+https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6401982849;
+the production issue remains open. Use this exact comment ID for any follow-up
+edit, not the CLI's ambiguous last-comment selection.

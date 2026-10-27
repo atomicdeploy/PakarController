@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/HostSerial.h"
+#include "../firmware/esp/src/HostSerial.h"
 #include <cassert>
 #include <cstring>
 int main() {

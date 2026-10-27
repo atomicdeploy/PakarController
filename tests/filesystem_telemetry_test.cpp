@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/FilesystemTelemetry.h"
+#include "../firmware/esp/src/FilesystemTelemetry.h"
 #include <ArduinoJson.h>
 #include <cassert>
 #include <cstdio>

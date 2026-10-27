@@ -2,8 +2,8 @@
 #define ARDUINOJSON_ENABLE_ARDUINO_STRING 1
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include "../firmware/esp8266/src/CloudConfig.h"
-#include "../firmware/esp8266/src/NetworkConfig.h"
+#include "../firmware/esp/src/CloudConfig.h"
+#include "../firmware/esp/src/NetworkConfig.h"
 #include <cassert>
 #include <iostream>
 NetworkFixtureWiFi WiFi;
@@ -29,7 +29,7 @@ const char* interfaceName(){return "none";}
 struct Ethernet { bool live=false;bool configured()const{return NetworkConfigStore::ethernetBuild();}bool connected()const{return live;} } port;
 Ethernet& ethernet(){return port;}
 }
-#include "../firmware/esp8266/src/CloudManagement.h"
+#include "../firmware/esp/src/CloudManagement.h"
 namespace {
 JsonDocument patch(const char* text) {
   JsonDocument d;assert(!deserializeJson(d,text));return d;
@@ -120,6 +120,16 @@ int main() {
     assert(networkConfig.accessPointEnabled());
   } else assert(!network("{\"station_enabled\":false,\"ap_enabled\":false}",result));
   NetworkPath::port.live=false;
+  assert(network("{\"dhcp\":true,\"fallbacks\":[{\"ssid\":\"Backup AP\",\"password\":\"private-test-key\"}],\"auto_switch\":false}",result));applied();
+  auto multi=networkConfigurationJson();
+  assert(strstr(multi.c_str(),"private-test-key")==nullptr);
+  assert(snapshot(multi)["station_profiles"][1]["ssid"]=="Backup AP");
+  assert(snapshot(multi)["auto_switch"]==false);
+  assert(!network("{\"auto_switch\":\"true\"}",result));
+  assert(!network("{\"fallbacks\":[{\"ssid\":\"Backup AP\"}]}",result));
+  assert(!network("{\"dhcp\":false}",result));
+  assert(network("{\"fallbacks\":[],\"auto_switch\":true}",result));applied();
+  assert(snapshot(networkConfigurationJson())["auto_switch"]==true);
   for(bool* busy:{&otaActive,&avrUploadOwner,&programmingLatched,&networkApplyPending,&cloudApplyPending,&remoteFirmware.active}) {
     *busy=true;assert(!cloud("{\"telemetry_seconds\":19}",result));assert(!network("{\"dhcp\":true}",result));*busy=false;
   }

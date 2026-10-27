@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const source=readFileSync(new URL('../assets/web/frame-stream.js',import.meta.url),'utf8').replaceAll('\r\n','\n').trim();
-const web=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8').replaceAll('\r\n','\n');
+const web=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8').replaceAll('\r\n','\n');
 assert.equal(web.split('// BEGIN FRAME STREAM')[1].split('// END FRAME STREAM')[0].trim(),source,'One actual embedded streaming engine');
 const {createFrameStream,streamPolicy}=vm.runInNewContext(source+'\n({createFrameStream,streamPolicy})');
 // Ported actual donor FakeAnimationFrameClock: cancelled callbacks are retained

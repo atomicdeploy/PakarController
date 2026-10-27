@@ -236,14 +236,19 @@ mod tests {
             .unwrap();
         assert_eq!(menu.matches("menu::top_menu_button(").count(), 4);
         assert_eq!(menu.matches(".shortcut_text(").count(), 6);
-        for shortcut in ["Ctrl+Shift+,", "Ctrl+K", "Ctrl+M", "Ctrl+,", "F11", "F5"] {
-            assert!(menu.contains(&format!(".shortcut_text(\"{shortcut}\")")));
-            assert!(
-                !menu
-                    .lines()
-                    .any(|line| line.contains("format!(") && line.contains(shortcut)),
-                "shortcut must not be part of the primary label: {shortcut}"
-            );
+        for shortcut in [
+            "device_settings",
+            "connect",
+            "cell_mapping",
+            "preferences",
+            "fullscreen",
+            "refresh",
+        ] {
+            assert!(menu.contains(&format!(".shortcut_text(&shortcuts.{shortcut})")));
         }
+        assert!(
+            !menu.contains("Ctrl+"),
+            "shortcut text must come from persisted bindings, not labels"
+        );
     }
 }

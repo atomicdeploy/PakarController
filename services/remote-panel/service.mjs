@@ -131,7 +131,7 @@ export function createPanel({config,client,html,basic,font,release,now=Date.now,
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const config=JSON.parse(readFileSync(process.env.PAKAR_REMOTE_CONFIG??'/etc/pakarcontroller-remote-panel/config.json','utf8'));
-  const root=resolve(fileURLToPath(new URL('../../',import.meta.url))),ui=resolve(config.ui_directory??root+'/firmware/esp8266/src');
+  const root=resolve(fileURLToPath(new URL('../../',import.meta.url))),ui=resolve(config.ui_directory??root+'/firmware/esp/src');
   const header=readFileSync(ui+'/WebUi.h','utf8'),html=header.match(/R"HTML\(([\s\S]*)\)HTML";/)?.[1];
   if(!html)throw Error('Actual project Web UI missing');
   const release=JSON.parse(html.match(/const PAKAR_WEB_BUILD = (\{[^\n]+\});/)?.[1]??'null');

@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const service=read('firmware/esp32s3/src/BleService.h');
-const routes=read('firmware/esp8266/src/BleRoutes.h');
-const main=read('firmware/esp8266/esp8266.ino');
-const urboot=read('firmware/esp8266/src/UrbootRoutes.h');
+const routes=read('firmware/esp/src/BleRoutes.h');
+const main=read('firmware/esp/application.ino');
+const urboot=read('firmware/esp/src/UrbootRoutes.h');
 const wire=read('libraries/BoardCore/src/BleWire.h');
 const storage=read('firmware/esp32s3/src/BleStorage.h');
 
@@ -92,7 +92,8 @@ assert(main.includes('#include <firmware/esp32s3/src/BleService.h>'));
 assert(main.includes('#include "src/BleRoutes.h"'));
 assert(main.includes('bleService.begin(LittleFS,filesystemMounted,hostname,bleRequest)'));
 assert(main.includes('body+=bleStatusJson()'));
-assert(main.includes('void loop() {\n#if defined(ARDUINO_ARCH_ESP32)\n  serviceBle();'));
+assert(main.includes('void loop() {\n#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED\n  serviceBle();'),
+  'The instant offline game fallback excludes every network/BLE service from its loop');
 assert(urboot.includes('serviceBleReadOnly();'));
 assert(wire.includes('packetLimit(mtu)-kHeader'));
 assert(wire.includes('static_cast<uint32_t>(now-started_)>=60000U'));

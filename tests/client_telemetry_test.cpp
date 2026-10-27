@@ -1,7 +1,7 @@
 // Select the REAL SDK ArduinoStringWriter, which clears its destination.
 // The generic host write() adapter appends and hid this production regression.
 #define ARDUINOJSON_ENABLE_ARDUINO_STRING 1
-#include "../firmware/esp8266/src/ClientTelemetry.h"
+#include "../firmware/esp/src/ClientTelemetry.h"
 #include <cassert>
 #include <cstdio>
 int main(){

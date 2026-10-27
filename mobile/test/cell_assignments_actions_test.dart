@@ -26,11 +26,92 @@ DeviceStatus tableStatus({bool lock = false, String boot = 'boot'}) {
 }
 
 void main() {
+  testWidgets('Color selection actions do not command the board', (
+    tester,
+  ) async {
+    String? selected;
+    final observed = tableStatus();
+    observed.json['cells'] = List.filled(80, 'white');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CellAssignmentsActions(
+            status: observed,
+            connected: true,
+            selectColor: (value) => selected = value,
+            command: (_, _) async =>
+                throw StateError('Selection must not send'),
+            readStatus: () async =>
+                throw StateError('Selection uses current observation'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Select all red'));
+    expect(selected, 'lost');
+    await tester.tap(find.text('Select all white'));
+    expect(selected, 'idle');
+    expect(find.text('Import colors…'), findsNothing);
+    expect(find.byTooltip('Import and export colors'), findsOneWidget);
+  });
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   tearDown(
     () => messenger.setMockMethodCallHandler(AndroidDocuments.channel, null),
+  );
+
+  testWidgets(
+    'Lock help follows configured color names without changing state identity',
+    (tester) async {
+      final status = tableStatus();
+      status.json['state_presentation'] = {
+        'states': {
+          'lost': {'rgb': 0x0000ff},
+          'idle': {'rgb': 0xffff00},
+        },
+      };
+      var colors = true;
+      String? selected;
+      final commands = <(String, Map<String, String>)>[];
+      Widget view() => MaterialApp(
+        home: Scaffold(
+          body: CellAssignmentsActions(
+            status: status,
+            connected: true,
+            colorLabels: colors,
+            selectColor: (value) => selected = value,
+            readStatus: () async => status,
+            command: (path, values) async {
+              commands.add((path, values));
+              return true;
+            },
+          ),
+        ),
+      );
+      await tester.pumpWidget(view());
+      expect(
+        find.byTooltip('Prevent blue cells returning to yellow'),
+        findsOneWidget,
+      );
+      expect(find.text('Lock blue cells'), findsOneWidget);
+      await tester.tap(find.text('Select all blue'));
+      expect(selected, 'lost');
+      expect(commands, isEmpty);
+      await tester.tap(find.text('Lock blue cells'));
+      await tester.pumpAndSettle();
+      expect(commands, hasLength(1));
+      expect(commands.single.$1, '/api/cells/lock');
+      expect(commands.single.$2, {'enabled': 'true'});
+      colors = false;
+      await tester.pumpWidget(view());
+      expect(
+        find.byTooltip('Prevent lost cells returning to idle'),
+        findsOneWidget,
+      );
+      expect(find.text('Lock lost cells'), findsOneWidget);
+      expect(commands, hasLength(1));
+    },
   );
 
   testWidgets('Lock sends one board command and waits for observed state', (
@@ -92,9 +173,12 @@ void main() {
           ),
         ),
       );
+      await tester.tap(find.byTooltip('Import and export colors'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Import colors…'));
       await tester.pumpAndSettle();
       expect(find.text('2 assignments · 78 cells unchanged'), findsOneWidget);
+      expect(find.text('White → Red'), findsOneWidget);
       expect(commands, isEmpty);
       await tester.tap(find.text('Apply atomically'));
       await tester.pumpAndSettle();
@@ -108,10 +192,16 @@ void main() {
   );
 
   testWidgets(
-    'Locked red→white import cannot be applied; cancellation never sends',
+    'Locked import uses configured palette names; cancellation never sends',
     (tester) async {
       final status = tableStatus(lock: true);
       status.json['cells'][0] = 'red';
+      status.json['state_presentation'] = {
+        'states': {
+          'lost': {'rgb': 0x0000ff},
+          'idle': {'rgb': 0xffff00},
+        },
+      };
       var writes = 0;
       messenger.setMockMethodCallHandler(
         AndroidDocuments.channel,
@@ -135,9 +225,12 @@ void main() {
           ),
         ),
       );
+      await tester.tap(find.byTooltip('Import and export colors'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Import colors…'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Red lock blocks cells 1'), findsOneWidget);
+      expect(find.textContaining('Blue lock blocks cells 1'), findsOneWidget);
+      expect(find.text('Blue → Yellow'), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(
@@ -180,7 +273,7 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.text('Export colors'));
+      await tester.tap(find.byTooltip('Import and export colors'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Excel workbook (.xlsx)'));
       await tester.pumpAndSettle();
@@ -216,6 +309,8 @@ void main() {
         ),
       );
       await tester.pumpWidget(view());
+      await tester.tap(find.byTooltip('Import and export colors'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Import colors…'));
       await tester.pump();
       status = tableStatus(boot: 'other-boot');
@@ -251,7 +346,9 @@ void main() {
         ),
       );
       await tester.pumpWidget(view());
-      final importBounds = tester.getRect(find.text('Import colors…'));
+      final importBounds = tester.getRect(
+        find.byTooltip('Import and export colors'),
+      );
       final lockBounds = tester.getRect(find.text('Lock red cells'));
       final raw = tableStatus().json;
       raw['capabilities']['acknowledged_features'] = ['network'];
@@ -260,11 +357,16 @@ void main() {
       connected = false;
       await tester.pumpWidget(view());
       await tester.pumpAndSettle();
-      expect(tester.getRect(find.text('Import colors…')), importBounds);
+      expect(
+        tester.getRect(find.byTooltip('Import and export colors')),
+        importBounds,
+      );
       expect(tester.getRect(find.text('Lock red cells')), lockBounds);
       expect(
-        tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
-        isNull,
+        tester
+            .widgetList<OutlinedButton>(find.byType(OutlinedButton))
+            .map((button) => button.onPressed),
+        everyElement(isNull),
       );
       expect(
         tester.widget<FilterChip>(find.byType(FilterChip)).onSelected,

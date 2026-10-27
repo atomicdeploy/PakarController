@@ -4,7 +4,7 @@
 use crate::{DeviceStatus, Event, HttpCommand};
 use reqwest::blocking::Client;
 use std::{
-    collections::{BTreeMap,HashSet, VecDeque},
+    collections::{BTreeMap, HashSet, VecDeque},
     io::{self, Read, Write},
     net::{IpAddr, SocketAddr, TcpStream},
     sync::{
@@ -24,17 +24,30 @@ const WEBSOCKET_TIMEOUT: Duration = Duration::from_secs(4);
 struct AddressCache {
     entries: VecDeque<(String, IpAddr)>,
     relookup: HashSet<String>,
-    verified_routes:BTreeMap<String,SavedRoute>,
-    restored_routes:BTreeMap<String,SavedRoute>,
+    verified_routes: BTreeMap<String, SavedRoute>,
+    restored_routes: BTreeMap<String, SavedRoute>,
 }
-#[derive(Clone,Debug,PartialEq,Eq,serde::Serialize,serde::Deserialize)]
-pub struct SavedRoute {pub endpoint:String,pub numeric_origin:String,pub board_id:String}
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct SavedRoute {
+    pub endpoint: String,
+    pub numeric_origin: String,
+    pub board_id: String,
+}
 impl SavedRoute {
-    pub fn valid(&self)->bool {
-        let (Some(logical),Some(numeric))=(device_origin(&self.endpoint),device_origin(&self.numeric_origin))else{return false;};
-        numeric.host_str().is_some_and(|host|host.trim_matches(['[',']']).parse::<IpAddr>().is_ok_and(|ip|!ip.is_unspecified()&&!ip.is_multicast()))
-            &&logical.scheme()==numeric.scheme()&&logical.port_or_known_default()==numeric.port_or_known_default()
-            &&Pin::from_identity(&self.board_id,&"a".repeat(32)).is_some()
+    pub fn valid(&self) -> bool {
+        let (Some(logical), Some(numeric)) = (
+            device_origin(&self.endpoint),
+            device_origin(&self.numeric_origin),
+        ) else {
+            return false;
+        };
+        numeric.host_str().is_some_and(|host| {
+            host.trim_matches(['[', ']'])
+                .parse::<IpAddr>()
+                .is_ok_and(|ip| !ip.is_unspecified() && !ip.is_multicast())
+        }) && logical.scheme() == numeric.scheme()
+            && logical.port_or_known_default() == numeric.port_or_known_default()
+            && Pin::from_identity(&self.board_id, &"a".repeat(32)).is_some()
     }
 }
 impl AddressCache {
@@ -51,8 +64,10 @@ impl AddressCache {
     fn invalidate(&mut self, domain: &str) {
         self.entries.retain(|(known, _)| known != domain);
         self.relookup.remove(domain);
-        self.verified_routes.retain(|origin,_|named_origin(origin).is_none_or(|(name,_)|name!=domain));
-        self.restored_routes.retain(|origin,_|named_origin(origin).is_none_or(|(name,_)|name!=domain));
+        self.verified_routes
+            .retain(|origin, _| named_origin(origin).is_none_or(|(name, _)| name != domain));
+        self.restored_routes
+            .retain(|origin, _| named_origin(origin).is_none_or(|(name, _)| name != domain));
     }
     fn request_relookup(&mut self, domain: &str) {
         if self.entries.iter().any(|(known, _)| known == domain) {
@@ -98,8 +113,11 @@ fn named_origin(origin: &str) -> Option<(String, u16)> {
     if domain.len() > 253
         || domain.parse::<IpAddr>().is_ok()
         || !domain.split('.').all(|label| {
-            !label.is_empty() && label.len() <= 63
-                && label.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-')
+            !label.is_empty()
+                && label.len() <= 63
+                && label
+                    .bytes()
+                    .all(|c| c.is_ascii_alphanumeric() || c == b'-')
                 && label.as_bytes()[0].is_ascii_alphanumeric()
                 && label.as_bytes()[label.len() - 1].is_ascii_alphanumeric()
         })
@@ -127,7 +145,9 @@ fn verified_address(
     // name must still match; learning an alias never relaxes that contract.
     if domain.ends_with(".local") {
         let (_, expected, _) = local_origin(origin)?;
-        if !crate::bridge::matches_hostname(status, &expected) { return None; }
+        if !crate::bridge::matches_hostname(status, &expected) {
+            return None;
+        }
     }
     Some((domain, remote.ip()))
 }
@@ -140,71 +160,157 @@ pub fn remember_address(origin: &str, status: &DeviceStatus, remote: Option<Sock
         && let Ok(mut cache) = address_cache().lock()
     {
         cache.remember(domain, address);
-        let mut numeric=device_origin(origin).unwrap();
-        if numeric.set_host(Some(&address.to_string())).is_ok(){
-            if cache.verified_routes.len()>=32&&!cache.verified_routes.contains_key(origin.trim_end_matches('/')){if let Some(first)=cache.verified_routes.keys().next().cloned(){cache.verified_routes.remove(&first);}}
-            cache.verified_routes.insert(origin.trim_end_matches('/').into(),SavedRoute{endpoint:origin.trim_end_matches('/').into(),numeric_origin:numeric.to_string().trim_end_matches('/').into(),board_id:status.board_id.clone()});
+        let mut numeric = device_origin(origin).unwrap();
+        if numeric.set_host(Some(&address.to_string())).is_ok() {
+            if cache.verified_routes.len() >= 32
+                && !cache
+                    .verified_routes
+                    .contains_key(origin.trim_end_matches('/'))
+            {
+                if let Some(first) = cache.verified_routes.keys().next().cloned() {
+                    cache.verified_routes.remove(&first);
+                }
+            }
+            cache.verified_routes.insert(
+                origin.trim_end_matches('/').into(),
+                SavedRoute {
+                    endpoint: origin.trim_end_matches('/').into(),
+                    numeric_origin: numeric.to_string().trim_end_matches('/').into(),
+                    board_id: status.board_id.clone(),
+                },
+            );
         }
     }
     // An IP-only fallback learns the board's actual configured hostname from
     // this same verified HTTP/TCP response, never from a claimed status IP or
     // multicast packet. Future HTTP and WS requests retain Host/SNI ownership.
-    if let Some(preferred)=configured_origin(origin,status)
-        && preferred.trim_end_matches('/')!=origin.trim_end_matches('/')
-        && let Some((domain,address))=verified_address(&preferred,status,remote)
-        && let Ok(mut cache)=address_cache().lock(){
-            cache.remember(domain,address);
-            let mut numeric=device_origin(&preferred).unwrap();
-            if numeric.set_host(Some(&address.to_string())).is_ok(){
-                if cache.verified_routes.len()>=32&&!cache.verified_routes.contains_key(&preferred){if let Some(first)=cache.verified_routes.keys().next().cloned(){cache.verified_routes.remove(&first);}}
-                cache.verified_routes.insert(preferred.clone(),SavedRoute{endpoint:preferred,numeric_origin:numeric.to_string().trim_end_matches('/').into(),board_id:status.board_id.clone()});
+    if let Some(preferred) = configured_origin(origin, status)
+        && preferred.trim_end_matches('/') != origin.trim_end_matches('/')
+        && let Some((domain, address)) = verified_address(&preferred, status, remote)
+        && let Ok(mut cache) = address_cache().lock()
+    {
+        cache.remember(domain, address);
+        let mut numeric = device_origin(&preferred).unwrap();
+        if numeric.set_host(Some(&address.to_string())).is_ok() {
+            if cache.verified_routes.len() >= 32 && !cache.verified_routes.contains_key(&preferred)
+            {
+                if let Some(first) = cache.verified_routes.keys().next().cloned() {
+                    cache.verified_routes.remove(&first);
+                }
             }
+            cache.verified_routes.insert(
+                preferred.clone(),
+                SavedRoute {
+                    endpoint: preferred,
+                    numeric_origin: numeric.to_string().trim_end_matches('/').into(),
+                    board_id: status.board_id.clone(),
+                },
+            );
         }
+    }
 }
-pub fn configured_origin(origin:&str,status:&DeviceStatus)->Option<String> {
-    let mut url=device_origin(origin)?;
-    let name=if let Some(bridge)=&status.bridge {bridge["hostname"].as_str()?}else{status.hostname.as_str()};
-    let name=crate::identity::normalize_name(name).ok()?;
+pub fn configured_origin(origin: &str, status: &DeviceStatus) -> Option<String> {
+    let mut url = device_origin(origin)?;
+    let name = if let Some(bridge) = &status.bridge {
+        bridge["hostname"].as_str()?
+    } else {
+        status.hostname.as_str()
+    };
+    let name = crate::identity::normalize_name(name).ok()?;
     // A remote DNS alias is deliberately retained. Only literal LAN addresses
     // and existing local names become the configured mDNS board name.
-    let host=url.host_str()?;
-    if host.trim_matches(['[',']']).parse::<IpAddr>().is_ok_and(|ip|ip.is_loopback()) {
+    let host = url.host_str()?;
+    if host
+        .trim_matches(['[', ']'])
+        .parse::<IpAddr>()
+        .is_ok_and(|ip| ip.is_loopback())
+    {
         return Some(origin.trim_end_matches('/').into());
     }
-    if host.trim_matches(['[',']']).parse::<IpAddr>().is_err()&&!host.ends_with(".local") {return Some(origin.trim_end_matches('/').into());}
+    if host.trim_matches(['[', ']']).parse::<IpAddr>().is_err() && !host.ends_with(".local") {
+        return Some(origin.trim_end_matches('/').into());
+    }
     url.set_host(Some(&format!("{name}.local"))).ok()?;
     Some(url.to_string().trim_end_matches('/').into())
 }
 /// A fresh same-peer WS status may report a completed rename before HTTP can
 /// accept the old Host header. Reuse only the selected session's real TCP hint.
-pub fn rebind_verified_name(origin:&str,previous:&DeviceStatus,status:&DeviceStatus) {
-    if Pin::from_status(previous).is_none()||Pin::from_status(previous)!=Pin::from_status(status){return;}
-    let Some((domain,port))=named_origin(origin)else{return;};
-    let remote=address_cache().lock().ok().and_then(|cache|cache.entries.iter().find(|(name,_)|name==&domain).map(|(_,ip)|SocketAddr::new(*ip,port)));
-    if let Some(preferred)=configured_origin(origin,status){remember_address(&preferred,status,remote);}
+pub fn rebind_verified_name(origin: &str, previous: &DeviceStatus, status: &DeviceStatus) {
+    if Pin::from_status(previous).is_none()
+        || Pin::from_status(previous) != Pin::from_status(status)
+    {
+        return;
+    }
+    let Some((domain, port)) = named_origin(origin) else {
+        return;
+    };
+    let remote = address_cache().lock().ok().and_then(|cache| {
+        cache
+            .entries
+            .iter()
+            .find(|(name, _)| name == &domain)
+            .map(|(_, ip)| SocketAddr::new(*ip, port))
+    });
+    if let Some(preferred) = configured_origin(origin, status) {
+        remember_address(&preferred, status, remote);
+    }
 }
 /// Read-only recovery candidate, never a direct mutation destination. Even a
 /// cached address must pass a fresh public identity/status probe after failure.
-pub fn cached_origin(origin:&str)->Option<String> {
-    let cache=address_cache().lock().ok()?;
-    cache.verified_routes.get(origin.trim_end_matches('/')).or_else(||cache.restored_routes.get(origin.trim_end_matches('/'))).map(|route|route.numeric_origin.clone())
+pub fn cached_origin(origin: &str) -> Option<String> {
+    let cache = address_cache().lock().ok()?;
+    cache
+        .verified_routes
+        .get(origin.trim_end_matches('/'))
+        .or_else(|| cache.restored_routes.get(origin.trim_end_matches('/')))
+        .map(|route| route.numeric_origin.clone())
 }
-pub fn restore_route(route:&SavedRoute,endpoint:&str){
-    if !route.valid()||route.endpoint!=endpoint.trim_end_matches('/'){return;}
-    if let Ok(mut cache)=address_cache().lock(){
-        if cache.restored_routes.len()>=32&&!cache.restored_routes.contains_key(&route.endpoint){if let Some(first)=cache.restored_routes.keys().next().cloned(){cache.restored_routes.remove(&first);}}
-        cache.restored_routes.insert(route.endpoint.clone(),route.clone());
+pub fn restore_route(route: &SavedRoute, endpoint: &str) {
+    if !route.valid() || route.endpoint != endpoint.trim_end_matches('/') {
+        return;
+    }
+    if let Ok(mut cache) = address_cache().lock() {
+        if cache.restored_routes.len() >= 32 && !cache.restored_routes.contains_key(&route.endpoint)
+        {
+            if let Some(first) = cache.restored_routes.keys().next().cloned() {
+                cache.restored_routes.remove(&first);
+            }
+        }
+        cache
+            .restored_routes
+            .insert(route.endpoint.clone(), route.clone());
     }
 }
-pub fn recovery_matches(origin:&str,status:&DeviceStatus)->bool {
-    address_cache().lock().ok().and_then(|cache|cache.verified_routes.get(origin.trim_end_matches('/')).or_else(||cache.restored_routes.get(origin.trim_end_matches('/'))).cloned())
-        .is_some_and(|route|route.board_id==status.board_id)
+pub fn recovery_matches(origin: &str, status: &DeviceStatus) -> bool {
+    address_cache()
+        .lock()
+        .ok()
+        .and_then(|cache| {
+            cache
+                .verified_routes
+                .get(origin.trim_end_matches('/'))
+                .or_else(|| cache.restored_routes.get(origin.trim_end_matches('/')))
+                .cloned()
+        })
+        .is_some_and(|route| route.board_id == status.board_id)
 }
-pub fn remembered_board(origin:&str)->Option<String>{
-    address_cache().lock().ok().and_then(|cache|cache.verified_routes.get(origin.trim_end_matches('/')).or_else(||cache.restored_routes.get(origin.trim_end_matches('/'))).map(|route|route.board_id.clone()))
+pub fn remembered_board(origin: &str) -> Option<String> {
+    address_cache().lock().ok().and_then(|cache| {
+        cache
+            .verified_routes
+            .get(origin.trim_end_matches('/'))
+            .or_else(|| cache.restored_routes.get(origin.trim_end_matches('/')))
+            .map(|route| route.board_id.clone())
+    })
 }
-pub fn verified_route(origin:&str,status:&DeviceStatus)->Option<SavedRoute>{
-    address_cache().lock().ok()?.verified_routes.get(origin.trim_end_matches('/')).filter(|route|route.board_id==status.board_id).cloned()
+pub fn verified_route(origin: &str, status: &DeviceStatus) -> Option<SavedRoute> {
+    address_cache()
+        .lock()
+        .ok()?
+        .verified_routes
+        .get(origin.trim_end_matches('/'))
+        .filter(|route| route.board_id == status.board_id)
+        .cloned()
 }
 
 /// A confirmed resolution failure can explicitly remove the obsolete hint.
@@ -251,15 +357,28 @@ pub fn device_client_builder() -> reqwest::blocking::ClientBuilder {
 /// for the existing selected HTTP worker to learn the actual TCP peer; this
 /// worker performs no HTTP or OS DNS work of its own. None is normal startup,
 /// not a connection failure. Discovery metadata never chooses this dial.
-fn websocket_address(endpoint: &crate::Endpoint, stamp: &crate::connection::Stamp) -> Result<Option<SocketAddr>, String> {
-    if !stamp.current() { return Err("WebSocket connection retired before resolution".into()); }
+fn websocket_address(
+    endpoint: &crate::Endpoint,
+    stamp: &crate::connection::Stamp,
+) -> Result<Option<SocketAddr>, String> {
+    if !stamp.current() {
+        return Err("WebSocket connection retired before resolution".into());
+    }
     let url = device_origin(&endpoint.base).ok_or("Invalid WebSocket device origin")?;
-    let port = url.port_or_known_default().ok_or("Missing WebSocket port")?;
+    let port = url
+        .port_or_known_default()
+        .ok_or("Missing WebSocket port")?;
     // host_str() includes IPv6 brackets on some URL implementations; trim only
     // those delimiters before parsing a numeric literal, never a DNS alias.
     let host = url.host_str().ok_or("Missing WebSocket host")?;
-    if let Ok(address) = host.trim_start_matches('[').trim_end_matches(']').parse::<IpAddr>() {
-        if address.is_unspecified() || address.is_multicast() { return Err("Invalid WebSocket TCP address".into()); }
+    if let Ok(address) = host
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .parse::<IpAddr>()
+    {
+        if address.is_unspecified() || address.is_multicast() {
+            return Err("Invalid WebSocket TCP address".into());
+        }
         return Ok(Some(SocketAddr::new(address, port)));
     }
     let (domain, _) = named_origin(&endpoint.base).ok_or("Invalid WebSocket hostname")?;
@@ -282,50 +401,94 @@ pub struct WebSocketTransport {
 }
 impl WebSocketTransport {
     fn prepare(&self, reading: bool) -> io::Result<()> {
-        if !self.stamp.current() { return Err(io::Error::new(io::ErrorKind::ConnectionAborted, "WebSocket route retired")); }
+        if !self.stamp.current() {
+            return Err(io::Error::new(
+                io::ErrorKind::ConnectionAborted,
+                "WebSocket route retired",
+            ));
+        }
         if let Some(deadline) = self.handshake_deadline {
-            let remaining = deadline.checked_duration_since(Instant::now()).filter(|d| !d.is_zero())
-                .ok_or_else(|| io::Error::new(io::ErrorKind::TimedOut, "WebSocket handshake deadline elapsed"))?;
-            if reading { self.socket.set_read_timeout(Some(remaining))?; }
-            else { self.socket.set_write_timeout(Some(remaining))?; }
+            let remaining = deadline
+                .checked_duration_since(Instant::now())
+                .filter(|d| !d.is_zero())
+                .ok_or_else(|| {
+                    io::Error::new(
+                        io::ErrorKind::TimedOut,
+                        "WebSocket handshake deadline elapsed",
+                    )
+                })?;
+            if reading {
+                self.socket.set_read_timeout(Some(remaining))?;
+            } else {
+                self.socket.set_write_timeout(Some(remaining))?;
+            }
         }
         Ok(())
     }
     fn established(&mut self) -> io::Result<()> {
         self.prepare(true)?;
         self.handshake_deadline = None;
-        self.socket.set_read_timeout(Some(Duration::from_millis(40)))?;
+        self.socket
+            .set_read_timeout(Some(Duration::from_millis(40)))?;
         self.socket.set_write_timeout(Some(WEBSOCKET_TIMEOUT))
     }
 }
 impl Read for WebSocketTransport {
-    fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> { self.prepare(true)?; self.socket.read(bytes) }
+    fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> {
+        self.prepare(true)?;
+        self.socket.read(bytes)
+    }
 }
 impl Write for WebSocketTransport {
-    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> { self.prepare(false)?; self.socket.write(bytes) }
-    fn flush(&mut self) -> io::Result<()> { self.prepare(false)?; self.socket.flush() }
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        self.prepare(false)?;
+        self.socket.write(bytes)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        self.prepare(false)?;
+        self.socket.flush()
+    }
 }
-pub type DeviceWebSocket = tungstenite::WebSocket<tungstenite::stream::MaybeTlsStream<WebSocketTransport>>;
+pub type DeviceWebSocket =
+    tungstenite::WebSocket<tungstenite::stream::MaybeTlsStream<WebSocketTransport>>;
 
 /// The original request retains its URL/Host/TLS SNI. The learned IP is used
 /// only by connect_timeout; upgrade success never grants board authority.
-pub fn connect_websocket(endpoint: &crate::Endpoint, mut request: tungstenite::handshake::client::Request,
-    stamp: crate::connection::Stamp) -> Result<Option<DeviceWebSocket>, String> {
+pub fn connect_websocket(
+    endpoint: &crate::Endpoint,
+    mut request: tungstenite::handshake::client::Request,
+    stamp: crate::connection::Stamp,
+) -> Result<Option<DeviceWebSocket>, String> {
     if request.uri().to_string() != crate::websocket_url(&endpoint.base)? {
         return Err("WebSocket request does not match the selected device origin".into());
     }
-    let Some(address) = websocket_address(endpoint, &stamp)? else { return Ok(None); };
-    if !stamp.current() { return Err("WebSocket route retired before TCP connection".into()); }
+    let Some(address) = websocket_address(endpoint, &stamp)? else {
+        return Ok(None);
+    };
+    if !stamp.current() {
+        return Err("WebSocket route retired before TCP connection".into());
+    }
     let socket = TcpStream::connect_timeout(&address, WEBSOCKET_TIMEOUT).map_err(|error| {
         request_relookup(&endpoint.base);
         crate::diagnostics::describe_error(error)
     })?;
-    socket.set_nodelay(true).map_err(crate::diagnostics::describe_error)?;
-    socket.set_read_timeout(Some(WEBSOCKET_TIMEOUT)).map_err(crate::diagnostics::describe_error)?;
-    socket.set_write_timeout(Some(WEBSOCKET_TIMEOUT)).map_err(crate::diagnostics::describe_error)?;
-    let transport = WebSocketTransport { socket, stamp,
-        handshake_deadline: Some(Instant::now() + WEBSOCKET_TIMEOUT) };
-    transport.prepare(true).map_err(crate::diagnostics::describe_error)?;
+    socket
+        .set_nodelay(true)
+        .map_err(crate::diagnostics::describe_error)?;
+    socket
+        .set_read_timeout(Some(WEBSOCKET_TIMEOUT))
+        .map_err(crate::diagnostics::describe_error)?;
+    socket
+        .set_write_timeout(Some(WEBSOCKET_TIMEOUT))
+        .map_err(crate::diagnostics::describe_error)?;
+    let transport = WebSocketTransport {
+        socket,
+        stamp,
+        handshake_deadline: Some(Instant::now() + WEBSOCKET_TIMEOUT),
+    };
+    transport
+        .prepare(true)
+        .map_err(crate::diagnostics::describe_error)?;
     crate::peer_identity::websocket_headers(&mut request);
     let (mut socket, response) = tungstenite::client_tls(request, transport).map_err(|error|{
         if matches!(&error,tungstenite::HandshakeError::Failure(tungstenite::Error::Http(response)) if response.status().as_u16()==426){"Peer compatibility: server rejected this app version; update it or explicitly disable its version gate".into()}
@@ -336,16 +499,23 @@ pub fn connect_websocket(endpoint: &crate::Endpoint, mut request: tungstenite::h
         tungstenite::stream::MaybeTlsStream::Plain(stream) => stream.established(),
         tungstenite::stream::MaybeTlsStream::Rustls(stream) => stream.sock.established(),
         _ => return Err("Unsupported WebSocket TLS transport".into()),
-    }.map_err(crate::diagnostics::describe_error)?;
+    }
+    .map_err(crate::diagnostics::describe_error)?;
     Ok(Some(socket))
 }
-pub fn websocket_read_timeout(socket: &mut DeviceWebSocket, timeout: Duration) -> Result<(), String> {
+pub fn websocket_read_timeout(
+    socket: &mut DeviceWebSocket,
+    timeout: Duration,
+) -> Result<(), String> {
     let stream = match socket.get_mut() {
         tungstenite::stream::MaybeTlsStream::Plain(stream) => stream,
         tungstenite::stream::MaybeTlsStream::Rustls(stream) => &mut stream.sock,
         _ => return Err("Unsupported WebSocket TLS transport".into()),
     };
-    stream.socket.set_read_timeout(Some(timeout)).map_err(crate::diagnostics::describe_error)
+    stream
+        .socket
+        .set_read_timeout(Some(timeout))
+        .map_err(crate::diagnostics::describe_error)
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -354,7 +524,9 @@ pub struct Pin {
     boot: String,
 }
 impl Pin {
-    pub fn board_id(&self)->&str{&self.board}
+    pub fn board_id(&self) -> &str {
+        &self.board
+    }
     pub fn matches_identity(&self, board: &str, boot: &str) -> bool {
         self.board == board && self.boot == boot
     }
@@ -465,7 +637,9 @@ impl Queue {
         self.pin = None;
         self.clock.fetch_add(1, Ordering::AcqRel);
     }
-    pub fn set_auto_discovery(&mut self,enabled:bool){self.auto_discovery=enabled;}
+    pub fn set_auto_discovery(&mut self, enabled: bool) {
+        self.auto_discovery = enabled;
+    }
     pub fn observe(&mut self, status: &DeviceStatus) -> bool {
         let next = Pin::from_status(status);
         if next == self.pin {
@@ -531,7 +705,11 @@ mod tests {
     #[test]
     fn websocket_bootstrap_preserves_hostname_and_uses_only_verified_tcp_routes() {
         use tungstenite::client::IntoClientRequest;
-        for (host, seeded) in [("ws-route-fixture.local", true), ("localhost", true), ("127.0.0.1", false)] {
+        for (host, seeded) in [
+            ("ws-route-fixture.local", true),
+            ("localhost", true),
+            ("127.0.0.1", false),
+        ] {
             let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
             listener.set_nonblocking(true).unwrap();
             let address = listener.local_addr().unwrap();
@@ -545,8 +723,12 @@ mod tests {
                 let accept = || loop {
                     match listener.accept() {
                         Ok((stream, _)) => {
-                            stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
-                            stream.set_write_timeout(Some(Duration::from_secs(2))).unwrap();
+                            stream
+                                .set_read_timeout(Some(Duration::from_secs(2)))
+                                .unwrap();
+                            stream
+                                .set_write_timeout(Some(Duration::from_secs(2)))
+                                .unwrap();
                             break stream;
                         }
                         Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
@@ -566,42 +748,83 @@ mod tests {
                         request.extend_from_slice(&bytes[..count]);
                     }
                     assert!(request.starts_with(b"GET /api/status "));
-                    write!(stream, "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len()).unwrap();
+                    write!(
+                        stream,
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                        body.len()
+                    )
+                    .unwrap();
                     stream.write_all(&body).unwrap();
                 }
                 let mut observed = String::new();
-                let socket = tungstenite::accept_hdr(accept(), |request: &tungstenite::handshake::server::Request,
-                    response: tungstenite::handshake::server::Response| {
-                    assert_eq!(request.uri().path(), "/ws");
-                    observed = request.headers()["Host"].to_str().unwrap().to_owned();
-                    Ok(response)
-                }).unwrap();
+                let socket = tungstenite::accept_hdr(
+                    accept(),
+                    |request: &tungstenite::handshake::server::Request,
+                     response: tungstenite::handshake::server::Response| {
+                        assert_eq!(request.uri().path(), "/ws");
+                        observed = request.headers()["Host"].to_str().unwrap().to_owned();
+                        Ok(response)
+                    },
+                )
+                .unwrap();
                 drop(socket);
                 observed
             });
             if seeded {
                 // Only a real decoded HTTP response/remote_addr seeds the cache;
                 // this isolated fixture substitutes DNS, not board authority.
-                let response = Client::builder().no_proxy().timeout(Duration::from_secs(2))
-                    .resolve(host, address).build().unwrap().get(format!("{origin}/api/status")).send().unwrap();
+                let response = Client::builder()
+                    .no_proxy()
+                    .timeout(Duration::from_secs(2))
+                    .resolve(host, address)
+                    .build()
+                    .unwrap()
+                    .get(format!("{origin}/api/status"))
+                    .send()
+                    .unwrap();
                 let remote = response.remote_addr();
                 let observed: DeviceStatus = response.json().unwrap();
                 remember_address(&origin, &observed, remote);
             }
-            let endpoint = crate::Endpoint { base: origin.clone(), user: String::new(), password: String::new() };
+            let endpoint = crate::Endpoint {
+                base: origin.clone(),
+                user: String::new(),
+                password: String::new(),
+            };
             let gate = crate::connection::Gate::default();
             let epoch = gate.select(Some(crate::connection::Method::WiFi));
-            let request = crate::websocket_url(&origin).unwrap().into_client_request().unwrap();
-            let mut socket = connect_websocket(&endpoint, request, gate.stamp(crate::connection::Method::WiFi, epoch)).unwrap().unwrap();
+            let request = crate::websocket_url(&origin)
+                .unwrap()
+                .into_client_request()
+                .unwrap();
+            let mut socket = connect_websocket(
+                &endpoint,
+                request,
+                gate.stamp(crate::connection::Method::WiFi, epoch),
+            )
+            .unwrap()
+            .unwrap();
             websocket_read_timeout(&mut socket, Duration::from_millis(7)).unwrap();
             if let tungstenite::stream::MaybeTlsStream::Plain(stream) = socket.get_mut() {
-                assert_eq!(stream.socket.read_timeout().unwrap(), Some(Duration::from_millis(7)));
+                assert_eq!(
+                    stream.socket.read_timeout().unwrap(),
+                    Some(Duration::from_millis(7))
+                );
                 assert!(stream.handshake_deadline.is_none());
-            } else { panic!("Plain loopback fixture unexpectedly selected TLS"); }
+            } else {
+                panic!("Plain loopback fixture unexpectedly selected TLS");
+            }
             drop(socket);
             assert_eq!(server.join().unwrap(), format!("{host}:{}", address.port()));
             if host == "localhost" {
-                assert!(address_cache().lock().unwrap().entries.iter().any(|(key, _)| key == host));
+                assert!(
+                    address_cache()
+                        .lock()
+                        .unwrap()
+                        .entries
+                        .iter()
+                        .any(|(key, _)| key == host)
+                );
             }
             invalidate_address(&origin);
         }
@@ -612,22 +835,53 @@ mod tests {
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         listener.set_nonblocking(true).unwrap();
         let address = listener.local_addr().unwrap();
-        for host in ["unlearned-ws-route-fixture.local", "unlearned-ws-route-fixture.example"] {
+        for host in [
+            "unlearned-ws-route-fixture.local",
+            "unlearned-ws-route-fixture.example",
+        ] {
             let origin = format!("http://{host}:{}", address.port());
             invalidate_address(&origin);
-            let endpoint = crate::Endpoint { base: origin.clone(), user: String::new(), password: String::new() };
+            let endpoint = crate::Endpoint {
+                base: origin.clone(),
+                user: String::new(),
+                password: String::new(),
+            };
             let gate = crate::connection::Gate::default();
             let epoch = gate.select(Some(crate::connection::Method::WiFi));
-            let request = || crate::websocket_url(&origin).unwrap().into_client_request().unwrap();
-            assert!(connect_websocket(&endpoint, request(), gate.stamp(crate::connection::Method::WiFi, epoch)).unwrap().is_none());
+            let request = || {
+                crate::websocket_url(&origin)
+                    .unwrap()
+                    .into_client_request()
+                    .unwrap()
+            };
+            assert!(
+                connect_websocket(
+                    &endpoint,
+                    request(),
+                    gate.stamp(crate::connection::Method::WiFi, epoch)
+                )
+                .unwrap()
+                .is_none()
+            );
             // A real prior hint marked for relookup must wait, not dial its old
             // address or start another resolver in this worker.
             let mut peer = status('a');
             peer.hostname = "unlearned-ws-route-fixture".into();
             remember_address(&origin, &peer, Some(address));
             request_relookup(&origin);
-            assert!(connect_websocket(&endpoint, request(), gate.stamp(crate::connection::Method::WiFi, epoch)).unwrap().is_none());
-            assert_eq!(listener.accept().unwrap_err().kind(), io::ErrorKind::WouldBlock);
+            assert!(
+                connect_websocket(
+                    &endpoint,
+                    request(),
+                    gate.stamp(crate::connection::Method::WiFi, epoch)
+                )
+                .unwrap()
+                .is_none()
+            );
+            assert_eq!(
+                listener.accept().unwrap_err().kind(),
+                io::ErrorKind::WouldBlock
+            );
             invalidate_address(&origin);
         }
     }
@@ -636,32 +890,70 @@ mod tests {
         use tungstenite::client::IntoClientRequest;
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         listener.set_nonblocking(true).unwrap();
-        let endpoint = crate::Endpoint { base: format!("http://{}", listener.local_addr().unwrap()), user: String::new(), password: String::new() };
+        let endpoint = crate::Endpoint {
+            base: format!("http://{}", listener.local_addr().unwrap()),
+            user: String::new(),
+            password: String::new(),
+        };
         let gate = crate::connection::Gate::default();
         let epoch = gate.select(Some(crate::connection::Method::WiFi));
         let mismatched = "ws://127.0.0.1:9/ws".into_client_request().unwrap();
-        assert!(connect_websocket(&endpoint, mismatched, gate.stamp(crate::connection::Method::WiFi, epoch)).is_err());
+        assert!(
+            connect_websocket(
+                &endpoint,
+                mismatched,
+                gate.stamp(crate::connection::Method::WiFi, epoch)
+            )
+            .is_err()
+        );
         gate.select(None);
-        let request = crate::websocket_url(&endpoint.base).unwrap().into_client_request().unwrap();
-        assert!(connect_websocket(&endpoint, request, gate.stamp(crate::connection::Method::WiFi, epoch)).is_err());
-        assert_eq!(listener.accept().unwrap_err().kind(), io::ErrorKind::WouldBlock);
+        let request = crate::websocket_url(&endpoint.base)
+            .unwrap()
+            .into_client_request()
+            .unwrap();
+        assert!(
+            connect_websocket(
+                &endpoint,
+                request,
+                gate.stamp(crate::connection::Method::WiFi, epoch)
+            )
+            .is_err()
+        );
+        assert_eq!(
+            listener.accept().unwrap_err().kind(),
+            io::ErrorKind::WouldBlock
+        );
     }
     #[test]
     fn websocket_handshake_deadline_and_runtime_route_check_are_independent() {
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-        let socket = TcpStream::connect_timeout(&listener.local_addr().unwrap(), Duration::from_secs(1)).unwrap();
+        let socket =
+            TcpStream::connect_timeout(&listener.local_addr().unwrap(), Duration::from_secs(1))
+                .unwrap();
         let (_peer, _) = listener.accept().unwrap();
         let gate = crate::connection::Gate::default();
         let epoch = gate.select(Some(crate::connection::Method::WiFi));
-        let mut stream = WebSocketTransport { socket, stamp: gate.stamp(crate::connection::Method::WiFi, epoch),
-            handshake_deadline: Some(Instant::now() - Duration::from_millis(1)) };
-        assert_eq!(stream.read(&mut [0]).unwrap_err().kind(), io::ErrorKind::TimedOut);
+        let mut stream = WebSocketTransport {
+            socket,
+            stamp: gate.stamp(crate::connection::Method::WiFi, epoch),
+            handshake_deadline: Some(Instant::now() - Duration::from_millis(1)),
+        };
+        assert_eq!(
+            stream.read(&mut [0]).unwrap_err().kind(),
+            io::ErrorKind::TimedOut
+        );
         stream.handshake_deadline = Some(Instant::now() + WEBSOCKET_TIMEOUT);
         stream.established().unwrap();
         assert!(stream.handshake_deadline.is_none());
         gate.select(None);
-        assert_eq!(stream.read(&mut [0]).unwrap_err().kind(), io::ErrorKind::ConnectionAborted);
-        assert_eq!(stream.write(&[1]).unwrap_err().kind(), io::ErrorKind::ConnectionAborted);
+        assert_eq!(
+            stream.read(&mut [0]).unwrap_err().kind(),
+            io::ErrorKind::ConnectionAborted
+        );
+        assert_eq!(
+            stream.write(&[1]).unwrap_err().kind(),
+            io::ErrorKind::ConnectionAborted
+        );
     }
     #[test]
     fn local_address_cache_accepts_only_verified_tcp_peer_not_advertised_ip() {
@@ -671,8 +963,14 @@ mod tests {
         let actual: SocketAddr = "192.0.2.10:80".parse().unwrap();
         let accepted = verified_address("http://LEDBOARD.local", &peer, Some(actual)).unwrap();
         assert_eq!(accepted, ("ledboard.local".into(), actual.ip()));
-        assert_eq!(verified_address("http://ledboard.example", &peer, Some(actual)), Some(("ledboard.example".into(), actual.ip())));
-        assert_eq!(verified_address("http://localhost", &peer, Some(actual)), Some(("localhost".into(), actual.ip())));
+        assert_eq!(
+            verified_address("http://ledboard.example", &peer, Some(actual)),
+            Some(("ledboard.example".into(), actual.ip()))
+        );
+        assert_eq!(
+            verified_address("http://localhost", &peer, Some(actual)),
+            Some(("localhost".into(), actual.ip()))
+        );
         assert!(verified_address("http://ledboard.local", &peer, None).is_none());
         peer.hostname = "foreign".into();
         assert!(verified_address("http://ledboard.local", &peer, Some(actual)).is_none());
@@ -703,45 +1001,110 @@ mod tests {
         }
     }
     #[test]
-    fn discovery_numeric_fallback_and_same_peer_rename_share_actual_session_tcp_cache(){
-        let mut observed=status('a');observed.hostname="discovery-cache-old".into();observed.ip="203.0.113.99".into();
-        let source="http://192.0.2.55:8080";let remote:SocketAddr="192.0.2.55:8080".parse().unwrap();
-        remember_address(source,&observed,Some(remote));
-        let old="http://discovery-cache-old.local:8080";
-        assert_eq!(cached_origin(old).as_deref(),Some(source));
-        let mut renamed=observed.clone();renamed.hostname="discovery-cache-new".into();
-        rebind_verified_name(old,&observed,&renamed);
-        let new="http://discovery-cache-new.local:8080";
-        assert_eq!(cached_origin(new).as_deref(),Some(source));
-        let mut foreign=renamed.clone();foreign.hostname="discovery-cache-foreign".into();foreign.board_id="different-board".into();
-        rebind_verified_name(old,&observed,&foreign);assert!(cached_origin("http://discovery-cache-foreign.local:8080").is_none());
-        assert_eq!(configured_origin("https://remote.example:8443",&renamed).as_deref(),Some("https://remote.example:8443"));
-        for alias in ["http://127.0.0.1:18082","http://[::1]:18082","http://localhost:18082"] {
-            assert_eq!(configured_origin(alias,&renamed).as_deref(),Some(alias),"A forwarded port is not a board LAN port");
+    fn discovery_numeric_fallback_and_same_peer_rename_share_actual_session_tcp_cache() {
+        let mut observed = status('a');
+        observed.hostname = "discovery-cache-old".into();
+        observed.ip = "203.0.113.99".into();
+        let source = "http://192.0.2.55:8080";
+        let remote: SocketAddr = "192.0.2.55:8080".parse().unwrap();
+        remember_address(source, &observed, Some(remote));
+        let old = "http://discovery-cache-old.local:8080";
+        assert_eq!(cached_origin(old).as_deref(), Some(source));
+        let mut renamed = observed.clone();
+        renamed.hostname = "discovery-cache-new".into();
+        rebind_verified_name(old, &observed, &renamed);
+        let new = "http://discovery-cache-new.local:8080";
+        assert_eq!(cached_origin(new).as_deref(), Some(source));
+        let mut foreign = renamed.clone();
+        foreign.hostname = "discovery-cache-foreign".into();
+        foreign.board_id = "different-board".into();
+        rebind_verified_name(old, &observed, &foreign);
+        assert!(cached_origin("http://discovery-cache-foreign.local:8080").is_none());
+        assert_eq!(
+            configured_origin("https://remote.example:8443", &renamed).as_deref(),
+            Some("https://remote.example:8443")
+        );
+        for alias in [
+            "http://127.0.0.1:18082",
+            "http://[::1]:18082",
+            "http://localhost:18082",
+        ] {
+            assert_eq!(
+                configured_origin(alias, &renamed).as_deref(),
+                Some(alias),
+                "A forwarded port is not a board LAN port"
+            );
         }
-        let mut forwarded=observed.clone();forwarded.hostname="forwarded-not-dns".into();
-        remember_address("http://127.0.0.1:18082",&forwarded,Some("127.0.0.1:18082".parse().unwrap()));
+        let mut forwarded = observed.clone();
+        forwarded.hostname = "forwarded-not-dns".into();
+        remember_address(
+            "http://127.0.0.1:18082",
+            &forwarded,
+            Some("127.0.0.1:18082".parse().unwrap()),
+        );
         assert!(cached_origin("http://forwarded-not-dns.local:18082").is_none());
-        invalidate_address(old);invalidate_address(new);assert!(cached_origin(old).is_none());assert!(cached_origin(new).is_none());
+        invalidate_address(old);
+        invalidate_address(new);
+        assert!(cached_origin(old).is_none());
+        assert!(cached_origin(new).is_none());
     }
     #[test]
-    fn discovery_saved_route_roundtrip_stays_readonly_endpoint_board_and_port_bound(){
-        let route=SavedRoute{endpoint:"http://saved-discovery.local:8081".into(),numeric_origin:"http://192.0.2.44:8081".into(),board_id:"saved-board".into()};
+    fn discovery_saved_route_roundtrip_stays_readonly_endpoint_board_and_port_bound() {
+        let route = SavedRoute {
+            endpoint: "http://saved-discovery.local:8081".into(),
+            numeric_origin: "http://192.0.2.44:8081".into(),
+            board_id: "saved-board".into(),
+        };
         assert!(route.valid());
-        let mut config=crate::config::AppConfig::default();config.endpoint=route.endpoint.clone();config.last_network_route=Some(route.clone());
-        let decoded:crate::config::AppConfig=serde_json::from_slice(&serde_json::to_vec(&config).unwrap()).unwrap();assert_eq!(decoded.last_network_route,Some(route.clone()));
-        invalidate_address(&route.endpoint);restore_route(&route,"http://different-discovery.local:8081");assert!(cached_origin(&route.endpoint).is_none());
-        restore_route(&route,&route.endpoint);assert_eq!(cached_origin(&route.endpoint),Some(route.numeric_origin.clone()));
-        let mut observed=status('a');observed.board_id=route.board_id.clone();observed.hostname="saved-discovery".into();
-        assert!(verified_route(&route.endpoint,&observed).is_none());assert!(recovery_matches(&route.endpoint,&observed));
-        assert!(websocket_address(&crate::Endpoint{base:route.endpoint.clone(),user:String::new(),password:String::new()},&{
-            let gate=crate::connection::Gate::default();let epoch=gate.select(Some(crate::Transport::WiFi));gate.stamp(crate::Transport::WiFi,epoch)
-        }).unwrap().is_none(),"A saved profile is not an admitted WS dial hint");
-        observed.board_id="another-board".into();assert!(!recovery_matches(&route.endpoint,&observed));
-        let mut invalid=route.clone();invalid.numeric_origin="https://192.0.2.44:8081".into();assert!(!invalid.valid());
-        invalid=route.clone();invalid.numeric_origin="http://192.0.2.44:8082".into();assert!(!invalid.valid());
-        invalid=route.clone();invalid.numeric_origin="http://unverified-discovery.local:8081".into();assert!(!invalid.valid());
-        invalidate_address(&route.endpoint);assert!(cached_origin(&route.endpoint).is_none());
+        let mut config = crate::config::AppConfig::default();
+        config.endpoint = route.endpoint.clone();
+        config.last_network_route = Some(route.clone());
+        let decoded: crate::config::AppConfig =
+            serde_json::from_slice(&serde_json::to_vec(&config).unwrap()).unwrap();
+        assert_eq!(decoded.last_network_route, Some(route.clone()));
+        invalidate_address(&route.endpoint);
+        restore_route(&route, "http://different-discovery.local:8081");
+        assert!(cached_origin(&route.endpoint).is_none());
+        restore_route(&route, &route.endpoint);
+        assert_eq!(
+            cached_origin(&route.endpoint),
+            Some(route.numeric_origin.clone())
+        );
+        let mut observed = status('a');
+        observed.board_id = route.board_id.clone();
+        observed.hostname = "saved-discovery".into();
+        assert!(verified_route(&route.endpoint, &observed).is_none());
+        assert!(recovery_matches(&route.endpoint, &observed));
+        assert!(
+            websocket_address(
+                &crate::Endpoint {
+                    base: route.endpoint.clone(),
+                    user: String::new(),
+                    password: String::new()
+                },
+                &{
+                    let gate = crate::connection::Gate::default();
+                    let epoch = gate.select(Some(crate::Transport::WiFi));
+                    gate.stamp(crate::Transport::WiFi, epoch)
+                }
+            )
+            .unwrap()
+            .is_none(),
+            "A saved profile is not an admitted WS dial hint"
+        );
+        observed.board_id = "another-board".into();
+        assert!(!recovery_matches(&route.endpoint, &observed));
+        let mut invalid = route.clone();
+        invalid.numeric_origin = "https://192.0.2.44:8081".into();
+        assert!(!invalid.valid());
+        invalid = route.clone();
+        invalid.numeric_origin = "http://192.0.2.44:8082".into();
+        assert!(!invalid.valid());
+        invalid = route.clone();
+        invalid.numeric_origin = "http://unverified-discovery.local:8081".into();
+        assert!(!invalid.valid());
+        invalidate_address(&route.endpoint);
+        assert!(cached_origin(&route.endpoint).is_none());
     }
     #[test]
     fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority() {
@@ -932,11 +1295,20 @@ mod tests {
         let mut s = status('a');
         s.http_peer_fencing = false;
         assert!(Pin::from_identity(&s.board_id, &s.boot_id).is_some());
-        assert!(Pin::from_status(&s).is_none(), "Do not invent HTTP fence support for USB");
+        assert!(
+            Pin::from_status(&s).is_none(),
+            "Do not invent HTTP fence support for USB"
+        );
         for board in ["", "UPPER", "space name", &"a".repeat(65)] {
             assert!(Pin::from_identity(board, &s.boot_id).is_none());
         }
-        for boot in ["", &"0".repeat(32), &"A".repeat(32), &"a".repeat(31), &"g".repeat(32)] {
+        for boot in [
+            "",
+            &"0".repeat(32),
+            &"A".repeat(32),
+            &"a".repeat(31),
+            &"g".repeat(32),
+        ] {
             assert!(Pin::from_identity(&s.board_id, boot).is_none());
         }
     }
@@ -1068,10 +1440,13 @@ mod tests {
     }
     #[test]
     fn gui_mapping_enveloped_read_needs_no_http_status_preflight() {
-        let (endpoint, server) = crate::tests::mock_device(vec![
-            (200, wire_mapping(Some(("esp8266-aabbccddeeff", 'a')))),
-        ]);
-        let result = crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 73)).unwrap();
+        let (endpoint, server) = crate::tests::mock_device(vec![(
+            200,
+            wire_mapping(Some(("esp8266-aabbccddeeff", 'a'))),
+        )]);
+        let result =
+            crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 73))
+                .unwrap();
         assert!(matches!(result, Event::Mapping(73, cells, Some(_)) if cells.len()==80));
         let requests = server.join().unwrap();
         assert_eq!(requests.len(), 1);
@@ -1083,21 +1458,44 @@ mod tests {
     #[test]
     fn gui_mapping_foreign_or_previous_boot_response_is_never_adopted() {
         for identity in [("other-board", 'a'), ("esp8266-aabbccddeeff", 'b')] {
-            let (endpoint, server) = crate::tests::mock_device(vec![(200, wire_mapping(Some(identity)))]);
-            let error = crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 74)).err().unwrap();
+            let (endpoint, server) =
+                crate::tests::mock_device(vec![(200, wire_mapping(Some(identity)))]);
+            let error = crate::scoped_http_request(
+                &client(),
+                &scope(),
+                &HttpCommand::Mapping(endpoint, 74),
+            )
+            .err()
+            .unwrap();
             assert!(error.contains("different board/boot"));
             let requests = server.join().unwrap();
-            assert_eq!(requests.len(), 1, "Foreign mapping cannot trigger an optimistic fallback");
+            assert_eq!(
+                requests.len(),
+                1,
+                "Foreign mapping cannot trigger an optimistic fallback"
+            );
             assert!(requests[0].starts_with("GET /api/cells/mapping "));
         }
     }
     #[test]
     fn gui_mapping_incomplete_or_invalid_envelope_is_not_legacy() {
-        for invalid in [serde_json::json!({"board_id":"esp8266-aabbccddeeff"}), serde_json::json!({"boot_id":"a".repeat(32)})] {
+        for invalid in [
+            serde_json::json!({"board_id":"esp8266-aabbccddeeff"}),
+            serde_json::json!({"boot_id":"a".repeat(32)}),
+        ] {
             let mut value: serde_json::Value = serde_json::from_slice(&wire_mapping(None)).unwrap();
-            for (key, value_part) in invalid.as_object().unwrap() { value[key] = value_part.clone(); }
-            let (endpoint, server) = crate::tests::mock_device(vec![(200, serde_json::to_vec(&value).unwrap())]);
-            let error = crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 75)).err().unwrap();
+            for (key, value_part) in invalid.as_object().unwrap() {
+                value[key] = value_part.clone();
+            }
+            let (endpoint, server) =
+                crate::tests::mock_device(vec![(200, serde_json::to_vec(&value).unwrap())]);
+            let error = crate::scoped_http_request(
+                &client(),
+                &scope(),
+                &HttpCommand::Mapping(endpoint, 75),
+            )
+            .err()
+            .unwrap();
             assert!(error.contains("incomplete board/boot"));
             assert_eq!(server.join().unwrap().len(), 1);
         }
@@ -1108,9 +1506,14 @@ mod tests {
         let clock = scope.clock.clone();
         let (endpoint, server) = crate::tests::mock_device_with_hook(
             vec![(200, wire_mapping(Some(("esp8266-aabbccddeeff", 'a'))))],
-            Box::new(move |_| { clock.fetch_add(1, Ordering::AcqRel); }),
+            Box::new(move |_| {
+                clock.fetch_add(1, Ordering::AcqRel);
+            }),
         );
-        let error = crate::scoped_http_request(&client(), &scope, &HttpCommand::Mapping(endpoint, 76)).err().unwrap();
+        let error =
+            crate::scoped_http_request(&client(), &scope, &HttpCommand::Mapping(endpoint, 76))
+                .err()
+                .unwrap();
         assert!(error.contains("revoked"));
         assert_eq!(server.join().unwrap().len(), 1);
     }
@@ -1119,7 +1522,12 @@ mod tests {
         let mut scope = scope();
         scope.queued_at = Instant::now() - Duration::from_secs(25);
         let (endpoint, server) = crate::tests::mock_device(vec![]);
-        assert!(crate::scoped_http_request(&client(), &scope, &HttpCommand::Mapping(endpoint, 77)).err().unwrap().contains("expired"));
+        assert!(
+            crate::scoped_http_request(&client(), &scope, &HttpCommand::Mapping(endpoint, 77))
+                .err()
+                .unwrap()
+                .contains("expired")
+        );
         assert!(server.join().unwrap().is_empty());
     }
     #[test]
@@ -1131,9 +1539,16 @@ mod tests {
                 (200, wire_mapping(None)),
                 (200, wire_status(after, &["table"])),
             ]);
-            let result = crate::scoped_http_request(&client(), &scope(), &HttpCommand::Mapping(endpoint, 78));
-            if after=='a' { assert!(matches!(result, Ok(Event::Mapping(78, cells, None)) if cells.len()==80)); }
-            else { assert!(result.err().unwrap().contains("changed during readback")); }
+            let result = crate::scoped_http_request(
+                &client(),
+                &scope(),
+                &HttpCommand::Mapping(endpoint, 78),
+            );
+            if after == 'a' {
+                assert!(matches!(result, Ok(Event::Mapping(78, cells, None)) if cells.len()==80));
+            } else {
+                assert!(result.err().unwrap().contains("changed during readback"));
+            }
             let requests = server.join().unwrap();
             assert_eq!(requests.len(), 4);
             assert!(requests[0].starts_with("GET /api/cells/mapping "));

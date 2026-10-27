@@ -16,21 +16,30 @@ class CellAssignments {
       );
 
   static const maximumFileBytes = 512 * 1024;
-  static const states = ['white', 'red', 'off'];
+  static const states = ['idle', 'lost', 'won', 'off'];
   final Map<int, String> values;
   List<Map<String, Object>> get assignments => [
     for (final entry in values.entries)
       {'cell': entry.key, 'state': entry.value},
   ];
-  String get commandValue => jsonEncode(assignments);
+  // Keep the original wire spellings for existing state codes. Export/UI use
+  // semantic names; neither representation depends on a state's current RGB.
+  List<Map<String, Object>> get wireAssignments => [
+    for (final entry in values.entries)
+      {'cell': entry.key, 'state': switch (entry.value) {
+        'idle' => 'white', 'lost' => 'red', _ => entry.value,
+      }},
+  ];
+  String get commandValue => jsonEncode(wireAssignments);
 
   static String normalizeState(Object? value) {
     if (value is! String) throw const FormatException('Missing cell state');
     return switch (value.trim().toLowerCase()) {
-      'white' || '#ffffff' => 'white',
-      'red' || '#ff0000' => 'red',
+      'idle' || 'white' || '#ffffff' => 'idle',
+      'lost' || 'red' || '#ff0000' => 'lost',
+      'won' => 'won',
       'off' || '#000000' => 'off',
-      _ => throw const FormatException('Cell colors must be white, red or off'),
+      _ => throw const FormatException('Cell states must be idle, won, lost or off'),
     };
   }
 

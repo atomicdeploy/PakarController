@@ -1,8 +1,10 @@
 use eframe::egui;
 
 /// Root-viewport overlay: dialogs must not independently replay messages.
-pub fn draw(ctx: &egui::Context) {
-    if !crate::config::live().notifications.in_app { return; }
+pub fn draw(ctx: &egui::Context, details_label: &str) {
+    if !crate::config::live().notifications.in_app {
+        return;
+    }
     let state = crate::messaging::snapshot();
     if state.toasts.is_empty() {
         return;
@@ -48,6 +50,11 @@ pub fn draw(ctx: &egui::Context) {
                                     .max_height(140.0)
                                     .show(ui, |ui| {
                                         ui.add(egui::Label::new(&toast.message).wrap());
+                                        if let Some(detail) = toast.details.as_ref() {
+                                            ui.collapsing(details_label, |ui| {
+                                                ui.add(egui::Label::new(detail).wrap());
+                                            });
+                                        }
                                     });
                             });
                             if ui

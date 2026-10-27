@@ -1,11 +1,11 @@
 //! Adapted from Pealayer's PreferencesDraft and rail/body/footer editor.
+use super::dropdown::DropdownUiExt;
 use crate::{
     PakarControllerApp,
-    config::{AppConfig, AppDirection, AppLanguage, AppTheme, ColorPalette},
+    config::{AppConfig, AppDirection, AppLanguage, AppTheme, ColorPalette, UiControlDensity},
     ui::{dialog, icons},
 };
 use eframe::egui;
-use super::dropdown::DropdownUiExt;
 pub const PAGES: [&str; 7] = [
     "appearance",
     "application",
@@ -64,9 +64,19 @@ impl PreferencesDraft {
     }
     // Adapted from Pealayer PreferencesDraft::sync_external_appearance: live
     // owner fields update all three baselines without erasing unrelated drafts.
-    fn sync_connection_owner(&mut self, method: crate::connection::Method, enabled: bool,
-        endpoint: &str, user: &str, port: &str) {
-        for target in [&mut self.config, &mut self.saved_config, &mut self.previewed_config] {
+    fn sync_connection_owner(
+        &mut self,
+        method: crate::connection::Method,
+        enabled: bool,
+        endpoint: &str,
+        user: &str,
+        port: &str,
+    ) {
+        for target in [
+            &mut self.config,
+            &mut self.saved_config,
+            &mut self.previewed_config,
+        ] {
             target.connection_method = method;
             target.connection_enabled = enabled;
             target.endpoint = endpoint.to_owned();
@@ -75,8 +85,19 @@ impl PreferencesDraft {
         }
     }
     fn sync_workspace_owner(&mut self, workspaces: &crate::native_workspace::Store) {
-        for target in [&mut self.config, &mut self.saved_config, &mut self.previewed_config] {
+        for target in [
+            &mut self.config,
+            &mut self.saved_config,
+            &mut self.previewed_config,
+        ] {
             target.native_workspaces = workspaces.clone();
+        }
+    }
+    fn sync_status_owner(&mut self, items: &super::status_bar::Items) {
+        // Footer customization is owned by the live footer, not this editor.
+        // Keep its three baselines aligned without discarding appearance drafts.
+        for target in [&mut self.config, &mut self.saved_config, &mut self.previewed_config] {
+            target.status_items = items.clone();
         }
     }
 }
@@ -91,54 +112,141 @@ struct Outcome {
     board_action: Option<Option<bool>>,
     client_action: Option<crate::client_management::Action>,
 }
-fn app_management(draft:&mut PreferencesDraft, ui:&mut egui::Ui)->Option<crate::client_management::Action>{
-    use crate::client_management::{self,Action};
-    let mut action=None;
-    dialog::section(ui,icons::ARROW_CLOCKWISE,"App updates",|ui|{
-        ui.weak(format!("PakarController {} · build {} · Windows x64",env!("CARGO_PKG_VERSION"),client_management::build()));
+fn app_management(
+    draft: &mut PreferencesDraft,
+    ui: &mut egui::Ui,
+) -> Option<crate::client_management::Action> {
+    use crate::client_management::{self, Action};
+    let mut action = None;
+    dialog::section(ui, icons::ARROW_CLOCKWISE, "App updates", |ui| {
+        ui.weak(format!(
+            "PakarController {} · build {} · Windows x64",
+            env!("CARGO_PKG_VERSION"),
+            client_management::build()
+        ));
         ui.weak("Updates this desktop application, not the connected board firmware.");
-        dialog::setting_row(ui,icons::GLOBE,"Management server",None,|ui|{ui.text_edit_singleline(&mut draft.config.client_management.base);});
-        let settings=&mut draft.config.client_management;
-        ui.checkbox(&mut settings.auto_check,"Automatically check for app updates");
-        ui.checkbox(&mut settings.auto_download,"Download verified newer app packages");
-        ui.checkbox(&mut settings.auto_apply,"Apply automatically when all editors and device operations are closed");
-        ui.checkbox(&mut settings.auto_cleanup,"Remove obsolete owned pending packages");
-        let status=client_management::snapshot();
-        ui.strong(if status.state.is_empty(){"Not checked"}else{&status.state});
-        if !status.detail.is_empty(){ui.weak(&status.detail);}
-        if let Some(total)=status.expected_bytes.filter(|total|*total>0){
-            ui.add(egui::ProgressBar::new((status.received_bytes as f64/total as f64).clamp(0.0,1.0) as f32)
-                .text(format!("{} / {} bytes",status.received_bytes,total)));
+        dialog::setting_row(ui, icons::GLOBE, "Management server", None, |ui| {
+            ui.text_edit_singleline(&mut draft.config.client_management.base);
+        });
+        let settings = &mut draft.config.client_management;
+        ui.checkbox(
+            &mut settings.auto_check,
+            "Automatically check for app updates",
+        );
+        ui.checkbox(
+            &mut settings.auto_download,
+            "Download verified newer app packages",
+        );
+        ui.checkbox(
+            &mut settings.auto_apply,
+            "Apply automatically when all editors and device operations are closed",
+        );
+        ui.checkbox(
+            &mut settings.auto_cleanup,
+            "Remove obsolete owned pending packages",
+        );
+        let status = client_management::snapshot();
+        ui.strong(if status.state.is_empty() {
+            "Not checked"
+        } else {
+            &status.state
+        });
+        if !status.detail.is_empty() {
+            ui.weak(&status.detail);
         }
-        if let Some(release)=status.release.as_ref(){ui.label(format!("Available: {} · build {} · {} bytes",release.version,release.build,release.bytes));}
+        if let Some(total) = status.expected_bytes.filter(|total| *total > 0) {
+            ui.add(
+                egui::ProgressBar::new(
+                    (status.received_bytes as f64 / total as f64).clamp(0.0, 1.0) as f32,
+                )
+                .text(format!("{} / {} bytes", status.received_bytes, total)),
+            );
+        }
+        if let Some(release) = status.release.as_ref() {
+            ui.label(format!(
+                "Available: {} · build {} · {} bytes",
+                release.version, release.build, release.bytes
+            ));
+        }
         ui.weak(if status.managed_installation{"Managed installation confirmed; graceful replacement preserves settings and rollback."}
             else{"Automatic replacement is unavailable until the approved installer initializes this installation."});
-        let ready=!draft.is_dirty()&&!status.applying;
-        ui.add_enabled_ui(ready,|ui|{ui.horizontal_wrapped(|ui|{
-            if dialog::action_button(ui,icons::ARROW_CLOCKWISE,"Check now").clicked(){action=Some(Action::Check);}
-            if ui.add_enabled(status.release.is_some(),egui::Button::new("Download package")).clicked(){action=Some(Action::Download);}
-            if ui.add_enabled(status.managed_installation&&status.package_verified,egui::Button::new("Apply and restart")).clicked(){action=Some(Action::Apply);}
-            if dialog::action_button(ui,icons::TRASH,"Clean old pending packages").clicked(){action=Some(Action::Cleanup);}
-        });});
-        if !ready{ui.weak("Save or discard preference edits before performing app management actions.");}
+        let ready = !draft.is_dirty() && !status.applying;
+        ui.add_enabled_ui(ready, |ui| {
+            ui.horizontal_wrapped(|ui| {
+                if dialog::action_button(ui, icons::ARROW_CLOCKWISE, "Check now").clicked() {
+                    action = Some(Action::Check);
+                }
+                if ui
+                    .add_enabled(
+                        status.release.is_some(),
+                        egui::Button::new("Download package"),
+                    )
+                    .clicked()
+                {
+                    action = Some(Action::Download);
+                }
+                if ui
+                    .add_enabled(
+                        status.managed_installation && status.package_verified,
+                        egui::Button::new("Apply and restart"),
+                    )
+                    .clicked()
+                {
+                    action = Some(Action::Apply);
+                }
+                if dialog::action_button(ui, icons::TRASH, "Clean old pending packages").clicked() {
+                    action = Some(Action::Cleanup);
+                }
+            });
+        });
+        if !ready {
+            ui.weak("Save or discard preference edits before performing app management actions.");
+        }
     });
     ui.add_space(8.0);
-    dialog::section(ui,icons::LOCK,"Client enrollment and local policy",|ui|{
-        let settings=&mut draft.config.client_management;
-        ui.checkbox(&mut settings.telemetry,"Send operational app telemetry");
-        ui.checkbox(&mut settings.remote_commands,"Receive management commands");
-        ui.checkbox(&mut settings.allow_remote_cleanup,"Allow remote cleanup of verified obsolete pending packages");
-        ui.checkbox(&mut settings.allow_remote_uninstall,"Opt in to remote uninstall (requires a separately approved removal inventory)");
-        ui.weak("Telemetry excludes passwords, enrollment credentials, board payloads and preference contents. Remote actions are claimed at most once; uncertain actions are never replayed.");
-        let status=client_management::snapshot();
-        ui.label(if status.enrolled{"Enrolled · credential protected by Windows"}else{"Not enrolled"});
-        if let Some(id)=status.client_id{ui.weak(format!("Client: {id}"));}
-        ui.add(egui::TextEdit::singleline(&mut draft.enrollment_token).password(true).hint_text("One-time enrollment token"));
-        if ui.add_enabled(!draft.is_dirty()&&!draft.enrollment_token.is_empty(),egui::Button::new("Enroll this client")).clicked(){
-            action=Some(Action::Enroll(std::mem::take(&mut draft.enrollment_token)));
-        }
-        ui.weak("Uninstall is not executable until an explicit local removal inventory is approved. Active app, settings, rollback and shared caches are never cleanup targets.");
-    });
+    dialog::section(
+        ui,
+        icons::LOCK,
+        "Client enrollment and local policy",
+        |ui| {
+            let settings = &mut draft.config.client_management;
+            ui.checkbox(&mut settings.telemetry, "Send operational app telemetry");
+            ui.checkbox(&mut settings.remote_commands, "Receive management commands");
+            ui.checkbox(
+                &mut settings.allow_remote_cleanup,
+                "Allow remote cleanup of verified obsolete pending packages",
+            );
+            ui.checkbox(
+                &mut settings.allow_remote_uninstall,
+                "Opt in to remote uninstall (requires a separately approved removal inventory)",
+            );
+            ui.weak("Telemetry excludes passwords, enrollment credentials, board payloads and preference contents. Remote actions are claimed at most once; uncertain actions are never replayed.");
+            let status = client_management::snapshot();
+            ui.label(if status.enrolled {
+                "Enrolled · credential protected by Windows"
+            } else {
+                "Not enrolled"
+            });
+            if let Some(id) = status.client_id {
+                ui.weak(format!("Client: {id}"));
+            }
+            ui.add(
+                egui::TextEdit::singleline(&mut draft.enrollment_token)
+                    .password(true)
+                    .hint_text("One-time enrollment token"),
+            );
+            if ui
+                .add_enabled(
+                    !draft.is_dirty() && !draft.enrollment_token.is_empty(),
+                    egui::Button::new("Enroll this client"),
+                )
+                .clicked()
+            {
+                action = Some(Action::Enroll(std::mem::take(&mut draft.enrollment_token)));
+            }
+            ui.weak("Uninstall is not executable until an explicit local removal inventory is approved. Active app, settings, rollback and shared caches are never cleanup targets.");
+        },
+    );
     action
 }
 struct BoardView {
@@ -159,41 +267,84 @@ fn board_controls(ui: &mut egui::Ui, board: &BoardView) -> Option<Option<bool>> 
         dialog::setting_row(ui, icons::SPEAKER_SLASH, "Silent mode", None, |ui| {
             if let Some(mut value) = board.value {
                 let label = super::i18n::text(if value { "On" } else { "Off" });
-                if ui.add_enabled(board.ready && !board.pending,
-                    egui::Checkbox::new(&mut value, label)).changed() {
+                if ui
+                    .add_enabled(
+                        board.ready && !board.pending,
+                        egui::Checkbox::new(&mut value, label),
+                    )
+                    .changed()
+                {
                     action = Some(Some(value));
                 }
-            } else { ui.weak(super::i18n::text("Unknown")); }
-            if board.pending { ui.spinner(); }
+            } else {
+                ui.weak(super::i18n::text("Unknown"));
+            }
+            if board.pending {
+                ui.spinner();
+            }
         });
         ui.label(egui::RichText::new(super::i18n::text(
             "Mutes the physical board buzzer, including welcome and menu sounds. Saved directly on the board; Windows notification sound is separate.")).small().weak());
-        if !board.ready { ui.weak(super::i18n::text("Programming safety keeps the board muted.")); }
-        if ui.add_enabled(board.ready && !board.pending,
-            egui::Button::new(format!("{}  {}", icons::ARROW_CLOCKWISE, super::i18n::text("Refresh")))).clicked() {
+        if !board.ready {
+            ui.weak(super::i18n::text(
+                "Programming safety keeps the board muted.",
+            ));
+        }
+        if ui
+            .add_enabled(
+                board.ready && !board.pending,
+                egui::Button::new(format!(
+                    "{}  {}",
+                    icons::ARROW_CLOCKWISE,
+                    super::i18n::text("Refresh")
+                )),
+            )
+            .clicked()
+        {
             action = Some(None);
         }
-        if !board.message.is_empty() { ui.weak(&board.message); }
-        if board.value.is_some() && !board.persisted { ui.weak(super::i18n::text("Not persisted")); }
+        if !board.message.is_empty() {
+            ui.weak(&board.message);
+        }
+        if board.value.is_some() && !board.persisted {
+            ui.weak(super::i18n::text("Not persisted"));
+        }
     });
     action
 }
 fn connection_summary(draft: &PreferencesDraft, ui: &mut egui::Ui) -> egui::Response {
     let config = &draft.config;
-    ui.strong(format!("{} · {}", super::connection_controls::method_label(config.connection_method),
-        if config.connection_enabled { "Enabled" } else { "Disconnected" }));
+    ui.strong(format!(
+        "{} · {}",
+        super::connection_controls::method_label(config.connection_method),
+        if config.connection_enabled {
+            "Enabled"
+        } else {
+            "Disconnected"
+        }
+    ));
     ui.weak(match config.connection_method {
         crate::connection::Method::WiFi => config.endpoint.as_str(),
         crate::connection::Method::Serial if config.serial_port.is_empty() => "No port selected",
         crate::connection::Method::Serial => config.serial_port.as_str(),
     });
-    ui.add_enabled(!draft.is_dirty(), egui::Button::new(format!("{}  Connection settings…", icons::GEAR)))
-        .on_disabled_hover_text("Save or discard preference changes before opening connection settings.")
+    ui.add_enabled(
+        !draft.is_dirty(),
+        egui::Button::new(format!("{}  Connection settings…", icons::GEAR)),
+    )
+    .on_disabled_hover_text(
+        "Save or discard preference changes before opening connection settings.",
+    )
 }
 fn device_settings_link(draft: &PreferencesDraft, ui: &mut egui::Ui) -> egui::Response {
     ui.weak("Board identity, network, LEDs, front panel and AVR parameters belong to the connected device, not this PC.");
-    ui.add_enabled(!draft.is_dirty(),egui::Button::new(format!("{}  Device settings…",icons::CIRCUITRY)))
-        .on_disabled_hover_text("Save or discard application preference changes before opening device settings.")
+    ui.add_enabled(
+        !draft.is_dirty(),
+        egui::Button::new(format!("{}  Device settings…", icons::CIRCUITRY)),
+    )
+    .on_disabled_hover_text(
+        "Save or discard application preference changes before opening device settings.",
+    )
 }
 fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &BoardView) -> Outcome {
     crate::config::set_live(&draft.config);
@@ -205,23 +356,83 @@ fn editor(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &BoardView) ->
 }
 fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &BoardView) -> Outcome {
     let mut outcome = Outcome::default();
+    // Adapt Pealayer draw_preferences_editor: reserve the footer at the bottom
+    // first, then let the editor consume exactly what remains. A guessed body
+    // minimum made short pages leave a dead zone below Save/Cancel and pushed
+    // those actions outside short/high-DPI windows.
+    let rtl = crate::config::resolved_rtl(&draft.config);
+    let action_height = super::control_density::height(ui).max(dialog::ACTION_HEIGHT);
+    egui::Panel::bottom(ui.id().with("preferences-footer"))
+        .resizable(false)
+        .exact_size(action_height + 17.0)
+        .frame(egui::Frame::NONE.inner_margin(egui::Margin::symmetric(0, 8)))
+        .show_separator_line(true)
+        .show(ui, |ui| {
+            let layout = if rtl {
+                egui::Layout::left_to_right(egui::Align::Center)
+            } else {
+                egui::Layout::right_to_left(egui::Align::Center)
+            };
+            ui.allocate_ui_with_layout(egui::vec2(ui.available_width(), action_height), layout, |ui| {
+                // Reserve actions before status, so a long failure/status message
+                // cannot wrap them or change the footer's height.
+                if dialog::primary_action_button(ui, icons::CHECK, "Save").clicked() {
+                    outcome.save = true;
+                }
+                if dialog::action_button(ui, icons::X, "Cancel").clicked() {
+                    outcome.close = true;
+                }
+                let status = if draft.is_dirty() {
+                    super::i18n::text("Unsaved changes")
+                } else {
+                    draft.status.clone()
+                };
+                ui.with_layout(super::i18n::layout(rtl, egui::Align::Center), |ui| {
+                    ui.add(egui::Label::new(egui::RichText::new(&status).small().weak()).truncate())
+                        .on_hover_text(status);
+                });
+            });
+        });
+    egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| {
     ui.horizontal(|ui| {
         ui.label(icons::MAGNIFYING_GLASS);
         ui.add_sized(
             [ui.available_width(), 28.0],
-            dialog::singleline_text_edit(&mut draft.search).hint_text(crate::ui::i18n::text("Search preferences")),
+            dialog::singleline_text_edit(ui, &mut draft.search)
+                .hint_text(crate::ui::i18n::text("Search preferences")),
         );
     });
     ui.add_space(8.0);
-    let body_height = (ui.available_height() - 48.0).max(260.0);
+    let categories = [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace"),(4,icons::INFO,"Notifications"),(5,icons::CIRCUITRY,"Board"),(6,icons::ARROW_CLOCKWISE,"App updates")];
+    // The donor's compact selector keeps the controls usable when the native
+    // window is narrow or the embedded dialog is constrained by display scale.
+    let narrow = ui.available_width() < 560.0;
+    if narrow {
+        let (_, icon, title) = categories[draft.tab.min(categories.len() - 1)];
+        super::dropdown::ComboBox::from_id_salt("preferences-compact-tab")
+            .width(ui.available_width())
+            .selected_text(format!("{icon}  {}", super::i18n::text(title)))
+            .show_ui(ui, |ui| {
+                for (tab, icon, title) in categories {
+                    if tab == 5 && !board.device_available { continue; }
+                    ui.dropdown_value(&mut draft.tab, tab, format!("{icon}  {}", super::i18n::text(title)));
+                }
+            });
+        ui.add_space(8.0);
+    }
+    let body_height = ui.available_height().max(0.0);
     ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),super::i18n::layout(crate::config::resolved_rtl(&draft.config),egui::Align::Min),|ui|{
+        if !narrow {
         ui.allocate_ui_with_layout(egui::vec2(142.0,body_height),super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),|ui|{
-            for (tab,icon,title) in [(0,icons::PALETTE,"Appearance"),(1,icons::APP_WINDOW,"Application"),(2,icons::PLUG,"Connection"),(3,icons::TABS,"Workspace"),(4,icons::INFO,"Notifications"),(5,icons::CIRCUITRY,"Board"),(6,icons::ARROW_CLOCKWISE,"App updates")] {
+            dialog::scroll_column(ui,"preferences-navigation",Some(body_height),|ui|{
+            for (tab,icon,title) in categories {
                 if tab==5 && !board.device_available { continue; }
                 if dialog::navigation_button(ui,draft.tab==tab,icon,&super::i18n::text(title),138.0).clicked(){draft.tab=tab;}
             }
+            });
         });
         ui.separator();
+        }
         ui.allocate_ui_with_layout(egui::vec2(ui.available_width(),body_height),super::i18n::vertical_layout(crate::config::resolved_rtl(&draft.config)),|ui|{
             dialog::scroll_column(ui,"preferences-body",Some(body_height),|ui|{
                 if (draft.tab==6||!draft.search.is_empty())&&draft.matches("App updates management releases telemetry enrollment cleanup uninstall server"){
@@ -233,6 +444,7 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
                         if draft.matches("Palette Studio native"){dialog::setting_row(ui,icons::PALETTE,"Palette",None,|ui|{super::dropdown::ComboBox::from_id_salt("palette").selected_text(super::i18n::text(&format!("{:?}",draft.config.color_palette))).show_ui(ui,|ui|{for p in [ColorPalette::Studio,ColorPalette::Native]{ui.dropdown_value(&mut draft.config.color_palette,p,super::i18n::text(&format!("{p:?}")));}});});}
                         if draft.matches("Accent color"){dialog::setting_row(ui,icons::DIAMOND,"Accent color",None,|ui|{super::color_picker::accent_picker(ui,&mut draft.config.accent,180.0);});}
                         if draft.matches("UI scale size"){dialog::setting_row(ui,icons::MAGNIFYING_GLASS,"UI scale",None,|ui|{ui.add(egui::Slider::new(&mut draft.config.ui_scale,0.75..=2.0).step_by(0.05));});}
+                        if draft.matches("Control density compact regular comfortable spacious"){dialog::setting_row(ui,icons::ARROWS_OUT,"Control density",None,|ui|{super::dropdown::ComboBox::from_id_salt("control-density").selected_text(super::i18n::text(&format!("{:?}",draft.config.ui_control_density))).show_ui(ui,|ui|{for density in UiControlDensity::ALL{ui.dropdown_value(&mut draft.config.ui_control_density,density,super::i18n::text(&format!("{density:?}")));}});});}
                         if draft.matches("Language System Persian English"){dialog::setting_row(ui,icons::GLOBE,"Language",None,|ui|{super::dropdown::ComboBox::from_id_salt("language").selected_text(super::i18n::text(&format!("{:?}",draft.config.language))).show_ui(ui,|ui|{ui.dropdown_value(&mut draft.config.language,AppLanguage::System,super::i18n::text("System language"));ui.dropdown_value(&mut draft.config.language,AppLanguage::English,"English");ui.dropdown_value(&mut draft.config.language,AppLanguage::Persian,"فارسی");});});}
                         if draft.matches("Direction automatic RTL LTR"){dialog::setting_row(ui,icons::GLOBE,"Direction",None,|ui|{super::dropdown::ComboBox::from_id_salt("direction").selected_text(match draft.config.direction{AppDirection::Auto=>super::i18n::text("Automatic"),AppDirection::Ltr=>super::i18n::text("Left to right"),AppDirection::Rtl=>super::i18n::text("Right to left")}).show_ui(ui,|ui|{for(d,label)in[(AppDirection::Auto,"Automatic"),(AppDirection::Ltr,"Left to right"),(AppDirection::Rtl,"Right to left")]{ui.dropdown_value(&mut draft.config.direction,d,super::i18n::text(label));}});});}
                     });ui.add_space(8.0);
@@ -251,6 +463,28 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
                         if draft.matches("Always on top"){ui.checkbox(&mut draft.config.always_on_top, crate::ui::i18n::text("Always on top"));}
                         if draft.matches("Native dialog preferences"){ui.checkbox(&mut draft.config.native_dialogs, crate::ui::i18n::text("Open Preferences in a native window"));}
                     });ui.add_space(8.0);
+                    if draft.matches("Keyboard shortcuts accelerator fullscreen refresh preferences device settings connect cell mapping") {
+                        dialog::section(ui,icons::KEYBOARD,"Keyboard shortcuts",|ui|{
+                            ui.checkbox(&mut draft.config.keyboard_shortcuts_enabled,
+                                crate::ui::i18n::text("Enable in-app keyboard shortcuts and hardware bindings"));
+                            ui.weak(crate::ui::i18n::text("Leave a shortcut blank to disable it. Modified shortcuts remain available while editing text; bare printable keys do not interrupt typing."));
+                            for (label,value) in [
+                                ("Fullscreen",&mut draft.config.application_shortcuts.fullscreen),
+                                ("Refresh",&mut draft.config.application_shortcuts.refresh),
+                                ("Preferences",&mut draft.config.application_shortcuts.preferences),
+                                ("Device settings",&mut draft.config.application_shortcuts.device_settings),
+                                ("Connect",&mut draft.config.application_shortcuts.connect),
+                                ("Cell mapping",&mut draft.config.application_shortcuts.cell_mapping),
+                            ] {
+                                dialog::setting_row(ui,icons::KEYBOARD,label,None,|ui|{
+                                    ui.add_sized([160.0,28.0],dialog::singleline_text_edit(ui,value));
+                                });
+                            }
+                            if let Err(error)=draft.config.application_shortcuts.validate(){
+                                ui.colored_label(ui.visuals().error_fg_color,error);
+                            }
+                        });ui.add_space(8.0);
+                    }
                 }
                 if draft.tab==2||!draft.search.is_empty(){
                     dialog::section(ui,icons::PLUG,"Connection",|ui|{
@@ -295,6 +529,7 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
                 if draft.tab==4||!draft.search.is_empty(){
                     dialog::section(ui,icons::INFO,"Notifications",|ui|{
                         use crate::platform::notifications::Policy;
+                        if draft.matches("Events errors automatically hide resolved") { ui.checkbox(&mut draft.config.events_auto_hide, crate::ui::i18n::text("Auto-hide Events when errors clear")); }
                         if draft.matches("In-app toast notification banner"){ui.checkbox(&mut draft.config.notifications.in_app, crate::ui::i18n::text("In-app toast banners"));}
                         if draft.matches("Windows system notification important all off"){dialog::setting_row(ui,icons::APP_WINDOW,"Windows notifications",None,|ui|{
                             super::dropdown::ComboBox::from_id_salt("notification-policy").selected_text(format!("{:?}",draft.config.notifications.system)).show_ui(ui,|ui|{
@@ -313,6 +548,7 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
                     ui.checkbox(&mut draft.config.additive_cell_selection, crate::ui::i18n::text("Toggle multiple cells and rows without Ctrl")).on_hover_text(crate::ui::i18n::text("When off, Ctrl+click toggles items. Shift extends a range; dragging always replaces unless Ctrl/Shift is held."));
                     ui.checkbox(&mut draft.config.animate_cells, crate::ui::i18n::text("Animate cell state transitions")).on_hover_text(crate::ui::i18n::text("Disable for reduced motion. Cell geometry never changes."));
                     ui.checkbox(&mut draft.config.show_cell_indicators, crate::ui::i18n::text("Show cell LED-state indicators")).on_hover_text(crate::ui::i18n::text("Optional corner dots for white/red/off state. Hidden by default."));
+                    ui.checkbox(&mut draft.config.color_cell_backgrounds, crate::ui::i18n::text("Fill lamp backgrounds with state color")).on_hover_text(crate::ui::i18n::text("Use the board's state colors. Live individual-pixel previews remain unchanged."));
                     super::dropdown::ComboBox::from_id_salt("preferences-cell-shape").selected_text(draft.config.cell_shape.label()).show_ui(ui,|ui|{for shape in [super::cell_pixels::Shape::Rounded,super::cell_pixels::Shape::Circle,super::cell_pixels::Shape::Hexagon]{ui.dropdown_value(&mut draft.config.cell_shape,shape,shape.label());}});
                     ui.checkbox(&mut draft.config.pixel_diagnostics, crate::ui::i18n::text("Show physical pixel indices (top first, CCW)")).on_hover_text(crate::ui::i18n::text("Applies to circle/hexagon cells. Zero-based 0–479; values are sampled from device RGB before brightness/correction."));
                     ui.label(format!("{} saved workspaces",draft.config.workspace_profiles.len()));
@@ -327,35 +563,14 @@ fn editor_contents(draft: &mut PreferencesDraft, ui: &mut egui::Ui, board: &Boar
             });
         });
     });
-    ui.separator();
-    dialog::action_bar(
-        ui,
-        crate::config::resolved_rtl(&draft.config),
-        |ui| {
-            ui.label(
-                egui::RichText::new(if draft.is_dirty() {
-                    super::i18n::text("Unsaved changes")
-                } else {
-                    draft.status.clone()
-                })
-                .small()
-                .weak(),
-            );
-        },
-        |ui| {
-            if dialog::primary_action_button(ui, icons::CHECK, "Save").clicked() {
-                outcome.save = true;
-            }
-            if dialog::action_button(ui, icons::X, "Cancel").clicked() {
-                outcome.close = true;
-            }
-        },
-    );
+    });
     if draft.confirm_close {
         egui::Modal::new(egui::Id::new("preferences-discard-confirmation")).show(ui.ctx(), |ui| {
             ui.set_width(360.0);
             ui.heading(crate::ui::i18n::text("Discard preference changes?"));
-            ui.label(crate::ui::i18n::text("Your saved preferences will be restored."));
+            ui.label(crate::ui::i18n::text(
+                "Your saved preferences will be restored.",
+            ));
             ui.add_space(12.0);
             dialog::action_row(ui, crate::config::resolved_rtl(&draft.config), |ui| {
                 if dialog::primary_action_button(ui, icons::TRASH, "Discard").clicked() {
@@ -373,25 +588,39 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
     let Some(mut draft) = app.preferences.take() else {
         return;
     };
-    draft.sync_connection_owner(app.transport, app.connection_enabled, &app.base, &app.user, &app.serial_port);
+    draft.sync_connection_owner(
+        app.transport,
+        app.connection_enabled,
+        &app.base,
+        &app.user,
+        &app.serial_port,
+    );
     // Workspace autosave is owner state, not a Preferences edit. Keep all three
     // baselines in sync so an open editor cannot erase newer per-board sessions.
     draft.sync_workspace_owner(&app.config.native_workspaces);
+    draft.sync_status_owner(&app.config.status_items);
     app.board_silent.expire();
     let status = app.live_status();
     let available = status.is_some_and(crate::board_silent::supported);
     let device_available = status.is_some_and(|s| s.capabilities.is_some());
     let ready = available && status.is_some_and(|s| !s.programming_latch);
     let peer = status.and_then(crate::peer_http::Pin::from_status);
-    if ready && app.board_silent.needs_refresh() { app.request_board_silent(None); }
+    if ready && app.board_silent.needs_refresh() {
+        app.request_board_silent(None);
+    }
     let board = BoardView {
         bridge: app.bridge.snapshot(),
-        available, device_available, ready,
+        available,
+        device_available,
+        ready,
         value: app.board_silent.value(peer.as_ref(), app.command_route()),
-        pending: app.board_silent.pending.is_some(), persisted: app.board_silent.persisted(),
+        pending: app.board_silent.pending.is_some(),
+        persisted: app.board_silent.persisted(),
         message: app.board_silent.message.clone(),
     };
-    if draft.tab == 5 && !board.device_available { draft.tab = 2; }
+    if draft.tab == 5 && !board.device_available {
+        draft.tab = 2;
+    }
     if draft.tab == 4 {
         let status = app.notification_snapshot();
         draft.status = format!(
@@ -409,7 +638,10 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("pakar-preferences"),
             egui::ViewportBuilder::default()
-                .with_title(format!("{} — PakarController",super::i18n::text("Preferences")))
+                .with_title(format!(
+                    "{} — PakarController",
+                    super::i18n::text("Preferences")
+                ))
                 .with_inner_size([780.0, 590.0])
                 .with_min_inner_size([520.0, 420.0]),
             |child, _| {
@@ -418,7 +650,9 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
                     open = false;
                 }
                 egui::CentralPanel::default().show(child, |ui| {
-                    egui::Frame::new().inner_margin(12).show(ui, |ui| {
+                    egui::Frame::new().inner_margin(egui::Margin {
+                        left: 12, right: 12, top: 12, bottom: 2,
+                    }).show(ui, |ui| {
                         outcome = editor(&mut draft, ui, &board);
                     });
                 });
@@ -435,24 +669,34 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
             egui::vec2(520.0, 420.0),
             egui::vec2(1000.0, 780.0),
         );
-        egui::Window::new(format!("{} {}", icons::GEAR, super::i18n::text("Preferences")))
-            .id(egui::Id::new("pakar-preferences"))
-            .open(&mut open)
-            .default_rect(g.default_rect)
-            .min_size(g.min_size)
-            .max_size(g.max_size)
-            .constrain_to(g.bounds)
-            .frame(dialog::opaque_window_frame_from_context(ctx))
-            .collapsible(false)
-            .show(ctx, |ui| {
-                outcome = editor(&mut draft, ui, &board);
-            });
+        egui::Window::new(format!(
+            "{} {}",
+            icons::GEAR,
+            super::i18n::text("Preferences")
+        ))
+        .id(egui::Id::new("pakar-preferences"))
+        .open(&mut open)
+        .default_rect(g.default_rect)
+        .min_size(g.min_size)
+        .max_size(g.max_size)
+        .constrain_to(g.bounds)
+        .frame(dialog::opaque_window_frame_from_context(ctx))
+        .collapsible(false)
+        .show(ctx, |ui| {
+            outcome = editor(&mut draft, ui, &board);
+        });
         if dialog::escape_pressed(ctx) {
             outcome.close = true;
         }
     }
-    if let Some(action) = outcome.board_action { app.request_board_silent(action); }
-    if let Some(action)=outcome.client_action { if !draft.is_dirty(){crate::client_management::request(action,app.config.client_management.clone(),ctx);} }
+    if let Some(action) = outcome.board_action {
+        app.request_board_silent(action);
+    }
+    if let Some(action) = outcome.client_action {
+        if !draft.is_dirty() {
+            crate::client_management::request(action, app.config.client_management.clone(), ctx);
+        }
+    }
     if outcome.test_notification {
         app.notification_test();
     }
@@ -462,15 +706,24 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
         return; // Close only this clean Preferences editor; the canonical dialog owns connection edits.
     }
     if outcome.device_settings && !draft.is_dirty() {
-        app.device_settings.open=true;
-        app.device_settings.page=0;
-        crate::config::apply(ctx,&app.config);
+        app.device_settings.open = true;
+        app.device_settings.page = 0;
+        crate::config::apply(ctx, &app.config);
         return;
     }
     if outcome.save {
         // Layout belongs to the workspace and can change while Preferences is open.
-        draft.config.dock_layout = super::layout::serialize(&app.dock).unwrap_or_default();
-        draft.sync_connection_owner(app.transport, app.connection_enabled, &app.base, &app.user, &app.serial_port);
+        app.remember_ui_workspace();
+        draft.config.dock_layout = app.workspace.layout.snapshot().0;
+        draft.config.native_workspaces = app.config.native_workspaces.clone();
+        draft.config.workspace_profiles = app.config.workspace_profiles.clone();
+        draft.sync_connection_owner(
+            app.transport,
+            app.connection_enabled,
+            &app.base,
+            &app.user,
+            &app.serial_port,
+        );
         match draft.config.save() {
             Ok(()) => {
                 app.config = draft.config.clone();
@@ -503,34 +756,151 @@ pub fn draw(app: &mut PakarControllerApp, ctx: &egui::Context) {
 mod tests {
     use super::*;
     #[test]
+    fn preferences_footer_stays_at_the_bottom_in_both_hosts_and_short_pages() {
+        // Real egui geometry, not a source-string assertion. Resize the same
+        // editor and switch categories/status lengths to exercise remembered
+        // panel geometry as well as the first sizing frame.
+        for native in [false, true] {
+            for rtl in [false, true] {
+                for density in [UiControlDensity::Regular, UiControlDensity::Comfortable] {
+                    let ctx = egui::Context::default();
+                    ctx.set_pixels_per_point(1.5);
+                    ctx.all_styles_mut(|style| super::super::control_density::configure(style, density));
+                    let config = AppConfig {
+                        language: AppLanguage::English,
+                        direction: if rtl { AppDirection::Rtl } else { AppDirection::Ltr },
+                        ui_control_density: density,
+                        ..AppConfig::default()
+                    };
+                    let mut draft = PreferencesDraft::new(config.clone());
+                    let board = BoardView {
+                        bridge: serde_json::Value::Null, available: false, device_available: true,
+                        ready: false, value: None, pending: false, persisted: false, message: String::new(),
+                    };
+                    for size in [egui::vec2(780.0, 590.0), egui::vec2(520.0, 360.0), egui::vec2(390.0, 280.0)] {
+                        for (page, search) in [(0, ""), (5, ""), (4, ""), (0, "no matching preference")] {
+                            draft.tab = page;
+                            draft.search = search.into();
+                            draft.status = "A long saved-status or persistence error must not push either action outside the dialog or wrap the footer.".repeat(3);
+                            let mut bounds = egui::Rect::NOTHING;
+                            let mut output = None;
+                            for _ in 0..3 {
+                                output = Some(ctx.run_ui(egui::RawInput {
+                                    screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+                                    ..Default::default()
+                                }, |ui| {
+                                    let mut draw = |ui: &mut egui::Ui| {
+                                        bounds = ui.available_rect_before_wrap();
+                                        let result = editor_contents(&mut draft, ui, &board);
+                                        assert!(!result.save && !result.close && !result.discard);
+                                        assert!(!result.device_settings && !result.connection_settings);
+                                        assert!(result.client_action.is_none() && result.board_action.is_none());
+                                    };
+                                    if native {
+                                        egui::CentralPanel::default().show(ui, |ui| {
+                                            egui::Frame::new().inner_margin(egui::Margin {
+                                                left: 12, right: 12, top: 12, bottom: 2,
+                                            }).show(ui, &mut draw);
+                                        });
+                                    } else {
+                                        egui::Window::new("Preferences geometry")
+                                            .id(egui::Id::new("preferences-geometry"))
+                                            .fixed_rect(egui::Rect::from_min_size(egui::pos2(8.0, 8.0), size - egui::vec2(16.0, 32.0)))
+                                            .collapsible(false)
+                                            .show(&ctx, &mut draw);
+                                    }
+                                }));
+                                output.as_mut().unwrap().textures_delta.clear();
+                            }
+                            let output = output.unwrap();
+                            let action_rect = |icon: &str, label: &str| {
+                                let caption = format!("{icon}  {}", super::super::i18n::text(label));
+                                let point = output.shapes.iter().find_map(|shape| match &shape.shape {
+                                    egui::Shape::Text(text) if text.galley.text() == caption => Some(text.pos + text.galley.size() * 0.5),
+                                    _ => None,
+                                }).unwrap_or_else(|| panic!("missing {label}; native={native}, size={size:?}, page={page}"));
+                                output.shapes.iter().filter_map(|shape| match &shape.shape {
+                                    egui::Shape::Rect(rect) if rect.rect.contains(point) && rect.rect.width() >= dialog::ACTION_BUTTON_WIDTH && rect.rect.height() < 64.0 => Some(rect.rect),
+                                    _ => None,
+                                }).min_by(|a, b| a.area().total_cmp(&b.area())).expect("painted action button")
+                            };
+                            let save = action_rect(icons::CHECK, "Save");
+                            let cancel = action_rect(icons::X, "Cancel");
+                            assert!(bounds.expand(1.0).contains_rect(save), "Save outside {bounds:?}: {save:?}");
+                            assert!(bounds.expand(1.0).contains_rect(cancel), "Cancel outside {bounds:?}: {cancel:?}");
+                            let bottom_gap = bounds.bottom() - save.bottom();
+                            assert!((0.0..=12.0).contains(&bottom_gap), "excess space below actions: {bottom_gap}; native={native}, size={size:?}, page={page}");
+                            assert!((save.center().y - cancel.center().y).abs() <= 1.0);
+                            assert!(!save.intersects(cancel), "actions overlap");
+                            assert_eq!(draft.config, config, "layout must not edit preferences");
+                            assert!(!draft.is_dirty());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    #[test]
     fn board_silent_preferences_distinguish_unknown_from_off_without_editing_app_config() {
         let saved = AppConfig::default();
         let draft = PreferencesDraft::new(saved.clone());
         for value in [None, Some(false), Some(true)] {
             let ctx = egui::Context::default();
-            let board = BoardView { bridge: serde_json::Value::Null, available: true, device_available: true, ready: true, value, pending: false, persisted: true, message: String::new() };
+            let board = BoardView {
+                bridge: serde_json::Value::Null,
+                available: true,
+                device_available: true,
+                ready: true,
+                value,
+                pending: false,
+                persisted: true,
+                message: String::new(),
+            };
             let mut action = None;
-            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| { action = board_controls(ui, &board); });
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                action = board_controls(ui, &board);
+            });
             output.textures_delta.clear();
-            let texts: Vec<_> = output.shapes.iter().filter_map(|s| match &s.shape {
-                egui::epaint::Shape::Text(t) => Some(t.galley.job.text.as_str()), _ => None,
-            }).collect();
-            assert!(texts.contains(&super::super::i18n::text(match value { None => "Unknown", Some(false) => "Off", Some(true) => "On" }).as_str()));
+            let texts: Vec<_> = output
+                .shapes
+                .iter()
+                .filter_map(|s| match &s.shape {
+                    egui::epaint::Shape::Text(t) => Some(t.galley.job.text.as_str()),
+                    _ => None,
+                })
+                .collect();
+            assert!(
+                texts.contains(
+                    &super::super::i18n::text(match value {
+                        None => "Unknown",
+                        Some(false) => "Off",
+                        Some(true) => "On",
+                    })
+                    .as_str()
+                )
+            );
             assert!(action.is_none());
-            assert_eq!(draft.config, saved); assert!(!draft.is_dirty());
+            assert_eq!(draft.config, saved);
+            assert!(!draft.is_dirty());
         }
         assert_eq!(page_index("board"), Some(5));
     }
     #[test]
     fn board_settings_navigation_preserves_unsaved_application_preferences() {
-        for dirty in [false,true] {
-            let ctx=egui::Context::default();
-            let mut draft=PreferencesDraft::new(AppConfig::default());
-            if dirty { draft.config.ui_scale=1.25; }
-            let before=draft.config.clone(); let mut enabled=false;
-            let mut output=ctx.run_ui(egui::RawInput::default(),|ui| { enabled=device_settings_link(&draft,ui).enabled(); });
+        for dirty in [false, true] {
+            let ctx = egui::Context::default();
+            let mut draft = PreferencesDraft::new(AppConfig::default());
+            if dirty {
+                draft.config.ui_scale = 1.25;
+            }
+            let before = draft.config.clone();
+            let mut enabled = false;
+            let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+                enabled = device_settings_link(&draft, ui).enabled();
+            });
             output.textures_delta.clear();
-            assert_eq!(enabled,!dirty); assert_eq!(draft.config,before);
+            assert_eq!(enabled, !dirty);
+            assert_eq!(draft.config, before);
         }
     }
     #[test]
@@ -543,6 +913,19 @@ mod tests {
         assert!(d.take_preview_update().is_some());
         assert!(d.take_preview_update().is_none());
         assert_eq!(d.saved_config, saved);
+    }
+    #[test]
+    fn lamp_background_preview_and_discard_preserve_saved_configuration() {
+        let original = AppConfig::default();
+        let mut draft = PreferencesDraft::new(original.clone());
+        draft.config.color_cell_backgrounds = true;
+        assert!(draft.is_dirty());
+        assert!(draft.take_preview_update().unwrap().color_cell_backgrounds);
+        assert!(draft.take_preview_update().is_none());
+        draft.config = draft.saved_config.clone();
+        assert!(!draft.take_preview_update().unwrap().color_cell_backgrounds);
+        assert_eq!(draft.config, original);
+        assert!(!draft.is_dirty());
     }
     #[test]
     fn notification_deep_link_is_exact_and_preserves_dirty_draft() {
@@ -559,14 +942,28 @@ mod tests {
     fn external_connection_owner_updates_all_baselines_without_losing_unrelated_drafts() {
         for dirty in [false, true] {
             let mut draft = PreferencesDraft::new(AppConfig::default());
-            if dirty { draft.config.close_to_tray = !draft.config.close_to_tray; }
+            if dirty {
+                draft.config.close_to_tray = !draft.config.close_to_tray;
+            }
             let close_to_tray = draft.config.close_to_tray;
-            draft.sync_connection_owner(crate::connection::Method::Serial, true,
-                "http://new-board.local", "operator", "COM22");
-            assert_eq!(draft.is_dirty(), dirty, "a clean editor must not become dirty after IPC changes method");
+            draft.sync_connection_owner(
+                crate::connection::Method::Serial,
+                true,
+                "http://new-board.local",
+                "operator",
+                "COM22",
+            );
+            assert_eq!(
+                draft.is_dirty(),
+                dirty,
+                "a clean editor must not become dirty after IPC changes method"
+            );
             assert_eq!(draft.config.close_to_tray, close_to_tray);
             for baseline in [&draft.config, &draft.saved_config, &draft.previewed_config] {
-                assert_eq!(baseline.connection_method, crate::connection::Method::Serial);
+                assert_eq!(
+                    baseline.connection_method,
+                    crate::connection::Method::Serial
+                );
                 assert!(baseline.connection_enabled);
                 assert_eq!(baseline.endpoint, "http://new-board.local");
                 assert_eq!(baseline.user, "operator");
@@ -576,13 +973,17 @@ mod tests {
     }
     #[test]
     fn workspace_autosave_does_not_dirty_or_erase_an_open_preferences_draft() {
-        let workspaces: crate::native_workspace::Store = serde_json::from_value(serde_json::json!({
-            "entries":[{"identity":{"board":"board-a","application":"table"},
-                "snapshot":{"selection":[1,21],"find":"1, 21"}}]
-        })).unwrap();
+        let workspaces: crate::native_workspace::Store =
+            serde_json::from_value(serde_json::json!({
+                "entries":[{"identity":{"board":"board-a","application":"table"},
+                    "snapshot":{"selection":[1,21],"find":"1, 21"}}]
+            }))
+            .unwrap();
         for dirty in [false, true] {
             let mut draft = PreferencesDraft::new(AppConfig::default());
-            if dirty { draft.config.close_to_tray = true; }
+            if dirty {
+                draft.config.close_to_tray = true;
+            }
             draft.sync_workspace_owner(&workspaces);
             assert_eq!(draft.is_dirty(), dirty);
             assert_eq!(draft.config.close_to_tray, dirty);
@@ -592,26 +993,70 @@ mod tests {
         }
     }
     #[test]
+    fn status_bar_changes_survive_preferences_save_or_discard_without_erasing_drafts() {
+        let mut items = super::super::status_bar::Items::default();
+        items.telemetry = false;
+        items.order.reverse();
+        for dirty in [false, true] {
+            let mut draft = PreferencesDraft::new(AppConfig::default());
+            if dirty { draft.config.close_to_tray = true; }
+            draft.sync_status_owner(&items);
+            assert_eq!(draft.is_dirty(), dirty);
+            assert_eq!(draft.config.close_to_tray, dirty);
+            for baseline in [&draft.config, &draft.saved_config, &draft.previewed_config] {
+                assert_eq!(baseline.status_items, items);
+            }
+        }
+    }
+    #[test]
     fn connection_summary_is_contextual_and_dirty_preferences_cannot_open_another_editor() {
-        for method in [crate::connection::Method::WiFi, crate::connection::Method::Serial] {
+        for method in [
+            crate::connection::Method::WiFi,
+            crate::connection::Method::Serial,
+        ] {
             for dirty in [false, true] {
                 let ctx = egui::Context::default();
                 let mut draft = PreferencesDraft::new(AppConfig::default());
-                draft.sync_connection_owner(method, false, "http://ledboard.local", "operator", "COM22");
-                if dirty { draft.config.close_to_tray = !draft.config.close_to_tray; }
+                draft.sync_connection_owner(
+                    method,
+                    false,
+                    "http://ledboard.local",
+                    "operator",
+                    "COM22",
+                );
+                if dirty {
+                    draft.config.close_to_tray = !draft.config.close_to_tray;
+                }
                 let mut enabled = false;
                 let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
                     enabled = connection_summary(&draft, ui).enabled();
                 });
                 output.textures_delta.clear();
-                let texts: Vec<_> = output.shapes.iter().filter_map(|shape| match &shape.shape {
-                    egui::epaint::Shape::Text(text) => Some(text.galley.job.text.as_str()), _ => None,
-                }).collect();
+                let texts: Vec<_> = output
+                    .shapes
+                    .iter()
+                    .filter_map(|shape| match &shape.shape {
+                        egui::epaint::Shape::Text(text) => Some(text.galley.job.text.as_str()),
+                        _ => None,
+                    })
+                    .collect();
                 assert_eq!(enabled, !dirty);
-                assert_eq!(texts.contains(&"http://ledboard.local"), method == crate::connection::Method::WiFi);
-                assert_eq!(texts.contains(&"COM22"), method == crate::connection::Method::Serial);
-                assert!(!texts.contains(&"operator"), "no duplicate authentication editor");
-                assert!(!texts.contains(&"Connect") && !texts.contains(&"Disconnect"), "no second lifecycle action");
+                assert_eq!(
+                    texts.contains(&"http://ledboard.local"),
+                    method == crate::connection::Method::WiFi
+                );
+                assert_eq!(
+                    texts.contains(&"COM22"),
+                    method == crate::connection::Method::Serial
+                );
+                assert!(
+                    !texts.contains(&"operator"),
+                    "no duplicate authentication editor"
+                );
+                assert!(
+                    !texts.contains(&"Connect") && !texts.contains(&"Disconnect"),
+                    "no second lifecycle action"
+                );
             }
         }
     }

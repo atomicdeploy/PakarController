@@ -1,4 +1,5 @@
 #include "ShiftRegisters.h"
+#include <GameRole.h>
 
 #if defined(__AVR__)
 #include <avr/io.h>
@@ -118,6 +119,11 @@ bool ShiftRegisters::inputActive(uint8_t bit) const {
 
 uint8_t ShiftRegisters::activeInputs() const {
   const uint8_t physicalActive = static_cast<uint8_t>(~inputRegister_);
+#if PAKAR_FIRST_WINS_ENABLED
+  // Puzzles' arcade inputs are direct bit identifiers. PCController's
+  // four-button front-panel reversal is not wiring shared by this role.
+  const uint8_t logicalPhysical = physicalActive;
+#else
   uint8_t logicalKeys = static_cast<uint8_t>(physicalActive & 0x0FU);
   logicalKeys = static_cast<uint8_t>(((logicalKeys & 0x05U) << 1) |
                                      ((logicalKeys & 0x0AU) >> 1));
@@ -125,6 +131,7 @@ uint8_t ShiftRegisters::activeInputs() const {
                                      ((logicalKeys & 0x0CU) >> 2));
   const uint8_t logicalPhysical = static_cast<uint8_t>(
       (physicalActive & 0xF0U) | logicalKeys);
+#endif
   // K1..K4 are physically wired in reverse order. Virtual inputs remain in
   // logical order so protocol injection and native tests use the same stable
   // key identifiers as every front-panel consumer.

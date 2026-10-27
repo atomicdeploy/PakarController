@@ -6,7 +6,7 @@ const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),'utf8');
 const interfaces=read('firmware/esp32s3/src/DiscoveryInterfaces.h');
 const discovery=read('firmware/esp32s3/src/Discovery.h');
 const ssdp=read('firmware/esp32s3/src/SsdpDevice.cpp');
-const mndp=read('firmware/esp8266/src/MndpService.h');
+const mndp=read('firmware/esp/src/MndpService.h');
 const build=read('tools/build-firmware.ps1');
 function checkInterfaces(source){
   assert.match(source,/#if defined\(PAKAR_S3_ETHERNET_ENABLED\) && PAKAR_S3_ETHERNET_ENABLED\s+#include <ETH.h>/);

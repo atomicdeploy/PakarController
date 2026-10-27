@@ -1,7 +1,7 @@
 // Executes production FrontPanel.cpp against a display transport double.
 #include "FrontPanel.h"
 #include "SevenSegments.h"
-#include "../firmware/esp8266/src/UpdateProgress.h"
+#include "../firmware/esp/src/UpdateProgress.h"
 #include <array>
 #include <cassert>
 #include <cstring>

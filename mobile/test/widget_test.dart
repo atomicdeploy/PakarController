@@ -269,8 +269,8 @@ void main() {
       );
       await tester.enterText(find.byType(TextField).first, '1-3');
       await tester.pump();
-      await tester.ensureVisible(find.text('Set red'));
-      await tester.tap(find.text('Set red'));
+      await tester.ensureVisible(find.text('Red'));
+      await tester.tap(find.text('Red'));
       await tester.pump();
       expect(sent, ['1,2,3']);
       expect(
@@ -302,8 +302,8 @@ void main() {
       );
       await tester.enterText(find.byType(TextField).first, '1-3');
       await tester.pump();
-      await tester.ensureVisible(find.text('Set red'));
-      await tester.tap(find.text('Set red'));
+      await tester.ensureVisible(find.text('Red'));
+      await tester.tap(find.text('Red'));
       await tester.pump();
       expect(writes, 1);
       expect(

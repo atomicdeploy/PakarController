@@ -4,8 +4,8 @@
 #include "DiscoveryInterfaces.h"
 #include "DiscoveryMdns.h"
 #include "NbnsService.h"
-#include "../../esp8266/src/MndpService.h"
-#include "../../esp8266/src/ApplicationIdentity.h"
+#include "../../esp/src/MndpService.h"
+#include "../../esp/src/ApplicationIdentity.h"
 
 namespace PakarS3 {
 class Discovery {

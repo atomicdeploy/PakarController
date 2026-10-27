@@ -14,7 +14,7 @@ await output('desktop/src/ui/settings_catalog.rs','// Generated from assets/cont
  'const PAGE_FEATURES: [&[&str]; 10] = ['+c.pages.map(p=>'&['+p.features.map(quoted).join(', ')+']').join(', ')+'];\n');
 await output('mobile/lib/settings_catalog.dart','// Generated shared device page catalog; mobile native editors remain tracked.\nconst deviceSettingsCatalog = '+JSON.stringify(c,null,2)+';\n');
 const module=await read('assets/web/device-settings.js');assert(!module.includes('</script>')&&!module.includes(')HTML"'));
-const path='firmware/esp8266/src/WebUi.h';let web=await read(path),begin='// BEGIN DEVICE SETTINGS CONTRACT',end='// END DEVICE SETTINGS CONTRACT';
+const path='web/index.html';let web=await read(path),begin='// BEGIN DEVICE SETTINGS CONTRACT',end='// END DEVICE SETTINGS CONTRACT';
 assert.equal(web.split(begin).length,2);assert.equal(web.split(end).length,2);
 web=web.slice(0,web.indexOf(begin)+begin.length)+'\nconst DEVICE_SETTINGS='+JSON.stringify(c)+';\n'+module.trim()+'\n'+web.slice(web.indexOf(end));
 await output(path,web.replace(/\r\n/g,'\n'));

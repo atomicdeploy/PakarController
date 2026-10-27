@@ -1,5 +1,6 @@
 #include "LedScene.h"
 #include "AvrSceneSync.h"
+#include "LedBackendSettings.h"
 #include <cassert>
 #include <cstdio>
 #include <map>
@@ -43,6 +44,55 @@ struct MemoryFiles {
 };
 using Store = SceneStore<MemoryFiles>;
 int main() {
+  {
+    // Diagnostics never write mode, pattern, output policy or transient RGB
+    // into the semantic scene, for both default clear and optional overlay.
+    LedGrid grid;grid.begin();grid.setPattern(LedGrid::kPatternRainbow);grid.setOutputEnabled(false);
+    const auto before=captureLedScene(SceneState{},grid,1,1,0,0);
+    for(auto composite:{BoardCore::PixelDiagnostic::Clear,BoardCore::PixelDiagnostic::Overlay}){
+      BoardCore::PixelDiagnostic options;options.composite=composite;options.effect=BoardCore::PixelDiagnostic::Blink;
+      assert(grid.diagnostic(0,1,0xff0000,false,options));
+      const auto during=captureLedScene(before,grid,1,1,0,0);
+      assert(during.pattern==before.pattern&&during.flags==before.flags&&during.winner==before.winner);
+      for(unsigned i=0;i<LedGrid::kCells;++i)assert(during.cells[i]==before.cells[i]);
+      options.enabled=false;assert(grid.diagnostic(0,1,0xff0000,false,options));
+      assert(!grid.outputEnabled());
+    }
+  }
+  {
+    MemoryFiles files;LedBackendSettings<MemoryFiles> settings;
+    assert(!settings.begin(files,true,1)&&settings.selection()==1&&!settings.saved());
+    assert(!files.opensForWrite);
+    assert(settings.initializeDefault()&&settings.selection()==1&&settings.saved());
+    const auto initialWrites=files.opensForWrite;
+    assert(initialWrites==1&&settings.initializeDefault()&&files.opensForWrite==initialWrites);
+    assert(settings.save(2)&&settings.saved()&&settings.selection()==2);
+    const auto committed=*files.files[settings.path()];
+    const auto writes=files.opensForWrite;assert(settings.save(2)&&files.opensForWrite==writes);
+    LedBackendSettings<MemoryFiles> reboot;assert(reboot.begin(files,true,1)&&reboot.selection()==2);
+    assert(!reboot.save(0)&&!reboot.save(3));
+    for(unsigned fault=0;fault<5;++fault){
+      files.failOpen=fault==0;files.failWrite=fault==1;files.failClose=fault==2;
+      files.failRead=fault==3;files.failRename=fault==4;
+      assert(!reboot.save(1)&&reboot.selection()==2);
+      assert(*files.files[settings.path()]==committed);
+      files.failOpen=files.failWrite=files.failClose=files.failRead=files.failRename=false;
+    }
+    for(size_t byte=0;byte<committed.size();++byte){
+      auto corrupt=committed;corrupt[byte]^=1;files.files[settings.path()]=std::make_shared<MemoryFiles::Bytes>(corrupt);
+      LedBackendSettings<MemoryFiles> damaged;const auto before=files.opensForWrite;
+      assert(!damaged.begin(files,true,1)&&damaged.selection()==1&&!damaged.saved()&&*damaged.error());
+      assert(!damaged.initializeDefault());
+      assert(files.opensForWrite==before);
+    }
+    LedBackendSettings<MemoryFiles> unmounted;assert(!unmounted.begin(files,false,0)&&!unmounted.initializeDefault()&&!unmounted.save(1));
+    MemoryFiles absentFiles;LedBackendSettings<MemoryFiles> absent;
+    assert(!absent.begin(absentFiles,true,0)&&!absent.initializeDefault()&&!absentFiles.opensForWrite);
+  }
+  assert(AvrSceneSync::resetClearsRound(2,1,0));
+  assert(AvrSceneSync::resetClearsRound(0,255,0));
+  assert(!AvrSceneSync::resetClearsRound(2,1,1)); // Reset then a fresh winner in one frame.
+  assert(!AvrSceneSync::resetClearsRound(2,2,0));
   AvrSceneSync sync;
   auto baseline = sync.observe(1, 2);
   assert(baseline.baseline && baseline.sendMode);
@@ -108,7 +158,7 @@ int main() {
   wrap.observe(desired, UINT32_MAX-500); assert(!wrap.service(998)); assert(wrap.service(999));
   Store unavailable; assert(!unavailable.begin(fs, false, defaults));
   unavailable.observe(next, 1); assert(!unavailable.service(1501) && unavailable.pending());
-  SceneState bad = desired; bad.cells[2] = 3; reboot.observe(bad, 70000);
+  SceneState bad = desired; bad.cells[2] = 4; reboot.observe(bad, 70000);
   assert(!reboot.pending()); // Invalid optional record cannot become saved authority.
 
   // Actual renderer: restore all logical states/mapping before first frame.
@@ -156,5 +206,12 @@ int main() {
   assert(!restoredLock.setCell(1,BoardCore::Protocol::kCellWhite,BoardCore::Protocol::kEffectImmediate));
   assert(restoredLock.setCell(1,BoardCore::Protocol::kCellOff,BoardCore::Protocol::kEffectImmediate));
   restoredLock.setRedLock(false);assert(restoredLock.resetWhite());
+  assert(restoredLock.setCell(80,BoardCore::Protocol::kCellWon,BoardCore::Protocol::kEffectImmediate));
+  auto won=captureLedScene(defaults,restoredLock,1,80,3,0);
+  MemoryFiles wonFiles;Store wonStore;wonStore.begin(wonFiles,true,defaults);
+  wonStore.observe(won,0);assert(wonStore.service(1500));
+  Store wonReboot;assert(wonReboot.begin(wonFiles,true,defaults));
+  LedGrid restoredWon;restoredWon.begin(false);restoreLedScene(restoredWon,wonReboot.state());
+  assert(restoredWon.state(80)==BoardCore::Protocol::kCellWon);
   puts("Scene persistence: exact80-cell reboot/mode/output/red-lock restore, first-frame mapping, debounce/max-delay, no-op/frame wear, rollover and transactional failure/corruption recovery passed. Host fixtures, not power-loss/optical proof.");
 }

@@ -4,6 +4,7 @@ import 'cell_assignments.dart';
 import 'documents.dart';
 import 'icons.dart';
 import 'models.dart';
+import 'cell_controls.dart';
 
 /// Pealayer ServerFilePicker's explicit select/preview/apply ownership contract
 /// adapted to native SAF. Picking or cancelling never mutates a board.
@@ -17,6 +18,8 @@ class CellAssignmentsActions extends StatefulWidget {
     this.documents,
     this.ownerCurrent,
     this.seenFeatures = const {},
+    this.selectColor,
+    this.colorLabels = true,
   });
   final DeviceStatus status;
   final bool connected;
@@ -27,6 +30,8 @@ class CellAssignmentsActions extends StatefulWidget {
 
   /// Retained presentation only; never grants command/export authority.
   final Set<String> seenFeatures;
+  final ValueChanged<String>? selectColor;
+  final bool colorLabels;
   @override
   State<CellAssignmentsActions> createState() => _CellAssignmentsActionsState();
 }
@@ -39,6 +44,12 @@ class _CellAssignmentsActionsState extends State<CellAssignmentsActions> {
       widget.connected && widget.status.peer.tableSelection && !busy;
   bool get assignmentReady =>
       ready && widget.status.peer.has('cell-assignments');
+
+  String displayName(String state, {DeviceStatus? observed}) => cellActionLabel(
+    state,
+    cellActionColor(state, (observed ?? widget.status).json),
+    colors: widget.colorLabels,
+  );
 
   bool sameOwner(DeviceStatus initial) =>
       mounted &&
@@ -99,7 +110,7 @@ class _CellAssignmentsActionsState extends State<CellAssignmentsActions> {
     final cells = CellAssignments.fromObservedCells(observed.json['cells']);
     final blocked = observed.json['red_lock'] == true
         ? assignments.values.entries
-              .where((e) => cells.values[e.key] == 'red' && e.value == 'white')
+              .where((e) => cells.values[e.key] == 'lost' && e.value == 'idle')
               .map((e) => e.key)
               .toList()
         : <int>[];
@@ -124,7 +135,7 @@ class _CellAssignmentsActionsState extends State<CellAssignmentsActions> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'Red lock blocks cells ${blocked.join(', ')}. Nothing will be applied.',
+                    '${displayName('lost', observed: observed)} lock blocks cells ${blocked.join(', ')}. Nothing will be applied.',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -150,7 +161,7 @@ class _CellAssignmentsActionsState extends State<CellAssignmentsActions> {
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 5),
                               child: Text(
-                                '${cells.values[entry.key]} → ${entry.value}',
+                                '${displayName(cells.values[entry.key]!, observed: observed)} → ${displayName(entry.value, observed: observed)}',
                               ),
                             ),
                           ],
@@ -222,9 +233,10 @@ class _CellAssignmentsActionsState extends State<CellAssignmentsActions> {
                 widget.seenFeatures.contains('cell-lock'))
               FilterChip(
                 avatar: const Icon(PakarIcons.lock, size: 18),
-                label: const Text('Lock red cells'),
+                label: Text('Lock ${displayName('lost').toLowerCase()} cells'),
                 selected: lock == true,
-                tooltip: 'Prevent red cells changing back to white',
+                tooltip:
+                    'Prevent ${displayName('lost').toLowerCase()} cells returning to ${displayName('idle').toLowerCase()}',
                 onSelected:
                     ready && widget.status.peer.has('cell-lock') && lock is bool
                     ? (value) => run((owner) async {
@@ -244,38 +256,51 @@ class _CellAssignmentsActionsState extends State<CellAssignmentsActions> {
               ),
             if (widget.status.peer.has('cell-assignments') ||
                 widget.seenFeatures.contains('cell-assignments')) ...[
-              OutlinedButton.icon(
-                onPressed: assignmentReady ? importCells : null,
-                icon: const Icon(PakarIcons.gridFour, size: 18),
-                label: const Text('Import colors…'),
-              ),
+              for (final color in ['idle', 'lost'])
+                OutlinedButton.icon(
+                  onPressed:
+                      ready &&
+                          widget.status.cells.length == 80 &&
+                          widget.selectColor != null
+                      ? () => widget.selectColor!(color)
+                      : null,
+                  icon: Icon(
+                    PakarIcons.circle,
+                    size: 18,
+                    color: cellActionColor(color, widget.status.json),
+                  ),
+                  label: Text('Select all ${displayName(color).toLowerCase()}'),
+                ),
               PopupMenuButton<String>(
                 enabled: assignmentReady,
-                tooltip: 'Export cell colors',
-                onSelected: exportCells,
+                tooltip: 'Import and export colors',
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) =>
+                    value == 'import' ? importCells() : exportCells(value),
                 itemBuilder: (_) => [
+                  const PopupMenuItem(
+                    value: 'import',
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(Icons.file_open_outlined),
+                      title: Text('Import colors…'),
+                    ),
+                  ),
+                  const PopupMenuDivider(),
                   for (final format in ['xlsx', 'csv', 'json'])
                     PopupMenuItem(
                       value: format,
-                      child: Text(
-                        format == 'xlsx'
-                            ? 'Excel workbook (.xlsx)'
-                            : '${format.toUpperCase()} document',
+                      child: ListTile(
+                        dense: true,
+                        leading: const Icon(Icons.file_download_outlined),
+                        title: Text(
+                          format == 'xlsx'
+                              ? 'Excel workbook (.xlsx)'
+                              : '${format.toUpperCase()} document',
+                        ),
                       ),
                     ),
                 ],
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(PakarIcons.floppyDisk, size: 18),
-                      SizedBox(width: 8),
-                      Text('Export colors'),
-                      Icon(PakarIcons.caretDown, size: 16),
-                    ],
-                  ),
-                ),
               ),
             ],
             if (busy && !previewing)

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const source=read('assets/web/rayanlamp.js'),web=read('firmware/esp8266/src/WebUi.h');
+const source=read('assets/web/rayanlamp.js'),web=read('firmware/esp/src/WebUi.h');
 assert.equal(web.split('// BEGIN RAYANLAMP ADAPTATIONS')[1].split('// END RAYANLAMP ADAPTATIONS')[0].trim(),source.trim());
 const ctx=vm.createContext({});
 vm.runInContext(source,ctx);

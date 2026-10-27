@@ -10,21 +10,21 @@ Pealayer,src/preferences_contract.rs,reviewed,desktop/src/preferences.rs,Single 
 Pealayer,src/config.rs,adapted,desktop/src/config.rs,Imported numeric step types and adapted themes isolated persistence and workspace profile state
 Pealayer,src/platform/windows.rs,adapted,desktop/src/platform/instance.rs + windows_jump_list.rs,Imported mutex ownership named pipe lifecycle and Jump List task publisher
 Pealayer,web_ui/src/components/SevenSegmentDisplay.tsx,adapted,desktop/src/ui/seven_segment.rs,Exact seven segment geometry and intensity behavior adapted to egui
-Pealayer,web_ui/src/components/ApplicationStatusBar.tsx,reviewed,firmware/esp8266/src/WebUi.h,Live state status composition selected for Web redesign
-Pealayer,web_ui/src/components/HeaderBar.tsx,reviewed,firmware/esp8266/src/WebUi.h,Header action and device identity composition selected for Web redesign
-Pealayer,web_ui/src/components/HardwareTab.tsx,reviewed,firmware/esp8266/src/WebUi.h,Advertised hardware presentation selected for Web redesign
-Pealayer,web_ui/src/components/PreferencesTab.tsx,reviewed,firmware/esp8266/src/WebUi.h,Preferences grouping selected for Web redesign
-Pealayer,web_ui/src/appearance.ts,reviewed,firmware/esp8266/src/WebUi.h,Native Web palette parity contract selected for Web redesign
-Pealayer,web_ui/src/styles.css,reviewed,firmware/esp8266/src/WebUi.h,Surface typography spacing and responsive tokens selected for Web redesign
-PCController,Tools/Controller/internal/native/commands.go,adapted,firmware/esp8266/esp8266.ino,DisplayText and ScheduledSegment payload contract imported
+Pealayer,web_ui/src/components/ApplicationStatusBar.tsx,reviewed,firmware/esp/src/WebUi.h,Live state status composition selected for Web redesign
+Pealayer,web_ui/src/components/HeaderBar.tsx,reviewed,firmware/esp/src/WebUi.h,Header action and device identity composition selected for Web redesign
+Pealayer,web_ui/src/components/HardwareTab.tsx,reviewed,firmware/esp/src/WebUi.h,Advertised hardware presentation selected for Web redesign
+Pealayer,web_ui/src/components/PreferencesTab.tsx,reviewed,firmware/esp/src/WebUi.h,Preferences grouping selected for Web redesign
+Pealayer,web_ui/src/appearance.ts,reviewed,firmware/esp/src/WebUi.h,Native Web palette parity contract selected for Web redesign
+Pealayer,web_ui/src/styles.css,reviewed,firmware/esp/src/WebUi.h,Surface typography spacing and responsive tokens selected for Web redesign
+PCController,Tools/Controller/internal/native/commands.go,adapted,firmware/esp/application.ino,DisplayText and ScheduledSegment payload contract imported
 PCController,Tools/Controller/web/src/seven-segment-preview.tsx,adapted,desktop/src/ui/seven_segment.rs,Validated live raw segment preview merged with Pealayer geometry
 PCController,Tools/Controller/web/src/telemetry-chart.tsx,reviewed,desktop/src/ui/hardware_monitor.rs,Hardware monitor chart behavior selected for adaptation
 PCController,Tools/Controller/web/src/update-operation-panel.tsx,reviewed,desktop/src/main.rs,Programming progress and failure presentation selected for adaptation
 PCController,Tools/Controller/web/src/app-preferences-dialog.tsx,reviewed,desktop/src/preferences.rs,Preferences dialog hierarchy selected for adaptation
 PCController,Tools/Controller/web/src/app.tsx,reviewed,desktop/src/main.rs,Contextual application shell and live state routing
-PCController,Tools/Controller/web/src/components.tsx,reviewed,firmware/esp8266/src/WebUi.h,Reusable hardware components selected for Web redesign
-PCController,Tools/Controller/web/src/views.tsx,reviewed,firmware/esp8266/src/WebUi.h,Contextual board and front panel views selected for Web redesign
-PCController,Tools/Controller/web/src/styles.css,reviewed,firmware/esp8266/src/WebUi.h,Front panel and hardware monitor presentation selected for Web redesign
+PCController,Tools/Controller/web/src/components.tsx,reviewed,firmware/esp/src/WebUi.h,Reusable hardware components selected for Web redesign
+PCController,Tools/Controller/web/src/views.tsx,reviewed,firmware/esp/src/WebUi.h,Contextual board and front panel views selected for Web redesign
+PCController,Tools/Controller/web/src/styles.css,reviewed,firmware/esp/src/WebUi.h,Front panel and hardware monitor presentation selected for Web redesign
 PCController,Tools/Controller/internal/tui/frontpanel.go,reviewed,desktop/src/main.rs,Front panel facts and menu layout selected for TUI expansion
 PCController,Tools/Controller/internal/tui/display_editor.go,adapted,desktop/src/display.rs,Once Loop Interval speed hold pause force-scroll settings and PCController-compatible CLI and TUI command syntax
 PCController,Tools/Controller/internal/native/commands.go,adapted,desktop/src/display.rs,Scheduled target 5 payload and explicit target 4 host release adapted to the existing Rust client
@@ -51,7 +51,7 @@ Pealayer,build.rs,adapted,desktop/build.rs,Adapted executable resource compiler 
 Pealayer,assets/themes/ui-colors.json,adapted,assets/themes/ui-colors.json,Imported exact semantic color swatches
 Pealayer,assets/fonts/Vazirmatn-Regular.ttf,adapted,assets/fonts/Vazirmatn-Regular.ttf,Imported bundled font fallback
 Pealayer,LICENSE,adapted,desktop/licenses/Pealayer-MIT.txt,Preserved upstream license attribution
-PU850-ESP,LocalLib/FirmwareTransfer.cpp,adapted,firmware/esp8266/src/FirmwareTransfer.cpp + FirmwareRange.h,Actual donor GET HEAD Range ETag MD5 aligned flash source imported with shared authorization and Pakar identity
-PU850-ESP,LocalLib/Authentication.cpp + Sessions.cpp,adapted,firmware/esp8266/src/WebAccess.h + AccessConfig.cpp + libraries/BoardCore/src/AccessPolicy.h,Bounded sessions and constant comparison adapted with real authorization persistence rotation expiry and no secret dumps
-PU850-ESP,LocalLib/AsyncWebServer.cpp + AsyncOTA.cpp,adapted,firmware/esp8266/esp8266.ino + src/AsyncHttpService.h,Real async transport with deferred hardware work and exclusive owner-aware multipart OTA
+PU850-ESP,LocalLib/FirmwareTransfer.cpp,adapted,firmware/esp/src/FirmwareTransfer.cpp + FirmwareRange.h,Actual donor GET HEAD Range ETag MD5 aligned flash source imported with shared authorization and Pakar identity
+PU850-ESP,LocalLib/Authentication.cpp + Sessions.cpp,adapted,firmware/esp/src/WebAccess.h + AccessConfig.cpp + libraries/BoardCore/src/AccessPolicy.h,Bounded sessions and constant comparison adapted with real authorization persistence rotation expiry and no secret dumps
+PU850-ESP,LocalLib/AsyncWebServer.cpp + AsyncOTA.cpp,adapted,firmware/esp/application.ino + src/AsyncHttpService.h,Real async transport with deferred hardware work and exclusive owner-aware multipart OTA
 PU850-ESP,PRODUCT-PROFILES.md + ProductConfig.h,reviewed,docs/PU850-PARITY.md,Metadata and safe firmware transfer mapped; explicit open gaps retained

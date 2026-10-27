@@ -59,6 +59,7 @@ void TonePlayer::error() {
 }
 
 void TonePlayer::update(uint32_t now) {
+  if(streamState_==1)return; // Prefill is silent until an explicit start.
   uint32_t startsAt = now;
   if (stepActive_) {
     if (static_cast<int32_t>(now - stepEndsAt_) < 0) {
@@ -91,9 +92,11 @@ void TonePlayer::update(uint32_t now) {
     activeFrequencyHz_ = 0; activeDurationMs_ = 0; ++revision_;
     activeStartedMs_ = now;
   }
+  if(streamState_==2)streamState_=streamFinal_?3:4;
 }
 
 void TonePlayer::stop() {
+  if(streamState_==1||streamState_==2)streamState_=5;
   stopHardwareTone();
   head_ = 0;
   tail_ = 0;
@@ -120,6 +123,41 @@ void TonePlayer::setMuted(bool muted) {
 }
 
 bool TonePlayer::isBusy() const { return stepActive_ || count_ != 0; }
+
+void TonePlayer::streamStatus(uint8_t *out) const {
+  out[0]=streamId_;out[1]=streamId_>>8;
+  out[2]=streamOffset_;out[3]=streamOffset_>>8;
+  out[4]=MAX_TONES-count_;out[5]=streamState_;out[6]=muted_;
+}
+
+uint8_t TonePlayer::stream(const uint8_t *p,uint8_t n) {
+  if(n<5)return 3;
+  const uint8_t action=p[0];
+  const uint16_t id=p[1]|uint16_t(p[2])<<8,offset=p[3]|uint16_t(p[4])<<8;
+  if(action>5||!id||(action!=1&&n!=5))return 3;
+  if(action==0){
+    if(offset||muted_||isBusy()||id==streamId_)return 6;
+    stop();streamId_=id;streamOffset_=0;streamFinal_=false;streamState_=1;return 0;
+  }
+  if(id!=streamId_)return 6;
+  if(action==4)return 0;
+  if(action==5){stop();streamState_=5;return 0;}
+  if(muted_||(streamState_!=1&&streamState_!=2)||offset!=streamOffset_)return 6;
+  if(action==2){if(streamState_!=1||!count_)return 6;streamState_=2;return 0;}
+  if(action==3){streamFinal_=true;return 0;}
+  if(streamFinal_||n==5||(n-5)%4)return 3;
+  const uint8_t steps=(n-5)/4;
+  if(steps>MAX_TONES-count_)return 5;
+  if(uint32_t(streamOffset_)+steps>65535U)return 3;
+  // Validate the complete chunk before changing the circular buffer.
+  for(uint8_t at=5;at<n;at+=4){
+    const uint16_t hz=p[at]|uint16_t(p[at+1])<<8,ms=p[at+2]|uint16_t(p[at+3])<<8;
+    if(!ms||ms>5000||(hz&&(hz<20||hz>20000)))return 3;
+  }
+  for(uint8_t at=5;at<n;at+=4)
+    enqueue(p[at]|uint16_t(p[at+1])<<8,p[at+2]|uint16_t(p[at+3])<<8);
+  streamOffset_+=steps;return 0;
+}
 
 bool TonePlayer::startHardwareTone(uint16_t frequencyHz) {
   if (pin_ != BoardPins::Buzzer || frequencyHz == 0) {

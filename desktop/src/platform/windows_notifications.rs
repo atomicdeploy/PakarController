@@ -2,16 +2,20 @@
 //! to the existing tray-icon HWND/GUID rather than creating a second tray icon.
 //! Source: 78563ff7501e13cb8e40a60dd181f69f127c550d. Shell notifications, not
 //! a WinRT action/progress toast. Acceptance is not evidence of visibility.
+use super::windows_tray::TRAY_GUID;
 use crate::messaging::Severity;
 use windows::{
-    Win32::{Foundation::{HWND, LPARAM, LRESULT, WPARAM}, UI::Shell::{
-        DefSubclassProc, NIF_GUID, NIF_INFO, NIIF_ERROR, NIIF_INFO, NIIF_NOSOUND,
-        NIIF_RESPECT_QUIET_TIME, NIIF_WARNING, NIF_TIP, NIM_MODIFY, NOTIFYICONDATAW,
-        RemoveWindowSubclass, SetWindowSubclass, Shell_NotifyIconW,
-    }, UI::WindowsAndMessaging::RegisterWindowMessageW},
+    Win32::{
+        Foundation::{HWND, LPARAM, LRESULT, WPARAM},
+        UI::Shell::{
+            DefSubclassProc, NIF_GUID, NIF_INFO, NIF_TIP, NIIF_ERROR, NIIF_INFO, NIIF_NOSOUND,
+            NIIF_RESPECT_QUIET_TIME, NIIF_WARNING, NIM_MODIFY, NOTIFYICONDATAW,
+            RemoveWindowSubclass, SetWindowSubclass, Shell_NotifyIconW,
+        },
+        UI::WindowsAndMessaging::RegisterWindowMessageW,
+    },
     core::{GUID, w},
 };
-use super::windows_tray::TRAY_GUID;
 const HOOK_ID: usize = 0x50414b;
 // tray-icon =0.26.1's observed, pinned callback contract. Not a guessed HWND.
 const TRAY_CALLBACK: u32 = 6002;
@@ -29,7 +33,14 @@ pub struct Hook {
     events: Box<Events>,
     handled_clicks: u64,
 }
-unsafe extern "system" fn callback(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM, _: usize, data: usize) -> LRESULT {
+unsafe extern "system" fn callback(
+    hwnd: HWND,
+    msg: u32,
+    wp: WPARAM,
+    lp: LPARAM,
+    _: usize,
+    data: usize,
+) -> LRESULT {
     if msg == TRAY_CALLBACK {
         // The Box address stays stable until the subclass is removed in Drop.
         let events = unsafe { &*(data as *const Events) };
@@ -40,36 +51,70 @@ unsafe extern "system" fn callback(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM,
             0x405 => Some(&events.clicked),
             _ => None,
         };
-        if let Some(counter) = counter { counter.set(counter.get().saturating_add(1)); }
+        if let Some(counter) = counter {
+            counter.set(counter.get().saturating_add(1));
+        }
     }
     // Let tray-icon recreate its OWN icon first. Never add a second icon here.
     let restarted = msg == unsafe { &*(data as *const Events) }.taskbar_created;
     let result = unsafe { DefSubclassProc(hwnd, msg, wp, lp) };
     if restarted {
         let events = unsafe { &*(data as *const Events) };
-        events.explorer_epoch.set(events.explorer_epoch.get().saturating_add(1));
+        events
+            .explorer_epoch
+            .set(events.explorer_epoch.get().saturating_add(1));
     }
     result
 }
 impl Hook {
     pub fn new(hwnd_raw: isize) -> Result<Self, String> {
-        if hwnd_raw == 0 { return Err("Notification tray HWND is unavailable".into()); }
+        if hwnd_raw == 0 {
+            return Err("Notification tray HWND is unavailable".into());
+        }
         let hwnd = HWND(hwnd_raw as *mut _);
         let taskbar_created = unsafe { RegisterWindowMessageW(w!("TaskbarCreated")) };
-        if taskbar_created == 0 { return Err("Windows taskbar restart message registration failed".into()); }
-        let events = Box::new(Events { taskbar_created, ..Default::default() });
-        if !unsafe { SetWindowSubclass(hwnd, Some(callback), HOOK_ID, (&*events as *const Events) as usize) }.as_bool() {
+        if taskbar_created == 0 {
+            return Err("Windows taskbar restart message registration failed".into());
+        }
+        let events = Box::new(Events {
+            taskbar_created,
+            ..Default::default()
+        });
+        if !unsafe {
+            SetWindowSubclass(
+                hwnd,
+                Some(callback),
+                HOOK_ID,
+                (&*events as *const Events) as usize,
+            )
+        }
+        .as_bool()
+        {
             return Err("Windows notification callback registration failed".into());
         }
-        Ok(Self { hwnd, events, handled_clicks: 0 })
+        Ok(Self {
+            hwnd,
+            events,
+            handled_clicks: 0,
+        })
     }
-    pub fn explorer_epoch(&self) -> u64 { self.events.explorer_epoch.get() }
+    pub fn explorer_epoch(&self) -> u64 {
+        self.events.explorer_epoch.get()
+    }
     pub fn set_tooltip(&self, text: &str) -> Result<(), String> {
         let nid = tooltip_data(self.hwnd, text);
-        unsafe { Shell_NotifyIconW(NIM_MODIFY, &nid) }.as_bool().then_some(())
+        unsafe { Shell_NotifyIconW(NIM_MODIFY, &nid) }
+            .as_bool()
+            .then_some(())
             .ok_or_else(|| "Windows Shell rejected GUID-bound tray tooltip".into())
     }
-    pub fn show(&self, title: &str, message: &str, severity: &Severity, sound: bool) -> Result<(), String> {
+    pub fn show(
+        &self,
+        title: &str,
+        message: &str,
+        severity: &Severity,
+        sound: bool,
+    ) -> Result<(), String> {
         let severity_flag = match severity {
             Severity::Error => NIIF_ERROR,
             Severity::Warning => NIIF_WARNING,
@@ -82,11 +127,21 @@ impl Hook {
             guidItem: GUID::from_u128(TRAY_GUID),
             szInfo: wide_buffer(message),
             szInfoTitle: wide_buffer(title),
-            dwInfoFlags: severity_flag | NIIF_RESPECT_QUIET_TIME | if sound { Default::default() } else { NIIF_NOSOUND },
+            dwInfoFlags: severity_flag
+                | NIIF_RESPECT_QUIET_TIME
+                | if sound {
+                    Default::default()
+                } else {
+                    NIIF_NOSOUND
+                },
             ..Default::default()
         };
-        unsafe { Shell_NotifyIconW(NIM_MODIFY, &nid) }.as_bool().then_some(())
-            .ok_or_else(|| "Windows Shell rejected notification; check Explorer/notification settings".into())
+        unsafe { Shell_NotifyIconW(NIM_MODIFY, &nid) }
+            .as_bool()
+            .then_some(())
+            .ok_or_else(|| {
+                "Windows Shell rejected notification; check Explorer/notification settings".into()
+            })
     }
     pub fn take_click(&mut self) -> bool {
         let now = self.events.clicked.get();
@@ -126,7 +181,9 @@ fn wide_buffer<const N: usize>(text: &str) -> [u16; N] {
     for ch in text.chars().filter(|ch| *ch != '\0') {
         let mut units = [0; 2];
         let encoded = ch.encode_utf16(&mut units);
-        if cursor + encoded.len() >= N { break; }
+        if cursor + encoded.len() >= N {
+            break;
+        }
         out[cursor..cursor + encoded.len()].copy_from_slice(encoded);
         cursor += encoded.len();
     }
@@ -137,9 +194,9 @@ mod tests {
     use super::*;
     #[test]
     fn utf16_limits_preserve_complete_surrogates_and_termination() {
-        assert_eq!(wide_buffer::<4>("AB😀"), [65,66,0,0]);
-        assert_eq!(wide_buffer::<5>("AB😀"), [65,66,0xd83d,0xde00,0]);
-        assert_eq!(wide_buffer::<4>("A\0B"), [65,66,0,0]);
+        assert_eq!(wide_buffer::<4>("AB😀"), [65, 66, 0, 0]);
+        assert_eq!(wide_buffer::<5>("AB😀"), [65, 66, 0xd83d, 0xde00, 0]);
+        assert_eq!(wide_buffer::<4>("A\0B"), [65, 66, 0, 0]);
         assert!(Hook::new(0).is_err());
         assert!(Hook::new(42).is_err());
     }

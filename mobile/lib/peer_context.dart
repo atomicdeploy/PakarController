@@ -1,6 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'game_settings_command.dart';
+import 'board_artwork.dart';
+import 'application_artwork.dart';
+import 'led_backend.dart';
+
 /// Actual PCController peripheral-availability.ts ready AND advertised rule,
 /// adapted through Pakar's living capability manifest (capabilities.rs).
 /// No table, peripheral or application identity is inferred from pixel counts.
@@ -84,9 +89,12 @@ class PeerContext {
     }
     final modes = <PeerMode>[];
     final keys = value['keys'];
-    final keyGame = role == 'first-wins' &&
-        keys is Map && keys['count'] == 9 &&
-        keys['groups_per_key'] == 2 && keys['pixels_per_group'] == 12;
+    final keyGame =
+        role == 'first-wins' &&
+        keys is Map &&
+        keys['count'] == 9 &&
+        keys['groups_per_key'] == 2 &&
+        keys['pixels_per_group'] == 12;
     if ((table || keyGame) && rawModes is List) {
       for (final mode in rawModes) {
         if (mode is! Map || mode['code'] is! int) continue;
@@ -120,7 +128,7 @@ class PeerContext {
       Set.unmodifiable(features),
       table,
       List.unmodifiable(modes),
-      PeerApplication.parse(value['application']),
+      PeerApplication.parse(value['application'], role: role),
       features.contains('leds')
           ? LedOutputCapability.parse(value['led_output'])
           : null,
@@ -134,18 +142,41 @@ class PeerContext {
   bool allows(String path, Map<String, String> values) {
     if (!known) return false;
     return switch (path) {
+      '/api/led/presentation' ||
+      '/api/led/preview' => has('state-presentation') && has('leds'),
       '/api/cell' || '/api/cells/mapping' => tableSelection,
       '/api/game/reset' => modes.any((mode) => mode.id == 'first-wins'),
-      '/api/game/settings' => role == 'first-wins' && has('key-settings'),
+      '/api/game/press' =>
+        role == 'first-wins' &&
+            has('game-press') &&
+            values.length == 1 &&
+            RegExp(r'^[1-9]$').hasMatch(values['key'] ?? ''),
+      '/api/game/settings' =>
+        role == 'first-wins' &&
+            has('key-settings') &&
+            (!values.containsKey('presentation') || has('game-presentation')) &&
+            (!gameMelodyPatch(values) || has('game-melodies')) &&
+            _validGameSettings(values),
       '/api/cells' => tableSelection && has('cell-batch'),
       '/api/cells/assignments' => tableSelection && has('cell-assignments'),
       '/api/cells/lock' => tableSelection && has('cell-lock'),
       '/api/mode' => modes.any((mode) => mode.id == values['value']),
-      '/api/display' => has(values.containsKey('text') ? 'text' : 'display'),
+      '/api/display' => has(
+        values.containsKey('text') || values['release'] == 'true'
+            ? 'text'
+            : 'display',
+      ),
       '/api/audio' || '/api/buzzer' => has('buzzer'),
       '/api/outputs' => has('outputs'),
-      '/api/brightness' || '/api/effect' || '/api/led/output' => has('leds'),
+      '/api/led/output' =>
+        has('leds') &&
+            (!values.containsKey('backend') ||
+                values.length == 1 &&
+                    ledOutput?.runtimeSwitch == true &&
+                    ledOutput!.availableBackends.contains(values['backend'])),
+      '/api/brightness' || '/api/effect' => has('leds'),
       '/api/led/diagnostic' => has('leds') && has('pixel-diagnostic'),
+      '/api/pixels/groups' => has('leds') && has('pixel-group-layout'),
       '/api/device/name' => has('identity'),
       '/api/network' || '/api/cloud' => has('network'),
       _ => false, // Add an explicit contract before exposing a new mutation.
@@ -157,37 +188,80 @@ class PeerContext {
       : 'PakarController';
 }
 
+bool _validGameSettings(Map<String, String> values) {
+  try {
+    gameSettingsPatch(values);
+    return true;
+  } on FormatException {
+    return false;
+  }
+}
+
 /// Selected board wire implementation, not animation mode or active/ready state.
 /// Missing, mistyped or contradictory metadata is unknown, never false.
 class LedOutputCapability {
-  const LedOutputCapability._(this.backend, this.rmt, this.dma);
+  const LedOutputCapability._(
+    this.backend,
+    this.rmt,
+    this.dma,
+    this.availableBackends,
+    this.runtimeSwitch,
+  );
   final String backend;
   final bool rmt, dma;
+  final List<String> availableBackends;
+  final bool runtimeSwitch;
   static LedOutputCapability? parse(Object? raw) {
     if (raw is! Map || raw['rmt'] is! bool || raw['dma'] is! bool) return null;
     final backend = raw['backend'], rmt = raw['rmt'], dma = raw['dma'];
     if (!((backend == 'rmt-dma' && rmt == true && dma == true) ||
-        ((backend == 'gpio-static' || backend == 'fastled') &&
+        ((backend == 'gpio-static' ||
+                backend == 'fastled' ||
+                backend == 'none') &&
             rmt == false &&
             dma == false))) {
       return null;
     }
-    return LedOutputCapability._(backend as String, rmt as bool, dma as bool);
+    final declared = raw['available_backends'];
+    final available = declared is List
+        ? selectableLedBackends.where(declared.contains).toList()
+        : <String>[];
+    return LedOutputCapability._(
+      backend as String,
+      rmt as bool,
+      dma as bool,
+      List.unmodifiable(available),
+      raw['runtime_switch'] == true,
+    );
   }
 
   String get label => backend == 'rmt-dma'
       ? 'RMT + DMA'
       : backend == 'gpio-static'
       ? 'GPIO · no RMT/DMA'
+      : backend == 'none'
+      ? 'No LED transmitter'
       : 'FastLED · no RMT/DMA';
 }
 
 const knownFeatures = {
+  'state-presentation',
+  'key-settings',
+  'game-melodies',
+  'usb-key-settings',
+  'reset-ack',
   'usb-demand',
   'usb-pixel-diagnostic',
+  'usb-api',
   'status-rgb',
   'command-ack',
   'pixel-diagnostic',
+  'pixel-diagnostic-effects',
+  'pixel-diagnostic-overlay',
+  'pixel-corrections-preview',
+  'pixel-group-layout',
+  'pixel-correction-rule-toggle',
+  'pixel-corrections',
   'network',
   'telemetry',
   'leds',
@@ -253,7 +327,11 @@ class PeerApplication {
   PeerApplication._(this.id, this.name, this.title, this.icon);
   final String id, name, title;
   final Uint8List? icon;
-  static PeerApplication? parse(Object? raw) {
+  // Reuse validated bytes across telemetry snapshots. MemoryImage keys use
+  // byte-buffer identity; decoding each status otherwise flashes the header.
+  static String? _iconEncoding;
+  static Uint8List? _iconBytes;
+  static PeerApplication? parse(Object? raw, {String role = ''}) {
     if (raw is! Map ||
         !validText(raw['id'], 96) ||
         !validText(raw['name'], 96) ||
@@ -262,7 +340,9 @@ class PeerApplication {
     }
     Uint8List? icon;
     final encoded = raw['icon_png_base64'];
-    if (encoded is String && encoded.length <= 4096) {
+    if (encoded is String && encoded == _iconEncoding) {
+      icon = _iconBytes;
+    } else if (encoded is String && encoded.length <= 4096) {
       try {
         final bytes = base64Decode(encoded);
         if (bytes.length >= 33 &&
@@ -272,11 +352,18 @@ class PeerApplication {
           final width = data.getUint32(16), height = data.getUint32(20);
           if (width >= 8 && width <= 256 && height >= 8 && height <= 256) {
             icon = bytes;
+            _iconEncoding = encoded;
+            _iconBytes = bytes;
           }
         }
       } on FormatException {
         /* Identity still valid, artwork unavailable. */
       }
+    }
+    // Only the generic bundled artwork is upgraded by acknowledged role.
+    // A valid board-supplied custom icon retains precedence.
+    if (icon == null || encoded == applicationArtworkBase64) {
+      icon = boardArtwork[role] ?? icon;
     }
     return PeerApplication._(raw['id'], raw['name'], raw['title'], icon);
   }

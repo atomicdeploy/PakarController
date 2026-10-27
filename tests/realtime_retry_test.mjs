@@ -5,7 +5,7 @@ import {webcrypto} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8').replaceAll('\r\n','\n');
-const module=read('assets/web/realtime-retry.js'),web=read('firmware/esp8266/src/WebUi.h');
+const module=read('assets/web/realtime-retry.js'),web=read('firmware/esp/src/WebUi.h');
 const context=vm.createContext({AbortController});
 vm.runInContext(module,context);
 const create=vm.runInContext('createRealtimeRetry',context);

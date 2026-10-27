@@ -145,8 +145,8 @@ function createPeerHttp({fetcher = (...args) => fetch(...args), now = () => Date
       if (peer) assertOwner(peer);
       return value;
     } catch (error) {
-      if (timedOut) throw new PeerAPIError('Request timed out. A sent write may have applied; it was not retried.', 408, 'timeout');
-      if (external?.aborted) throw new PeerAPIError('Request cancelled. A sent write may have applied; it was not retried.', 0, 'cancelled');
+      if (timedOut) throw new PeerAPIError(mutation ? 'Request timed out. A sent write may have applied; it was not retried.' : 'Board read timed out. No command was sent.', 408, 'timeout');
+      if (external?.aborted) throw new PeerAPIError(mutation ? 'Request cancelled. A sent write may have applied; it was not retried.' : 'Board read cancelled. No command was sent.', 0, 'cancelled');
       throw error;
     } finally {clearTimer(timer); external?.removeEventListener('abort', abort);}
   }

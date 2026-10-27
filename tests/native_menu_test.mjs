@@ -15,16 +15,14 @@ const menu = shell.split('egui::Panel::top("pakar-menu")')[1]
   .split('ui.with_layout(egui::Layout::right_to_left')[0];
 assert.equal((menu.match(/menu::top_menu_button\(/g) || []).length, 4);
 assert.equal((menu.match(/\.shortcut_text\(/g) || []).length, 6);
-for (const binding of ['Ctrl+Shift+,', 'Ctrl+K', 'Ctrl+M', 'Ctrl+,', 'F11', 'F5']) {
-  assert.ok(menu.includes(`.shortcut_text("${binding}")`));
-  assert.ok(!menu.split('\n').some(line => line.includes('format!(') && line.includes(binding)),
-    `primary label must not contain ${binding}`);
-}
+for (const binding of ['device_settings', 'connect', 'cell_mapping', 'preferences', 'fullscreen', 'refresh'])
+  assert.ok(menu.includes(`.shortcut_text(&shortcuts.${binding})`));
+assert.ok(!menu.includes('Ctrl+'), 'shortcut text must come from persisted bindings, not labels');
 // The user requested a height explanation without changing the height policy.
 const config = read('desktop/src/config.rs');
 for (const unchanged of ['font.size = font.size.min(13.0);',
   'style.spacing.item_spacing = eframe::egui::vec2(8.0, 6.0);',
-  'style.spacing.interact_size.y = 28.0;']) assert.ok(config.includes(unchanged));
+  'crate::ui::control_density::configure(style, config.ui_control_density);']) assert.ok(config.includes(unchanged));
 for (const test of ['shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes',
   'sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state',
   'production_menu_rows_use_shortcut_atoms_and_imported_root_menu_helper']) assert.ok(source.includes(`fn ${test}(`));

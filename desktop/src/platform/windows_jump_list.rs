@@ -19,9 +19,7 @@ pub fn install() -> Result<(), String> {
 fn build_windows_jump_list(include_quick_actions: bool) -> Result<(), String> {
     use windows::Win32::Foundation::PROPERTYKEY;
     use windows::Win32::System::Com::StructuredStorage::PROPVARIANT;
-    use windows::Win32::System::Com::{
-        CLSCTX_INPROC_SERVER, CoCreateInstance,
-    };
+    use windows::Win32::System::Com::{CLSCTX_INPROC_SERVER, CoCreateInstance};
     use windows::Win32::UI::Shell::Common::{IObjectArray, IObjectCollection};
     use windows::Win32::UI::Shell::PropertiesSystem::IPropertyStore;
     use windows::Win32::UI::Shell::{

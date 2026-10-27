@@ -6,6 +6,15 @@ import {isIP} from 'node:net';
 import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
 import {toolHeaders,assertToolPeerCompatible} from './peer-identity.mjs';
+import {gunzipSync} from 'node:zlib';
+
+// Only presentation is decoded; firmware range/hash checks retain wire bytes.
+export function assertWebUi(response) {
+  const encoding=response.headers?.['content-encoding'];
+  if(encoding&&encoding!=='identity'&&encoding!=='gzip')throw Error('Unsupported Web UI content encoding');
+  const body=encoding==='gzip'?gunzipSync(response.body,{maxOutputLength:512*1024}):response.body;
+  if(body.length>512*1024||!/<html|<!doctype html/i.test(body.toString('utf8')))throw Error('Device Web UI not served');
+}
 
 export function deviceOrigin(value) {
   const url=new URL(value);
@@ -85,7 +94,7 @@ export async function checkEthernet({origin,run=false,manifest,manifestSha,image
   };
   const first=await json('/api/status');peer=ethernetReady(first.value,first.remote);
   const fresh=async()=>{const next=await json('/api/status');ethernetReady(next.value,next.remote,peer);return next.value};
-  const html=await read('/');if(!/<html|<!doctype html/i.test(html.body.toString('utf8')))throw Error('Device Web UI not served');
+  assertWebUi(await read('/'));
   const xml=await read('/description.xml');if(!/<UDN>uuid:/.test(xml.body.toString('utf8')))throw Error('SSDP description not served');
   const config=(await json('/api/network/ethernet')).value;if(config.configured!==true||typeof config.dhcp!=='boolean')throw Error('Ethernet configuration unavailable');
   const head=await read('/firmware/download',{method:'HEAD'});

@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "StatusRgb.h"
-#include "../../esp8266/src/ConfigurationChanges.h"
+#include "../../esp/src/ConfigurationChanges.h"
 
 namespace PakarS3 {
 // Persistent OWNER of onboard RGB configuration. Adapted from the actual

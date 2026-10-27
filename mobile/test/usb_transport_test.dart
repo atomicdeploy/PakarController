@@ -9,6 +9,7 @@ import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/usb_transport.dart';
 import 'package:pakarcontroller/lan_resolver.dart';
 import 'package:pakarcontroller/pixel_diagnostic.dart';
+import 'package:pakarcontroller/models.dart' show audioCueNames;
 
 class UsbFixture {
   UsbFixture() {
@@ -29,6 +30,8 @@ class UsbFixture {
       expiredLease = false;
   Uint8List capture = Uint8List(0);
   Map<String, dynamic>? pixels;
+  bool pixelFramePartial = false;
+  int get groupCount => status['pixels'] == 216 ? 18 : 80;
   final status = <String, dynamic>{
     'version': '0.2.8',
     'compatibility': {
@@ -125,9 +128,10 @@ class UsbFixture {
             utf8.encode(
               jsonEncode({
                 'status': status,
-                'physical': List.generate(80, (i) => i + 1),
-                'names': List.generate(80, (i) => '${i + 1}'),
+                'physical': List.generate(groupCount, (i) => i + 1),
+                'names': List.generate(groupCount, (i) => '${i + 1}'),
                 'pixels': demand & 8 != 0 ? pixels : null,
+                if (pixelFramePartial && demand & 8 != 0) 'pixel_frame_partial': true,
               }),
             ),
           );
@@ -147,11 +151,27 @@ class UsbFixture {
               (status['cells'] as List)[i] = ['white', 'red', 'off'][p[0]];
             }
           }
+        } else if (op == 0x5c && p.length == 2 && p[0] == 3) {
+          final backend = p[1] == 1 ? 'gpio-static' : 'rmt-dma';
+          final driver = status['led_output']['driver'] as Map;
+          driver['requested_backend'] = backend;
+          driver['switch_pending'] = true;
+          Future<void>.delayed(const Duration(milliseconds: 80), () {
+            driver['backend'] = backend;
+            driver['switch_pending'] = false;
+          });
+        } else if(op==0x67) {
+          const fields=['enabled_mask','idle_rgb','win_rgb','lose_rgb','extended_effects','auto_reset_ms'];
+          const offsets=[1,3,6,9,12,13],widths=[2,3,3,3,1,4];
+          for(var i=0;i<6;i++) {if(p[0]&(1<<i)!=0) {(status['key_game'] as Map)[fields[i]]=i==4?p[12]!=0:read(p,offsets[i],widths[i]);}}
+          for(var i=0;i<2;i++) {if(p[0]&(64<<i)!=0) {(status['key_game'] as Map)[i==0?'winner_cue':'reset_cue']=p[17+i]==255?'silent':audioCueNames[p[17+i]];}}
+          if(p[0]&192!=0) status['game_audio_applied']=true;
         } else if (op == 0x65) {
           final probe = PixelProbe(
             index: read(p, 0, 2),
-            group: p[2] == 6,
+            group: p[2] == (status['pixels']==216?12:6),
             rgb: p[3] << 16 | p[4] << 8 | p[5],
+            pixels: status['pixels'] as int,groupSize:status['pixels']==216?12:6,
           );
           pixels = {
             'revision': 1,
@@ -160,7 +180,7 @@ class UsbFixture {
                 .frame(off: p[6] == 1)
                 .map((b) => b.toRadixString(16).padLeft(2, '0'))
                 .join(),
-            'physical': List.generate(80, (i) => i + 1),
+            'physical': List.generate(groupCount, (i) => i + 1),
           };
         }
         reply(f, 0x80, [wrongAck ? 0x51 : op, 0]);
@@ -179,6 +199,101 @@ class UsbFixture {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  test('USB backend switch waits for active driver, sends once, and never uses network', () async {
+    final fixture = UsbFixture();
+    fixture.status['capabilities']['led_output'] = {
+      'backend': 'gpio-static', 'rmt': false, 'dma': false,
+      'available_backends': ['gpio-static', 'rmt-dma'], 'runtime_switch': true,
+    };
+    fixture.status['led_output']['backend_saved'] = true;
+    fixture.status['led_output']['driver'] = {
+      'backend': 'gpio-static', 'requested_backend': 'gpio-static',
+      'available_backends': ['gpio-static', 'rmt-dma'], 'switch_pending': false,
+      'switch_error': 0, 'error_code': 0, 'ready': true,
+    };
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(fixture.channel, fixture.invoke);
+    var http = 0, dns = 0;
+    final api = PakarApi(
+      baseUrl: 'usb://12/0', usb: fixture.transport,
+      client: MockClient((_) async { http++; throw StateError('No HTTP'); }),
+      resolver: LanResolver(lookup: (_) async { dns++; throw StateError('No DNS'); }),
+    );
+    try {
+      await api.status();
+      final result = await api.fastCommand('/api/led/output', {'backend': 'rmt-dma'}, authorize: () => true);
+      expect(result?.json['led_output']['driver']['backend'], 'rmt-dma');
+      expect(result?.json['led_output']['driver']['switch_pending'], false);
+      final writes = fixture.writes.where((frame) => frame.opcode == 0x5e).toList();
+      expect(writes.length, 1);
+      expect(writes.single.payload.sublist(16), [0x5c, 3, 2]);
+      expect(http, 0);
+      expect(dns, 0);
+    } finally {
+      await api.close();
+      await fixture.close();
+    }
+  });
+  test('first-wins USB connects, saves partial settings and publishes a twelve-pixel group',() async {
+    final f=UsbFixture();
+    f.status['pixels']=216;f.status['cells']=<String>[];f.status['cell_states']=List.filled(18,'idle');f.status['mode']='first-wins';
+    final caps=f.status['capabilities'] as Map;caps['role']='first-wins';
+    (caps['acknowledged_features'] as List).addAll(<String>['key-settings','usb-key-settings','game-melodies']);
+    f.status['key_game']=<String,dynamic>{'enabled_mask':3,'win_rgb':65280,'idle_rgb':16777215,'auto_reset_ms':0};
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(f.channel,f.invoke);
+    try {
+      await f.transport.connect('usb://12/0');
+      expect(f.transport.latest!.json['cells'], isEmpty);
+      expect(f.transport.latest!.json['cell_states'], List.filled(18, 'idle'));
+      final saved=await f.transport.command('/api/game/settings',{'enabled_mask':'15','auto_reset_ms':'10000'},authorize:()=>true);
+      expect(saved.json['key_game']['enabled_mask'],15);expect(saved.json['key_game']['win_rgb'],65280);
+      final melodies=await f.transport.command('/api/game/settings',{'winner_cue':'attention','reset_cue':'silent'},authorize:()=>true);
+      expect(melodies.json['key_game']['winner_cue'],'attention');
+      expect(melodies.json['key_game']['reset_cue'],'silent');
+      expect(melodies.json['game_audio_applied'],true);
+      await expectLater(f.transport.command('/api/game/settings',{'chase_period_ms':'900'},authorize:()=>true),throwsFormatException);
+      final actual=await f.transport.command('/api/led/diagnostic',{'index':'204','count':'12','rgb':'65280','off':'false'},authorize:()=>true);
+      expect((actual.json['pixel_frame']['rgb'] as String).length,216*6);
+      expect((actual.json['pixel_frame']['rgb'] as String).substring(204*6),'00ff00'*12);
+      await expectLater(f.transport.command('/api/led/diagnostic',{'index':'210','count':'12','rgb':'65280','off':'false'},authorize:()=>true),throwsFormatException);
+    } finally {await f.close();}
+  });
+  for (final semantic in [false, true]) {
+    test('USB table snapshot preserves won state with semantic=$semantic', () async {
+      final fixture = UsbFixture();
+      (fixture.status['cells'] as List)[4] = 'won';
+      if (semantic) {
+        fixture.status['cell_states'] = List.filled(80, 'idle')..[4] = 'won';
+      }
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(fixture.channel, fixture.invoke);
+      try {
+        await fixture.transport.connect('usb://12/0');
+        expect(fixture.transport.latest!.json['cells'][4], 'won');
+        expect(fixture.transport.latest!.json.containsKey('cell_states'), semantic);
+        if (semantic) {
+          expect(fixture.transport.latest!.json['cell_states'][4], 'won');
+        }
+        expect(fixture.writes.where((frame) => frame.opcode == 0x5e), isEmpty);
+      } finally {
+        await fixture.close();
+      }
+    });
+  }
+  for (final malformed in [List.filled(79, 'idle'), List.filled(80, 'unknown')]) {
+    test('USB malformed semantic state does not fall back to plausible legacy cells: ${malformed.length}/${malformed.first}', () async {
+      final fixture = UsbFixture();
+      fixture.status['cell_states'] = malformed;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(fixture.channel, fixture.invoke);
+      try {
+        await expectLater(fixture.transport.connect('usb://12/0'), throwsFormatException);
+        expect(fixture.writes.where((frame) => frame.opcode == 0x5e), isEmpty);
+      } finally {
+        await fixture.close();
+      }
+    });
+  }
   test('USB COBS CRC matches fixed protocol and rejects corrupt/reserved/oversized frames', () {
     for (final payload in [
       <int>[],

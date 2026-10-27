@@ -9,6 +9,20 @@ import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/lan_resolver.dart';
 
 void main() {
+  test('User read recovers superseded snapshot without replaying a command', () async {
+    var reads=0;
+    final api=PakarApi(client:MockClient((request) async {
+      expect(request.method,'GET');
+      return http.Response(jsonEncode({'version':'0.2.8','hostname':'ledboard',
+        'board_id':'fixture-board','boot_id':'a'*32,'command_clock_ms':++reads==2?100:200}),200);
+    }));
+    try {
+      await api.status();
+      final result=await api.settledStatus();
+      expect(result.json['command_clock_ms'],200);
+      expect(reads,3);
+    } finally {await api.close();}
+  });
   test('Older HTTP producer reply is superseded, not a freshly returned cached observation; equal clocks remain valid', () async {
     var reads = 0, publications = 0;
     final api = PakarApi(

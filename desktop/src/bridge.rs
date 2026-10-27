@@ -15,10 +15,12 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-#[path = "bridge_transfer.rs"]
-mod transfer;
 #[path = "bridge_events.rs"]
 mod events;
+#[path = "bridge_transfer.rs"]
+mod transfer;
+#[path = "bridge_pixels.rs"]
+mod pixels;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -101,7 +103,7 @@ struct Shared {
     clients: AtomicUsize,
     receipts: Mutex<BTreeMap<String, (Instant, Value, Option<Value>)>>,
     last_input: Mutex<Value>,
-    peers: Mutex<BTreeMap<String,(Instant,Value)>>,
+    peers: Mutex<BTreeMap<String, (Instant, Value)>>,
     events: Mutex<events::Journal>,
     active_commands: AtomicUsize,
 }
@@ -122,7 +124,12 @@ impl Default for Runtime {
     }
 }
 impl Runtime {
-    pub fn demand(&self)->crate::usb_demand::Demand{self.shared.as_ref().map(|s|s.demand.demand()).unwrap_or_default()}
+    pub fn demand(&self) -> crate::usb_demand::Demand {
+        self.shared
+            .as_ref()
+            .map(|s| s.demand.demand())
+            .unwrap_or_default()
+    }
     pub fn reconcile(&mut self, settings: &Settings, fixture: bool) {
         if self.settings.as_ref() == Some(settings) {
             return;
@@ -199,8 +206,10 @@ impl Runtime {
         "error":self.error,"discovery":self.discovery.as_ref().map(|d|d.snapshot())})
     }
     /// Only call after the selected source's typed event admission succeeds.
-    pub fn publish_event(&self,event:Value) {
-        if let Some(shared)=&self.shared {publish_event(shared,event);}
+    pub fn publish_event(&self, event: Value) {
+        if let Some(shared) = &self.shared {
+            publish_event(shared, event);
+        }
     }
     pub fn stop(&mut self) {
         if let Some(shared) = self.shared.take() {
@@ -209,9 +218,9 @@ impl Runtime {
         self.discovery = None;
     }
 }
-fn publish_event(shared:&Shared,event:Value) {
-    if let Ok(o)=route(shared) {
-        if event["board_id"]==o.status.board_id&&event["boot_id"]==o.status.boot_id {
+fn publish_event(shared: &Shared, event: Value) {
+    if let Ok(o) = route(shared) {
+        if event["board_id"] == o.status.board_id && event["boot_id"] == o.status.boot_id {
             shared.events.lock().unwrap().push(event);
         }
     }
@@ -267,9 +276,38 @@ fn status_value(shared: &Shared, o: &Observation) -> Value {
         // Advertise only operations implemented by this route, not every
         // capability reachable through a separate, unselected Wi-Fi connection.
         if let Some(c) = &mut status.capabilities {
-            c.acknowledged_features
-                .retain(|s| matches!(s.as_str(), "table" | "leds" | "cell-batch" | "command-ack" | "cell-assignments" | "cell-lock"));
-            c.modes.retain(|m| m.id == "cell");
+            let usb_key_settings = c
+                .acknowledged_features
+                .iter()
+                .any(|feature| feature == "usb-key-settings");
+            let usb_pixel = c
+                .acknowledged_features
+                .iter()
+                .any(|feature| feature == "usb-pixel-diagnostic")
+                && c.acknowledged_features
+                    .iter()
+                    .any(|feature| feature == "usb-demand");
+            let usb_groups = c.has("usb-api") && c.has(crate::pixel_groups::FEATURE);
+            c.acknowledged_features.retain(|s| {
+                matches!(
+                    s.as_str(),
+                    "table"
+                        | "leds"
+                        | "cell-batch"
+                        | "command-ack"
+                        | "cell-assignments"
+                        | "cell-lock"
+                        | "inputs"
+                        | "outputs"
+                        | "usb-key-settings"
+                        | "reset-ack"
+                        | "usb-pixel-diagnostic"
+                        | "usb-demand"
+                ) || matches!(s.as_str(), "key-settings" | "game-melodies") && usb_key_settings
+                    || s == "pixel-diagnostic" && usb_pixel
+                    || s == crate::pixel_groups::FEATURE && usb_groups
+            });
+            c.modes.retain(|m| m.id == "cell" || m.id == "first-wins");
         }
     }
     let mut v = serde_json::to_value(status).unwrap_or(Value::Null);
@@ -384,23 +422,38 @@ pub(crate) fn usb_request(
             .ok_or_else(|| format!("Missing {key}"))
     };
     Ok(match path {
-        "/api/led/diagnostic"=>{
-            if !crate::pixel_diagnostic::usb_supported(status){return Err("USB pixel diagnostics unavailable".into());}
-            let index=get("index")?.parse().map_err(|_|"Invalid pixel index")?;
-            let count:u8=get("count")?.parse().map_err(|_|"Invalid pixel count")?;
-            let rgb=get("rgb")?.parse().map_err(|_|"Invalid RGB")?;
-            let off=match get("off")?{"true"=>true,"false"=>false,_=>return Err("Invalid off boolean".into())};
-            let probe=crate::pixel_diagnostic::Probe{index,group:count==6,rgb};
-            if !matches!(count,1|6)||probe.first()!=index{return Err("Invalid pixel group".into());}
-            (0x65,probe.usb(off).ok_or("Invalid pixel diagnostic")?,None)
+        "/api/game/reset" => (0x4d, Vec::new(), None),
+        "/api/game/settings" if form.iter().any(|(name, _)| name == "presentation") => {
+            if form.len() != 1 { return Err("USB presentation must be edited separately".into()); }
+            (0x69, crate::game_presentation::payload(get("presentation")?, &status.key_game["presentation"])?, None)
+        }
+        "/api/game/settings" => (0x67, crate::usb_table::key_settings_patch(form)?, None),
+        "/api/game/press" => (0x68, vec![get("key")?.parse::<u8>().ok().filter(|key| (1..=9).contains(key)).ok_or("Invalid key")?], None),
+        "/api/led/diagnostic" => {
+            if !crate::pixel_diagnostic::usb_supported(status) {
+                return Err("USB pixel diagnostics unavailable".into());
+            }
+            let (probe,off)=crate::pixel_diagnostic::Probe::from_form(status,form)
+                .ok_or("Invalid or stale physical pixel group")?;
+            (
+                0x65,
+                probe.usb(off).ok_or("Invalid pixel diagnostic")?,
+                None,
+            )
         }
         "/api/cells/assignments" => {
-            let doc=crate::cell_assignments::Document::new(serde_json::from_str(get("assignments")?).map_err(|_|"Invalid assignments")?)?;
-            (0x62,doc.payload(),None)
+            let doc = crate::cell_assignments::Document::new(
+                serde_json::from_str(get("assignments")?).map_err(|_| "Invalid assignments")?,
+            )?;
+            (0x62, doc.payload(), None)
         }
         "/api/cells/lock" => {
-            let enabled=match get("enabled")?{"true"=>1,"false"=>0,_=>return Err("Lock requires a boolean".into())};
-            (0x63,vec![enabled],None)
+            let enabled = match get("enabled")? {
+                "true" => 1,
+                "false" => 0,
+                _ => return Err("Lock requires a boolean".into()),
+            };
+            (0x63, vec![enabled], None)
         }
         "/api/cell" => {
             let id = get("id")?.parse().map_err(|_| "Invalid cell")?;
@@ -450,6 +503,12 @@ pub(crate) fn usb_request(
             None,
         ),
         "/api/led/output" => {
+            if let Some((_, backend)) = form.iter().find(|(key, _)| key == "backend") {
+                if form.len() != 1 || !crate::led_backend::allowed(status, backend) {
+                    return Err("LED backend unavailable or switching".into());
+                }
+                return Ok((0x5c, vec![3, crate::led_backend::code(backend).ok_or("Invalid LED backend")?], None));
+            }
             let value = match form
                 .iter()
                 .find(|(k, _)| k == "enabled")
@@ -496,6 +555,17 @@ fn mutate(
     {
         return Err("Capability unavailable or board programming active".into());
     }
+    if path=="/api/led/diagnostic" && matches!(o.route,Route::Usb{..})
+        && crate::pixel_groups::advertised(&o.status) {
+        let (probe,off)=crate::pixel_diagnostic::Probe::from_form(&o.status,&form)
+            .ok_or("Invalid or stale physical pixel group; nothing sent")?;
+        if form.iter().any(|(key,_)| !matches!(key.as_str(),"index"|"count"|"rgb"|"off"|"group_layout_revision")) {
+            return Err("Advanced diagnostics are not advertised by this USB bridge".into());
+        }
+        let (_,mut request)=crate::pixel_diagnostic::api_command(&o.status,probe,off)?;
+        request["expires_at_ms"]=json!(clock(o)?+lifetime.min(Duration::from_secs(8)).as_millis() as u64);
+        return pixels::diagnostic(shared,o,&request,headers,lifetime);
+    }
     let forwarding = trace(
         headers.get("x-pakar-route").map(String::as_str),
         &shared.settings.instance_id,
@@ -536,11 +606,28 @@ fn mutate(
                 route: o.route.clone(),
                 at: o.at,
             };
-            let count=if path=="/api/cells/assignments" {
-                form.iter().find(|(k,_)|k=="assignments").and_then(|(_,v)|serde_json::from_str::<Vec<crate::cell_assignments::Assignment>>(v).ok()).map(|v|v.len())
-            }else{form.iter().find(|(k,_)|k=="ids").and_then(|(_,v)|crate::ui::cell_search::parse(v).ok()).map(|s|s.len())};
-            let assignments=if matches!(path,"/api/cells/assignments"|"/api/cells/lock") {crate::cell_assignments::Document::from_status(&next.status).ok().map(|d|d.assignments)}else{None};
-            let result = json!({"accepted":true,"count":count,"assignments":assignments,"red_lock":next.status.red_lock,"status":status_value(shared,&next)});
+            let count = if path == "/api/cells/assignments" {
+                form.iter()
+                    .find(|(k, _)| k == "assignments")
+                    .and_then(|(_, v)| {
+                        serde_json::from_str::<Vec<crate::cell_assignments::Assignment>>(v).ok()
+                    })
+                    .map(|v| v.len())
+            } else {
+                form.iter()
+                    .find(|(k, _)| k == "ids")
+                    .and_then(|(_, v)| crate::ui::cell_search::parse(v).ok())
+                    .map(|s| s.len())
+            };
+            let assignments = if matches!(path, "/api/cells/assignments" | "/api/cells/lock") {
+                crate::cell_assignments::Document::from_status(&next.status)
+                    .ok()
+                    .map(|d| d.assignments)
+            } else {
+                None
+            };
+            let result = json!({"accepted":true,"count":count,"assignments":assignments,"red_lock":next.status.red_lock,
+                "avr_acknowledged":matches!(path,"/api/game/reset"|"/api/game/press"),"status":status_value(shared,&next)});
             *shared.observation.lock().unwrap() = Some(next);
             Ok(result)
         }
@@ -592,19 +679,41 @@ fn mutate(
             {
                 return Err("Upstream peer changed after dispatch; no replay".into());
             }
+            let status = if path == "/api/led/output"
+                && let Some((_, backend)) = form.iter().find(|(key, _)| key == "backend") {
+                crate::led_backend::finish_network(endpoint, status, backend, || {
+                    if !stamp.current() || shared.stop.load(Ordering::Acquire) {
+                        Err("Bridge owner retired; nothing replayed".into())
+                    } else { Ok(()) }
+                })?
+            } else { status };
             let next = Observation {
                 status,
                 mapping: o.mapping.clone(),
                 route: o.route.clone(),
                 at: Instant::now(),
             };
-            if path=="/api/cells/assignments" {
-                let raw=form.iter().find(|(k,_)|k=="assignments").ok_or("Missing assignments")?;
-                let doc=crate::cell_assignments::Document::new(serde_json::from_str(&raw.1).map_err(|_|"Invalid assignments")?)?;
-                if !doc.verify(&next.status){return Err("Assignment ACK differs from board readback; no replay".into());}
-            }else if path=="/api/cells/lock" {
-                let enabled=form.iter().find(|(k,_)|k=="enabled").ok_or("Missing lock")?.1=="true";
-                if next.status.red_lock!=Some(enabled){return Err("Lock ACK differs from board readback; no replay".into());}
+            if path == "/api/cells/assignments" {
+                let raw = form
+                    .iter()
+                    .find(|(k, _)| k == "assignments")
+                    .ok_or("Missing assignments")?;
+                let doc = crate::cell_assignments::Document::new(
+                    serde_json::from_str(&raw.1).map_err(|_| "Invalid assignments")?,
+                )?;
+                if !doc.verify(&next.status) {
+                    return Err("Assignment ACK differs from board readback; no replay".into());
+                }
+            } else if path == "/api/cells/lock" {
+                let enabled = form
+                    .iter()
+                    .find(|(k, _)| k == "enabled")
+                    .ok_or("Missing lock")?
+                    .1
+                    == "true";
+                if next.status.red_lock != Some(enabled) {
+                    return Err("Lock ACK differs from board readback; no replay".into());
+                }
             }
             result["status"] = status_value(shared, &next);
             *shared.observation.lock().unwrap() = Some(next);
@@ -655,6 +764,9 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
             owns_receipt = true;
         }
         let path = match request["command"].as_str() {
+            Some("reset") => "/api/game/reset",
+            Some("game-settings") => "/api/game/settings",
+            Some("game-press") => "/api/game/press",
             Some("cell") => "/api/cell",
             Some("cells") => "/api/cells",
             Some("cell-assignments") => "/api/cells/assignments",
@@ -667,7 +779,35 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
             _ => return Err("Unsupported command on bridge".into()),
         };
         let mut form = Vec::new();
-        for key in ["id", "ids", "state", "effect", "value", "enabled", "mode", "assignments", "index", "count", "rgb", "off"] {
+        for key in [
+            "key",
+            "presentation",
+            "id",
+            "ids",
+            "state",
+            "effect",
+            "value",
+            "enabled",
+            "mode",
+            "assignments",
+            "index",
+            "count",
+            "rgb",
+            "off",
+            "group_layout_revision",
+            "enabled_mask",
+            "idle_rgb",
+            "win_rgb",
+            "lose_rgb",
+            "extended_effects",
+            "auto_reset_ms",
+            "chase_period_ms",
+            "chase_neighbors",
+            "chase_invert",
+            "winner_cue",
+            "reset_cue",
+            "backend",
+        ] {
             if let Some(v) = request.get(key) {
                 form.push((
                     key.into(),
@@ -681,49 +821,123 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
         }
         // Preserve the original intent across every network hop. Unwrapping it
         // into a raw mutation loses the receiver's same-ID deduplication.
-        if let Route::Network{endpoint,stamp,gate}=&o.route {
-            if o.status.programming_latch||!o.status.capabilities.as_ref().is_some_and(|c|c.allows(path,&form)) {
+        if let Route::Network {
+            endpoint,
+            stamp,
+            gate,
+        } = &o.route
+        {
+            if o.status.programming_latch
+                || !o
+                    .status
+                    .capabilities
+                    .as_ref()
+                    .is_some_and(|c| c.allows(path, &form))
+            {
                 return Err("Capability unavailable or board programming active".into());
             }
-            let _lease=gate.acquire(Transport::WiFi,stamp.epoch).ok_or("Network owner revoked")?;
-            let pin=peer_http::Pin::from_status(&o.status).ok_or("Peer unavailable")?;
-            let response=pin.client()?.post(format!("{}/api/command",endpoint.base.trim_end_matches('/')))
-                .timeout(Duration::from_millis(deadline-now).min(Duration::from_secs(4)))
-                .basic_auth(&endpoint.user,Some(&endpoint.password))
-                .header("X-Pakar-Route",trace(headers.get("x-pakar-route").map(String::as_str),&shared.settings.instance_id)?)
-                .form(&[("packet",request.to_string())]).send().map_err(|_|"Network outcome uncertain; not replayed")?;
-            if !stamp.current()||shared.stop.load(Ordering::Acquire){return Err("Network owner retired; not replayed".into());}
-            if !response.status().is_success(){return Err(format!("Upstream rejected command ({})",response.status()));}
-            if response.content_length().is_some_and(|n|n>65536){return Err("Upstream receipt exceeds limit; not replayed".into());}
-            let mut bytes=Vec::new();response.take(65537).read_to_end(&mut bytes).map_err(|_|"Upstream receipt unavailable; not replayed")?;
-            if bytes.len()>65536{return Err("Upstream receipt exceeds limit; not replayed".into());}
-            let mut result:Value=serde_json::from_slice(&bytes).map_err(|_|"Invalid upstream receipt; not replayed")?;
-            if !stamp.current()||shared.stop.load(Ordering::Acquire){return Err("Network owner retired while receiving receipt; not replayed".into());}
-            if result["type"]!="command-result"||result["request_id"]!=id||result["board_id"]!=o.status.board_id||result["boot_id"]!=o.status.boot_id {
+            let _lease = gate
+                .acquire(Transport::WiFi, stamp.epoch)
+                .ok_or("Network owner revoked")?;
+            let pin = peer_http::Pin::from_status(&o.status).ok_or("Peer unavailable")?;
+            let response = pin
+                .client()?
+                .post(format!(
+                    "{}/api/command",
+                    endpoint.base.trim_end_matches('/')
+                ))
+                .timeout(Duration::from_millis(deadline - now).min(Duration::from_secs(4)))
+                .basic_auth(&endpoint.user, Some(&endpoint.password))
+                .header(
+                    "X-Pakar-Route",
+                    trace(
+                        headers.get("x-pakar-route").map(String::as_str),
+                        &shared.settings.instance_id,
+                    )?,
+                )
+                .form(&[("packet", request.to_string())])
+                .send()
+                .map_err(|_| "Network outcome uncertain; not replayed")?;
+            if !stamp.current() || shared.stop.load(Ordering::Acquire) {
+                return Err("Network owner retired; not replayed".into());
+            }
+            if !response.status().is_success() {
+                return Err(format!("Upstream rejected command ({})", response.status()));
+            }
+            if response.content_length().is_some_and(|n| n > 65536) {
+                return Err("Upstream receipt exceeds limit; not replayed".into());
+            }
+            let mut bytes = Vec::new();
+            response
+                .take(65537)
+                .read_to_end(&mut bytes)
+                .map_err(|_| "Upstream receipt unavailable; not replayed")?;
+            if bytes.len() > 65536 {
+                return Err("Upstream receipt exceeds limit; not replayed".into());
+            }
+            let mut result: Value = serde_json::from_slice(&bytes)
+                .map_err(|_| "Invalid upstream receipt; not replayed")?;
+            if !stamp.current() || shared.stop.load(Ordering::Acquire) {
+                return Err("Network owner retired while receiving receipt; not replayed".into());
+            }
+            if result["type"] != "command-result"
+                || result["request_id"] != id
+                || result["board_id"] != o.status.board_id
+                || result["boot_id"] != o.status.boot_id
+            {
                 return Err("Foreign upstream receipt; not replayed".into());
             }
             // Actual PCController decodePeerResponse rejects ambiguous ACKs
             // while tolerating unrelated future metadata. Apply that rule to
             // this living command-result shape, not its JSON-RPC selector.
-            let accepted=result["accepted"].as_bool().ok_or("Ambiguous upstream receipt: accepted boolean required; not replayed")?;
-            if accepted&&result.get("error").is_some()
-                || !accepted&&!result["error"].as_str().is_some_and(|error|!error.trim().is_empty()) {
+            let accepted = result["accepted"]
+                .as_bool()
+                .ok_or("Ambiguous upstream receipt: accepted boolean required; not replayed")?;
+            if accepted && result.get("error").is_some()
+                || !accepted
+                    && !result["error"]
+                        .as_str()
+                        .is_some_and(|error| !error.trim().is_empty())
+            {
                 return Err("Ambiguous upstream result/error; not replayed".into());
             }
             if accepted {
-                let status:DeviceStatus=serde_json::from_value(result["status"].clone()).map_err(|_|"Upstream receipt has no readback")?;
-                if peer_http::Pin::from_status(&status).as_ref()!=Some(&pin){return Err("Upstream readback peer changed; not replayed".into());}
-                if status.compatibility.is_some(){crate::peer_identity::validate_board(&status)?;}
-                if !command_readback(&request,&result,&status)? {return Err("Upstream ACK differs from command readback; not replayed".into());}
-                let next=Observation{status,mapping:o.mapping.clone(),route:o.route.clone(),at:Instant::now()};
-                result["status"]=status_value(shared,&next);
-                *shared.observation.lock().unwrap()=Some(next);
+                let mut status: DeviceStatus = serde_json::from_value(result["status"].clone())
+                    .map_err(|_| "Upstream receipt has no readback")?;
+                if peer_http::Pin::from_status(&status).as_ref() != Some(&pin) {
+                    return Err("Upstream readback peer changed; not replayed".into());
+                }
+                if status.compatibility.is_some() {
+                    crate::peer_identity::validate_board(&status)?;
+                }
+                if request["command"] == "led-output"
+                    && let Some(backend) = request["backend"].as_str() {
+                    status = crate::led_backend::finish_network(endpoint, status, backend, || {
+                        if !stamp.current() || shared.stop.load(Ordering::Acquire) {
+                            Err("Bridge owner retired; nothing replayed".into())
+                        } else { Ok(()) }
+                    })?;
+                }
+                if !command_readback(&request, &result, &status)? {
+                    return Err("Upstream ACK differs from command readback; not replayed".into());
+                }
+                let next = Observation {
+                    status,
+                    mapping: o.mapping.clone(),
+                    route: o.route.clone(),
+                    at: Instant::now(),
+                };
+                result["status"] = status_value(shared, &next);
+                *shared.observation.lock().unwrap() = Some(next);
             }
             return Ok(result);
         }
         let mut pin = headers.clone();
         pin.insert("x-pakar-board".into(), o.status.board_id.clone());
         pin.insert("x-pakar-boot".into(), o.status.boot_id.clone());
+        if path=="/api/led/diagnostic" && crate::pixel_groups::advertised(&o.status) {
+            return pixels::diagnostic(shared,&o,&request,&pin,Duration::from_millis(deadline-now));
+        }
         let mut result = mutate(
             shared,
             &o,
@@ -751,29 +965,93 @@ fn command(shared: &Shared, request: Value, headers: &BTreeMap<String, String>) 
         }
         // Other observers receive the outcome, not another command execution.
         // The complete authoritative readback remains in the private receipt.
-        publish_event(shared,json!({"type":"command-observed","request_id":id,"board_id":reply["board_id"],"boot_id":reply["boot_id"],"accepted":reply["accepted"],"error":reply["error"],"command":request["command"]}));
+        publish_event(
+            shared,
+            json!({"type":"command-observed","request_id":id,"board_id":reply["board_id"],"boot_id":reply["boot_id"],"accepted":reply["accepted"],"error":reply["error"],"command":request["command"]}),
+        );
     }
     reply
 }
-fn command_readback(request:&Value,reply:&Value,status:&DeviceStatus)->Result<bool,String> {
-    let text=|key:&str|request[key].as_str().unwrap_or("");
+fn command_readback(request: &Value, reply: &Value, status: &DeviceStatus) -> Result<bool, String> {
+    let text = |key: &str| request[key].as_str().unwrap_or("");
     Ok(match text("command") {
-        "cell"=>request["id"].as_u64().filter(|v|(1..=80).contains(v)).is_some_and(|id|status.cells.get(id as usize-1).is_some_and(|s|s==text("state"))),
-        "cells"=>{let batch=crate::cell_batch::Request::new(&crate::ui::cell_search::parse(text("ids"))?,text("state"),request["effect"].as_str().unwrap_or("immediate"))?;reply["count"].as_u64()==Some(batch.ids.len() as u64)&&batch.verify(status)},
-        "cell-assignments"=>{let doc=crate::cell_assignments::Document::new(serde_json::from_value(request["assignments"].clone()).map_err(|_|"Invalid assignments")?)?;reply["count"].as_u64()==Some(doc.assignments.len() as u64)&&doc.verify(status)},
-        "cell-lock"=>request["enabled"].as_bool().is_some_and(|v|status.red_lock==Some(v)),
-        "mode"=>status.mode==text("value"),
-        "effect"=>status.effect==text("value"),
-        "brightness"=>request["value"].as_u64()==Some(u64::from(status.brightness)),
-        "led-output"=>(!request.get("enabled").is_some()||request["enabled"].as_bool().is_some_and(|v|status.led_output["enabled"]==v))&&(!request.get("mode").is_some()||status.led_output["mode"]==request["mode"]),
-        "pixel-diagnostic"=>{
-            let index=request["index"].as_u64().and_then(|v|u16::try_from(v).ok()).ok_or("Invalid pixel index")?;
-            let rgb=request["rgb"].as_u64().and_then(|v|u32::try_from(v).ok()).ok_or("Invalid pixel RGB")?;
-            let count=request["count"].as_u64().ok_or("Invalid pixel count")?;
-            let probe=crate::pixel_diagnostic::Probe{index,group:count==6,rgb};
-            matches!(count,1|6)&&probe.valid()&&probe.first()==index&&crate::pixel_diagnostic::ready(status)&&probe.matches(status,request["off"]==true)
-        },
-        _=>false,
+        "game-press" => reply["avr_acknowledged"] == true,
+        "reset" => {
+            reply["avr_acknowledged"] == true
+                && status.winner == 0
+                && status.cells.iter().all(|cell| cell == "white")
+        }
+        "game-settings" => {
+            let mut selected = Vec::new();
+            for key in [
+                "presentation",
+                "enabled_mask",
+                "idle_rgb",
+                "win_rgb",
+                "lose_rgb",
+                "extended_effects",
+                "auto_reset_ms",
+                "chase_period_ms",
+                "chase_neighbors",
+                "chase_invert",
+                "winner_cue",
+                "reset_cue",
+            ] {
+                if let Some(value) = request.get(key) {
+                    selected.push((
+                        key.to_owned(),
+                        value
+                            .as_str()
+                            .map(str::to_owned)
+                            .unwrap_or_else(|| value.to_string()),
+                    ));
+                }
+            }
+            crate::usb_table::key_settings_network_verify(status, &selected)
+        }
+        "cell" => request["id"]
+            .as_u64()
+            .filter(|v| (1..=80).contains(v))
+            .is_some_and(|id| {
+                status
+                    .cells
+                    .get(id as usize - 1)
+                    .is_some_and(|s| s == text("state"))
+            }),
+        "cells" => {
+            let batch = crate::cell_batch::Request::new(
+                &crate::ui::cell_search::parse(text("ids"))?,
+                text("state"),
+                request["effect"].as_str().unwrap_or("immediate"),
+            )?;
+            reply["count"].as_u64() == Some(batch.ids.len() as u64) && batch.verify(status)
+        }
+        "cell-assignments" => {
+            let doc = crate::cell_assignments::Document::new(
+                serde_json::from_value(request["assignments"].clone())
+                    .map_err(|_| "Invalid assignments")?,
+            )?;
+            reply["count"].as_u64() == Some(doc.assignments.len() as u64) && doc.verify(status)
+        }
+        "cell-lock" => request["enabled"]
+            .as_bool()
+            .is_some_and(|v| status.red_lock == Some(v)),
+        "mode" => status.mode == text("value"),
+        "effect" => status.effect == text("value"),
+        "brightness" => request["value"].as_u64() == Some(u64::from(status.brightness)),
+        "led-output" => {
+            (!request.get("enabled").is_some()
+                || request["enabled"]
+                    .as_bool()
+                    .is_some_and(|v| status.led_output["enabled"] == v))
+                && (!request.get("mode").is_some() || status.led_output["mode"] == request["mode"])
+                && (request.get("backend").is_none() || request["backend"].as_str()
+                    .is_some_and(|backend| crate::led_backend::confirmed(status, backend)))
+        }
+        "pixel-diagnostic" => {
+            pixels::diagnostic_matches(request,status)?
+        }
+        _ => false,
     })
 }
 struct Request {
@@ -884,10 +1162,15 @@ fn write_response(
     write!(socket,"HTTP/1.1 {code} Result\r\n{}Content-Type: {kind}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",crate::peer_identity::server_headers(),body.len()).map_err(|e|e.to_string())?;
     socket.write_all(body).map_err(|e| e.to_string())
 }
-fn remember_peer(shared:&Shared,value:Value){
-    let Some(id)=value["id"].as_str().map(str::to_owned) else{return;};
-    let mut peers=shared.peers.lock().unwrap();peers.retain(|_,(at,_)|at.elapsed()<Duration::from_secs(120));
-    if peers.contains_key(&id)||peers.len()<32{peers.insert(id,(Instant::now(),value));}
+fn remember_peer(shared: &Shared, value: Value) {
+    let Some(id) = value["id"].as_str().map(str::to_owned) else {
+        return;
+    };
+    let mut peers = shared.peers.lock().unwrap();
+    peers.retain(|_, (at, _)| at.elapsed() < Duration::from_secs(120));
+    if peers.contains_key(&id) || peers.len() < 32 {
+        peers.insert(id, (Instant::now(), value));
+    }
 }
 fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
     // Peek leaves the complete handshake for tungstenite's reviewed parser.
@@ -918,14 +1201,21 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
         let mut limits = tungstenite::protocol::WebSocketConfig::default();
         limits.max_message_size = Some(8192);
         limits.max_frame_size = Some(8192);
-        let observed_ip=socket.peer_addr().map(|a|a.ip().to_string()).unwrap_or_default();
-        let mut ws_peer=None;
-        let mut ws_forwarding=BTreeMap::new();
+        let observed_ip = socket
+            .peer_addr()
+            .map(|a| a.ip().to_string())
+            .unwrap_or_default();
+        let mut ws_peer = None;
+        let mut ws_forwarding = BTreeMap::new();
         let mut ws = tungstenite::accept_hdr_with_config(
             socket,
             |r: &tungstenite::handshake::server::Request,
              mut response: tungstenite::handshake::server::Response| {
-                let compatible=crate::peer_identity::validate_client(r.headers().get("x-pakar-version").and_then(|v|v.to_str().ok()));
+                let compatible = crate::peer_identity::validate_client(
+                    r.headers()
+                        .get("x-pakar-version")
+                        .and_then(|v| v.to_str().ok()),
+                );
                 let allowed = r.uri().path() == "/ws"
                     && !r.headers().contains_key("origin")
                     && trace(
@@ -937,20 +1227,56 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
                     .is_ok()
                     && compatible.is_ok();
                 if allowed {
-                    if let Some(value)=r.headers().get("x-pakar-route").and_then(|v|v.to_str().ok()){ws_forwarding.insert("x-pakar-route".to_owned(),value.to_owned());}
-                    ws_peer=Some((r.headers().get("x-pakar-client-id").and_then(|v|v.to_str().ok()).unwrap_or_default().to_owned(),r.headers().get("x-pakar-version").and_then(|v|v.to_str().ok()).unwrap_or_default().to_owned()));
-                    response.headers_mut().insert("server",format!("PakarController/{}",crate::peer_identity::VERSION).parse().unwrap());
-                    response.headers_mut().insert("x-pakar-version",crate::peer_identity::VERSION.parse().unwrap());
-                    response.headers_mut().insert("x-pakar-build",crate::peer_identity::build_identity().parse().unwrap());
-                    response.headers_mut().insert("x-pakar-client-id",crate::peer_identity::session_id().parse().unwrap());
+                    if let Some(value) = r
+                        .headers()
+                        .get("x-pakar-route")
+                        .and_then(|v| v.to_str().ok())
+                    {
+                        ws_forwarding.insert("x-pakar-route".to_owned(), value.to_owned());
+                    }
+                    ws_peer = Some((
+                        r.headers()
+                            .get("x-pakar-client-id")
+                            .and_then(|v| v.to_str().ok())
+                            .unwrap_or_default()
+                            .to_owned(),
+                        r.headers()
+                            .get("x-pakar-version")
+                            .and_then(|v| v.to_str().ok())
+                            .unwrap_or_default()
+                            .to_owned(),
+                    ));
+                    response.headers_mut().insert(
+                        "server",
+                        format!("PakarController/{}", crate::peer_identity::VERSION)
+                            .parse()
+                            .unwrap(),
+                    );
+                    response.headers_mut().insert(
+                        "x-pakar-version",
+                        crate::peer_identity::VERSION.parse().unwrap(),
+                    );
+                    response.headers_mut().insert(
+                        "x-pakar-build",
+                        crate::peer_identity::build_identity().parse().unwrap(),
+                    );
+                    response.headers_mut().insert(
+                        "x-pakar-client-id",
+                        crate::peer_identity::session_id().parse().unwrap(),
+                    );
                     Ok(response)
                 } else {
                     Err(tungstenite::http::Response::builder()
-                        .status(if compatible.is_err(){426}else{403})
-                        .header("Server",format!("PakarController/{}",crate::peer_identity::VERSION))
-                        .header("X-Pakar-Version",crate::peer_identity::VERSION)
-                        .header("X-Pakar-Build",crate::peer_identity::build_identity())
-                        .body(Some(compatible.err().unwrap_or_else(||"Bridge request rejected: check origin and route".into())))
+                        .status(if compatible.is_err() { 426 } else { 403 })
+                        .header(
+                            "Server",
+                            format!("PakarController/{}", crate::peer_identity::VERSION),
+                        )
+                        .header("X-Pakar-Version", crate::peer_identity::VERSION)
+                        .header("X-Pakar-Build", crate::peer_identity::build_identity())
+                        .body(Some(compatible.err().unwrap_or_else(|| {
+                            "Bridge request rejected: check origin and route".into()
+                        })))
                         .unwrap())
                 }
             },
@@ -962,23 +1288,43 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
         let mut previous = Value::Null;
         let mut pushed = Instant::now() - Duration::from_secs(3);
-        let mut cursor=shared.events.lock().unwrap().cursor();
-        let (results_tx,results_rx)=mpsc::sync_channel(1);
-        let mut pending=false;
-        let mut pixels=false;
+        let mut cursor = shared.events.lock().unwrap().cursor();
+        let (results_tx, results_rx) = mpsc::sync_channel(1);
+        let mut pending = false;
+        let mut pixels = false;
         while !shared.stop.load(Ordering::Acquire) {
-            shared.demand.touch(crate::usb_demand::Demand{flags:crate::usb_demand::STATUS|crate::usb_demand::PANEL|crate::usb_demand::PERIPHERAL|if pixels{crate::usb_demand::PIXELS}else{0},table:true});
-            if let Ok(result)=results_rx.try_recv(){
-                pending=false;
-                ws.send(tungstenite::Message::Text(Value::to_string(&result).into())).map_err(|e|e.to_string())?;
+            shared.demand.touch(crate::usb_demand::Demand {
+                flags: crate::usb_demand::STATUS
+                    | crate::usb_demand::PANEL
+                    | crate::usb_demand::PERIPHERAL
+                    | if pixels { crate::usb_demand::PIXELS } else { 0 },
+                table: true,
+            });
+            if let Ok(result) = results_rx.try_recv() {
+                pending = false;
+                ws.send(tungstenite::Message::Text(Value::to_string(&result).into()))
+                    .map_err(|e| e.to_string())?;
             }
-            if let Ok(o)=route(shared) {
-                let journal=shared.events.lock().unwrap().read(Some(&cursor),&o.status.board_id,&o.status.boot_id)?;
-                cursor=journal["cursor"].as_str().unwrap().to_owned();
-                if journal["gap"]==true {ws.send(tungstenite::Message::Text(json!({"type":"event-gap","cursor":cursor}).to_string().into())).map_err(|e|e.to_string())?;}
-                for entry in journal["events"].as_array().unwrap(){
-                    let mut event=entry["event"].clone();event["bridge_cursor"]=entry["cursor"].clone();
-                    ws.send(tungstenite::Message::Text(event.to_string().into())).map_err(|e|e.to_string())?;
+            if let Ok(o) = route(shared) {
+                let journal = shared.events.lock().unwrap().read(
+                    Some(&cursor),
+                    &o.status.board_id,
+                    &o.status.boot_id,
+                )?;
+                cursor = journal["cursor"].as_str().unwrap().to_owned();
+                if journal["gap"] == true {
+                    ws.send(tungstenite::Message::Text(
+                        json!({"type":"event-gap","cursor":cursor})
+                            .to_string()
+                            .into(),
+                    ))
+                    .map_err(|e| e.to_string())?;
+                }
+                for entry in journal["events"].as_array().unwrap() {
+                    let mut event = entry["event"].clone();
+                    event["bridge_cursor"] = entry["cursor"].clone();
+                    ws.send(tungstenite::Message::Text(event.to_string().into()))
+                        .map_err(|e| e.to_string())?;
                 }
             }
             let value=route(shared).map(|o|status_value(shared,&o)).unwrap_or_else(|_|json!({"type":"bridge-offline","bridge":{"instance_id":shared.settings.instance_id}}));
@@ -993,19 +1339,57 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
             match ws.read() {
                 Ok(tungstenite::Message::Text(text)) if text.len() <= 8192 => {
                     let request: Value = serde_json::from_str(&text).map_err(|e| e.to_string())?;
-                    if request["type"]=="peer-introduction" {
-                        let accepted=ws_peer.as_ref().ok_or("Missing peer identity".to_owned()).and_then(|(id,version)|crate::peer_identity::sanitize_report(&request["report"],id,version,&observed_ip));
-                        let response=match accepted{Ok(value)=>{remember_peer(shared,value);json!({"type":"peer-introduction","accepted":true,"version":crate::peer_identity::VERSION,"compatibility":crate::peer_identity::advertised_policy()})},Err(error)=>json!({"type":"peer-introduction","accepted":false,"error":error})};
-                        ws.send(tungstenite::Message::Text(response.to_string().into())).map_err(|e|e.to_string())?;
-                    }else if request["type"] == "command" {
-                        if pending||shared.active_commands.fetch_update(Ordering::AcqRel,Ordering::Acquire,|n|(n<16).then_some(n+1)).is_err(){
+                    if request["type"] == "peer-introduction" {
+                        let accepted = ws_peer
+                            .as_ref()
+                            .ok_or("Missing peer identity".to_owned())
+                            .and_then(|(id, version)| {
+                                crate::peer_identity::sanitize_report(
+                                    &request["report"],
+                                    id,
+                                    version,
+                                    &observed_ip,
+                                )
+                            });
+                        let response = match accepted {
+                            Ok(value) => {
+                                remember_peer(shared, value);
+                                json!({"type":"peer-introduction","accepted":true,"version":crate::peer_identity::VERSION,"compatibility":crate::peer_identity::advertised_policy()})
+                            }
+                            Err(error) => {
+                                json!({"type":"peer-introduction","accepted":false,"error":error})
+                            }
+                        };
+                        ws.send(tungstenite::Message::Text(response.to_string().into()))
+                            .map_err(|e| e.to_string())?;
+                    } else if request["type"] == "command" {
+                        if pending
+                            || shared
+                                .active_commands
+                                .fetch_update(Ordering::AcqRel, Ordering::Acquire, |n| {
+                                    (n < 16).then_some(n + 1)
+                                })
+                                .is_err()
+                        {
                             ws.send(tungstenite::Message::Text(json!({"type":"command-result","request_id":request["request_id"],"board_id":request["board_id"],"boot_id":request["boot_id"],"accepted":false,"error":"Bridge command busy; nothing sent"}).to_string().into())).map_err(|e|e.to_string())?;
-                        }else{
-                            pending=true;let owner=shared.clone();let tx=results_tx.clone();let forwarding=ws_forwarding.clone();
-                            thread::spawn(move||{let result=command(&owner,request,&forwarding);owner.active_commands.fetch_sub(1,Ordering::AcqRel);let _=tx.try_send(result);});
+                        } else {
+                            pending = true;
+                            let owner = shared.clone();
+                            let tx = results_tx.clone();
+                            let forwarding = ws_forwarding.clone();
+                            thread::spawn(move || {
+                                let result = command(&owner, request, &forwarding);
+                                owner.active_commands.fetch_sub(1, Ordering::AcqRel);
+                                let _ = tx.try_send(result);
+                            });
                         }
+                    } else if request["type"] == "pixel-subscribe" {
+                        pixels = request["enabled"].as_bool().ok_or("Invalid pixel subscription")?;
+                        previous = Value::Null;
                     } else if request["type"] == "status" {
-                        if let Some(value)=request["pixels"].as_bool(){pixels=value;}
+                        if let Some(value) = request["pixels"].as_bool() {
+                            pixels = value;
+                        }
                         previous = Value::Null;
                     }
                 }
@@ -1033,24 +1417,69 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
         }
     };
     let path = request.path.split('?').next().unwrap_or("");
-    if request.method=="GET" && matches!(path,"/api/status"|"/api/cells/mapping"|"/api/events") {
-        let pixels=request.path.split_once('?').is_some_and(|(_,query)|query.split('&').any(|v|matches!(v,"pixels=true"|"pixels=1")));
-        shared.demand.touch(crate::usb_demand::Demand{flags:crate::usb_demand::STATUS|if pixels{crate::usb_demand::PIXELS}else{0},table:true});
+    if request.method == "GET"
+        && matches!(path, "/api/status" | "/api/cells/mapping" | "/api/events")
+    {
+        let pixels = request.path.split_once('?').is_some_and(|(_, query)| {
+            query
+                .split('&')
+                .any(|v| matches!(v, "pixels=true" | "pixels=1"))
+        });
+        shared.demand.touch(crate::usb_demand::Demand {
+            flags: crate::usb_demand::STATUS | if pixels { crate::usb_demand::PIXELS } else { 0 },
+            table: true,
+        });
     }
     // Public identity/status bootstrap stays discoverable before admission;
     // all control/config/export paths require a supported app release.
-    let bootstrap=request.method=="GET" && matches!(path,"/description.xml"|"/upnp/device.xml"|"/api/discovery"|"/upnp/public.json"|"/healthz"|"/api/status"|"/api/auth/info"|"/api/peer/info");
-    if (!bootstrap || request.headers.contains_key("x-pakar-version")) && let Err(error)=crate::peer_identity::validate_client(request.headers.get("x-pakar-version").map(String::as_str)) {
+    let bootstrap = request.method == "GET"
+        && matches!(
+            path,
+            "/description.xml"
+                | "/upnp/device.xml"
+                | "/api/discovery"
+                | "/upnp/public.json"
+                | "/healthz"
+                | "/api/status"
+                | "/api/auth/info"
+                | "/api/peer/info"
+        );
+    if (!bootstrap || request.headers.contains_key("x-pakar-version"))
+        && let Err(error) = crate::peer_identity::validate_client(
+            request.headers.get("x-pakar-version").map(String::as_str),
+        )
+    {
         return write_response(&mut socket,426,"application/json",json!({"accepted":false,"error":error,"compatibility":crate::peer_identity::advertised_policy()}).to_string().as_bytes());
     }
-    if let Some(id)=request.headers.get("x-pakar-client-id").filter(|v|uuid::Uuid::parse_str(v).is_ok()) {
-        let mut peers=shared.peers.lock().unwrap();peers.retain(|_,(at,_)|at.elapsed()<Duration::from_secs(120));
-        if peers.contains_key(id)||peers.len()<32 {
-            let mut value=peers.get(id).map(|(_,v)|v.clone()).unwrap_or_else(||json!({"id":id}));
-            value["version"]=request.headers.get("x-pakar-version").cloned().unwrap_or_default().into();
-            if let Some(agent)=request.headers.get("user-agent").filter(|v|v.len()<=192&&!v.chars().any(char::is_control)){value["user_agent"]=agent.clone().into();}
-            if let Ok(address)=socket.peer_addr(){value["observed_ip"]=address.ip().to_string().into();}
-            peers.insert(id.clone(),(Instant::now(),value));
+    if let Some(id) = request
+        .headers
+        .get("x-pakar-client-id")
+        .filter(|v| uuid::Uuid::parse_str(v).is_ok())
+    {
+        let mut peers = shared.peers.lock().unwrap();
+        peers.retain(|_, (at, _)| at.elapsed() < Duration::from_secs(120));
+        if peers.contains_key(id) || peers.len() < 32 {
+            let mut value = peers
+                .get(id)
+                .map(|(_, v)| v.clone())
+                .unwrap_or_else(|| json!({"id":id}));
+            value["version"] = request
+                .headers
+                .get("x-pakar-version")
+                .cloned()
+                .unwrap_or_default()
+                .into();
+            if let Some(agent) = request
+                .headers
+                .get("user-agent")
+                .filter(|v| v.len() <= 192 && !v.chars().any(char::is_control))
+            {
+                value["user_agent"] = agent.clone().into();
+            }
+            if let Ok(address) = socket.peer_addr() {
+                value["observed_ip"] = address.ip().to_string().into();
+            }
+            peers.insert(id.clone(), (Instant::now(), value));
         }
     }
     if trace(
@@ -1075,28 +1504,83 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
             br#"{"enabled":false,"ready":true,"username":"","default_credentials":false}"#,
         );
     }
-    if request.method=="GET" && path=="/api/peer/info" {
-        let value=json!({"product":"PakarController","role":"bridge","id":shared.settings.instance_id,"session_id":crate::peer_identity::session_id(),"version":crate::peer_identity::VERSION,"hostname":shared.settings.hostname,"compatibility":crate::peer_identity::advertised_policy(),"client":crate::client_telemetry::Reporter::new().value_for_transport("bridge")});
-        return write_response(&mut socket,200,"application/json",value.to_string().as_bytes());
+    if request.method == "GET" && path == "/api/peer/info" {
+        let value = json!({"product":"PakarController","role":"bridge","id":shared.settings.instance_id,"session_id":crate::peer_identity::session_id(),"version":crate::peer_identity::VERSION,"hostname":shared.settings.hostname,"compatibility":crate::peer_identity::advertised_policy(),"client":crate::client_telemetry::Reporter::new().value_for_transport("bridge")});
+        return write_response(
+            &mut socket,
+            200,
+            "application/json",
+            value.to_string().as_bytes(),
+        );
     }
-    if request.method=="GET" && path=="/api/clients" {
-        let mut peers=shared.peers.lock().unwrap();peers.retain(|_,(at,_)|at.elapsed()<Duration::from_secs(120));
-        let value=json!({"clients":peers.values().map(|(at,v)|{let mut v=v.clone();v["age_ms"]=(at.elapsed().as_millis() as u64).into();v}).collect::<Vec<_>>()});
-        return write_response(&mut socket,200,"application/json",value.to_string().as_bytes());
+    if request.method == "GET" && path == "/api/clients" {
+        let mut peers = shared.peers.lock().unwrap();
+        peers.retain(|_, (at, _)| at.elapsed() < Duration::from_secs(120));
+        let value = json!({"clients":peers.values().map(|(at,v)|{let mut v=v.clone();v["age_ms"]=(at.elapsed().as_millis() as u64).into();v}).collect::<Vec<_>>()});
+        return write_response(
+            &mut socket,
+            200,
+            "application/json",
+            value.to_string().as_bytes(),
+        );
     }
-    if request.method=="POST" && path=="/api/clients/report" {
-        let body=std::str::from_utf8(&request.body).map_err(|_|"Invalid report form")?;
-        let parsed=reqwest::Url::parse(&format!("http://bridge/?{body}")).map_err(|_|"Invalid report form")?;
-        let fields=parsed.query_pairs().collect::<Vec<_>>();
-        let report=if fields.len()==1&&fields[0].0=="report"{serde_json::from_str::<Value>(&fields[0].1).map_err(|_|"Invalid peer report")?}else{return write_response(&mut socket,400,"application/json",br#"{"accepted":false,"error":"Expected one report field"}"#);};
-        let ip=socket.peer_addr().map(|a|a.ip().to_string()).unwrap_or_default();
-        let result=crate::peer_identity::sanitize_report(&report,request.headers.get("x-pakar-client-id").map_or("",String::as_str),request.headers.get("x-pakar-version").map_or("",String::as_str),&ip);
-        return match result{Ok(value)=>{remember_peer(shared,value);write_response(&mut socket,200,"application/json",br#"{"accepted":true}"#)},Err(error)=>write_response(&mut socket,400,"application/json",json!({"accepted":false,"error":error}).to_string().as_bytes())};
+    if request.method == "POST" && path == "/api/clients/report" {
+        let body = std::str::from_utf8(&request.body).map_err(|_| "Invalid report form")?;
+        let parsed = reqwest::Url::parse(&format!("http://bridge/?{body}"))
+            .map_err(|_| "Invalid report form")?;
+        let fields = parsed.query_pairs().collect::<Vec<_>>();
+        let report = if fields.len() == 1 && fields[0].0 == "report" {
+            serde_json::from_str::<Value>(&fields[0].1).map_err(|_| "Invalid peer report")?
+        } else {
+            return write_response(
+                &mut socket,
+                400,
+                "application/json",
+                br#"{"accepted":false,"error":"Expected one report field"}"#,
+            );
+        };
+        let ip = socket
+            .peer_addr()
+            .map(|a| a.ip().to_string())
+            .unwrap_or_default();
+        let result = crate::peer_identity::sanitize_report(
+            &report,
+            request
+                .headers
+                .get("x-pakar-client-id")
+                .map_or("", String::as_str),
+            request
+                .headers
+                .get("x-pakar-version")
+                .map_or("", String::as_str),
+            &ip,
+        );
+        return match result {
+            Ok(value) => {
+                remember_peer(shared, value);
+                write_response(
+                    &mut socket,
+                    200,
+                    "application/json",
+                    br#"{"accepted":true}"#,
+                )
+            }
+            Err(error) => write_response(
+                &mut socket,
+                400,
+                "application/json",
+                json!({"accepted":false,"error":error})
+                    .to_string()
+                    .as_bytes(),
+            ),
+        };
     }
     if request.method == "GET" && matches!(path, "/description.xml" | "/upnp/device.xml") {
         let xml = format!(
             "<root><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>{}</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>PakarController</modelName><modelNumber>{}</modelNumber><modelDescription>Controller bridge</modelDescription><modelURL>https://github.com/atomicdeploy/PakarController</modelURL><UDN>uuid:{}</UDN></device></root>",
-            shared.settings.hostname,crate::peer_identity::VERSION, shared.settings.instance_id
+            shared.settings.hostname,
+            crate::peer_identity::VERSION,
+            shared.settings.instance_id
         );
         return write_response(&mut socket, 200, "text/xml", xml.as_bytes());
     }
@@ -1126,17 +1610,27 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
     }
     let result = (|| -> Result<Value, String> {
         let o = route(shared)?;
+        if pixels::handles(&request.method,path) {return pixels::handle(shared,&o,&request);}
         match (request.method.as_str(), path) {
             ("GET", "/api/events") => {
-                let query=reqwest::Url::parse(&format!("http://bridge{}",request.path)).map_err(|_|"Invalid event query")?;
-                let values:Vec<_>=query.query_pairs().collect();
-                if values.len()>1||values.iter().any(|(key,_)|key!="after"){return Err("Expected only after event cursor".into());}
-                shared.events.lock().unwrap().read(values.first().map(|(_,v)|v.as_ref()),&o.status.board_id,&o.status.boot_id)
+                let query = reqwest::Url::parse(&format!("http://bridge{}", request.path))
+                    .map_err(|_| "Invalid event query")?;
+                let values: Vec<_> = query.query_pairs().collect();
+                if values.len() > 1 || values.iter().any(|(key, _)| key != "after") {
+                    return Err("Expected only after event cursor".into());
+                }
+                shared.events.lock().unwrap().read(
+                    values.first().map(|(_, v)| v.as_ref()),
+                    &o.status.board_id,
+                    &o.status.boot_id,
+                )
             }
             ("GET", "/api/status") => Ok(status_value(shared, &o)),
             ("GET", "/api/cells/assignments") => {
-                let doc=crate::cell_assignments::Document::from_status(&o.status)?;
-                Ok(json!({"role":doc.role,"assignments":doc.assignments,"red_lock":o.status.red_lock,"board_id":o.status.board_id,"boot_id":o.status.boot_id}))
+                let doc = crate::cell_assignments::Document::from_status(&o.status)?;
+                Ok(
+                    json!({"role":doc.role,"assignments":doc.assignments,"red_lock":o.status.red_lock,"board_id":o.status.board_id,"boot_id":o.status.boot_id}),
+                )
             }
             ("GET", "/api/cells/mapping") => {
                 if o.mapping.is_null() {
@@ -1186,12 +1680,38 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
                 Ok(command(shared, command_packet(&request)?, &request.headers))
             }
             ("POST", path) if path.starts_with("/api/") => {
-                if matches!(path,"/api/cells/assignments"|"/api/cells/lock") && request.headers.get("content-type").is_some_and(|v|v.starts_with("application/json")) {
-                    let value:Value=serde_json::from_slice(&request.body).map_err(|_|"Invalid assignment JSON")?;
-                    let form=if path=="/api/cells/assignments" {
-                        crate::cell_assignments::Document::new(serde_json::from_value(value["assignments"].clone()).map_err(|_|"Invalid assignments")?)?.form()
-                    }else{vec![("enabled".into(),value["enabled"].as_bool().ok_or("Lock requires enabled boolean")?.to_string())]};
-                    return mutate(shared,&o,path,form,&request.headers,&request.body,Duration::from_secs(8));
+                if matches!(path, "/api/cells/assignments" | "/api/cells/lock")
+                    && request
+                        .headers
+                        .get("content-type")
+                        .is_some_and(|v| v.starts_with("application/json"))
+                {
+                    let value: Value = serde_json::from_slice(&request.body)
+                        .map_err(|_| "Invalid assignment JSON")?;
+                    let form = if path == "/api/cells/assignments" {
+                        crate::cell_assignments::Document::new(
+                            serde_json::from_value(value["assignments"].clone())
+                                .map_err(|_| "Invalid assignments")?,
+                        )?
+                        .form()
+                    } else {
+                        vec![(
+                            "enabled".into(),
+                            value["enabled"]
+                                .as_bool()
+                                .ok_or("Lock requires enabled boolean")?
+                                .to_string(),
+                        )]
+                    };
+                    return mutate(
+                        shared,
+                        &o,
+                        path,
+                        form,
+                        &request.headers,
+                        &request.body,
+                        Duration::from_secs(8),
+                    );
                 }
                 let body =
                     std::str::from_utf8(&request.body).map_err(|_| "Expected URL-encoded form")?;
@@ -1203,7 +1723,8 @@ fn serve(mut socket: TcpStream, shared: &Arc<Shared>) -> Result<(), String> {
                     .collect();
                 if form.len() > 16
                     || form.iter().enumerate().any(|(i, (k, v))| {
-                        v.len() > (if k=="assignments"{4096}else{512}) || form[..i].iter().any(|(key, _)| key == k)
+                        v.len() > (if k == "assignments" { 4096 } else { 512 })
+                            || form[..i].iter().any(|(key, _)| key == k)
                     })
                 {
                     return Err("Invalid or duplicate form field".into());
@@ -1254,43 +1775,110 @@ fn command_packet(request: &Request) -> Result<Value, String> {
 mod tests {
     use super::*;
     #[test]
-    fn cell_assignments_bridge_http_json_export_lock_and_correlated_no_replay(){
-        let (shared,rx,_gate)=fixture();
+    fn cell_assignments_bridge_http_json_export_lock_and_correlated_no_replay() {
+        let (shared, rx, _gate) = fixture();
         {
-            let mut owned=shared.observation.lock().unwrap();let status=&mut owned.as_mut().unwrap().status;
-            status.red_lock=Some(false);let caps=status.capabilities.as_mut().unwrap();caps.role="table-selection".into();
-            caps.acknowledged_features.extend(["cell-assignments".into(),"cell-lock".into()]);
+            let mut owned = shared.observation.lock().unwrap();
+            let status = &mut owned.as_mut().unwrap().status;
+            status.red_lock = Some(false);
+            let caps = status.capabilities.as_mut().unwrap();
+            caps.role = "table-selection".into();
+            caps.acknowledged_features
+                .extend(["cell-assignments".into(), "cell-lock".into()]);
         }
-        let before=route(&shared).unwrap().status;
-        let mut actual=before.clone();
-        let worker=thread::spawn(move||{
-            for expected in [0x62,0x63,0x62] {
-                match rx.recv_timeout(Duration::from_secs(4)).unwrap(){
-                    SerialCommand::Bridge(_,admission,opcode,payload,reply)=>{
-                        assert_eq!(opcode,expected);assert!(admission.current(1,Some(&actual)));
-                        if opcode==0x62 {let doc=crate::cell_assignments::Document::from_payload(&payload).unwrap();for row in doc.assignments{actual.cells[row.cell as usize-1]=row.state;}}
-                        else{actual.red_lock=Some(payload==[1]);}
+        let before = route(&shared).unwrap().status;
+        let mut actual = before.clone();
+        let worker = thread::spawn(move || {
+            for expected in [0x62, 0x63, 0x62] {
+                match rx.recv_timeout(Duration::from_secs(4)).unwrap() {
+                    SerialCommand::Bridge(_, admission, opcode, payload, reply) => {
+                        assert_eq!(opcode, expected);
+                        assert!(admission.current(1, Some(&actual)));
+                        if opcode == 0x62 {
+                            let doc =
+                                crate::cell_assignments::Document::from_payload(&payload).unwrap();
+                            for row in doc.assignments {
+                                actual.cells[row.cell as usize - 1] = row.state;
+                            }
+                        } else {
+                            actual.red_lock = Some(payload == [1]);
+                        }
                         reply.send(Ok(actual.clone())).unwrap();
-                    },_=>panic!("Only selected USB owner may receive assignments"),
+                    }
+                    _ => panic!("Only selected USB owner may receive assignments"),
                 }
             }
-            assert!(rx.recv_timeout(Duration::from_millis(100)).is_err(),"No foreign-pin or duplicate command may reach USB");
+            assert!(
+                rx.recv_timeout(Duration::from_millis(100)).is_err(),
+                "No foreign-pin or duplicate command may reach USB"
+            );
         });
-        let listener=TcpListener::bind("127.0.0.1:0").unwrap();let base=format!("http://{}",listener.local_addr().unwrap());
-        let owner=shared.clone();let server=thread::spawn(move||{for _ in 0..4{let (socket,_)=listener.accept().unwrap();serve(socket,&owner).unwrap();}});
-        let client=peer_http::Pin::from_status(&before).unwrap().client().unwrap();
-        let exported:Value=client.get(format!("{base}/api/cells/assignments")).send().unwrap().error_for_status().unwrap().json().unwrap();
-        assert_eq!(exported["assignments"].as_array().unwrap().len(),80);assert_eq!(exported["red_lock"],false);
-        let body=json!({"assignments":[{"cell":1,"state":"red","future_optional":true},{"cell":80,"state":"off"}]});
-        assert_eq!(client.post(format!("{base}/api/cells/assignments")).header("X-Pakar-Boot","b".repeat(32)).json(&body).send().unwrap().status(),409);
-        let applied:Value=client.post(format!("{base}/api/cells/assignments")).json(&body).send().unwrap().error_for_status().unwrap().json().unwrap();
-        assert_eq!(applied["accepted"],true);assert_eq!(applied["count"],2);assert_eq!(applied["status"]["cells"][0],"red");assert_eq!(applied["status"]["cells"][79],"off");
-        let locked:Value=client.post(format!("{base}/api/cells/lock")).json(&json!({"enabled":true})).send().unwrap().error_for_status().unwrap().json().unwrap();
-        assert_eq!(locked["red_lock"],true);assert_eq!(locked["status"]["red_lock"],true);server.join().unwrap();
-        let packet=json!({"type":"command","request_id":"assignment-one-intent","board_id":before.board_id,"boot_id":before.boot_id,
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let base = format!("http://{}", listener.local_addr().unwrap());
+        let owner = shared.clone();
+        let server = thread::spawn(move || {
+            for _ in 0..4 {
+                let (socket, _) = listener.accept().unwrap();
+                serve(socket, &owner).unwrap();
+            }
+        });
+        let client = peer_http::Pin::from_status(&before)
+            .unwrap()
+            .client()
+            .unwrap();
+        let exported: Value = client
+            .get(format!("{base}/api/cells/assignments"))
+            .send()
+            .unwrap()
+            .error_for_status()
+            .unwrap()
+            .json()
+            .unwrap();
+        assert_eq!(exported["assignments"].as_array().unwrap().len(), 80);
+        assert_eq!(exported["red_lock"], false);
+        let body = json!({"assignments":[{"cell":1,"state":"red","future_optional":true},{"cell":80,"state":"off"}]});
+        assert_eq!(
+            client
+                .post(format!("{base}/api/cells/assignments"))
+                .header("X-Pakar-Boot", "b".repeat(32))
+                .json(&body)
+                .send()
+                .unwrap()
+                .status(),
+            409
+        );
+        let applied: Value = client
+            .post(format!("{base}/api/cells/assignments"))
+            .json(&body)
+            .send()
+            .unwrap()
+            .error_for_status()
+            .unwrap()
+            .json()
+            .unwrap();
+        assert_eq!(applied["accepted"], true);
+        assert_eq!(applied["count"], 2);
+        assert_eq!(applied["status"]["cells"][0], "red");
+        assert_eq!(applied["status"]["cells"][79], "off");
+        let locked: Value = client
+            .post(format!("{base}/api/cells/lock"))
+            .json(&json!({"enabled":true}))
+            .send()
+            .unwrap()
+            .error_for_status()
+            .unwrap()
+            .json()
+            .unwrap();
+        assert_eq!(locked["red_lock"], true);
+        assert_eq!(locked["status"]["red_lock"], true);
+        server.join().unwrap();
+        let packet = json!({"type":"command","request_id":"assignment-one-intent","board_id":before.board_id,"boot_id":before.boot_id,
             "expires_at_ms":9000,"command":"cell-assignments","assignments":[{"cell":2,"state":"red"}]});
-        let first=command(&shared,packet.clone(),&BTreeMap::new());assert_eq!(first["accepted"],true);assert_eq!(first["count"],1);
-        assert_eq!(command(&shared,packet,&BTreeMap::new()),first);worker.join().unwrap();
+        let first = command(&shared, packet.clone(), &BTreeMap::new());
+        assert_eq!(first["accepted"], true);
+        assert_eq!(first["count"], 1);
+        assert_eq!(command(&shared, packet, &BTreeMap::new()), first);
+        worker.join().unwrap();
     }
     pub(super) fn fixture() -> (Arc<Shared>, mpsc::Receiver<SerialCommand>, connection::Gate) {
         let settings = Settings {
@@ -1360,18 +1948,55 @@ mod tests {
         assert!(rx.recv().unwrap().is_err());
     }
     #[test]
-    fn usb_demand_bridge_listener_is_not_a_reader_and_http_rgb_is_explicit(){
-        let(shared,_rx,_gate)=fixture();assert_eq!(shared.demand.demand(),crate::usb_demand::Demand::default());
-        shared.clients.store(4,Ordering::Release);assert_eq!(shared.demand.demand(),crate::usb_demand::Demand::default(),"Open sockets alone are not subscribers");
-        let listener=TcpListener::bind("127.0.0.1:0").unwrap();let base=format!("http://{}",listener.local_addr().unwrap());
-        let owner=shared.clone();let server=thread::spawn(move||{for _ in 0..2{let(socket,_)=listener.accept().unwrap();serve(socket,&owner).unwrap();}});
+    fn usb_demand_bridge_listener_is_not_a_reader_and_http_rgb_is_explicit() {
+        let (shared, _rx, _gate) = fixture();
+        assert_eq!(shared.demand.demand(), crate::usb_demand::Demand::default());
+        shared.clients.store(4, Ordering::Release);
+        assert_eq!(
+            shared.demand.demand(),
+            crate::usb_demand::Demand::default(),
+            "Open sockets alone are not subscribers"
+        );
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let base = format!("http://{}", listener.local_addr().unwrap());
+        let owner = shared.clone();
+        let server = thread::spawn(move || {
+            for _ in 0..2 {
+                let (socket, _) = listener.accept().unwrap();
+                serve(socket, &owner).unwrap();
+            }
+        });
         // This fixture serves one request per socket and closes it; consume
         // each response and never race a pooled Windows socket's final close.
-        let client=reqwest::blocking::Client::builder().pool_max_idle_per_host(0).build().unwrap();
-        let _:Value=client.get(format!("{base}/api/status")).send().unwrap().error_for_status().unwrap().json().unwrap();
-        assert_eq!(shared.demand.demand(),crate::usb_demand::Demand::metadata());
-        let _:Value=client.get(format!("{base}/api/status?pixels=1")).send().unwrap().error_for_status().unwrap().json().unwrap();
-        assert_eq!(shared.demand.demand().flags,crate::usb_demand::STATUS|crate::usb_demand::PIXELS);server.join().unwrap();
+        let client = reqwest::blocking::Client::builder()
+            .pool_max_idle_per_host(0)
+            .build()
+            .unwrap();
+        let _: Value = client
+            .get(format!("{base}/api/status"))
+            .send()
+            .unwrap()
+            .error_for_status()
+            .unwrap()
+            .json()
+            .unwrap();
+        assert_eq!(
+            shared.demand.demand(),
+            crate::usb_demand::Demand::metadata()
+        );
+        let _: Value = client
+            .get(format!("{base}/api/status?pixels=1"))
+            .send()
+            .unwrap()
+            .error_for_status()
+            .unwrap()
+            .json()
+            .unwrap();
+        assert_eq!(
+            shared.demand.demand().flags,
+            crate::usb_demand::STATUS | crate::usb_demand::PIXELS
+        );
+        server.join().unwrap();
     }
     #[test]
     fn bridge_http_recovery_uses_existing_packet_form_contract() {
@@ -1411,12 +2036,16 @@ mod tests {
     #[test]
     fn bridge_status_keeps_board_identity_and_only_available_route_capabilities() {
         let (shared, _, gate) = fixture();
-        let o = route(&shared).unwrap();
+        let mut o = route(&shared).unwrap();
         let v = status_value(&shared, &o);
         assert_eq!(v["board_id"], "fixture-board");
         assert_eq!(v["hostname"], "ledboard");
         assert_eq!(v["bridge"]["hostname"], "fixture-host");
-        assert_eq!(v["capabilities"]["led_output"],json!({"backend":"gpio-static","rmt":false,"dma":false}));
+        assert_eq!(
+            v["capabilities"]["led_output"],
+            json!({"backend":"gpio-static","rmt":false,"dma":false,
+                "available_backends":[],"runtime_switch":false})
+        );
         assert!(
             !v["capabilities"]["acknowledged_features"]
                 .as_array()
@@ -1424,6 +2053,51 @@ mod tests {
                 .contains(&json!("ota"))
         );
         assert_eq!(v["bridge"]["path"], json!([shared.settings.instance_id]));
+        o.status.pixels = 216;
+        o.status.mode = "first-wins".into();
+        {
+            let c = o.status.capabilities.as_mut().unwrap();
+            c.role = "first-wins".into();
+            c.modes = vec![crate::capabilities::Mode {
+                id: "first-wins".into(),
+                code: 2,
+                label: "First wins".into(),
+                kind: "game".into(),
+            }];
+            c.acknowledged_features.extend([
+                "inputs".into(),
+                "outputs".into(),
+                "key-settings".into(),
+                "pixel-diagnostic".into(),
+            ]);
+        }
+        let without_usb = status_value(&shared, &o);
+        let features = without_usb["capabilities"]["acknowledged_features"]
+            .as_array()
+            .unwrap();
+        assert!(
+            !features.contains(&json!("key-settings"))
+                && !features.contains(&json!("pixel-diagnostic"))
+        );
+        o.status
+            .capabilities
+            .as_mut()
+            .unwrap()
+            .acknowledged_features
+            .extend([
+                "usb-key-settings".into(),
+                "usb-pixel-diagnostic".into(),
+                "usb-demand".into(),
+            ]);
+        let with_usb = status_value(&shared, &o);
+        let features = with_usb["capabilities"]["acknowledged_features"]
+            .as_array()
+            .unwrap();
+        assert!(
+            features.contains(&json!("key-settings"))
+                && features.contains(&json!("pixel-diagnostic"))
+        );
+        assert_eq!(with_usb["capabilities"]["modes"][0]["id"], "first-wins");
         gate.select(None);
         assert!(route(&shared).is_err());
     }
@@ -1553,81 +2227,216 @@ mod tests {
         server.join().unwrap();
     }
     #[test]
-    fn bridge_duplex_events_continue_while_usb_ack_pending_and_http_recovers_cursor(){
+    fn bridge_duplex_events_continue_while_usb_ack_pending_and_http_recovers_cursor() {
         use tungstenite::client::IntoClientRequest;
-        let (shared,rx,_gate)=fixture();
-        let listener=TcpListener::bind("127.0.0.1:0").unwrap();let address=listener.local_addr().unwrap();
-        let owner=shared.clone();let server=thread::spawn(move||{
-            let (stream,_)=listener.accept().unwrap();let first=owner.clone();
-            let ws=thread::spawn(move||serve(stream,&first).unwrap());
-            let (stream,_)=listener.accept().unwrap();serve(stream,&owner).unwrap();ws.join().unwrap();
+        let (shared, rx, _gate) = fixture();
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let owner = shared.clone();
+        let server = thread::spawn(move || {
+            let (stream, _) = listener.accept().unwrap();
+            let first = owner.clone();
+            let ws = thread::spawn(move || serve(stream, &first).unwrap());
+            let (stream, _) = listener.accept().unwrap();
+            serve(stream, &owner).unwrap();
+            ws.join().unwrap();
         });
-        let mut handshake=format!("ws://{address}/ws").into_client_request().unwrap();crate::peer_identity::websocket_headers(&mut handshake);
-        let (mut ws,_)=tungstenite::connect(handshake).unwrap();
-        let _:Value=serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();
-        let before=shared.events.lock().unwrap().cursor();
-        let packet=json!({"type":"command","request_id":"duplex-command","board_id":"fixture-board","boot_id":"a".repeat(32),"expires_at_ms":7500,"command":"cell","id":1,"state":"red","effect":"immediate"});
-        ws.send(tungstenite::Message::Text(packet.clone().to_string().into())).unwrap();
-        let SerialCommand::Bridge(_,_,_,_,reply)=rx.recv_timeout(Duration::from_secs(2)).unwrap() else{panic!("Expected USB dispatch")};
-        publish_event(&shared,json!({"type":"panel-event","board_id":"fixture-board","boot_id":"b".repeat(32),"event_id":9}));
-        publish_event(&shared,json!({"type":"panel-event","board_id":"fixture-board","boot_id":"a".repeat(32),"event_id":10,"text":"working"}));
-        let started=Instant::now();
-        loop{let event:Value=serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();if event["type"]=="panel-event"{assert_eq!(event["event_id"],10);assert!(event["bridge_cursor"].is_string());break;}}
-        assert!(started.elapsed()<Duration::from_millis(500),"Event must not wait for command ACK");
-        let mut actual=route(&shared).unwrap().status;actual.cells[0]="red".into();reply.send(Ok(actual)).unwrap();
-        let receipt=loop{let value:Value=serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();if value["type"]=="command-result"{break value;}};
-        assert_eq!(receipt["accepted"],true);assert_eq!(command(&shared,packet,&BTreeMap::new()),receipt);assert!(rx.try_recv().is_err());
-        let client=crate::peer_identity::client_builder().no_proxy().build().unwrap();
-        let journal:Value=client.get(format!("http://{address}/api/events")).query(&[("after",before)]).send().unwrap().error_for_status().unwrap().json().unwrap();
-        assert_eq!(journal["events"].as_array().unwrap().len(),2);assert_eq!(journal["gap"],false);assert_eq!(journal["events"][0]["event"]["event_id"],10);assert_eq!(journal["events"][1]["event"]["type"],"command-observed");
-        ws.close(None).unwrap();drop(ws);server.join().unwrap();
+        let mut handshake = format!("ws://{address}/ws").into_client_request().unwrap();
+        crate::peer_identity::websocket_headers(&mut handshake);
+        let (mut ws, _) = tungstenite::connect(handshake).unwrap();
+        let _: Value = serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();
+        let before = shared.events.lock().unwrap().cursor();
+        let packet = json!({"type":"command","request_id":"duplex-command","board_id":"fixture-board","boot_id":"a".repeat(32),"expires_at_ms":7500,"command":"cell","id":1,"state":"red","effect":"immediate"});
+        ws.send(tungstenite::Message::Text(
+            packet.clone().to_string().into(),
+        ))
+        .unwrap();
+        let SerialCommand::Bridge(_, _, _, _, reply) =
+            rx.recv_timeout(Duration::from_secs(2)).unwrap()
+        else {
+            panic!("Expected USB dispatch")
+        };
+        publish_event(
+            &shared,
+            json!({"type":"panel-event","board_id":"fixture-board","boot_id":"b".repeat(32),"event_id":9}),
+        );
+        publish_event(
+            &shared,
+            json!({"type":"panel-event","board_id":"fixture-board","boot_id":"a".repeat(32),"event_id":10,"text":"working"}),
+        );
+        let started = Instant::now();
+        loop {
+            let event: Value = serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();
+            if event["type"] == "panel-event" {
+                assert_eq!(event["event_id"], 10);
+                assert!(event["bridge_cursor"].is_string());
+                break;
+            }
+        }
+        assert!(
+            started.elapsed() < Duration::from_millis(500),
+            "Event must not wait for command ACK"
+        );
+        let mut actual = route(&shared).unwrap().status;
+        actual.cells[0] = "red".into();
+        reply.send(Ok(actual)).unwrap();
+        let receipt = loop {
+            let value: Value = serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();
+            if value["type"] == "command-result" {
+                break value;
+            }
+        };
+        assert_eq!(receipt["accepted"], true);
+        assert_eq!(command(&shared, packet, &BTreeMap::new()), receipt);
+        assert!(rx.try_recv().is_err());
+        let client = crate::peer_identity::client_builder()
+            .no_proxy()
+            .build()
+            .unwrap();
+        let journal: Value = client
+            .get(format!("http://{address}/api/events"))
+            .query(&[("after", before)])
+            .send()
+            .unwrap()
+            .error_for_status()
+            .unwrap()
+            .json()
+            .unwrap();
+        assert_eq!(journal["events"].as_array().unwrap().len(), 2);
+        assert_eq!(journal["gap"], false);
+        assert_eq!(journal["events"][0]["event"]["event_id"], 10);
+        assert_eq!(journal["events"][1]["event"]["type"], "command-observed");
+        ws.close(None).unwrap();
+        drop(ws);
+        server.join().unwrap();
     }
     #[test]
-    fn bridge_network_correlation_rejects_foreign_or_inconsistent_ack_without_extra_get(){
-        for bad in ["id","boot","readback","missing-accepted","null-accepted","string-accepted","success-error","success-null-error","rejected-no-error","rejected-empty-error","rejected-object-error","valid-rejection"] {
-            let (shared,_,_)=fixture();let old=route(&shared).unwrap().status;
-            let mut status=old.clone();status.cells[0]="red".into();
-            let mut result=json!({"type":"command-result","request_id":"forwarded","board_id":old.board_id,"boot_id":old.boot_id,"accepted":true,"status":status});
-            match bad{
-                "id"=>result["request_id"]="other".into(),"boot"=>result["status"]["boot_id"]="b".repeat(32).into(),
-                "readback"=>result["status"]["cells"][0]="white".into(),
-                "missing-accepted"=>{result.as_object_mut().unwrap().remove("accepted");},
-                "null-accepted"=>result["accepted"]=Value::Null,"string-accepted"=>result["accepted"]="true".into(),
-                "success-error"=>result["error"]="denied".into(),"success-null-error"=>result["error"]=Value::Null,
-                "rejected-no-error"=>result["accepted"]=false.into(),
-                "rejected-empty-error"=>{result["accepted"]=false.into();result["error"]=" \t".into();},
-                "rejected-object-error"=>{result["accepted"]=false.into();result["error"]=json!({"message":"denied"});},
-                _=>{result["accepted"]=false.into();result["error"]="denied".into();}
+    fn bridge_network_correlation_rejects_foreign_or_inconsistent_ack_without_extra_get() {
+        for bad in [
+            "id",
+            "boot",
+            "readback",
+            "missing-accepted",
+            "null-accepted",
+            "string-accepted",
+            "success-error",
+            "success-null-error",
+            "rejected-no-error",
+            "rejected-empty-error",
+            "rejected-object-error",
+            "valid-rejection",
+        ] {
+            let (shared, _, _) = fixture();
+            let old = route(&shared).unwrap().status;
+            let mut status = old.clone();
+            status.cells[0] = "red".into();
+            let mut result = json!({"type":"command-result","request_id":"forwarded","board_id":old.board_id,"boot_id":old.boot_id,"accepted":true,"status":status});
+            match bad {
+                "id" => result["request_id"] = "other".into(),
+                "boot" => result["status"]["boot_id"] = "b".repeat(32).into(),
+                "readback" => result["status"]["cells"][0] = "white".into(),
+                "missing-accepted" => {
+                    result.as_object_mut().unwrap().remove("accepted");
+                }
+                "null-accepted" => result["accepted"] = Value::Null,
+                "string-accepted" => result["accepted"] = "true".into(),
+                "success-error" => result["error"] = "denied".into(),
+                "success-null-error" => result["error"] = Value::Null,
+                "rejected-no-error" => result["accepted"] = false.into(),
+                "rejected-empty-error" => {
+                    result["accepted"] = false.into();
+                    result["error"] = " \t".into();
+                }
+                "rejected-object-error" => {
+                    result["accepted"] = false.into();
+                    result["error"] = json!({"message":"denied"});
+                }
+                _ => {
+                    result["accepted"] = false.into();
+                    result["error"] = "denied".into();
+                }
             };
-            let (endpoint,server)=crate::tests::mock_device(vec![(200,serde_json::to_vec(&result).unwrap())]);
-            let gate=connection::Gate::default();let epoch=gate.select(Some(Transport::WiFi));
-            shared.observation.lock().unwrap().as_mut().unwrap().route=Route::Network{endpoint,stamp:gate.stamp(Transport::WiFi,epoch),gate:gate.clone()};
-            let packet=json!({"type":"command","request_id":"forwarded","board_id":"fixture-board","boot_id":"a".repeat(32),"expires_at_ms":7500,"command":"cell","id":1,"state":"red","effect":"immediate"});
-            let receipt=command(&shared,packet.clone(),&BTreeMap::new());assert_eq!(receipt["accepted"],false,"{bad}");
-            if bad=="valid-rejection"{assert_eq!(receipt["error"],"denied");}
-            assert_eq!(route(&shared).unwrap().status.cells[0],"white","Rejected/ambiguous ACK must not update observed state");
-            assert_eq!(command(&shared,packet.clone(),&BTreeMap::new()),receipt);
-            let requests=server.join().unwrap();assert_eq!(requests.len(),1);assert!(requests[0].starts_with("POST /api/command "));
-            let form=reqwest::Url::parse(&format!("http://bridge/?{}",requests[0].split_once("\r\n\r\n").unwrap().1)).unwrap();
-            let fields:Vec<_>=form.query_pairs().collect();assert_eq!(fields.len(),1);assert_eq!(fields[0].0,"packet");assert_eq!(serde_json::from_str::<Value>(&fields[0].1).unwrap(),packet);
+            let (endpoint, server) =
+                crate::tests::mock_device(vec![(200, serde_json::to_vec(&result).unwrap())]);
+            let gate = connection::Gate::default();
+            let epoch = gate.select(Some(Transport::WiFi));
+            shared.observation.lock().unwrap().as_mut().unwrap().route = Route::Network {
+                endpoint,
+                stamp: gate.stamp(Transport::WiFi, epoch),
+                gate: gate.clone(),
+            };
+            let packet = json!({"type":"command","request_id":"forwarded","board_id":"fixture-board","boot_id":"a".repeat(32),"expires_at_ms":7500,"command":"cell","id":1,"state":"red","effect":"immediate"});
+            let receipt = command(&shared, packet.clone(), &BTreeMap::new());
+            assert_eq!(receipt["accepted"], false, "{bad}");
+            if bad == "valid-rejection" {
+                assert_eq!(receipt["error"], "denied");
+            }
+            assert_eq!(
+                route(&shared).unwrap().status.cells[0],
+                "white",
+                "Rejected/ambiguous ACK must not update observed state"
+            );
+            assert_eq!(command(&shared, packet.clone(), &BTreeMap::new()), receipt);
+            let requests = server.join().unwrap();
+            assert_eq!(requests.len(), 1);
+            assert!(requests[0].starts_with("POST /api/command "));
+            let form = reqwest::Url::parse(&format!(
+                "http://bridge/?{}",
+                requests[0].split_once("\r\n\r\n").unwrap().1
+            ))
+            .unwrap();
+            let fields: Vec<_> = form.query_pairs().collect();
+            assert_eq!(fields.len(), 1);
+            assert_eq!(fields[0].0, "packet");
+            assert_eq!(serde_json::from_str::<Value>(&fields[0].1).unwrap(), packet);
         }
     }
     #[test]
-    fn bridge_readback_covers_pixel_groups_and_optional_batch_effect(){
-        let (shared,_,_)=fixture();let mut status=route(&shared).unwrap().status;
-        status.cells[0]="red".into();
-        assert!(command_readback(&json!({"command":"cells","ids":"1","state":"red"}),&json!({"count":1}),&status).unwrap());
-        status.effect="none".into();status.led_output=json!({"enabled":true,"mode":"effects"});
-        status.capabilities.as_mut().unwrap().acknowledged_features.push("pixel-diagnostic".into());
-        for count in [1,6] {
-            let probe=crate::pixel_diagnostic::Probe{index:474,group:count==6,rgb:0x12ab34};
+    fn bridge_readback_covers_pixel_groups_and_optional_batch_effect() {
+        let (shared, _, _) = fixture();
+        let mut status = route(&shared).unwrap().status;
+        status.cells[0] = "red".into();
+        assert!(
+            command_readback(
+                &json!({"command":"cells","ids":"1","state":"red"}),
+                &json!({"count":1}),
+                &status
+            )
+            .unwrap()
+        );
+        status.effect = "none".into();
+        status.led_output = json!({"enabled":true,"mode":"effects"});
+        status
+            .capabilities
+            .as_mut()
+            .unwrap()
+            .acknowledged_features
+            .push("pixel-diagnostic".into());
+        for count in [1, 6] {
+            let probe = crate::pixel_diagnostic::Probe {
+                index: 474,
+                group: count == 6,
+                rgb: 0x12ab34,
+                ..Default::default()
+            };
             status.pixel_frame=Some(serde_json::from_value(json!({"revision":1,"pending":false,"brightness":255,"physical":(1..=80).collect::<Vec<_>>(),"rgb":probe.frame(false).unwrap().iter().map(|v|format!("{v:02x}")).collect::<String>()})).unwrap());
-            let packet=json!({"command":"pixel-diagnostic","index":474,"count":count,"rgb":probe.rgb,"off":false});
-            assert!(command_readback(&packet,&json!({}),&status).unwrap());
-            status.pixel_frame.as_mut().unwrap().pending=true;
-            assert!(!command_readback(&packet,&json!({}),&status).unwrap(),"Pending frames are not confirmed output");
+            let packet = json!({"command":"pixel-diagnostic","index":474,"count":count,"rgb":probe.rgb,"off":false});
+            assert!(
+                !command_readback(&packet, &json!({}), &status).unwrap(),
+                "A matching RGB frame alone does not confirm the diagnostic owner/state"
+            );
+            status.led_output["diagnostic"] = json!({
+                "active":true,"index":474,"count":count,"rgb":probe.rgb,"off":false
+            });
+            assert!(command_readback(&packet, &json!({}), &status).unwrap());
+            status.pixel_frame.as_mut().unwrap().pending = true;
+            assert!(
+                !command_readback(&packet, &json!({}), &status).unwrap(),
+                "Pending frames are not confirmed output"
+            );
+            status.led_output.as_object_mut().unwrap().remove("diagnostic");
         }
-        status.pixel_frame=None;
+        status.pixel_frame = None;
         assert!(!command_readback(&json!({"command":"pixel-diagnostic","index":474,"count":6,"rgb":0x12ab34,"off":false}),&json!({}),&status).unwrap());
     }
     #[test]
@@ -1661,7 +2470,8 @@ mod tests {
             .unwrap();
         assert_eq!(auth["enabled"], false);
         use tungstenite::client::IntoClientRequest;
-        let mut request=format!("ws://{address}/ws").into_client_request().unwrap();crate::peer_identity::websocket_headers(&mut request);
+        let mut request = format!("ws://{address}/ws").into_client_request().unwrap();
+        crate::peer_identity::websocket_headers(&mut request);
         let (mut ws, _) = tungstenite::connect(request).unwrap();
         let value: Value = serde_json::from_str(ws.read().unwrap().to_text().unwrap()).unwrap();
         assert_eq!(value["board_id"], "fixture-board");
@@ -1689,18 +2499,63 @@ mod tests {
         }
     }
     #[test]
-    fn bridge_live_headers_and_peer_registry_reject_unsupported_controls(){
-        let(shared,rx,_)=fixture();let listener=TcpListener::bind("127.0.0.1:0").unwrap();let address=listener.local_addr().unwrap();let owner=shared.clone();
-        let worker=thread::spawn(move||for _ in 0..4{serve(listener.accept().unwrap().0,&owner).unwrap();});
-        let anonymous=reqwest::blocking::Client::builder().no_proxy().build().unwrap();
-        let rejected=anonymous.post(format!("http://{address}/api/reset")).send().unwrap();assert_eq!(rejected.status().as_u16(),426);assert!(rx.try_recv().is_err());
-        assert_eq!(rejected.headers()["x-pakar-version"],crate::peer_identity::VERSION);assert_eq!(rejected.headers()["server"],format!("PakarController/{}",crate::peer_identity::VERSION));
-        let client=crate::peer_identity::client_builder().no_proxy().build().unwrap();
-        let mut report=crate::client_telemetry::Reporter::new().value();report["password"]="never retain".into();
-        let accepted=client.post(format!("http://{address}/api/clients/report")).form(&[("report",report.to_string())]).send().unwrap();assert!(accepted.status().is_success());
-        let peers:Value=client.get(format!("http://{address}/api/clients")).send().unwrap().json().unwrap();
-        assert_eq!(peers["clients"].as_array().unwrap().len(),1);assert_eq!(peers["clients"][0]["observed_ip"],"127.0.0.1");assert!(!peers.to_string().contains("never retain"));
-        let public:Value=anonymous.get(format!("http://{address}/api/peer/info")).send().unwrap().json().unwrap();assert_eq!(public["version"],crate::peer_identity::VERSION);assert_eq!(public["compatibility"]["enforced"],true);
+    fn bridge_live_headers_and_peer_registry_reject_unsupported_controls() {
+        let (shared, rx, _) = fixture();
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let owner = shared.clone();
+        let worker = thread::spawn(move || {
+            for _ in 0..4 {
+                serve(listener.accept().unwrap().0, &owner).unwrap();
+            }
+        });
+        let anonymous = reqwest::blocking::Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap();
+        let rejected = anonymous
+            .post(format!("http://{address}/api/reset"))
+            .send()
+            .unwrap();
+        assert_eq!(rejected.status().as_u16(), 426);
+        assert!(rx.try_recv().is_err());
+        assert_eq!(
+            rejected.headers()["x-pakar-version"],
+            crate::peer_identity::VERSION
+        );
+        assert_eq!(
+            rejected.headers()["server"],
+            format!("PakarController/{}", crate::peer_identity::VERSION)
+        );
+        let client = crate::peer_identity::client_builder()
+            .no_proxy()
+            .build()
+            .unwrap();
+        let mut report = crate::client_telemetry::Reporter::new().value();
+        report["password"] = "never retain".into();
+        let accepted = client
+            .post(format!("http://{address}/api/clients/report"))
+            .form(&[("report", report.to_string())])
+            .send()
+            .unwrap();
+        assert!(accepted.status().is_success());
+        let peers: Value = client
+            .get(format!("http://{address}/api/clients"))
+            .send()
+            .unwrap()
+            .json()
+            .unwrap();
+        assert_eq!(peers["clients"].as_array().unwrap().len(), 1);
+        assert_eq!(peers["clients"][0]["observed_ip"], "127.0.0.1");
+        assert!(!peers.to_string().contains("never retain"));
+        let public: Value = anonymous
+            .get(format!("http://{address}/api/peer/info"))
+            .send()
+            .unwrap()
+            .json()
+            .unwrap();
+        assert_eq!(public["version"], crate::peer_identity::VERSION);
+        assert_eq!(public["compatibility"]["enforced"], true);
         worker.join().unwrap();
     }
 }
@@ -1733,7 +2588,8 @@ impl crate::PakarControllerApp {
             {
                 json!({"board_id":status.board_id,"boot_id":status.boot_id,
                     "physical":self.mappings.iter().map(|c|c.physical_cell).collect::<Vec<_>>(),
-                    "names":self.mappings.iter().map(|c|c.name.clone()).collect::<Vec<_>>()})
+                    "names":self.mappings.iter().map(|c|c.name.clone()).collect::<Vec<_>>(),
+                    "pixel_groups":status.pixel_groups})
             } else {
                 Value::Null
             };

@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const web=read('firmware/esp8266/src/WebUi.h');
+const web=read('firmware/esp/src/WebUi.h');
 const workspace=web.split('// BEGIN WORKSPACE STORAGE')[1].split('// END WORKSPACE STORAGE')[0];
 const catalog=JSON.parse(read('assets/contracts/device-settings.json'));
 const settings=read('assets/web/device-settings.js');
@@ -40,7 +40,7 @@ function fixture(storage=new Map()){
     webSocketReconnect:{cancel(){}},stopStream(){},socket:null,
   });
   const run=code=>vm.runInContext(code,context);
-  run(settings);run(workspace);
+  run(settings);run(read('assets/web/feature-workspaces.js'));run(workspace);
   for(const name of ['normalizedCellOrder','selectionQuery','saveTablePreferences'])run(web.split(/\r?\n/).find(line=>line.startsWith('function '+name+'(')));
   run('initializeWorkspaceStorage()');
   return {nodes,storage,events,windowEvents,timers,context,run,get writes(){return writes},get apiCalls(){return apiCalls},
@@ -114,4 +114,16 @@ assert.equal(reopened.apiCalls,0);
 f.run("const blockedWorkspace=createWorkspaceStorage({storage:()=>{throw Error('blocked')}});blockedWorkspace.save('blocked',{query:'draft'});blockedWorkspace.flush();");
 assert.equal(f.run("blockedWorkspace.read('blocked').query"),'draft','Disabled browser storage still retains this session workspace');
 assert.equal(f.apiCalls,0);
+// Feature drafts share this same writer/key and are sanitized at the boundary.
+// Saving a retiring board must not pick up the next feature owner's draft.
+const diagnosticOwner=fixture();diagnosticOwner.context.first=first;diagnosticOwner.run('observeWorkspace(first)');
+diagnosticOwner.run("globalThis.pakarWebFeatures={workspaceSnapshot:key=>key===activeWorkspaceKey?{index:8,rgb:0x123456,position:'9',effect:'blink',pending:true,observation:{revision:500},password:'PRIVATE'}:undefined};scheduleWorkspaceSave()");diagnosticOwner.flush();
+const savedDiagnostic=JSON.parse(diagnosticOwner.storage.get(key)).diagnostic;
+assert.equal(savedDiagnostic.index,8);assert.equal(savedDiagnostic.rgb,0x123456);assert.equal(savedDiagnostic.effect,'blink');assert(!diagnosticOwner.storage.get(key).includes('PRIVATE'));assert(!Object.hasOwn(savedDiagnostic,'observation'));assert(!Object.hasOwn(savedDiagnostic,'pending'));
+diagnosticOwner.run('globalThis.pakarWebFeatures={workspaceSnapshot:()=>undefined};scheduleWorkspaceSave()');diagnosticOwner.flush();
+assert.equal(JSON.parse(diagnosticOwner.storage.get(key)).diagnostic.index,8,'A not-yet-attached feature owner preserves the existing scoped draft');
+assert.equal(diagnosticOwner.apiCalls,0);
+diagnosticOwner.run("globalThis.pakarWebFeatures={presentationSnapshot:()=>({mapView:'draft',mapOpen:true,mapFilter:'12',advancedOpen:true,expandedRules:['black:0:0:1:0'],rules:[{kind:'remove',pixel:5}],password:'PRIVATE-TOOLS'})};scheduleWorkspaceSave()");diagnosticOwner.flush();
+const storedTools=JSON.parse(diagnosticOwner.storage.get(key)).pixelTools;assert.equal(storedTools.mapView,'draft');assert.equal(storedTools.mapFilter,'12');assert.equal(storedTools.mapOpen,true);assert(!Object.hasOwn(storedTools,'rules'));assert(!diagnosticOwner.storage.get(key).includes('PRIVATE-TOOLS'));
+diagnosticOwner.run('globalThis.pakarWebFeatures={presentationSnapshot:()=>undefined};scheduleWorkspaceSave()');diagnosticOwner.flush();assert.equal(JSON.parse(diagnosticOwner.storage.get(key)).pixelTools.mapFilter,'12','Owner transition retains sanitized presentation through the existing writer');assert.equal(diagnosticOwner.apiCalls,0);
 console.log('Web workspace: immutable board/application scope, reboot restoration, public draft conflict guards, private-field exclusion, scroll/selection/find retention, debounced equal-write skips and zero device mutations passed (DOM/storage doubles).');

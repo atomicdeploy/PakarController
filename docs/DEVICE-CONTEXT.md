@@ -3,17 +3,21 @@
 Tracking: [issue #10](https://github.com/atomicdeploy/PakarController/issues/10).
 This is a source/firmware-build/Web-fixture checkpoint, not live desktop or physical acceptance.
 
+Current overview: [system architecture and gaps](ARCHITECTURE.md). Source release
+is0.2.8/client build23. Older verification/host observations below are historical;
+they do not imply a present serial owner, current installed package or board health.
+
 ## Authority and transport
 
 `libraries/BoardCore/src/DeviceContext.h` owns the ESP profile policy.
-`firmware/esp8266/esp8266.ino` publishes the same living `capabilities`
+`firmware/esp/application.ino` publishes the same living `capabilities`
 object through authenticated status JSON and its WebSocket status feed:
 
 ```json
-{"board_kind":"table","name":"ledboard",
+{"board_kind":"table","name":"ledboard","hostname":"ledboard","role":"table-selection",
  "acknowledged_features":["table","leds","streaming"],
  "table":{"columns":10,"rows":8,"pixels_per_cell":6},
- "modes":[{"id":"snake","code":3,"label":"Snake","kind":"presentation"}]}
+ "modes":[{"id":"cell","code":1,"label":"Cell selection","kind":"presentation"}]}
 ```
 
 This example is not a claim about the current physical board. The firmware
@@ -21,13 +25,22 @@ computes the complete actual response. The Table profile is explicit firmware
 configuration (`PAKAR_TABLE_ENABLED`, default 1), not an inference from 480
 pixels, hostname, cached preferences or a version. Setting it to 0 excludes
 Table and its modes; the host policy test compiles and exercises both settings.
-`PAKAR_FIRST_WINS_ENABLED` separately gates that Table game (default 1).
+`GameRole.h` derives `PAKAR_TABLE_SELECTION` and `PAKAR_FIRST_WINS_ENABLED`
+from the one `PAKAR_GAME_MODE=1|2` build choice; they are not independent runtime
+games. Table selection has80 six-pixel groups; first-wins has18 twelve-pixel
+groups for nine boxes. `PAKAR_SNAKE_ENABLED=0` currently excludes Snake.
+Logical10×8 indexing is separate from the interleaved20×4 visual table and the
+editable physical chain map. See ARCHITECTURE rather than inferring geometry
+from the `columns`/`rows` indexing fields alone.
 
-Existing 29 USB status bytes are preserved. Bytes 29–37 append reserved zero, 16-bit
+The initial additive USB layout preserved29 status bytes. Bytes29–37 appended
+reserved zero,16-bit
 feature mask, mode mask, board kind, columns, rows, pixels-per-cell and reserved
 byte. Old USB status cannot invent a Table. Feature mask bits 0–12 are network,
 telemetry, LEDs, streaming, Table, Display, Text, Buzzer, inputs, outputs,
-settings, ISP and OTA. This mask is distinct from legacy AVR HELLO bits.
+settings, ISP and OTA. Later optional fields/features extend this layout; use
+the current Protocol/HostSerial/USB adapters, not this historic byte summary as
+a complete packet specification. This mask is distinct from AVR HELLO bits.
 
 ## Individual acknowledgements
 
@@ -37,8 +50,8 @@ settings, ISP and OTA. This mask is distinct from legacy AVR HELLO bits.
 | Text | Display evidence **and** independent HELLO `kCapDisplayText` support bit |
 | Buzzer | Valid current AVR HELLO advertising Buzzer, not a melody catalog or generic online flag |
 | Inputs / outputs | Their respective current AVR HELLO bits |
-| First wins | Advertised Table game, enabled firmware flag and acknowledged inputs **and** outputs |
-| Snake | Advertised **Table presentation**, never a generic controller game |
+| First wins | Explicit baked role; physical game actions additionally require current AVR input/output/configuration ACK and no programming latch |
+| Snake | Compiled out; do not offer it from an old screenshot, cached manifest or historical mode description |
 
 Passive buzzer wiring has no electrical presence feedback: HELLO acknowledges
 the firmware's installed adapter, not that sound was physically heard. TM1637
@@ -100,7 +113,7 @@ and simultaneous independently routed multi-board workspaces remain open.
 The mobile client and old CLI/TUI domain menus are not certified contextual by
 this pass. Firmware-side relevant command guards also protect those callers.
 
-## Verification and deployment boundary
+## Historical verification and deployment boundary
 
 - Passed: production C++ context policy including Table-disabled profile;
   protocol/LED/ISP/Telnet/busy-line/audio/access/remote-state/front-panel/PC

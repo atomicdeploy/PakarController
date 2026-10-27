@@ -3,19 +3,20 @@ import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const driver=read('firmware/esp32s3/src/LedOutput.cpp');
 const header=read('firmware/esp32s3/src/LedOutput.h');
-const grid=read('firmware/esp8266/src/LedGrid.cpp');
+const grid=read('firmware/esp/src/LedGrid.cpp');
 const wire=read('firmware/esp32s3/src/LedWire.h');
 function driverContract(source) {
  const work=source.slice(source.indexOf('void LedOutput::work(){'));
- const reset=work.indexOf('gpio_reset_pin('),low=work.indexOf('gpio_set_level(');
- const output=work.indexOf('gpio_set_direction('),allocate=work.indexOf('heap_caps_malloc(');
+ const init=source.slice(source.indexOf('int LedOutput::initializeDriver('),source.indexOf('int LedOutput::releaseDriver(){'));
+ const reset=init.indexOf('gpio_reset_pin('),low=init.indexOf('gpio_set_level(');
+ const output=init.indexOf('gpio_set_direction('),allocate=init.indexOf('heap_caps_malloc(');
  assert.ok(reset>=0&&reset<low&&low<output&&output<allocate,'Idle LOW preloaded before output/allocation');
- assert.match(work.slice(0,allocate),/if\(pinError\)\{error_\.store\(pinError\);vTaskDelete\(nullptr\);return;\}/);
+ assert.match(init.slice(0,allocate),/if\(pinError\)return pinError;/);
  assert.match(source,/xQueueCreateStatic\(1,sizeof\(Frame\)/);
  assert.match(source,/xQueueOverwrite\(queue_,&producer_\)/);
  assert.match(work,/encodeWireBytes\(current_\.rgb/);
  assert.match(work,/flags\.eot_level=0/);
- assert.match(work,/rmt_tx_wait_all_done\(channel,100\)/);
+ assert.match(work,/rmt_tx_wait_all_done\(channel_,100\)/);
  assert.match(work,/esp_rom_delay_us\(resetMicros\)/);
  assert.doesNotMatch(source,/#include <driver\/rmt\.h>|rmt_write_items\(|rmt_item32_t|ESP_ERROR_CHECK\(/);
 }

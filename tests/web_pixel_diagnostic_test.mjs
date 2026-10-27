@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const web=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const web=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8');
 const source=web.split('// BEGIN PIXEL DIAGNOSTIC')[1].split('// END PIXEL DIAGNOSTIC')[0];
 function fixture(){
   const nodes=new Map(),sent=[],calls=[],errors=[];
@@ -18,6 +18,7 @@ function fixture(){
     peerHttp:{writable:()=>true,pin:()=>owner,assertOwner:peer=>{if(peer!==context.owner)throw Error('peer changed')}},
     document:{getElementById:id=>nodes.get(id),createElement:element},
     setUiText:(node,text,values={})=>{node.textContent=text.replace(/\{(\w+)\}/g,(_,key)=>values[key])},
+    setUiAttribute:(node,name,value)=>node.setAttribute(name,value),
     renderLedOutputControl(){},render:actual=>{context.state=actual},report:error=>errors.push(error),
     api:async(path,options={})=>{calls.push({path,options});if(context.overrideApi)return context.overrideApi(path,options);
       return path==='/api/led/output'?{enabled:true,mode:'effects'}:{pixels:480,led_output:{enabled:true,mode:'effects'}}},
@@ -60,6 +61,11 @@ for(const failure of ['ack','readback','queued','partial']){
   if(failure==='partial')f.context.onSent=()=>{f.ws.readyState=3};
   await f.run('showPhysicalPixel()');assert.equal(f.sent.length,failure==='partial'?1:0);assert.equal(f.errors.length,1);
   assert.match(f.nodes.get('physicalPixelResult').textContent,/unconfirmed.*Not replayed/);
+}
+{
+  const f=fixture();f.context.features.add('pixel-diagnostic');f.run('renderPixelDiagnostic()');
+  assert(f.nodes.get('pixelDiagnostic').hidden,'Typed diagnostics replaces the legacy frame sender instead of duplicating it');
+  assert.equal(f.calls.length,0);assert.equal(f.sent.length,0);
 }
 for(const cancellation of ['peer','stop']){
   const f=fixture();let finish;f.context.overrideApi=()=>new Promise(resolve=>finish=resolve);

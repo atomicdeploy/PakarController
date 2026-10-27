@@ -4,10 +4,11 @@
 // focus/hover lifetime, safe text nodes and idempotent teardown.
 function createToastController({root, document:doc=globalThis.document,
   translate=(text)=>text, setTimer=globalThis.setTimeout,
-  clearTimer=(id)=>globalThis.clearTimeout?.(id)}={}){
+  clearTimer=(id)=>globalThis.clearTimeout?.(id), now=()=>Date.now()}={}){
   if(!root||!doc)throw Error('Notification region unavailable');
   let toastSerial=0,items=[],stopped=false;
   const timers=new Map(),nodes=new Map(),paused=new Map();
+  const recentErrors=new Map();
   root.setAttribute('aria-live','polite');root.setAttribute('aria-atomic','false');
   root.setAttribute('tabindex','-1');
   function icon(name,size=20){
@@ -62,11 +63,20 @@ function createToastController({root, document:doc=globalThis.document,
   function showToast(tone,title,message,duration=4500){
     if(stopped)return null;
     const item={id:++toastSerial,tone:['info','success','error'].includes(tone)?tone:'info',title:String(title??'').slice(0,256),message:String(message??'').slice(0,4096),duration:Number.isFinite(duration)?Math.max(100,Math.min(duration,60000)):4500};
+    const duplicate=items.find(old=>old.tone===item.tone&&old.title===item.title&&old.message===item.message);
+    if(duplicate)return duplicate.id; // Do not extend expiry or steal focus.
+    if(item.tone==='error'){
+      const time=now(),key=JSON.stringify([item.title,item.message]);
+      for(const [old,at] of recentErrors)if(time-at>=30000)recentErrors.delete(old);
+      if(recentErrors.has(key))return null;
+      if(recentErrors.size>=64)recentErrors.delete(recentErrors.keys().next().value);
+      recentErrors.set(key,time);
+    }
     const evicted=items.slice(0,Math.max(0,items.length-3));
     for(const old of evicted){cancel(old.id);paused.delete(old.id)}
     items=[...items.slice(-3),item];render();arm(item);return item.id;
   }
-  function destroy(){if(stopped)return;stopped=true;for(const id of timers.keys())cancel(id);items=[];nodes.clear();paused.clear();root.replaceChildren()}
+  function destroy(){if(stopped)return;stopped=true;for(const id of timers.keys())cancel(id);items=[];nodes.clear();paused.clear();recentErrors.clear();root.replaceChildren()}
   return {showToast,dismissToast,refresh:render,destroy,snapshot:()=>items.map(({duration,...item})=>({...item}))};
 }
 let webToasts=null;

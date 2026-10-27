@@ -1,11 +1,11 @@
 #[path = "src/application_identity.rs"]
 mod application_identity;
+#[path = "src/brand_image.rs"]
+mod brand_image;
 #[path = "src/platform/windows_quick_actions.rs"]
 mod windows_quick_actions;
 #[path = "src/platform/windows_shell_icons.rs"]
 mod windows_shell_icons;
-#[path = "src/brand_image.rs"]
-mod brand_image;
 fn main() {
     println!("cargo:rerun-if-env-changed=PAKAR_ENFORCE_PEER_VERSIONS");
     println!("cargo:rerun-if-env-changed=PAKAR_BUILD_ID");
@@ -24,8 +24,11 @@ fn main() {
         .unwrap();
     }
     for action in windows_quick_actions::WINDOWS_QUICK_ACTIONS {
-        std::fs::write(out.join(format!("quick-action-{}.rgba", action.icon_resource_id)),
-            windows_shell_icons::shell_icon_rgba(action.icon_glyph, 16)).unwrap();
+        std::fs::write(
+            out.join(format!("quick-action-{}.rgba", action.icon_resource_id)),
+            windows_shell_icons::shell_icon_rgba(action.icon_glyph, 16),
+        )
+        .unwrap();
     }
     #[cfg(windows)]
     {

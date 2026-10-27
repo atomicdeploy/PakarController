@@ -7,11 +7,14 @@ use eframe::egui;
 /// from logic, not only from the creation callback. Never repeat after startup:
 /// a later user/tray hide or minimized screenshot must remain untouched.
 #[derive(Default)]
-pub struct Startup {shown:bool}
+pub struct Startup {
+    shown: bool,
+}
 impl Startup {
-    pub fn show_initial(&mut self,ctx:&egui::Context) {
-        if !std::mem::replace(&mut self.shown,true) {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));ctx.request_repaint();
+    pub fn show_initial(&mut self, ctx: &egui::Context) {
+        if !std::mem::replace(&mut self.shown, true) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+            ctx.request_repaint();
         }
     }
 }
@@ -27,12 +30,16 @@ impl Geometry {
             return None;
         }
         let size = viewport.inner_rect?.size();
-        if !size.is_finite() { return None; }
+        if !size.is_finite() {
+            return None;
+        }
         // Pealayer WindowGeometry::is_valid: finite and bounded, not a minimized
         // or fullscreen sample. Keep real user sizing; do not force defaults.
         if (420.0..=16_384.0).contains(&size.x) && (300.0..=16_384.0).contains(&size.y) {
             self.recovering = false;
-            if viewport.maximized != Some(true) { self.normal = Some(size); }
+            if viewport.maximized != Some(true) {
+                self.normal = Some(size);
+            }
         } else if (size.x < 320.0 || size.y < 240.0) && !self.recovering {
             self.recovering = true;
             return Some(self.normal.unwrap_or(egui::vec2(1180.0, 760.0)));
@@ -50,7 +57,9 @@ pub fn reconcile(ctx: &egui::Context) {
         restore
     });
     if let Some(size) = restore {
-        ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(egui::vec2(900.0, 600.0)));
+        ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(egui::vec2(
+            900.0, 600.0,
+        )));
         ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(size));
         ctx.request_repaint();
     }
@@ -60,23 +69,48 @@ mod tests {
     use super::*;
     #[test]
     fn initial_reveal_runs_once_from_logic_without_focus_or_restore() {
-        let ctx=egui::Context::default();let input=egui::RawInput::default();let mut startup=Startup::default();
-        let first=ctx.run_logic(&input,|ctx|startup.show_initial(ctx));
-        let commands=first.viewport_commands.values().flatten().collect::<Vec<_>>();
-        assert!(commands.iter().any(|c|matches!(c,egui::ViewportCommand::Visible(true))));
-        assert!(!commands.iter().any(|c|matches!(c,egui::ViewportCommand::Focus|egui::ViewportCommand::Minimized(_))));
-        assert!(ctx.run_logic(&input,|ctx|startup.show_initial(ctx)).viewport_commands.is_empty());
+        let ctx = egui::Context::default();
+        let input = egui::RawInput::default();
+        let mut startup = Startup::default();
+        let first = ctx.run_logic(&input, |ctx| startup.show_initial(ctx));
+        let commands = first
+            .viewport_commands
+            .values()
+            .flatten()
+            .collect::<Vec<_>>();
+        assert!(
+            commands
+                .iter()
+                .any(|c| matches!(c, egui::ViewportCommand::Visible(true)))
+        );
+        assert!(!commands.iter().any(|c| matches!(
+            c,
+            egui::ViewportCommand::Focus | egui::ViewportCommand::Minimized(_)
+        )));
+        assert!(
+            ctx.run_logic(&input, |ctx| startup.show_initial(ctx))
+                .viewport_commands
+                .is_empty()
+        );
     }
     fn viewport(size: egui::Vec2) -> egui::ViewportInfo {
-        egui::ViewportInfo { inner_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)), minimized: Some(false), occluded: Some(false), ..Default::default() }
+        egui::ViewportInfo {
+            inner_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+            minimized: Some(false),
+            occluded: Some(false),
+            ..Default::default()
+        }
     }
     #[test]
     fn preserves_user_size_and_never_samples_minimized_or_fullscreen_geometry() {
         let mut state = Geometry::default();
         assert_eq!(state.observe(&viewport(egui::vec2(1000.0, 700.0))), None);
         let mut tiny = viewport(egui::vec2(79.0, 101.0));
-        tiny.minimized = Some(true); assert_eq!(state.observe(&tiny), None);
-        tiny.minimized = Some(false); tiny.fullscreen = Some(true); assert_eq!(state.observe(&tiny), None);
+        tiny.minimized = Some(true);
+        assert_eq!(state.observe(&tiny), None);
+        tiny.minimized = Some(false);
+        tiny.fullscreen = Some(true);
+        assert_eq!(state.observe(&tiny), None);
         tiny.fullscreen = Some(false);
         assert_eq!(state.observe(&tiny), Some(egui::vec2(1000.0, 700.0)));
         assert_eq!(state.observe(&tiny), None); // no resize storm while awaiting OS
@@ -87,11 +121,31 @@ mod tests {
     fn recovery_commands_work_without_paint_and_do_not_reveal_hidden_windows() {
         let ctx = egui::Context::default();
         let mut input = egui::RawInput::default();
-        *input.viewports.get_mut(&egui::ViewportId::ROOT).unwrap() = viewport(egui::vec2(79.0, 101.0));
+        *input.viewports.get_mut(&egui::ViewportId::ROOT).unwrap() =
+            viewport(egui::vec2(79.0, 101.0));
         let result = ctx.run_logic(&input, reconcile);
-        assert!(result.viewport_commands.values().flatten().any(|c| matches!(c, egui::ViewportCommand::InnerSize(s) if *s == egui::vec2(1180.0, 760.0))));
-        assert!(!result.viewport_commands.values().flatten().any(|c| matches!(c, egui::ViewportCommand::Visible(_) | egui::ViewportCommand::Focus)));
-        input.viewports.get_mut(&egui::ViewportId::ROOT).unwrap().minimized = Some(true);
-        assert!(ctx.run_logic(&input, reconcile).viewport_commands.is_empty());
+        assert!(result.viewport_commands.values().flatten().any(
+            |c| matches!(c, egui::ViewportCommand::InnerSize(s) if *s == egui::vec2(1180.0, 760.0))
+        ));
+        assert!(
+            !result
+                .viewport_commands
+                .values()
+                .flatten()
+                .any(|c| matches!(
+                    c,
+                    egui::ViewportCommand::Visible(_) | egui::ViewportCommand::Focus
+                ))
+        );
+        input
+            .viewports
+            .get_mut(&egui::ViewportId::ROOT)
+            .unwrap()
+            .minimized = Some(true);
+        assert!(
+            ctx.run_logic(&input, reconcile)
+                .viewport_commands
+                .is_empty()
+        );
     }
 }

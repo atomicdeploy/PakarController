@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const source=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
 const persian=JSON.parse(source.match(/const PAKAR_FA=(\{[^\n]+\});/)[1]);
 const contextCode=source.split('// BEGIN PEER CONTEXT')[1].split('// END PEER CONTEXT')[0];
 const nodes=new Map();
 function element(){const node={hidden:false,dataset:{},children:[],classList:{toggle(){}},replaceChildren(){this.children=[]},
+  insertAdjacentElement(position,n){assert.equal(position,'afterend');this.afterElement=n;return n},
   appendChild(n){n.parentElement=this;this.children.push(n);return n},append(...items){for(const item of items)this.appendChild(item)},
   insertBefore(n,anchor){const at=this.children.indexOf(anchor);assert(at>=0);n.parentElement=this;this.children.splice(at,0,n)}};
   Object.defineProperty(node,'id',{get(){return this.nodeId},set(value){this.nodeId=value;nodes.set(value,this)}});return node}
@@ -26,7 +27,7 @@ const context=vm.createContext({Date:{now:()=>now},state:{cells:[]},document,boa
   peerHttp:{writable:()=>writable},
   TextEncoder,DataView,Uint8Array,atob,
   stopStream(){stops++},closeCellMenu(){},setEditingOrder(v){if(!v)cancelledOrders++}});
-for(const name of ['uiCopyValues','setUiText'])vm.runInContext(source.match(new RegExp('function '+name+'[^\\n]+'))[0],context);
+for(const name of ['uiCopyValues','renderUiText','setUiText'])vm.runInContext(source.match(new RegExp('function '+name+'[^\\n]+'))[0],context);
 vm.runInContext(source.slice(source.indexOf('function applyLocalization(){'),source.indexOf('function saveLocalization(){')),context);
 vm.runInContext(source.split('// BEGIN APPLICATION IDENTITY')[1].split('// END APPLICATION IDENTITY')[0],context);
 vm.runInContext(contextCode,context);
@@ -79,11 +80,23 @@ assert.equal(run('currentPeer().modes.length'),2);assert(snakeControls.hidden);
 assert(!run("contextAllows('/api/mode',{value:'snake'})"));
 assert(run("contextAllows('/api/cell',{id:1})"));
 const roleFeatures=[...table.acknowledged_features,'cell-assignments','cell-lock'];
+set({capabilities:{...manifest(['inputs','outputs','leds'],'keys'),role:'first-wins'},avr_online:true});
+assert(!run("contextAllows('/api/game/reset')"),'First-wins reset needs its individual ACK');
+assert(!run("contextAllows('/api/game/settings')"),'First-wins settings need their individual capability');
+assert(nodes.get('quickResetWhite').hidden,'A first-wins reset without its individual ACK must not be offered');
+set({capabilities:{...manifest(['inputs','outputs','leds','reset-ack','key-settings'],'keys'),role:'first-wins'},avr_online:true});
+assert(run("contextAllows('/api/game/reset')"));
+assert(run("contextAllows('/api/game/settings')"));
+assert(!nodes.get('quickResetWhite').hidden&&!nodes.get('quickResetWhite').disabled);
+set({capabilities:{...manifest(['inputs','outputs','leds','reset-ack','key-settings'],'keys'),role:'first-wins'},avr_online:false});
+assert(nodes.get('quickResetWhite').disabled);
 set({capabilities:{...table,role:'first-wins',acknowledged_features:roleFeatures},mode:'first-wins'});
 assert.equal(run('currentPeer().modes.length'),1);assert(!run("contextAllows('/api/cell',{id:1})"));
 for(const path of ['/api/cells','/api/cells/assignments','/api/cells/lock'])assert(!run(`contextAllows('${path}')`),'First-wins cannot acquire table-selection tools');
 set({capabilities:{...table,role:'table-selection',acknowledged_features:roleFeatures},mode:'cell'});
 assert.equal(run('currentPeer().modes.length'),1);
+assert(run("contextAllows('/api/game/reset')"),'Table reset retains its table capability, without a first-wins-only reset ACK');
+assert(!run("contextAllows('/api/game/settings')"),'First-wins settings cannot leak into a table');
 for(const path of ['/api/cells/assignments','/api/cells/lock'])assert(run(`contextAllows('${path}')`));
 set({capabilities:{...table,role:'unsupported-role',acknowledged_features:roleFeatures},mode:'cell'});
 assert.equal(run('currentPeer().modes.length'),0);assert(!run("contextAllows('/api/cells/assignments')"));
@@ -133,7 +146,9 @@ for(const mode of [undefined,null,'future',1]){set({capabilities:manifest(['leds
 set({capabilities:manifest([]),led_output:{enabled:true,mode:'static'}});assert(modeControl.hidden);
 const native=readFileSync(new URL('../desktop/src/ui/shell.rs',import.meta.url),'utf8');
 const nativeStatus=readFileSync(new URL('../desktop/src/ui/status_bar.rs',import.meta.url),'utf8');
-for(const gate of ['status.avr_available','status.display_available','status.network_available','status.telemetry_available'])assert(nativeStatus.includes(gate));
+for(const gate of ['self.avr_available','self.display_available','self.network_available','self.telemetry_available'])assert(nativeStatus.includes(gate));
+assert(nativeStatus.includes('Widget::Telemetry => self.peer_known && (self.telemetry_available || self.avr_available || self.display_available)'));
+assert(nativeStatus.includes('Widget::Network => self.peer_known && self.network_available'));
 assert.match(source, /data-capability="display" hidden><h2>Live display<\/h2>[^\n]+id="displayValue"/,'Numeric display controls require Display, not Text');
 // Previously acknowledged slots survive a transient outage. Retained layout
 // must never become actuation authority: the enclosing live gate remains.
@@ -151,3 +166,17 @@ assert(native.includes('panel.available(self.peer_context())'));
 assert(native.includes('panel.available(self.presentation_context())'), 'Panel retention uses acknowledged presentation, not stale live values');
 assert(!native.includes('("Snake", "snake", 3)'),'Native mode UI is not a fixed table list');
 console.log('Actual Web peer context and output control: no-ACK/offline, independent ACKs, generic LED placement, pending/no-optimism/readback, live localization, mode filtering, stale revocation and cross-board rebind passed. Native wiring is source-checked only.');
+
+// Wiring regressions on the dedicated first-wins surface (source assertions,
+// not a substitute for browser rendering or physical input acceptance).
+const gameWeb=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8');
+const gameRender=gameWeb.slice(gameWeb.indexOf('function renderKeyGame()'),gameWeb.indexOf('function renderContext()'));
+assert(gameRender.includes('Number(state.active_inputs)'), 'First-wins highlights use the actual input bitmap');
+assert(gameRender.includes('state.input_9===true'), 'Ninth GPIO input is not packed into the eight shift-register keys');
+assert(!gameRender.includes('Number(state.inputs)'), 'No nonexistent input field');
+assert(gameRender.includes("form.dataset.dirty!=='true'"), 'Live events must not erase unsaved game settings');
+assert(gameRender.includes('form.dataset.owner!==owner'), 'Drafts must be retired on board/boot change');
+assert(gameRender.includes("c.has('game-melodies')"), 'Melody configuration requires firmware acknowledgement');
+const keysNative=native.slice(native.indexOf('pub(super) fn draw_hardware('),native.indexOf('fn draw_dialogs('));
+assert(keysNative.includes('"Reset to white"'));
+assert(keysNative.includes('self.action("/api/game/reset", vec![], OP_RESET, vec![])'));

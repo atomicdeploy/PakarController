@@ -21,6 +21,16 @@ class LedSignalCapture {
     while(old==0 || old==3)if(state_.compare_exchange_weak(old,1))return true;
     return false;
   }
+  // Worker-only teardown at a frame boundary. Cancel a queued capture, or
+  // retry quiescing a previous RX fault without ever freeing a live DMA ring.
+  bool quiesce() {
+    unsigned pending=1;state_.compare_exchange_strong(pending,0);
+    if(enabled_){const int stopped=rmt_disable(channel_);if(stopped)return false;enabled_=false;}
+    if(channel_){if(rmt_del_channel(channel_)!=ESP_OK)return false;channel_=nullptr;}
+    if(buffer_){heap_caps_free(buffer_);buffer_=nullptr;}
+    if(state_.load()==4)state_.store(3);
+    return true;
+  }
   void start(const uint8_t* expected,size_t bytes) {
     unsigned pending=1;if(!state_.compare_exchange_strong(pending,2))return;
     received_.store(false);error_=0;

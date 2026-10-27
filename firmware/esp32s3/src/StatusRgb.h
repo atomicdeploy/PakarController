@@ -1,5 +1,8 @@
 #pragma once
 #include <stdint.h>
+#if defined(ARDUINO_ARCH_ESP32) && __has_include(<build/config/esp32s3/LedBackend.h>)
+#include <build/config/esp32s3/LedBackend.h>
+#endif
 
 namespace PakarS3 {
 
@@ -60,7 +63,12 @@ class StatusRgb {
   // Common DevKit RGB positions ONLY, and neither is selected automatically.
   // A different board needs an explicit reviewed whitelist addition, not a
   // persisted arbitrary GPIO that could drive flash, UART, USB or AVR RESET.
-  static bool supportedPin(int pin) { return pin == 38 || pin == 48; }
+  static bool supportedPin(int pin) {
+#ifdef PAKAR_S3_LED_DATA
+    if(pin == PAKAR_S3_LED_DATA)return false;
+#endif
+    return pin == 38 || pin == 48;
+  }
   static const char *name(State state) {
     switch (state) {
       case State::Off: return "off";

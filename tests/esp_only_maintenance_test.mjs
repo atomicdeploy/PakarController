@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 // Source guard of the actual lifecycle owners, not an executed SDK/OTA test.
-const source = readFileSync(new URL('../firmware/esp8266/src/MaintenanceRoutes.h', import.meta.url), 'utf8');
-const remote = readFileSync(new URL('../firmware/esp8266/src/RemoteFirmware.cpp', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../firmware/esp/src/MaintenanceRoutes.h', import.meta.url), 'utf8');
+const remote = readFileSync(new URL('../firmware/esp/src/RemoteFirmware.cpp', import.meta.url), 'utf8');
 const prepare = source.slice(source.indexOf('bool prepareRemotePair('), source.indexOf('bool programRemoteAvr('));
 const finish = source.slice(source.indexOf('int8_t finishRemotePair('), source.indexOf('bool strictU32('));
 for (const body of [prepare, finish]) {
@@ -50,7 +50,7 @@ assert.match(telemetry, /d\[F\("board_id"\)\]=pcBoardId;d\[F\("boot_id"\)\]=pcBo
 // Immutable running-image metadata is captured once on boot, not recomputed
 // for every Web/USB/cloud telemetry snapshot. OTA admission above still uses
 // RemoteFirmware's separate fresh integrity/hash validations.
-const sketch=readFileSync(new URL('../firmware/esp8266/esp8266.ino',import.meta.url),'utf8');
+const sketch=readFileSync(new URL('../firmware/esp/application.ino',import.meta.url),'utf8');
 function checkBootImageCache(routes,main) {
   const first=routes.indexOf('String buildTelemetryJson()'),last=routes.indexOf('bool prepareRemotePair(');
   assert.ok(first>=0 && last>first);

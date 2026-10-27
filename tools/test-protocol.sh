@@ -7,29 +7,34 @@ c++ -std=c++17 -Wall -Wextra -pedantic \
 "$root/build/protocol-test"
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/semantic_panel_test.cpp" -o "$root/build/semantic-panel-test"
 "$root/build/semantic-panel-test"
-c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/firmware/esp8266/src" "$root/tests/led_scheduler_test.cpp" -o "$root/build/led-scheduler-test"
+c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/firmware/esp/src" "$root/tests/led_scheduler_test.cpp" -o "$root/build/led-scheduler-test"
 "$root/build/led-scheduler-test"
 # Match test-led-worker.ps1: scenario names are specific to the compiled backend.
 # Retain all DMA failure cases; do not send them to the default static worker.
-for profile in static-bgr static-rgb dma-bgr dma-rgb static-bgr-calibrated dma-bgr-calibrated; do
+for profile in static-bgr static-rgb dma-bgr dma-rgb static-bgr-calibrated dma-bgr-calibrated dual dual-pm absent; do
   worker_flags=()
   if [[ "$profile" == *-rgb ]]; then worker_flags+=(-DPAKAR_S3_LED_SWAP_RED_BLUE=0); fi
   if [[ "$profile" == *-calibrated ]]; then worker_flags+=(-DPAKAR_S3_LED_RGB_GAINS=0xffb0f0); fi
-  if [[ "$profile" == dma-* ]]; then worker_flags+=(-DPAKAR_S3_LED_USE_DMA=1); fi
+  if [[ "$profile" == dma-* ]]; then worker_flags+=(-DPAKAR_S3_LED_RMT_ENABLED=1); fi
+  if [[ "$profile" == static-* ]]; then worker_flags+=(-DPAKAR_S3_LED_GPIO_ENABLED=1); fi
+  if [[ "$profile" == dual* ]]; then worker_flags+=(-DPAKAR_S3_LED_GPIO_ENABLED=1 -DPAKAR_S3_LED_RMT_ENABLED=1); fi
+  if [[ "$profile" == dual-pm ]]; then worker_flags+=(-DCONFIG_PM_ENABLE=1); fi
   c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -pthread "${worker_flags[@]}" \
     -I "$root/tests/led_worker_stubs" "$root/tests/led_worker_test.cpp" \
     "$root/firmware/esp32s3/src/LedOutput.cpp" -o "$root/build/led-worker-test"
   printf 'Actual worker wire profile: %s\n' "$profile"
-  if [[ "$profile" == *-calibrated ]]; then worker_scenarios=(color-gains)
-  elif [[ "$profile" == dma-* ]]; then worker_scenarios=(color-gains functional cadence latest-after-hold timeout stop-failure short-frame)
-  else worker_scenarios=(color-gains static); fi
+  if [[ "$profile" == absent ]]; then worker_scenarios=(absent)
+  elif [[ "$profile" == dual* ]]; then worker_scenarios=(runtime-switch runtime-resources)
+  elif [[ "$profile" == *-calibrated ]]; then worker_scenarios=(color-gains)
+  elif [[ "$profile" == dma-* ]]; then worker_scenarios=(color-gains unavailable-saved functional cadence latest-after-hold timeout stop-failure short-frame)
+  else worker_scenarios=(color-gains unavailable-saved static); fi
   for scenario in "${worker_scenarios[@]}"; do "$root/build/led-worker-test" "$scenario"; done
 done
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/mndp_test.cpp" -o "$root/build/mndp-test"
 "$root/build/mndp-test"
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/remote_policy_test.cpp" -o "$root/build/remote-policy-test"
 "$root/build/remote-policy-test"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/isp_stubs" "$root/tests/avr_isp_test.cpp" "$root/firmware/esp8266/src/AvrIsp.cpp" -o "$root/build/avr-isp-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/isp_stubs" "$root/tests/avr_isp_test.cpp" "$root/firmware/esp/src/AvrIsp.cpp" -o "$root/build/avr-isp-test"
 "$root/build/avr-isp-test"
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/urboot_protocol_test.cpp" -o "$root/build/urboot-protocol-test"
 "$root/build/urboot-protocol-test"
@@ -40,13 +45,13 @@ for client_platform in generic esp8266; do
   c++ -std=c++17 -Wall -Wextra -Werror "${client_flags[@]}" -I "$root/tests/access_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/client_telemetry_test.cpp" -o "$root/build/client-telemetry-test"
   "$root/build/client-telemetry-test"
 done
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/remote_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/remote_firmware_test.cpp" "$root/firmware/esp8266/src/RemoteFirmware.cpp" -lcrypto -o "$root/build/remote-firmware-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/remote_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" "$root/tests/remote_firmware_test.cpp" "$root/firmware/esp/src/RemoteFirmware.cpp" -lcrypto -o "$root/build/remote-firmware-test"
 "$root/build/remote-firmware-test"
 pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern remote-ota -Gate > /dev/null
 c++ -std=c++17 -Wall -Wextra -Werror -DARDUINO_ARCH_ESP32 -DESP32 \
   -I "$root/tests/s3_ota_stubs" -I "$root/tests/remote_stubs" \
   -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" \
-  "$root/tests/remote_s3_test.cpp" "$root/firmware/esp8266/src/RemoteFirmware.cpp" \
+  "$root/tests/remote_s3_test.cpp" "$root/firmware/esp/src/RemoteFirmware.cpp" \
   -lcrypto -o "$root/build/remote-s3-test"
 "$root/build/remote-s3-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/s3_dns_stubs" \
@@ -95,13 +100,13 @@ for cloud_platform in ESP8266 ESP32; do
   "$root/build/native/cloud_command_guard_test"
   c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-D$cloud_platform" \
     -I "$root/tests/cloud_stubs" "$root/tests/cloud_config_test.cpp" \
-    "$root/firmware/esp8266/src/CloudConfig.cpp" -o "$root/build/native/cloud_config_test"
+    "$root/firmware/esp/src/CloudConfig.cpp" -o "$root/build/native/cloud_config_test"
   "$root/build/native/cloud_config_test"
   c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-D$cloud_platform" \
     -I "$root/tests/cloud_service_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
-    -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
-    "$root/tests/cloud_services_test.cpp" "$root/firmware/esp8266/src/CloudServices.cpp" \
-    "$root/firmware/esp8266/src/CloudConfig.cpp" -o "$root/build/native/cloud_services_test"
+    -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" \
+    "$root/tests/cloud_services_test.cpp" "$root/firmware/esp/src/CloudServices.cpp" \
+    "$root/firmware/esp/src/CloudConfig.cpp" -o "$root/build/native/cloud_services_test"
   "$root/build/native/cloud_services_test"
   cloud_arch_flags=()
   if [[ "$cloud_platform" == ESP32 ]]; then cloud_arch_flags=(-DARDUINO_ARCH_ESP32); fi
@@ -109,13 +114,13 @@ for cloud_platform in ESP8266 ESP32; do
     -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 \
     -I "$root/tests/management_stubs" -I "$root/tests/cloud_stubs" \
     -I "$root/tests/network_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
-    "$root/tests/cloud_management_test.cpp" "$root/firmware/esp8266/src/CloudConfig.cpp" \
-    "$root/firmware/esp8266/src/NetworkConfig.cpp" -o "$root/build/native/cloud_management_test"
+    "$root/tests/cloud_management_test.cpp" "$root/firmware/esp/src/CloudConfig.cpp" \
+    "$root/firmware/esp/src/NetworkConfig.cpp" -o "$root/build/native/cloud_management_test"
   "$root/build/native/cloud_management_test"
 done
 c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror \
   -I "$root/tests/access_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
-  -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
+  -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" \
   "$root/tests/command_values_test.cpp" -o "$root/build/native/command_values_test"
 "$root/build/native/command_values_test"
 c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -DESP32 \
@@ -127,33 +132,37 @@ for ethernet_profile in 0 1; do
     "-DPAKAR_S3_ETHERNET_ENABLED=$ethernet_profile" -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 \
     -I "$root/tests/management_stubs" -I "$root/tests/ethernet_config_stubs" \
     -I "$root/tests/network_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" \
-    "$root/tests/ethernet_management_test.cpp" "$root/firmware/esp8266/src/CloudConfig.cpp" \
-    "$root/firmware/esp8266/src/NetworkConfig.cpp" -o "$root/build/native/ethernet_management_test"
+    "$root/tests/ethernet_management_test.cpp" "$root/firmware/esp/src/CloudConfig.cpp" \
+    "$root/firmware/esp/src/NetworkConfig.cpp" -o "$root/build/native/ethernet_management_test"
   "$root/build/native/ethernet_management_test"
   c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -DARDUINO_ARCH_ESP32 -DCONFIG_IDF_TARGET_ESP32S3 \
     "-DPAKAR_S3_ETHERNET_ENABLED=$ethernet_profile" -I "$root/tests/ethernet_stubs" \
+    -I "$root/libraries/BoardCore/src" \
+    "$root/tests/ethernet_lldp_runtime.cpp" "$root/firmware/esp32s3/src/EthernetLldp.cpp" \
     "$root/tests/s3_ethernet_port_test.cpp" "$root/firmware/esp32s3/src/EthernetPort.cpp" \
-    -o "$root/build/native/s3_ethernet_port_test"
+    -Wl,--wrap=esp_eth_update_input_path_info -o "$root/build/native/s3_ethernet_port_test"
   "$root/build/native/s3_ethernet_port_test"
   c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -DESP32 -DARDUINO_ARCH_ESP32 -DCONFIG_IDF_TARGET_ESP32S3 \
     "-DPAKAR_S3_ETHERNET_ENABLED=$ethernet_profile" -I "$root/tests/network_path_stubs" -I "$root" \
+    -I "$root/tests/ethernet_stubs" -I "$root/libraries/BoardCore/src" \
+    "$root/tests/ethernet_lldp_runtime.cpp" "$root/firmware/esp32s3/src/EthernetLldp.cpp" \
     "$root/tests/network_path_test.cpp" "$root/firmware/esp32s3/src/EthernetPort.cpp" \
-    -o "$root/build/native/network_path_test"
+    -Wl,--wrap=esp_eth_update_input_path_info -o "$root/build/native/network_path_test"
   "$root/build/native/network_path_test"
 done
 node "$root/tests/ethernet_discovery_test.mjs"
 node "$root/tests/esp_only_maintenance_test.mjs"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/firmware/esp8266/src" "$root/tests/telnet_shell_test.cpp" -o "$root/build/telnet-shell-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/firmware/esp/src" "$root/tests/telnet_shell_test.cpp" -o "$root/build/telnet-shell-test"
 "$root/build/telnet-shell-test"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/busy_stubs" -I "$root/firmware/esp8266/src" "$root/tests/busy_line_test.cpp" -o "$root/build/busy-line-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/busy_stubs" -I "$root/firmware/esp/src" "$root/tests/busy_line_test.cpp" -o "$root/build/busy-line-test"
 "$root/build/busy-line-test"
 c++ -std=c++17 -Wall -Wextra -Werror -DF_CPU=16000000UL -I "$root/libraries/BoardCore/src" -I "$root/tests/tone_stubs" -I "$root/firmware/avr" "$root/tests/tone_player_test.cpp" "$root/firmware/avr/TonePlayer.cpp" "$root/firmware/avr/BootMelody.cpp" -o "$root/build/tone-player-test"
 "$root/build/tone-player-test"
-c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
-  "$root/tests/device_identity_test.cpp" "$root/firmware/esp8266/src/DeviceIdentity.cpp" -o "$root/build/device-identity-test"
+c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" \
+  "$root/tests/device_identity_test.cpp" "$root/firmware/esp/src/DeviceIdentity.cpp" -o "$root/build/device-identity-test"
 "$root/build/device-identity-test"
 for identity_flags in -DPAKAR_TABLE_ENABLED=1 -DPAKAR_TABLE_ENABLED=0 -DPAKAR_IDENTITY_CUSTOM=1; do
-  c++ -std=c++17 -Wall -Wextra -Werror "$identity_flags" -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" "$root/tests/application_identity_test.cpp" -o "$root/build/application-identity-test"
+  c++ -std=c++17 -Wall -Wextra -Werror "$identity_flags" -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" "$root/tests/application_identity_test.cpp" -o "$root/build/application-identity-test"
   "$root/build/application-identity-test"
 done
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" \
@@ -161,13 +170,13 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" \
 "$root/build/access-policy-test"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" "$root/tests/device_context_test.cpp" -o "$root/build/device-context-test"
 "$root/build/device-context-test"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/firmware/esp8266/src" \
-  "$root/tests/access_config_test.cpp" "$root/firmware/esp8266/src/AccessConfig.cpp" -o "$root/build/access-config-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/firmware/esp/src" \
+  "$root/tests/access_config_test.cpp" "$root/firmware/esp/src/AccessConfig.cpp" -o "$root/build/access-config-test"
 "$root/build/access-config-test"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp8266/src" \
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp/src" \
   "$root/tests/async_http_test.cpp" -pthread -o "$root/build/async-http-test"
 "$root/build/async-http-test"
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp8266/src" \
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp/src" \
   "$root/tests/firmware_range_test.cpp" -o "$root/build/firmware-range-test"
 "$root/build/firmware-range-test"
 c++ -std=c++17 -Wall -Wextra -Werror \
@@ -186,7 +195,7 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   -o "$root/build/pc-contract-test"
 "$root/build/pc-contract-test"
 c++ -std=c++17 -Wall -Wextra -Werror \
-  -I "$root/tests/pc_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/avr" -I "$root/firmware/esp8266/src" \
+  -I "$root/tests/pc_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/avr" -I "$root/firmware/esp/src" \
   "$root/tests/esp_front_panel_test.cpp" "$root/firmware/avr/PcControllerRuntime.cpp" \
   "$root/firmware/avr/BoardSettings.cpp" "$root/firmware/avr/SevenSegments.cpp" \
   "$root/libraries/BoardCore/src/pccontroller/MacroRing.cpp" \
@@ -207,15 +216,28 @@ for display_flags in '' '-D__AVR__'; do
     "$root/tests/tm1637_bus_test.cpp" "$root/firmware/avr/SevenSegments.cpp" -o "$root/build/tm1637-bus-test"
   "$root/build/tm1637-bus-test"
 done
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/pixel_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" \
-  "$root/tests/led_grid_test.cpp" "$root/firmware/esp8266/src/LedGrid.cpp" -o "$root/build/led-grid-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/pixel_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" \
+  "$root/tests/led_grid_test.cpp" "$root/firmware/esp/src/LedGrid.cpp" -o "$root/build/led-grid-test"
 "$root/build/led-grid-test"
+c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" "$root/tests/pixel_group_layout_test.cpp" -o "$root/build/pixel-group-test"
+"$root/build/pixel-group-test"
+c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -I "$root/tests/correction_stubs" -I "$root/tests/access_stubs" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" "$root/tests/pixel_group_store_test.cpp" -o "$root/build/pixel-group-test"
+"$root/build/pixel-group-test"
+for group_role in 1 2; do
+  c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-DPAKAR_GAME_MODE=$group_role" -I "$root/tests/pixel_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" "$root/tests/pixel_group_renderer_test.cpp" "$root/firmware/esp/src/LedGrid.cpp" -o "$root/build/pixel-group-test"
+  "$root/build/pixel-group-test"
+done
+c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/firmware/esp/src" "$root/tests/usb_snapshot_projection_test.cpp" -o "$root/build/pixel-group-test"
+"$root/build/pixel-group-test"
+node "$root/tests/pixel_group_routes_test.mjs"
 c++ -std=c++17 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp32s3/src" \
   "$root/tests/s3_menu_audio_test.cpp" -o "$root/build/s3-menu-audio-test"
 "$root/build/s3-menu-audio-test"
 pwsh -NoProfile -File "$root/tools/test-uart-flow.ps1"
 pwsh -NoProfile -File "$root/tools/consult-reuse.ps1" -Concern peer-binding -Gate > /dev/null
-c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/firmware/esp8266/src" \
-  "$root/tests/web_access_fence_test.cpp" "$root/firmware/esp8266/src/AccessConfig.cpp" -o "$root/build/web-access-fence-test"
+c++ -std=c++17 -Wall -Wextra -Werror -I "$root/tests/access_stubs" -I "$root/libraries/BoardCore/src" -I "$HOME/Arduino/libraries/ArduinoJson/src" -I "$root/firmware/esp/src" \
+  "$root/tests/web_access_fence_test.cpp" "$root/firmware/esp/src/AccessConfig.cpp" -o "$root/build/web-access-fence-test"
 "$root/build/web-access-fence-test"
 pwsh -NoProfile -File "$root/tools/test-tasks.ps1"
+c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -I "$root/libraries/BoardCore/src" "$root/tests/usb_api_request_test.cpp" -o "$root/build/usb-api-request-test"
+"$root/build/usb-api-request-test"

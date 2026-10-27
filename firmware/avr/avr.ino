@@ -11,6 +11,7 @@
 #include "BootMelody.h"
 #include <PeerCompatibility.h>
 #include "BoardPins.h"
+#include "LedDiagnostic.h"
 #include "BusyInput.h"
 #include "FrontPanel.h"
 #include "PakarBoardConfig.h"
@@ -21,13 +22,17 @@
 #include "SevenSegments.h"
 #include "ShiftRegisters.h"
 #include "TonePlayer.h"
+#include "RadioAdapter.h"
 
 using namespace BoardCore::Protocol;
 
 namespace {
 
 constexpr uint32_t kBaud = 38400;
-constexpr uint16_t kShiftPeriodMs = 5;
+// The Puzzles donor sampled the shared register every loop. Preserve the
+// table-role cadence, but keep first-wins input latency below one scheduler
+// tick without busy-waiting or starving UART/front-panel work.
+constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5;
 
 BoardCore::SerialLink link(Serial);
 
@@ -37,6 +42,7 @@ uint8_t selectedCell = 1;
 uint8_t winner = 0;
 #if PAKAR_FIRST_WINS_ENABLED
 uint16_t enabledKeys = 0; // Fail closed until the ESP has supplied its saved mask.
+uint8_t gameWinnerCue=kCueWinner, gameResetCue=kCueWelcome;
 #endif
 uint8_t stableInputs = 0;
 bool stableInput9 = false;
@@ -46,6 +52,9 @@ uint8_t cellActionRevision = 0;
 uint8_t resetRevision = 0;
 Effect cellActionEffect = kEffectImmediate;
 bool stateDirty = true;
+#if PAKAR_PC_RF
+RadioAdapter radio;
+#endif
 Key boardKeys[9];
 BoardCore::Tasks taskManager;
 int8_t resetTask = -1;
@@ -78,6 +87,10 @@ class BoardHardware final : public PcControllerHardware {
   }
   Error execute(uint8_t opcode, const uint8_t *p, uint8_t n, uint32_t now) override {
     if (programmingLatch.active()) return kUnsafe;
+#if PAKAR_PC_RF
+    if(opcode==ControllerProtocol::RadioTransmit)
+      return radio.transmit(p,n,PAKAR_FIRST_WINS_ENABLED && winner==0);
+#endif
     if (opcode == ControllerProtocol::Buzzer) {
       if (n != 4) return kBadPayload;
       const uint16_t hz = p[0] | static_cast<uint16_t>(p[1]) << 8;
@@ -218,6 +231,9 @@ void sendHello(uint8_t sequence = 0) {
       1, // Explicit timestamped tone telemetry acknowledgement, not an API generation.
       1, // Explicit finite maintenance-panel priority acknowledgement.
       BoardCore::GameRole::mode, // Baked-in business role; never a runtime mode menu.
+      PAKAR_FIRST_WINS_ENABLED ? 1 : 0, // Optional cached round melodies in kKeyMask.
+      PAKAR_FIRST_WINS_ENABLED ? 1 : 0, // Explicit remote first-wins press support.
+      1, // Explicit buffered AVR audio stream support.
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }
@@ -238,6 +254,10 @@ bool sendGameState(uint8_t sequence = 0) {
       pcController.menuPage(), static_cast<uint8_t>(pcController.menuActive()),
       static_cast<uint8_t>(pcController.running()), static_cast<uint8_t>(frontPanel.captured()),
       static_cast<uint8_t>(frontPanel.capturedMeta()), static_cast<uint8_t>(frontPanel.capturedMeta() >> 8),
+#if PAKAR_FIRST_WINS_ENABLED
+      static_cast<uint8_t>(enabledKeys), static_cast<uint8_t>(enabledKeys >> 8),
+      gameWinnerCue, gameResetCue,
+#endif
   };
   return link.send(kGameState, sequence, payload, sizeof(payload));
 }
@@ -263,6 +283,11 @@ void recordCellAction(Effect effect) {
 }
 
 void resetGame(bool playWelcome = true) {
+#if PAKAR_FIRST_WINS_ENABLED
+  // Reset is idempotent, including audio: retries and a held reset button may
+  // repair outputs/ACK again but only a won -> ready transition earns a cue.
+  const bool roundWasWon=winner!=0;
+#endif
   ++resetRevision;
   winner = 0;
   shiftRegisters.allOutputsOff();
@@ -271,7 +296,16 @@ void resetGame(bool playWelcome = true) {
     selectedState = kCellWhite;
   }
   showState();
-  if (playWelcome && !programmingLatch.active()) playBootMelody();
+  if (playWelcome && !programmingLatch.active()) {
+#if PAKAR_FIRST_WINS_ENABLED
+    if(roundWasWon) {
+      buzzer.stop();
+      if(gameResetCue<kCueCount)playAudioCue(static_cast<AudioCue>(gameResetCue),buzzer);
+    }
+#else
+    playBootMelody();
+#endif
+  }
   markStateDirty();
 }
 
@@ -282,13 +316,10 @@ void chooseWinner(uint8_t button) {
   winner = button;
   shiftRegisters.setActiveOutputs(button <= 8 ? _BV(button - 1) : 0);
   showState();
+  // Use the same advertised winner cue as remote clients. Its five steps
+  // align with the ESP's full-color flash, without a second game melody.
   buzzer.stop();
-  const uint16_t base = static_cast<uint16_t>(440 + button * 35);
-  buzzer.enqueue(base, 90);
-  buzzer.pause(50);
-  buzzer.enqueue(base + 220, 110);
-  buzzer.pause(50);
-  buzzer.enqueue(base + 440, 260);
+  if(gameWinnerCue<kCueCount)playAudioCue(static_cast<AudioCue>(gameWinnerCue),buzzer);
   markStateDirty();
 #else
   (void)button;
@@ -384,6 +415,9 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
+      // Reconnecting clients may restate the baked role. Only an explicit
+      // game-reset action may clear an already-won round in the same mode.
+      if (mode == frame.payload[0]) {link.ack(frame.sequence,frame.opcode);break;}
       mode = static_cast<GameMode>(frame.payload[0]);
       resetGame();
       link.ack(frame.sequence, frame.opcode);
@@ -429,6 +463,13 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
           static_cast<uint16_t>(frame.payload[2] | frame.payload[3] << 8));
       link.ack(frame.sequence, frame.opcode);
       break;
+    case kAudioStream: {
+      uint8_t response[8];
+      response[0]=programmingLatch.active()?kUnsafe:buzzer.stream(frame.payload,frame.payloadLength);
+      buzzer.streamStatus(response+1);
+      link.send(kAudioStreamResponse,frame.sequence,response,sizeof(response));
+      break;
+    }
     case kAudioCue:
       if (frame.payloadLength != 1 || frame.payload[0] >= kCueCount ||
           programmingLatch.active()) {
@@ -455,10 +496,27 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       break;
 #if PAKAR_FIRST_WINS_ENABLED
     case kKeyMask:
-      if(frame.payloadLength!=2 || frame.payload[1]>1 ||
+      if((frame.payloadLength!=2 && frame.payloadLength!=4) || frame.payload[1]>1 ||
           !(frame.payload[0]|frame.payload[1])) {link.error(frame.sequence,frame.opcode,kBadPayload);break;}
-      enabledKeys=frame.payload[0]|uint16_t(frame.payload[1])<<8;
-      resetGame(false);link.ack(frame.sequence,frame.opcode);break;
+      if(frame.payloadLength==4 && ((frame.payload[2]>=kCueCount && frame.payload[2]!=255) ||
+          (frame.payload[3]>=kCueCount && frame.payload[3]!=255))){link.error(frame.sequence,frame.opcode,kBadPayload);break;}
+      {
+        const uint16_t requested=frame.payload[0]|uint16_t(frame.payload[1])<<8;
+        if(frame.payloadLength==4){gameWinnerCue=frame.payload[2];gameResetCue=frame.payload[3];}
+        // A retry after a lost ACK must not reset an already armed/won round.
+        if(enabledKeys!=requested){enabledKeys=requested;resetGame(false);}
+        markStateDirty();link.ack(frame.sequence,frame.opcode);break;
+      }
+#endif
+    case kGamePress:
+#if PAKAR_FIRST_WINS_ENABLED
+      if(frame.payloadLength!=1||frame.payload[0]<1||frame.payload[0]>9||
+         !(enabledKeys&(1U<<(frame.payload[0]-1)))){link.error(frame.sequence,frame.opcode,kBadPayload);break;}
+      if(winner&&winner!=frame.payload[0]){link.error(frame.sequence,frame.opcode,kBusy);break;}
+      chooseWinner(frame.payload[0]);
+      link.ack(frame.sequence,frame.opcode);sendGameState(frame.sequence);break;
+#else
+      link.error(frame.sequence,frame.opcode,kUnsupported);break;
 #endif
     case kProgrammingState:
       if (frame.payloadLength != 1 || frame.payload[0] > 1) {
@@ -505,8 +563,13 @@ void serviceInputs(uint32_t now) {
   lastShiftAt = now;
   shiftRegisters.service();
   const uint8_t raw = shiftRegisters.activeInputs();
-  const bool raw9 = analogRead(PakarBoardConfig::NinthButtonAdc) <
-                    pcController.settings().values().ninthThreshold;
+  // ADC6 is disconnected/unreliable. First-wins uses the dedicated pulled-up
+  // D6 input through the same key classifier as the shift-register buttons.
+#if PAKAR_FIRST_WINS_ENABLED && !PAKAR_AVR_LED_DIAGNOSTIC
+  const bool raw9 = digitalRead(BoardPins::NinthButton)==LOW;
+#else
+  const bool raw9 = false;
+#endif
   for (uint8_t bit = 0; bit < 9; ++bit) {
     boardKeys[bit].updateSample(bit < 8 ? (raw & _BV(bit)) != 0 : raw9, now);
   }
@@ -521,6 +584,12 @@ void setup() {
   pinMode(BoardPins::EspBusy, INPUT_PULLUP);
 #endif
   shiftRegisters.begin();
+#if PAKAR_FIRST_WINS_ENABLED && !PAKAR_AVR_LED_DIAGNOSTIC
+  pinMode(BoardPins::NinthButton,INPUT_PULLUP);
+#endif
+#if PAKAR_AVR_LED_DIAGNOSTIC
+  LedDiagnostic::begin();
+#endif
   buzzer.begin(BoardPins::Buzzer);
   display.begin(5);
   frontPanel.begin(millis());
@@ -532,6 +601,9 @@ void setup() {
     boardKeys[bit].setEventCallback(boardKeyGesture);
   }
   link.begin(kBaud, handleFrame);
+#if PAKAR_PC_RF
+  radio.begin(BoardPins::RcTransmit,digitalPinToInterrupt(BoardPins::RcReceive));
+#endif
   const uint8_t flags=pcController.settings().values().flags;
   if (!programmingLatch.active() && (flags & 2U) && !(flags & 1U) &&
       resetTelemetry.allowWelcome()) playBootMelody();
@@ -547,6 +619,9 @@ void loop() {
   if (stateDirty && espReadyForUnsolicitedFrame()) stateDirty = !sendGameState();
 #endif
   buzzer.update(now);
+#if PAKAR_PC_RF
+  radio.service(pcController);
+#endif
   frontPanel.service(now, mode, selectedCell, winner,
                      programmingLatch.active());
   display.service(now);
@@ -571,6 +646,13 @@ void loop() {
     previousBrightness = display.brightness();
   }
   taskManager.update(now);
+#if PAKAR_AVR_LED_DIAGNOSTIC
+  // Diagnostic only: 48 pixels mask interrupts for ~1.44 ms. Do not transmit
+  // during programming or already-buffered UART commands. Winner/reset changes
+  // render immediately; repeated refreshes pause during tone playback.
+  if(!programmingLatch.active() && !Serial.available())
+    LedDiagnostic::service(now,winner,!buzzer.isBusy());
+#endif
 #if PAKAR_USE_BUSY_WIRE || PAKAR_UART_BUFFERED
   // Busy-wire builds are event-driven. Reconnect convergence comes from the
   // ESP's HELLO -> GET_STATUS exchange, so periodic unsolicited frames only

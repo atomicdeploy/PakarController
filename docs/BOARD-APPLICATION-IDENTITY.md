@@ -8,8 +8,9 @@ Three different values now have separate owners:
 | DNS hostname | User, same persisted record | `hostname`; optional .local on input |
 | Application ID, name, title, PNG | Running firmware | Read-only `application`; APP_ID / APP_NAME / APP_TITLE / APP_ICON_PNG_BASE64 build macros |
 
-The Table build reports Pakar Table by default; the non-Table profile reports
-Pakar Controller. APP_TITLE defaults to APP_NAME. No identity is inferred from
+The table-selection build reports Pakar Table by default; the first-wins build
+reports Pakar Keys, with Pakar Controller as the generic non-Table fallback.
+APP_TITLE defaults to APP_NAME. No identity is inferred from
 hostname, LED count, previous selection or saved client preferences.
 
 Native header, viewport title/window/taskbar artwork, tray artwork/Show label,
@@ -77,7 +78,11 @@ existing ledger. Local filesystem icon overrides/presets, high-DPI editable
 masters, full WebPlatform shell actions and generic PCController adapter are
 still useful open work, not silently excluded or asserted complete.
 
-## Acceptance
+## Historical acceptance checkpoint
+
+The following0.2.7 images/cache/host observations belong to that earlier pass.
+Current source is0.2.8/client build23; see ARCHITECTURE.md for current role and
+deployment gaps. Do not reuse an old image/host observation as current readiness.
 
 Source versions stay consistent at 0.2.7. Both ESP link-mode candidates compile:
 busy-wire RAM 56460/80192, IRAM 63055/65536, IROM 726604/1048576;

@@ -11,7 +11,7 @@ if($LASTEXITCODE){throw 'Actual Urboot protocol fixture compilation failed'}
 & $taskOutput
 if($LASTEXITCODE){throw 'Actual Urboot protocol fixture failed'}
 $taskIsp=Join-Path $taskRoot 'build/native/avr_isp_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $taskRoot 'tests/isp_stubs') (Join-Path $taskRoot 'tests/avr_isp_test.cpp') (Join-Path $taskRoot 'firmware/esp8266/src/AvrIsp.cpp') -o $taskIsp
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $taskRoot 'tests/isp_stubs') (Join-Path $taskRoot 'tests/avr_isp_test.cpp') (Join-Path $taskRoot 'firmware/esp/src/AvrIsp.cpp') -o $taskIsp
 if($LASTEXITCODE){throw 'Actual ISP callback fixture compilation failed'}
 & $taskIsp
 if($LASTEXITCODE){throw 'Actual ISP preservation/callback fixture failed'}

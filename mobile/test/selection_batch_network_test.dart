@@ -214,8 +214,8 @@ void main() {
         tester.widget<TextField>(find.byType(TextField).first).controller!.text,
         '4-80',
       );
-      await tester.ensureVisible(find.text('Set red'));
-      await tester.tap(find.text('Set red'));
+      await tester.ensureVisible(find.text('Red'));
+      await tester.tap(find.text('Red'));
       await tester.pump();
       expect(sent, hasLength(1));
       expect(sent.single['ids']!.split(','), hasLength(77));

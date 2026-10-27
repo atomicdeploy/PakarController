@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-const source=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const source=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8');
 const begin=source.indexOf('function upgradeObservation('),end=source.indexOf('function renderUpdateProgress()',begin);
 assert(begin>=0&&end>begin);
 const sandbox={};vm.runInNewContext(source.slice(begin,end),sandbox);

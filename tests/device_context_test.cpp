@@ -14,6 +14,13 @@ int main() {
   assert(strcmp(name(15),"lcd")==0);
   const auto offline = features(false, caps, true, true, true);
   assert(!(offline & (Display | Text | Buzzer | Inputs | Outputs | Settings)));
+  assert(pixelEvents(offline)); // Both baked ESP roles can stream without an AVR.
+  assert(pixelEvents(Network | Leds));
+  assert(!pixelEvents(Network));
+  assert(!pixelEvents(Leds));
+  assert(!pixelEvents(0));
+  assert(!pixelEvents(offline & ~Leds)); // No compiled matrix output driver.
+  assert(!pixelEvents(offline & ~Network)); // Networking omitted at build time.
   const auto helloOnly = features(true, caps, false, false, true);
   assert((helloOnly & Buzzer) && !(helloOnly & (Display | Text)));
   assert(!(features(true, kCapTm1637, true, true, false) & (Text | Buzzer)));

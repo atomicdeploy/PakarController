@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/EthernetConfig.h"
+#include "../firmware/esp/src/EthernetConfig.h"
 #include <cassert>
 #include <iostream>
 namespace {

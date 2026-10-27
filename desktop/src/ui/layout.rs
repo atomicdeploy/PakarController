@@ -7,6 +7,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Panel {
     Table,
+    PixelDiagnostics,
+    PixelCorrections,
+    Keys,
     EffectControls,
     FrontPanel,
     Hardware,
@@ -15,8 +18,11 @@ pub enum Panel {
     Events,
 }
 impl Panel {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 10] = [
         Self::Table,
+        Self::PixelDiagnostics,
+        Self::PixelCorrections,
+        Self::Keys,
         Self::EffectControls,
         Self::FrontPanel,
         Self::Hardware,
@@ -27,6 +33,9 @@ impl Panel {
     pub fn name(self) -> &'static str {
         match self {
             Self::Table => "Table",
+            Self::PixelDiagnostics => "Pixel diagnostics",
+            Self::PixelCorrections => "Pixel corrections",
+            Self::Keys => "Keys",
             Self::EffectControls => "Effect controls",
             Self::FrontPanel => "Front panel",
             Self::Hardware => "Hardware monitor",
@@ -39,6 +48,9 @@ impl Panel {
         use super::icons::*;
         match self {
             Self::Table => GRID_FOUR,
+            Self::PixelDiagnostics => MAGNIFYING_GLASS,
+            Self::PixelCorrections => SLIDERS_HORIZONTAL,
+            Self::Keys => HAND_TAP,
             Self::EffectControls => SLIDERS_HORIZONTAL,
             Self::FrontPanel => GAUGE,
             Self::Hardware => CIRCUITRY,
@@ -54,12 +66,21 @@ impl Panel {
         })
     }
     pub fn available(self, context: Option<&crate::capabilities::Manifest>) -> bool {
-        if self == Self::Events { return true; }
-        let Some(c) = context else { return false; };
+        if self == Self::Events {
+            return true;
+        }
+        let Some(c) = context else {
+            return false;
+        };
         match self {
             Self::Table => c.table(),
+            Self::PixelDiagnostics => c.has("pixel-diagnostic"),
+            Self::PixelCorrections => c.has("pixel-corrections"),
+            Self::Keys => c.role == "first-wins" && c.has("inputs") && c.has("outputs"),
             Self::EffectControls => c.has("leds") || c.modes().next().is_some(),
-            Self::FrontPanel => c.has("display") || c.has("text") || c.has("buzzer") || c.has("lcd"),
+            Self::FrontPanel => {
+                c.has("display") || c.has("text") || c.has("buzzer") || c.has("lcd")
+            }
             Self::Hardware => c.has("telemetry"),
             Self::Network => c.has("network"),
             Self::Streaming => c.table() && c.has("streaming"),
@@ -69,17 +90,16 @@ impl Panel {
 }
 
 pub fn create_initial_layout() -> DockState<Panel> {
-    let mut dock = DockState::new(vec![Panel::Table]);
-    let [center, right] =
-        dock.main_surface_mut()
-            .split_right(NodeIndex::root(), 0.72, vec![Panel::EffectControls]);
+    let mut dock = DockState::new(vec![Panel::Table, Panel::Keys]);
+    let [center, right] = dock.main_surface_mut().split_right(
+        NodeIndex::root(),
+        0.72,
+        vec![Panel::EffectControls, Panel::PixelDiagnostics, Panel::PixelCorrections, Panel::Network],
+    );
     dock.main_surface_mut()
         .split_below(right, 0.48, vec![Panel::FrontPanel, Panel::Hardware]);
-    dock.main_surface_mut().split_below(
-        center,
-        0.80,
-        vec![Panel::Events, Panel::Streaming, Panel::Network],
-    );
+    dock.main_surface_mut()
+        .split_below(center, 0.80, vec![Panel::Events, Panel::Streaming]);
     sanitize_dock_rects(&mut dock);
     dock
 }
@@ -115,39 +135,91 @@ pub fn reveal(dock: &mut DockState<Panel>, panel: Panel) {
     if let Some(path) = dock.find_tab(&panel) {
         let mut node = Some(path.node);
         while let Some(index) = node {
-            if let Ok(node) = dock.node_mut(egui_dock::NodePath::new(path.surface, index)) { node.set_collapsed(false); }
+            if let Ok(node) = dock.node_mut(egui_dock::NodePath::new(path.surface, index)) {
+                node.set_collapsed(false);
+            }
             node = index.parent();
         }
         let _ = dock.set_active_tab(path);
         dock.set_focused_node_and_surface(path.node_path());
     }
 }
+/// A first-wins board uses Keys as its primary workspace, in the same slot
+/// where a table board uses Table. Older layouts accidentally placed Keys
+/// beside Front panel in the narrow right dock; migrate only that placement.
+pub fn promote_keys(dock: &mut DockState<Panel>) {
+    if let Some(keys) = dock.find_tab(&Panel::Keys) {
+        let primary = dock
+            .find_tab(&Panel::Table)
+            .or_else(|| dock.find_tab(&Panel::Events));
+        if primary.is_some_and(|primary| primary.node_path() != keys.node_path()) {
+            dock.remove_tab(keys);
+        }
+    }
+    reveal(dock, Panel::Keys);
+}
 /// Adapt Pealayer restore_tab_to_canonical_slot: siblings first, then semantic
 /// anchor splits. Never append a returning panel to whichever leaf has focus.
 pub fn restore_canonical(dock: &mut DockState<Panel>, panel: Panel) {
-    if dock.find_tab(&panel).is_some() { return; }
-    if dock.iter_all_tabs().count() == 0 { *dock = DockState::new(vec![panel]); return; }
+    if dock.find_tab(&panel).is_some() {
+        return;
+    }
+    if dock.iter_all_tabs().count() == 0 {
+        *dock = DockState::new(vec![panel]);
+        return;
+    }
+    if panel == Panel::Keys {
+        if let Some(path) = dock
+            .find_tab(&Panel::Table)
+            .or_else(|| dock.find_tab(&Panel::Events))
+        {
+            if let Ok(leaf) = dock.leaf_mut(path.node_path()) {
+                leaf.tabs.push(panel);
+                sanitize_dock_rects(dock);
+                return;
+            }
+        }
+    }
     let siblings: &[Panel] = match panel {
         Panel::FrontPanel | Panel::Hardware => &[Panel::FrontPanel, Panel::Hardware],
-        Panel::Events | Panel::Streaming | Panel::Network => &[Panel::Events, Panel::Streaming, Panel::Network],
+        Panel::Events | Panel::Streaming => &[Panel::Events, Panel::Streaming],
+        Panel::Network | Panel::EffectControls | Panel::PixelDiagnostics | Panel::PixelCorrections => &[Panel::EffectControls, Panel::PixelDiagnostics, Panel::PixelCorrections, Panel::Network],
         _ => &[],
     };
     if let Some(path) = siblings.iter().find_map(|p| dock.find_tab(p)) {
-        if let Ok(leaf) = dock.leaf_mut(path.node_path()) { leaf.tabs.push(panel); }
-    } else if let Some(path) = dock.find_tab(&Panel::Table).or_else(|| dock.iter_all_tabs().map(|(path, _)| path).next()) {
+        if let Ok(leaf) = dock.leaf_mut(path.node_path()) {
+            leaf.tabs.push(panel);
+        }
+    } else if let Some(path) = dock
+        .find_tab(&Panel::Table)
+        .or_else(|| dock.iter_all_tabs().map(|(path, _)| path).next())
+    {
         if path.surface != egui_dock::SurfaceIndex::main() {
             // Floating-only workspaces have no main-surface anchor to split.
             dock.push_to_first_leaf(panel);
         } else {
             match panel {
-                Panel::Table => { dock.main_surface_mut().split_left(path.node, 0.72, vec![panel]); }
-                Panel::EffectControls => { dock.main_surface_mut().split_right(path.node, 0.72, vec![panel]); }
+                Panel::Table | Panel::Keys => {
+                    dock.main_surface_mut()
+                        .split_left(path.node, 0.72, vec![panel]);
+                }
+                Panel::EffectControls | Panel::PixelDiagnostics | Panel::PixelCorrections => {
+                    dock.main_surface_mut()
+                        .split_right(path.node, 0.72, vec![panel]);
+                }
                 Panel::FrontPanel | Panel::Hardware => {
                     let anchor = dock.find_tab(&Panel::EffectControls).unwrap_or(path);
-                    if anchor.surface == egui_dock::SurfaceIndex::main() { dock.main_surface_mut().split_below(anchor.node, 0.48, vec![panel]); }
-                    else { dock.push_to_first_leaf(panel); }
+                    if anchor.surface == egui_dock::SurfaceIndex::main() {
+                        dock.main_surface_mut()
+                            .split_below(anchor.node, 0.48, vec![panel]);
+                    } else {
+                        dock.push_to_first_leaf(panel);
+                    }
                 }
-                _ => { dock.main_surface_mut().split_below(path.node, 0.80, vec![panel]); }
+                _ => {
+                    dock.main_surface_mut()
+                        .split_below(path.node, 0.80, vec![panel]);
+                }
             }
         }
     }
@@ -156,7 +228,9 @@ pub fn restore_canonical(dock: &mut DockState<Panel>, panel: Panel) {
 pub fn draw_workspace_tab_menu(app: &mut PakarControllerApp, ui: &mut egui::Ui) {
     super::cell_table::compact_menu(ui);
     for panel in Panel::ALL {
-        if !panel.available(app.presentation_context()) { continue; }
+        if !panel.available(app.presentation_context()) {
+            continue;
+        }
         let is_open = app.dock.find_tab(&panel).is_some() || app.open_panels.contains(&panel);
         let mut visible = is_open;
         if ui
@@ -279,6 +353,42 @@ impl TabViewer for PakarTabViewer<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn pixel_tools_are_independent_persistent_dock_panels() {
+        let mut dock = create_initial_layout();
+        let table = dock.find_tab(&Panel::Table).unwrap().node_path();
+        for panel in [Panel::PixelDiagnostics, Panel::PixelCorrections] {
+            assert_ne!(dock.find_tab(&panel).unwrap().node_path(), table);
+            let old = dock.find_tab(&panel).unwrap();
+            dock.remove_tab(old);
+            restore_canonical(&mut dock, panel);
+            assert_eq!(dock.find_tab(&panel).unwrap().node_path(), dock.find_tab(&Panel::EffectControls).unwrap().node_path());
+        }
+        let restored = restore(&serialize(&dock).unwrap());
+        for panel in Panel::ALL {
+            assert_eq!(restored.iter_all_tabs().filter(|(_, p)| **p == panel).count(), 1);
+        }
+        assert!(!Panel::PixelDiagnostics.available(None));
+        assert!(!Panel::PixelCorrections.available(None));
+    }
+    #[test]
+    fn first_wins_keys_migrate_from_narrow_front_panel_to_primary_slot() {
+        let mut dock = create_initial_layout();
+        dock.remove_tab(dock.find_tab(&Panel::Keys).unwrap());
+        let front = dock.find_tab(&Panel::FrontPanel).unwrap().node_path();
+        dock.leaf_mut(front).unwrap().tabs.push(Panel::Keys);
+        promote_keys(&mut dock);
+        let keys = dock.find_tab(&Panel::Keys).unwrap();
+        let table = dock.find_tab(&Panel::Table).unwrap();
+        assert_eq!(keys.node_path(), table.node_path());
+        assert_eq!(dock.leaf(keys.node_path()).unwrap().active, keys.tab);
+        assert_eq!(
+            dock.iter_all_tabs()
+                .filter(|(_, p)| **p == Panel::Keys)
+                .count(),
+            1
+        );
+    }
     #[test]
     fn restored_panel_returns_to_its_semantic_group_and_expands_collapsed_ancestors() {
         let mut dock = create_initial_layout();

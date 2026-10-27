@@ -116,7 +116,10 @@ void main() {
         'title': 'App title',
         'icon_png_base64': base64Encode(bytes),
       };
-      expect(PeerApplication.parse(json)!.icon, isNotNull);
+      final icon = PeerApplication.parse(json)!.icon;
+      expect(icon, isNotNull);
+      expect(identical(PeerApplication.parse(Map.of(json))!.icon, icon), isTrue,
+          reason: 'Repeated telemetry must retain the MemoryImage cache key');
       ByteData.sublistView(bytes).setUint32(16, 4096);
       json['icon_png_base64'] = base64Encode(bytes);
       expect(PeerApplication.parse(json)!.icon, isNull);

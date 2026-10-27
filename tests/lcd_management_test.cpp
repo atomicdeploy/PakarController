@@ -41,7 +41,7 @@ struct Server {
 } server;
 bool allowed=true;
 bool authenticate(){if(!allowed)server.send(401,"text/plain","fixture denied");return allowed;}
-#include "../firmware/esp8266/src/LcdManagement.h"
+#include "../firmware/esp/src/LcdManagement.h"
 JsonDocument read(){JsonDocument d;assert(!deserializeJson(d,server.body));return d;}
 int main(){
   registerLcdApi();server.invoke(HTTP_GET);assert(server.status==200);

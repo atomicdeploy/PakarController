@@ -12,7 +12,10 @@ pub enum Method {
 }
 impl Method {
     pub fn label(self) -> &'static str {
-        match self { Self::WiFi => "Wi-Fi", Self::Serial => "USB" }
+        match self {
+            Self::WiFi => "Wi-Fi",
+            Self::Serial => "USB",
+        }
     }
 }
 #[derive(Default)]
@@ -24,8 +27,14 @@ struct State {
 #[derive(Clone, Default)]
 pub struct Gate(Arc<Mutex<State>>);
 #[derive(Clone)]
-pub struct Stamp { gate: Gate, pub method: Method, pub epoch: u64 }
-pub struct Lease { stamp: Stamp }
+pub struct Stamp {
+    gate: Gate,
+    pub method: Method,
+    pub epoch: u64,
+}
+pub struct Lease {
+    stamp: Stamp,
+}
 impl Gate {
     pub fn select(&self, desired: Option<Method>) -> u64 {
         let mut state = self.0.lock().expect("connection ownership");
@@ -33,25 +42,44 @@ impl Gate {
         state.desired = desired;
         state.epoch
     }
-    pub fn epoch(&self) -> u64 { self.0.lock().expect("connection ownership").epoch }
+    pub fn epoch(&self) -> u64 {
+        self.0.lock().expect("connection ownership").epoch
+    }
     pub fn stamp(&self, method: Method, epoch: u64) -> Stamp {
-        Stamp { gate: self.clone(), method, epoch }
+        Stamp {
+            gate: self.clone(),
+            method,
+            epoch,
+        }
     }
     pub fn acquire(&self, method: Method, epoch: u64) -> Option<Lease> {
         let mut state = self.0.lock().expect("connection ownership");
-        if state.desired != Some(method) || state.epoch != epoch { return None; }
+        if state.desired != Some(method) || state.epoch != epoch {
+            return None;
+        }
         match &mut state.owner {
             None => state.owner = Some((method, epoch, 1)),
-            Some((owner, generation, count)) if *owner == method && *generation == epoch
-                && method == Method::WiFi => *count += 1, // HTTP and WS are one Wi-Fi method.
+            Some((owner, generation, count))
+                if *owner == method && *generation == epoch && method == Method::WiFi =>
+            {
+                *count += 1
+            } // HTTP and WS are one Wi-Fi method.
             _ => return None, // A revoked owner must really close before handoff.
         }
-        Some(Lease { stamp: Stamp { gate: self.clone(), method, epoch } })
+        Some(Lease {
+            stamp: Stamp {
+                gate: self.clone(),
+                method,
+                epoch,
+            },
+        })
     }
     pub fn releasing(&self) -> Option<Method> {
         let state = self.0.lock().expect("connection ownership");
-        state.owner.filter(|(method, epoch, _)| state.desired != Some(*method)
-            || state.epoch != *epoch).map(|(method, _, _)| method)
+        state
+            .owner
+            .filter(|(method, epoch, _)| state.desired != Some(*method) || state.epoch != *epoch)
+            .map(|(method, _, _)| method)
     }
 }
 impl Stamp {
@@ -61,8 +89,12 @@ impl Stamp {
     }
 }
 impl Lease {
-    pub fn stamp(&self) -> Stamp { self.stamp.clone() }
-    pub fn current(&self) -> bool { self.stamp.current() }
+    pub fn stamp(&self) -> Stamp {
+        self.stamp.clone()
+    }
+    pub fn current(&self) -> bool {
+        self.stamp.current()
+    }
 }
 impl Drop for Lease {
     fn drop(&mut self) {
@@ -70,7 +102,9 @@ impl Drop for Lease {
         if let Some((method, epoch, count)) = &mut state.owner {
             if *method == self.stamp.method && *epoch == self.stamp.epoch {
                 *count -= 1;
-                if *count == 0 { state.owner = None; }
+                if *count == 0 {
+                    state.owner = None;
+                }
             }
         }
     }

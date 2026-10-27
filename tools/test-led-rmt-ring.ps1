@@ -13,6 +13,7 @@ $taskOutput=Join-Path $taskRoot 'build/native/idf_rmt_ring_test.exe'
 foreach($taskOrder in @('bgr','rgb')){
   $taskFlags=if($taskOrder -eq 'rgb'){@('-DPAKAR_S3_LED_SWAP_RED_BLUE=0')}else{@()}
   $taskArgs=@('-std=c++17','-O2','-g0','-Wall','-Wextra','-Werror')+$taskFlags+@(
+    '-I',(Join-Path $taskRoot 'libraries/BoardCore/src'),
     (Join-Path $taskRoot 'tests/idf_rmt_ring_test.cpp'),'-o',$taskOutput)
   if($Plan){[pscustomobject]@{Profile=$taskOrder;Executable='g++';Arguments=$taskArgs;Meaning='Actual pinned IDF functions plus host descriptor model, not hardware'};continue}
   New-Item -ItemType Directory -Force (Split-Path -Parent $taskOutput) | Out-Null

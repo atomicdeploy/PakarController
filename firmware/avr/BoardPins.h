@@ -39,6 +39,9 @@ constexpr uint8_t IspMosi = PIN_PB3;
 constexpr uint8_t IspMiso = PIN_PB4;
 constexpr uint8_t IspClock = PIN_PB5;
 constexpr uint8_t AddressableLed = PIN_PD6;     // D6, WS2811 / WS2812B data
+// First-wins owns D6 as an active-low button input instead of the retired
+// AVR strip comparison output. ESP owns all addressable LED rendering.
+constexpr uint8_t NinthButton = PIN_PD6;        // D6 -> momentary switch -> GND
 
 // The first four active-low 74HC165 bits drive the menu. Inputs 4 and 5 are
 // reserved system-sense positions. The final two positions are monitored

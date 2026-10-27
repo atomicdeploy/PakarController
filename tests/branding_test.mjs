@@ -32,7 +32,7 @@ for (let y = 0; y < 64; y++) {
 }
 assert.equal(createHash('sha256').update(pixels).digest('hex'),
   'd24d849f01bfeaa0cffef1cc9b861062b52e1a320f4c943608fb5fd952ded387');
-const web = read('firmware/esp8266/src/WebUi.h');
+const web = read('firmware/esp/src/WebUi.h');
 const icons = [...web.matchAll(/(?:href|src)="data:image\/png;base64,([^"]+)"/g)].map(match=>match[1]);
 assert.equal(icons.length, 4, 'header, login, favicon and touch artwork');
 assert(icons.every(icon=>icon===master));
@@ -45,7 +45,7 @@ assert(!build.includes('shell_icon_ico(egui_phosphor::regular::CIRCUITRY)'));
 assert(native.includes('.with_icon(branding::window_icon())'));
 assert.equal((shell.match(/crate::branding::peer_logo\(/g)||[]).length, 2);
 assert(shell.includes('crate::branding::sync_peer'));
-assert(read('firmware/esp8266/src/ApplicationArtwork.h').includes(master));
+assert(read('firmware/esp/src/ApplicationArtwork.h').includes(master));
 assert(read('mobile/lib/application_artwork.dart').includes(JSON.stringify(master)));
 assert(read('mobile/lib/main.dart').includes('peer.application?.icon ?? bundledApplicationArtwork'));
 assert(read('desktop/src/platform/windows_tray.rs').includes('/pakar-icon-32.rgba'));
@@ -53,7 +53,7 @@ assert(read('desktop/src/brand_image.rs').includes('assets/branding/app-icon.png
 for (const name of ['bundled_artwork_decodes_without_files_or_theme_specific_replacements',
   'shell_derivative_preserves_native_master_and_multiple_resolutions',
   'header_and_about_share_one_cached_texture_in_both_themes']) assert(read('desktop/src/branding.rs').includes(`fn ${name}(`));
-const path = new URL('../firmware/esp8266/src/WebUi.h', import.meta.url);
+const path = new URL('../firmware/esp/src/WebUi.h', import.meta.url);
 const before = statSync(path).mtimeMs;
 const check = spawnSync(process.execPath, [new URL('../tools/generate-branding.mjs',import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1'), '--check'], {encoding:'utf8'});
 assert.equal(check.status, 0, check.stderr);

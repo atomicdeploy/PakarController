@@ -25,6 +25,28 @@ DeviceStatus diagnostic({int count = 6}) => DeviceStatus({
 });
 
 void main() {
+  test('Animated and overlay diagnostics require a published RGB frame', () {
+    for (final values in [
+      {'effect': 'breathe', 'composite': 'clear'},
+      {'effect': 'solid', 'composite': 'overlay'},
+    ]) {
+      final original = diagnostic();
+      final output = Map<String, dynamic>.from(
+        original.json['led_output'] as Map,
+      );
+      output['diagnostic'] = {
+        ...Map<String, dynamic>.from(output['diagnostic'] as Map),
+        'enabled': true,
+        'period_ms': 1000,
+        'duty_percent': 50,
+        'min_brightness': 0,
+        'max_brightness': 255,
+        ...values,
+      };
+      final status = DeviceStatus({...original.json, 'led_output': output});
+      expect(cellPixelPreview(status, CellMap.defaults(), 2), isNull);
+    }
+  });
   test(
     'Board diagnostic overrides stale white semantics using physical mapping',
     () {

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 import 'api.dart';
+import 'discovery_datagrams.dart';
 import 'peer_context.dart';
 import 'peer_identity.dart';
 import 'peer_policy.dart';
@@ -25,12 +26,14 @@ class DiscoveredDevice {
     this.kind = 'board',
     this.compatible = false,
     this.hostname = '',
+    this.application,
   });
   final String name, endpoint, protocol;
   final String boardId, mac, udn;
   final Set<String> addresses, aliases;
   final bool verified, authRequired, compatible;
   final String hostname;
+  final PeerApplication? application;
   final String instanceId, kind;
 
   Set<String> get origins =>
@@ -80,6 +83,7 @@ class DiscoveredDevice {
     kind: other.kind == 'bridge' ? other.kind : kind,
     compatible: other.verified ? other.compatible : compatible,
     hostname: other.hostname.isNotEmpty ? other.hostname : hostname,
+    application: other.application ?? application,
   );
 }
 
@@ -299,40 +303,36 @@ class DeviceDiscovery {
       mndp ? 5678 : 0,
       reuseAddress: true,
     );
-    StreamSubscription<RawSocketEvent>? listener;
-    try {
-      socket.broadcastEnabled = true;
-      if (mndp) socket.joinMulticast(InternetAddress('224.0.0.88'));
-      listener = socket.listen((event) {
-        if (event != RawSocketEvent.read) return;
-        Datagram? packet;
-        while ((packet = socket.receive()) != null) {
-          final p = packet!;
-          final d = mndp
-              ? parseMndp(p.data, p.address.address)
-              : parseSsdp(p.data, source: p.address.address);
-          if (d != null) _addFound(found, d);
+    await collectDiscoveryDatagrams(
+      events: socket,
+      receive: socket.receive,
+      close: socket.close,
+      window: const Duration(seconds: 4),
+      onPacket: (packet) {
+        final device = mndp
+            ? parseMndp(packet.data, packet.address.address)
+            : parseSsdp(packet.data, source: packet.address.address);
+        if (device != null) _addFound(found, device);
+      },
+      send: () {
+        socket.broadcastEnabled = true;
+        if (mndp) {
+          socket.joinMulticast(InternetAddress('224.0.0.88'));
+          socket.send([0, 0, 0, 0], InternetAddress('255.255.255.255'), 5678);
+        } else {
+          socket.send(
+            utf8.encode(
+              'M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\n'
+              'MAN: "ssdp:discover"\r\nMX: 1\r\nST: ssdp:all\r\n'
+              'USER-AGENT: ${PeerIdentity.current.userAgent}\r\n'
+              'X-Pakar-Version: ${PeerIdentity.current.version}\r\n\r\n',
+            ),
+            InternetAddress('239.255.255.250'),
+            1900,
+          );
         }
-      });
-      if (mndp) {
-        socket.send([0, 0, 0, 0], InternetAddress('255.255.255.255'), 5678);
-      } else {
-        socket.send(
-          utf8.encode(
-            'M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\n'
-            'MAN: "ssdp:discover"\r\nMX: 1\r\nST: ssdp:all\r\n'
-            'USER-AGENT: ${PeerIdentity.current.userAgent}\r\n'
-            'X-Pakar-Version: ${PeerIdentity.current.version}\r\n\r\n',
-          ),
-          InternetAddress('239.255.255.250'),
-          1900,
-        );
-      }
-      await Future<void>.delayed(const Duration(seconds: 4));
-    } finally {
-      await listener?.cancel();
-      socket.close();
-    }
+      },
+    );
   }
 }
 
@@ -509,6 +509,9 @@ Future<DiscoveredDevice?> verifyDiscoveredDevice(
       aliases: candidate.origins,
       verified: true,
       authRequired: status.$1 == 401,
+      application: value == null
+          ? null
+          : PeerContext.fromStatus(value).application,
       instanceId: instance,
       kind: value?['bridge'] is Map ? 'bridge' : candidate.kind,
       compatible: compatible,

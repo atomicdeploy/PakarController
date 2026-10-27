@@ -368,11 +368,26 @@ pub fn usb_introduction_error(request: u8, response: u8, payload: &[u8]) -> Stri
             6 => "request rejected by board safety fence",
             _ => "unknown board error",
         };
-        let category = if payload[1] == 2 { "Peer compatibility:" } else { "USB introduction:" };
-        return format!("{category} board rejected request 0x{request:02X}: {reason} (code 0x{:02X}); no control command sent or retried", payload[1]);
+        let category = if payload[1] == 2 {
+            "Peer compatibility:"
+        } else {
+            "USB introduction:"
+        };
+        return format!(
+            "{category} board rejected request 0x{request:02X}: {reason} (code 0x{:02X}); no control command sent or retried",
+            payload[1]
+        );
     }
-    let detail = payload.iter().take(8).map(|value| format!("{value:02X}")).collect::<Vec<_>>().join(" ");
-    format!("USB introduction: unexpected response 0x{response:02X} to request 0x{request:02X} (payload {detail}, {} bytes); no control command sent or retried", payload.len())
+    let detail = payload
+        .iter()
+        .take(8)
+        .map(|value| format!("{value:02X}"))
+        .collect::<Vec<_>>()
+        .join(" ");
+    format!(
+        "USB introduction: unexpected response 0x{response:02X} to request 0x{request:02X} (payload {detail}, {} bytes); no control command sent or retried",
+        payload.len()
+    )
 }
 /// Peer reports are observations, not authority. Keep only bounded nonsecret
 /// operational values; a report cannot change app settings or board ownership.
@@ -487,19 +502,32 @@ mod tests {
     use super::*;
     #[test]
     fn usb_introduction_error_preserves_actual_board_reason_without_suggesting_policy_bypass() {
-        for (code, expected) in [(2,"unsupported caller"),(3,"invalid report"),(5,"board busy"),(6,"safety fence"),(255,"unknown board error")] {
-            let message=usb_introduction_error(USB_REPORT,0x82,&[USB_REPORT,code]);
-            assert!(message.contains(expected),"{message}");
+        for (code, expected) in [
+            (2, "unsupported caller"),
+            (3, "invalid report"),
+            (5, "board busy"),
+            (6, "safety fence"),
+            (255, "unknown board error"),
+        ] {
+            let message = usb_introduction_error(USB_REPORT, 0x82, &[USB_REPORT, code]);
+            assert!(message.contains(expected), "{message}");
             assert!(message.contains("0x61"));
-            assert_eq!(unsupported(&message),code==2);
+            assert_eq!(unsupported(&message), code == 2);
             assert!(!message.contains("override"));
         }
-        for (response,payload) in [(0x80,vec![USB_REPORT,3]),(0x82,vec![0x55,2]),(0x82,vec![USB_REPORT]),(0x82,vec![USB_REPORT,2,0])] {
-            let message=usb_introduction_error(USB_REPORT,response,&payload);
+        for (response, payload) in [
+            (0x80, vec![USB_REPORT, 3]),
+            (0x82, vec![0x55, 2]),
+            (0x82, vec![USB_REPORT]),
+            (0x82, vec![USB_REPORT, 2, 0]),
+        ] {
+            let message = usb_introduction_error(USB_REPORT, response, &payload);
             assert!(message.contains("unexpected response"));
             assert!(!unsupported(&message));
         }
-        assert!(usb_introduction_error(0x01,0x82,&[0x01,3]).contains("invalid introduction payload"));
+        assert!(
+            usb_introduction_error(0x01, 0x82, &[0x01, 3]).contains("invalid introduction payload")
+        );
     }
     #[test]
     fn semver_minimum_not_exact_build_selectors() {
@@ -550,7 +578,10 @@ mod tests {
     fn usb_report_optional_only_correlated_explicit_unsupported_can_disable_reports() {
         let headers = server_headers();
         assert!(headers.contains(&format!("X-Pakar-Version-Check: {}\r\n", enforced())));
-        assert!(headers.contains(&format!("X-Pakar-Min-App-Version: {}\r\n", policy().minimum_app)));
+        assert!(headers.contains(&format!(
+            "X-Pakar-Min-App-Version: {}\r\n",
+            policy().minimum_app
+        )));
         assert!(!headers.contains("X-Pakar-Version-Enforced:"));
         for enforce in [false, true] {
             for (request, response, payload) in [
@@ -570,16 +601,23 @@ mod tests {
             for code in (0..=255_u8).filter(|code| *code != 2) {
                 let mut support = UsbReportSupport::default();
                 assert!(!support.observe_with_policy(
-                    enforce, (USB_REPORT, 9), (0x82, 9), &[USB_REPORT, code],
+                    enforce,
+                    (USB_REPORT, 9),
+                    (0x82, 9),
+                    &[USB_REPORT, code],
                 ));
                 assert!(support.supported());
             }
             let mut support = UsbReportSupport::default();
-            assert_eq!(support.observe_with_policy(
-                enforce, (USB_REPORT, 9), (0x82, 9), &[USB_REPORT, 2],
-            ), !enforce);
+            assert_eq!(
+                support.observe_with_policy(enforce, (USB_REPORT, 9), (0x82, 9), &[USB_REPORT, 2],),
+                !enforce
+            );
             assert_eq!(support.supported(), enforce);
-            assert!(UsbReportSupport::default().supported(), "A new physical session probes again");
+            assert!(
+                UsbReportSupport::default().supported(),
+                "A new physical session probes again"
+            );
         }
     }
     #[test]

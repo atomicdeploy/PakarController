@@ -28,21 +28,27 @@ pub struct Network {
 }
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Ethernet {
-    #[serde(default, skip_serializing_if="Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
-    #[serde(default, skip_serializing_if="Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lldp_enabled: Option<bool>,
-    #[serde(default, skip_serializing_if="Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lldp_receive: Option<bool>,
     #[serde(flatten)]
     pub addressing: Addressing,
 }
 impl Ethernet {
-    fn read(value: serde_json::Value) -> Result<Self,String> {
-        if value["configured"] != true { return Err("Ethernet is not supported by this firmware".into()); }
-        let config: Self=serde_json::from_value(value).map_err(|e|format!("Invalid Ethernet configuration: {e}"))?;
-        if !config.addressing.observed(){return Err("Complete Ethernet addressing settings are required".into());}
-        config.addressing.validate()?; Ok(config)
+    fn read(value: serde_json::Value) -> Result<Self, String> {
+        if value["configured"] != true {
+            return Err("Ethernet is not supported by this firmware".into());
+        }
+        let config: Self = serde_json::from_value(value)
+            .map_err(|e| format!("Invalid Ethernet configuration: {e}"))?;
+        if !config.addressing.observed() {
+            return Err("Complete Ethernet addressing settings are required".into());
+        }
+        config.addressing.validate()?;
+        Ok(config)
     }
 }
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
@@ -62,33 +68,84 @@ pub struct Addressing {
 }
 impl Addressing {
     pub fn observed(&self) -> bool {
-        self.dhcp.is_some() && [&self.address,&self.gateway,&self.subnet,&self.dns1,&self.dns2].iter().all(|v| v.is_some())
+        self.dhcp.is_some()
+            && [
+                &self.address,
+                &self.gateway,
+                &self.subnet,
+                &self.dns1,
+                &self.dns2,
+            ]
+            .iter()
+            .all(|v| v.is_some())
     }
     fn validate(&self) -> Result<(), String> {
-        if *self == Self::default() { return Ok(()); }
-        if !self.observed() { return Err("Incomplete device addressing settings; refresh before editing".into()); }
-        let mut values = [0u32; 5];
-        for (index, text) in [&self.address,&self.gateway,&self.subnet,&self.dns1,&self.dns2].iter().enumerate() {
-            let text = text.as_deref().unwrap_or_default();
-            if index >= 3 && text.is_empty() { continue; }
-            values[index] = u32::from(text.parse::<std::net::Ipv4Addr>().map_err(|_| "Enter valid IPv4 address, gateway, subnet and DNS values")?);
+        if *self == Self::default() {
+            return Ok(());
         }
-        if self.dhcp == Some(true) { return Ok(()); }
-        let [address,gateway,subnet,dns1,dns2] = values;
+        if !self.observed() {
+            return Err("Incomplete device addressing settings; refresh before editing".into());
+        }
+        let mut values = [0u32; 5];
+        for (index, text) in [
+            &self.address,
+            &self.gateway,
+            &self.subnet,
+            &self.dns1,
+            &self.dns2,
+        ]
+        .iter()
+        .enumerate()
+        {
+            let text = text.as_deref().unwrap_or_default();
+            if index >= 3 && text.is_empty() {
+                continue;
+            }
+            values[index] = u32::from(
+                text.parse::<std::net::Ipv4Addr>()
+                    .map_err(|_| "Enter valid IPv4 address, gateway, subnet and DNS values")?,
+            );
+        }
+        if self.dhcp == Some(true) {
+            return Ok(());
+        }
+        let [address, gateway, subnet, dns1, dns2] = values;
         let host = !subnet;
-        if host < 3 || host == u32::MAX || host & host.wrapping_add(1) != 0 ||
-            address >> 24 == 0 || address >> 24 >= 224 || address & host == 0 || address & host == host ||
-            gateway >> 24 == 0 || gateway >> 24 >= 224 || gateway & host == 0 || gateway & host == host ||
-            address & subnet != gateway & subnet || address == gateway || dns1 >> 24 >= 224 || dns2 >> 24 >= 224 {
+        if host < 3
+            || host == u32::MAX
+            || host & host.wrapping_add(1) != 0
+            || address >> 24 == 0
+            || address >> 24 >= 224
+            || address & host == 0
+            || address & host == host
+            || gateway >> 24 == 0
+            || gateway >> 24 >= 224
+            || gateway & host == 0
+            || gateway & host == host
+            || address & subnet != gateway & subnet
+            || address == gateway
+            || dns1 >> 24 >= 224
+            || dns2 >> 24 >= 224
+        {
             return Err("Invalid static subnet, host, gateway or DNS address".into());
         }
         Ok(())
     }
-    fn form(&self) -> Vec<(String,String)> {
+    fn form(&self) -> Vec<(String, String)> {
         let mut result = Vec::new();
-        if let Some(dhcp) = self.dhcp { result.push(("dhcp".into(),dhcp.to_string())); }
-        for (name,value) in [("address",&self.address),("gateway",&self.gateway),("subnet",&self.subnet),("dns1",&self.dns1),("dns2",&self.dns2)] {
-            if let Some(value) = value { result.push((name.into(),value.clone())); }
+        if let Some(dhcp) = self.dhcp {
+            result.push(("dhcp".into(), dhcp.to_string()));
+        }
+        for (name, value) in [
+            ("address", &self.address),
+            ("gateway", &self.gateway),
+            ("subnet", &self.subnet),
+            ("dns1", &self.dns1),
+            ("dns2", &self.dns2),
+        ] {
+            if let Some(value) = value {
+                result.push((name.into(), value.clone()));
+            }
         }
         result
     }
@@ -139,10 +196,12 @@ impl Network {
     pub fn validate(&self) -> Result<(), String> {
         self.validate_with_ethernet(false)
     }
-    fn validate_with_ethernet(&self, ethernet_ready:bool) -> Result<(), String> {
+    fn validate_with_ethernet(&self, ethernet_ready: bool) -> Result<(), String> {
         bounded(&self.station_ssid, 32, "SSID")?;
         if !self.station_enabled && !self.ap_enabled && !ethernet_ready {
-            return Err("Keep station or recovery AP enabled until Ethernet has a working IPv4 link".into());
+            return Err(
+                "Keep station or recovery AP enabled until Ethernet has a working IPv4 link".into(),
+            );
         }
         if self.station_enabled && self.station_ssid.is_empty() {
             return Err("Select or enter the station SSID".into());
@@ -152,13 +211,26 @@ impl Network {
 }
 impl Cloud {
     pub fn validate(&self) -> Result<(), String> {
-        if self.ntfy_enabled.is_some() || self.ntfy_host.is_some() || self.ntfy_topic.is_some() || self.ntfy_token_set.is_some() {
-            let (Some(enabled),Some(server),Some(topic),Some(_)) = (self.ntfy_enabled,self.ntfy_host.as_ref(),self.ntfy_topic.as_ref(),self.ntfy_token_set) else {
+        if self.ntfy_enabled.is_some()
+            || self.ntfy_host.is_some()
+            || self.ntfy_topic.is_some()
+            || self.ntfy_token_set.is_some()
+        {
+            let (Some(enabled), Some(server), Some(topic), Some(_)) = (
+                self.ntfy_enabled,
+                self.ntfy_host.as_ref(),
+                self.ntfy_topic.as_ref(),
+                self.ntfy_token_set,
+            ) else {
                 return Err("Read complete ntfy settings first".into());
             };
-            host(server,true,"ntfy server")?;
-            bounded(topic,64,"ntfy topic")?;
-            if (enabled && topic.is_empty()) || !topic.bytes().all(|c| c.is_ascii_alphanumeric() || b"_-".contains(&c)) {
+            host(server, true, "ntfy server")?;
+            bounded(topic, 64, "ntfy topic")?;
+            if (enabled && topic.is_empty())
+                || !topic
+                    .bytes()
+                    .all(|c| c.is_ascii_alphanumeric() || b"_-".contains(&c))
+            {
                 return Err("ntfy needs a single topic using letters, numbers, - or _".into());
             }
         }
@@ -241,24 +313,54 @@ pub struct Write {
     pub expected: Expected,
 }
 impl Write {
-    pub fn ethernet(id:u64,config:&Ethernet)->Result<Self,String>{
-        if !config.addressing.observed(){return Err("Read complete Ethernet settings first".into());}
+    pub fn ethernet(id: u64, config: &Ethernet) -> Result<Self, String> {
+        if !config.addressing.observed() {
+            return Err("Read complete Ethernet settings first".into());
+        }
         config.addressing.validate()?;
-        let mut expected=config.clone();
-        if expected.addressing.dhcp==Some(false){for value in [&mut expected.addressing.dns1,&mut expected.addressing.dns2]{if value.as_deref()==Some(""){*value=Some("0.0.0.0".into());}}}
-        let mut form=expected.addressing.form();
-        if let Some(enabled)=expected.enabled{form.push(("enabled".into(),enabled.to_string()));}
-        if let Some(enabled)=expected.lldp_enabled{form.push(("lldp_enabled".into(),enabled.to_string()));}
-        if let Some(enabled)=expected.lldp_receive{form.push(("lldp_receive".into(),enabled.to_string()));}
-        Ok(Self{id,group:Group::Ethernet,form,expected:Expected::Ethernet(expected)})
+        let mut expected = config.clone();
+        if expected.addressing.dhcp == Some(false) {
+            for value in [&mut expected.addressing.dns1, &mut expected.addressing.dns2] {
+                if value.as_deref() == Some("") {
+                    *value = Some("0.0.0.0".into());
+                }
+            }
+        }
+        let mut form = expected.addressing.form();
+        if let Some(enabled) = expected.enabled {
+            form.push(("enabled".into(), enabled.to_string()));
+        }
+        if let Some(enabled) = expected.lldp_enabled {
+            form.push(("lldp_enabled".into(), enabled.to_string()));
+        }
+        if let Some(enabled) = expected.lldp_receive {
+            form.push(("lldp_receive".into(), enabled.to_string()));
+        }
+        Ok(Self {
+            id,
+            group: Group::Ethernet,
+            form,
+            expected: Expected::Ethernet(expected),
+        })
     }
-    pub fn status_rgb(id:u64,config:&crate::status_rgb::Configuration)->Result<Self,String>{
-        Ok(Self{id,group:Group::StatusRgb,form:config.form()?,expected:Expected::StatusRgb(config.clone())})
+    pub fn status_rgb(id: u64, config: &crate::status_rgb::Configuration) -> Result<Self, String> {
+        Ok(Self {
+            id,
+            group: Group::StatusRgb,
+            form: config.form()?,
+            expected: Expected::StatusRgb(config.clone()),
+        })
     }
     pub fn network(id: u64, config: &Network, password: &str, open: bool) -> Result<Self, String> {
-        Self::network_with_ethernet(id,config,password,open,false)
+        Self::network_with_ethernet(id, config, password, open, false)
     }
-    fn network_with_ethernet(id:u64,config:&Network,password:&str,open:bool,ethernet_ready:bool)->Result<Self,String>{
+    fn network_with_ethernet(
+        id: u64,
+        config: &Network,
+        password: &str,
+        open: bool,
+        ethernet_ready: bool,
+    ) -> Result<Self, String> {
         config.validate_with_ethernet(ethernet_ready)?;
         if !password.is_empty() && !open && !(8..=63).contains(&password.len()) {
             return Err("Enter an 8–63 byte replacement Wi-Fi password, or keep the existing secret by leaving this blank.".into());
@@ -266,8 +368,10 @@ impl Write {
         bounded(password, 63, "Wi-Fi password")?;
         let mut expected = config.clone();
         if expected.addressing.dhcp == Some(false) {
-            for value in [&mut expected.addressing.dns1,&mut expected.addressing.dns2] {
-                if value.as_deref() == Some("") { *value = Some("0.0.0.0".into()); }
+            for value in [&mut expected.addressing.dns1, &mut expected.addressing.dns2] {
+                if value.as_deref() == Some("") {
+                    *value = Some("0.0.0.0".into());
+                }
             }
         }
         let mut form = vec![
@@ -277,7 +381,10 @@ impl Write {
         ];
         form.extend(expected.addressing.form());
         if open || !password.is_empty() {
-            form.push(("password".into(),if open {String::new()} else {password.into()}));
+            form.push((
+                "password".into(),
+                if open { String::new() } else { password.into() },
+            ));
         }
         Ok(Self {
             id,
@@ -297,7 +404,9 @@ impl Write {
         let mut expected = config.clone();
         expected.mqtt_password_set = password.expected_presence(config.mqtt_password_set);
         expected.websocket_token_set = token.expected_presence(config.websocket_token_set);
-        if let Some(present)=config.ntfy_token_set { expected.ntfy_token_set=Some(ntfy_token.expected_presence(present)); }
+        if let Some(present) = config.ntfy_token_set {
+            expected.ntfy_token_set = Some(ntfy_token.expected_presence(present));
+        }
         let mut form = vec![
             ("mqtt_enabled".into(), config.mqtt_enabled.to_string()),
             ("mqtt_tls".into(), config.mqtt_tls.to_string()),
@@ -324,11 +433,19 @@ impl Write {
         if let Some(value) = token.form_value()? {
             form.push(("websocket_token".into(), value));
         }
-        if let Some(enabled)=config.ntfy_enabled {
-            form.push(("ntfy_enabled".into(),enabled.to_string()));
-            form.push(("ntfy_host".into(),config.ntfy_host.clone().unwrap_or_default()));
-            form.push(("ntfy_topic".into(),config.ntfy_topic.clone().unwrap_or_default()));
-            if let Some(value)=ntfy_token.form_value()? {form.push(("ntfy_token".into(),value));}
+        if let Some(enabled) = config.ntfy_enabled {
+            form.push(("ntfy_enabled".into(), enabled.to_string()));
+            form.push((
+                "ntfy_host".into(),
+                config.ntfy_host.clone().unwrap_or_default(),
+            ));
+            form.push((
+                "ntfy_topic".into(),
+                config.ntfy_topic.clone().unwrap_or_default(),
+            ));
+            if let Some(value) = ntfy_token.form_value()? {
+                form.push(("ntfy_token".into(), value));
+            }
         }
         Ok(Self {
             id,
@@ -338,7 +455,11 @@ impl Write {
         })
     }
     pub fn verify_ack(&self, value: &serde_json::Value) -> Result<(), String> {
-        let field = match self.group {Group::Network|Group::Ethernet=>"accepted",Group::Cloud=>"updated",Group::StatusRgb=>"saved"};
+        let field = match self.group {
+            Group::Network | Group::Ethernet => "accepted",
+            Group::Cloud => "updated",
+            Group::StatusRgb => "saved",
+        };
         if value[field].as_bool() != Some(true) {
             return Err("Device did not confirm a saved configuration write".into());
         }
@@ -350,9 +471,14 @@ impl Write {
                 .is_ok_and(|actual| actual == *expected),
             Expected::Cloud(expected) => serde_json::from_value::<Cloud>(value.clone())
                 .is_ok_and(|actual| actual == *expected),
-            Expected::StatusRgb(expected) => crate::status_rgb::Configuration::read(value.clone())
-                .is_ok_and(|actual|actual==*expected)&&value["persisted"]==true,
-            Expected::Ethernet(expected) => Ethernet::read(value.clone()).is_ok_and(|actual|actual==*expected),
+            Expected::StatusRgb(expected) => {
+                crate::status_rgb::Configuration::read(value.clone())
+                    .is_ok_and(|actual| actual == *expected)
+                    && value["persisted"] == true
+            }
+            Expected::Ethernet(expected) => {
+                Ethernet::read(value.clone()).is_ok_and(|actual| actual == *expected)
+            }
         };
         if matches {
             Ok(())
@@ -432,17 +558,31 @@ pub struct Editor {
 }
 impl Editor {
     pub fn network_write(&self, id: u64) -> Result<Write, String> {
-        let draft = self.network.as_ref().ok_or("Network settings unavailable")?;
-        if draft.value.station_enabled && draft.value.station_ssid != draft.saved.station_ssid
-            && self.wifi_password.is_empty() && !self.open_network {
-            return Err("Enter a password or explicitly select Open when changing the station SSID".into());
+        let draft = self
+            .network
+            .as_ref()
+            .ok_or("Network settings unavailable")?;
+        if draft.value.station_enabled
+            && draft.value.station_ssid != draft.saved.station_ssid
+            && self.wifi_password.is_empty()
+            && !self.open_network
+        {
+            return Err(
+                "Enter a password or explicitly select Open when changing the station SSID".into(),
+            );
         }
         let mut config = draft.value.clone();
         if config.addressing.dhcp == Some(true) {
             config.addressing = draft.saved.addressing.clone();
             config.addressing.dhcp = Some(true);
         }
-        Write::network_with_ethernet(id, &config, &self.wifi_password, self.open_network,self.ethernet_ready)
+        Write::network_with_ethernet(
+            id,
+            &config,
+            &self.wifi_password,
+            self.open_network,
+            self.ethernet_ready,
+        )
     }
     pub fn dirty(&self) -> bool {
         self.usb_request.is_some()
@@ -469,14 +609,22 @@ impl Editor {
         self.ntfy_token = SecretEdit::default();
     }
     pub fn discard(&mut self) {
-        if let Some(d)=&mut self.status_rgb{d.discard();}
-        if let Some(d)=&mut self.firmware_feed {d.discard();}
+        if let Some(d) = &mut self.status_rgb {
+            d.discard();
+        }
+        if let Some(d) = &mut self.firmware_feed {
+            d.discard();
+        }
         self.usb_request = None;
-        if let Some(d) = &mut self.avr { d.discard(); }
+        if let Some(d) = &mut self.avr {
+            d.discard();
+        }
         if let Some(d) = &mut self.network {
             d.discard();
         }
-        if let Some(d)=&mut self.ethernet{d.discard();}
+        if let Some(d) = &mut self.ethernet {
+            d.discard();
+        }
         if let Some(d) = &mut self.cloud {
             d.discard();
         }
@@ -495,37 +643,72 @@ impl Editor {
             ..Self::default()
         };
     }
-    pub fn finish_avr(&mut self, id: u64, peer: Option<&crate::peer_http::Pin>,
-        route: Option<crate::Transport>, result: &Result<crate::pc_contract::Settings, String>) {
-        if self.avr_pending != Some(id) { return; }
-        self.avr_pending=None;
-        if self.avr_owner.as_ref().is_none_or(|(p,r)| Some(p)!=peer || Some(*r)!=route) {
-            self.avr=None; self.avr_owner=None;
-            self.message="Board changed; settings result was not applied to this editor.".into();
+    pub fn finish_avr(
+        &mut self,
+        id: u64,
+        peer: Option<&crate::peer_http::Pin>,
+        route: Option<crate::Transport>,
+        result: &Result<crate::pc_contract::Settings, String>,
+    ) {
+        if self.avr_pending != Some(id) {
+            return;
+        }
+        self.avr_pending = None;
+        if self
+            .avr_owner
+            .as_ref()
+            .is_none_or(|(p, r)| Some(p) != peer || Some(*r) != route)
+        {
+            self.avr = None;
+            self.avr_owner = None;
+            self.message = "Board changed; settings result was not applied to this editor.".into();
             return;
         }
         match result {
             Ok(settings) => {
-                self.avr=Some(Draft::new(crate::board_silent::Parameters::from_settings(settings)));
-                self.message="AVR settings verified · saved in EEPROM".into();
+                self.avr = Some(Draft::new(crate::board_silent::Parameters::from_settings(
+                    settings,
+                )));
+                self.message = "AVR settings verified · saved in EEPROM".into();
             }
             Err(error) => {
-                if let Some(d)=&mut self.avr { d.conflict=true; }
-                self.message=error.clone();
+                if let Some(d) = &mut self.avr {
+                    d.conflict = true;
+                }
+                self.message = error.clone();
             }
         }
     }
     pub fn observe(&mut self, path: &str, value: serde_json::Value) -> Result<(), String> {
-        if path==Group::Ethernet.path(){let config=Ethernet::read(value)?;if let Some(d)=&mut self.ethernet{d.observe(config);}else{self.ethernet=Some(Draft::new(config));}return Ok(());}
-        if path==Group::StatusRgb.path(){let config=crate::status_rgb::Configuration::read(value)?;
-            if let Some(d)=&mut self.status_rgb{d.observe(config);}else{self.status_rgb=Some(Draft::new(config));}return Ok(());}
+        if path == Group::Ethernet.path() {
+            let config = Ethernet::read(value)?;
+            if let Some(d) = &mut self.ethernet {
+                d.observe(config);
+            } else {
+                self.ethernet = Some(Draft::new(config));
+            }
+            return Ok(());
+        }
+        if path == Group::StatusRgb.path() {
+            let config = crate::status_rgb::Configuration::read(value)?;
+            if let Some(d) = &mut self.status_rgb {
+                d.observe(config);
+            } else {
+                self.status_rgb = Some(Draft::new(config));
+            }
+            return Ok(());
+        }
         if path == "/api/firmware/remote" {
             self.remote_job = Some(crate::maintenance::parse_job(value)?);
             return Ok(());
         }
         if path == "/api/telemetry" {
-            if value["type"] != "telemetry" || value["product"] != "PakarController"
-                || !value["boot_id"].as_str().is_some_and(|s| !s.is_empty() && s.len() <= 80) {
+            if value["type"] != "telemetry"
+                || value["product"] != "PakarController"
+                || !value["boot_id"]
+                    .as_str()
+                    .is_some_and(|s| !s.is_empty() && s.len() <= 80)
+            {
                 return Err("Complete telemetry unavailable".into());
             }
             self.telemetry = Some(value);
@@ -547,7 +730,7 @@ impl Editor {
             self.ssids.dedup();
         }
         if path == Group::Network.path() {
-            self.ethernet_ready=value["ethernet_ready"]==true;
+            self.ethernet_ready = value["ethernet_ready"] == true;
             let config: Network = serde_json::from_value(value)
                 .map_err(|e| format!("Invalid network response: {e}"))?;
             config.validate_with_ethernet(self.ethernet_ready)?;
@@ -580,8 +763,14 @@ impl Editor {
         match result {
             Ok(value) => {
                 let loaded = match group {
-                    Group::Ethernet => {self.ethernet=None;self.observe(group.path(),value)}
-                    Group::StatusRgb => {self.status_rgb=None;self.observe(group.path(),value)}
+                    Group::Ethernet => {
+                        self.ethernet = None;
+                        self.observe(group.path(), value)
+                    }
+                    Group::StatusRgb => {
+                        self.status_rgb = None;
+                        self.observe(group.path(), value)
+                    }
                     Group::Network => {
                         self.network = None;
                         self.wifi_password.clear();
@@ -607,10 +796,17 @@ pub fn usb_payloads(config: &Network, password: &str, open: bool) -> Result<Vec<
         return Err("USB provisioning requires an explicit password or Open choice; saved secrets cannot be read over this transport".into());
     }
     if config.addressing.dhcp == Some(false) {
-        return Err("Static addressing must be configured over the authenticated network API".into());
+        return Err(
+            "Static addressing must be configured over the authenticated network API".into(),
+        );
     }
-    config.validate()?; bounded(password, 63, "Wi-Fi password")?;
-    let password = if open { b"".as_slice() } else { password.as_bytes() };
+    config.validate()?;
+    bounded(password, 63, "Wi-Fi password")?;
+    let password = if open {
+        b"".as_slice()
+    } else {
+        password.as_bytes()
+    };
     let mut payloads = vec![vec![0]];
     for (kind, bytes) in [(1, config.station_ssid.as_bytes()), (2, password)] {
         for chunk in bytes.chunks(47) {
@@ -630,52 +826,113 @@ pub fn usb_payloads(config: &Network, password: &str, open: bool) -> Result<Vec<
 mod tests {
     use super::*;
     #[test]
-    fn ethernet_settings_require_actual_support_validate_addressing_and_confirm_readback(){
-        let raw=serde_json::json!({"configured":true,"enabled":true,"lldp_enabled":true,"lldp_receive":false,
+    fn ethernet_settings_require_actual_support_validate_addressing_and_confirm_readback() {
+        let raw = serde_json::json!({"configured":true,"enabled":true,"lldp_enabled":true,"lldp_receive":false,
             "dhcp":false,"address":"192.168.9.2","gateway":"192.168.9.1","subnet":"255.255.255.0","dns1":"0.0.0.0","dns2":"0.0.0.0"});
-        let config=Ethernet::read(raw.clone()).unwrap();let write=Write::ethernet(1,&config).unwrap();
-        assert_eq!(write.group.path(),"/api/network/ethernet");
-        assert!(write.verify_ack(&serde_json::json!({"accepted":true,"apply_pending":true})).is_ok());
+        let config = Ethernet::read(raw.clone()).unwrap();
+        let write = Write::ethernet(1, &config).unwrap();
+        assert_eq!(write.group.path(), "/api/network/ethernet");
+        assert!(
+            write
+                .verify_ack(&serde_json::json!({"accepted":true,"apply_pending":true}))
+                .is_ok()
+        );
         assert!(write.verify_readback(&raw).is_ok());
-        let mut foreign=raw.clone();foreign["address"]=serde_json::json!("192.168.9.3");assert!(write.verify_readback(&foreign).is_err());
-        foreign=raw.clone();foreign["configured"]=false.into();assert!(Ethernet::read(foreign).is_err());
-        foreign=raw.clone();foreign["subnet"]="255.0.255.0".into();assert!(Ethernet::read(foreign).is_err());
-        assert!(!write.form.iter().any(|(key,_)|["configured","ipv4_ready","apply_pending"].contains(&key.as_str())));
-        let mut editor=Editor::default();editor.observe(Group::Ethernet.path(),raw).unwrap();
-        editor.ethernet.as_mut().unwrap().value.enabled=Some(false);assert!(editor.dirty());editor.invalidate_peer();assert!(editor.ethernet.is_none());
+        let mut foreign = raw.clone();
+        foreign["address"] = serde_json::json!("192.168.9.3");
+        assert!(write.verify_readback(&foreign).is_err());
+        foreign = raw.clone();
+        foreign["configured"] = false.into();
+        assert!(Ethernet::read(foreign).is_err());
+        foreign = raw.clone();
+        foreign["subnet"] = "255.0.255.0".into();
+        assert!(Ethernet::read(foreign).is_err());
+        assert!(
+            !write
+                .form
+                .iter()
+                .any(|(key, _)| ["configured", "ipv4_ready", "apply_pending"]
+                    .contains(&key.as_str()))
+        );
+        let mut editor = Editor::default();
+        editor.observe(Group::Ethernet.path(), raw).unwrap();
+        editor.ethernet.as_mut().unwrap().value.enabled = Some(false);
+        assert!(editor.dirty());
+        editor.invalidate_peer();
+        assert!(editor.ethernet.is_none());
     }
     #[test]
-    fn wifi_off_requires_observed_ethernet_ready_not_configured_or_cached_peer(){
-        let mut raw=serde_json::json!({"station_enabled":true,"ap_enabled":true,"station_ssid":"Fixture","ethernet_ready":false});
-        let mut editor=Editor::default();editor.observe(Group::Network.path(),raw.clone()).unwrap();
-        let network=&mut editor.network.as_mut().unwrap().value;network.station_enabled=false;network.ap_enabled=false;
+    fn wifi_off_requires_observed_ethernet_ready_not_configured_or_cached_peer() {
+        let mut raw = serde_json::json!({"station_enabled":true,"ap_enabled":true,"station_ssid":"Fixture","ethernet_ready":false});
+        let mut editor = Editor::default();
+        editor.observe(Group::Network.path(), raw.clone()).unwrap();
+        let network = &mut editor.network.as_mut().unwrap().value;
+        network.station_enabled = false;
+        network.ap_enabled = false;
         assert!(editor.network_write(1).is_err());
-        raw["ethernet_ready"]=true.into();editor.observe(Group::Network.path(),raw).unwrap();assert!(editor.network_write(1).is_ok());
-        assert!(!editor.network_write(1).unwrap().form.iter().any(|(key,_)|key=="ethernet_ready"));
-        editor.invalidate_peer();assert!(!editor.ethernet_ready);
+        raw["ethernet_ready"] = true.into();
+        editor.observe(Group::Network.path(), raw).unwrap();
+        assert!(editor.network_write(1).is_ok());
+        assert!(
+            !editor
+                .network_write(1)
+                .unwrap()
+                .form
+                .iter()
+                .any(|(key, _)| key == "ethernet_ready")
+        );
+        editor.invalidate_peer();
+        assert!(!editor.ethernet_ready);
     }
     #[test]
     fn avr_editor_owns_dirty_draft_pending_receipt_and_same_peer_readback() {
-        let peer=|boot:char| crate::peer_http::Pin::from_status(&crate::DeviceStatus {
-            board_id:"esp32s3-settings-fixture".into(), boot_id:boot.to_string().repeat(32),
-            http_peer_fencing:true, ..Default::default()
-        }).unwrap();
-        let a=peer('a'); let b=peer('b');
-        let mut bytes=vec![0x50,2,5,0,0,0,2,0,63,0x10,0x32,0x54,0];
-        bytes.extend_from_slice(&[0;8]); bytes.push(1);
-        let settings=crate::pc_contract::Settings::parse(&crate::pc_contract::encode_hex(&bytes)).unwrap();
-        let mut e=Editor { avr:Some(Draft::new(crate::board_silent::Parameters::from_settings(&settings))),
-            avr_owner:Some((a.clone(),crate::Transport::Serial)), ..Default::default() };
+        let peer = |boot: char| {
+            crate::peer_http::Pin::from_status(&crate::DeviceStatus {
+                board_id: "esp32s3-settings-fixture".into(),
+                boot_id: boot.to_string().repeat(32),
+                http_peer_fencing: true,
+                ..Default::default()
+            })
+            .unwrap()
+        };
+        let a = peer('a');
+        let b = peer('b');
+        let mut bytes = vec![0x50, 2, 5, 0, 0, 0, 2, 0, 63, 0x10, 0x32, 0x54, 0];
+        bytes.extend_from_slice(&[0; 8]);
+        bytes.push(1);
+        let settings =
+            crate::pc_contract::Settings::parse(&crate::pc_contract::encode_hex(&bytes)).unwrap();
+        let mut e = Editor {
+            avr: Some(Draft::new(crate::board_silent::Parameters::from_settings(
+                &settings,
+            ))),
+            avr_owner: Some((a.clone(), crate::Transport::Serial)),
+            ..Default::default()
+        };
         assert!(!e.dirty());
-        e.avr.as_mut().unwrap().value.threshold=700; assert!(e.dirty());
-        e.avr_pending=Some(3);
-        e.finish_avr(2,Some(&a),Some(crate::Transport::Serial),&Ok(settings.clone()));
-        assert!(e.dirty()); assert_eq!(e.avr_pending,Some(3));
-        e.finish_avr(3,Some(&a),Some(crate::Transport::Serial),&Err("ACK lost".into()));
-        assert!(e.dirty() && e.avr.as_ref().unwrap().conflict); assert!(e.avr_pending.is_none());
-        e.discard(); assert!(!e.dirty());
-        e.avr_pending=Some(4);
-        e.finish_avr(4,Some(&b),Some(crate::Transport::Serial),&Ok(settings));
+        e.avr.as_mut().unwrap().value.threshold = 700;
+        assert!(e.dirty());
+        e.avr_pending = Some(3);
+        e.finish_avr(
+            2,
+            Some(&a),
+            Some(crate::Transport::Serial),
+            &Ok(settings.clone()),
+        );
+        assert!(e.dirty());
+        assert_eq!(e.avr_pending, Some(3));
+        e.finish_avr(
+            3,
+            Some(&a),
+            Some(crate::Transport::Serial),
+            &Err("ACK lost".into()),
+        );
+        assert!(e.dirty() && e.avr.as_ref().unwrap().conflict);
+        assert!(e.avr_pending.is_none());
+        e.discard();
+        assert!(!e.dirty());
+        e.avr_pending = Some(4);
+        e.finish_avr(4, Some(&b), Some(crate::Transport::Serial), &Ok(settings));
         assert!(e.avr.is_none() && e.avr_owner.is_none());
     }
     fn network() -> Network {
@@ -724,22 +981,44 @@ mod tests {
             websocket_path: "/controller".into(),
             websocket_token_set: false,
             telemetry_seconds: 30,
-            ntfy_enabled:None,ntfy_host:None,ntfy_topic:None,ntfy_token_set:None,
+            ntfy_enabled: None,
+            ntfy_host: None,
+            ntfy_topic: None,
+            ntfy_token_set: None,
         }
     }
     #[test]
     fn ntfy_opt_in_validation_secret_presence_and_optional_support() {
-        let mut c=cloud();let keep=SecretEdit::default();
-        assert!(!Write::cloud(1,&c,&keep,&keep,&keep).unwrap().form.iter().any(|(k,_)|k.starts_with("ntfy")));
-        c.ntfy_enabled=Some(false);c.ntfy_host=Some("ntfy.sh".into());
-        c.ntfy_topic=Some("fixture-private".into());c.ntfy_token_set=Some(false);
-        c.validate().unwrap();c.ntfy_enabled=Some(true);
-        let token=SecretEdit{mode:SecretMode::Replace,value:"tk_fixture".into()};
-        let w=Write::cloud(1,&c,&keep,&keep,&token).unwrap();
-        assert!(w.form.contains(&("ntfy_enabled".into(),"true".into())));
-        assert!(w.form.contains(&("ntfy_token".into(),"tk_fixture".into())));
-        let Expected::Cloud(saved)=w.expected else {panic!()};assert_eq!(saved.ntfy_token_set,Some(true));
-        for topic in ["","bad/path","bad\r\nheader"] {c.ntfy_topic=Some(topic.into());assert!(c.validate().is_err());}
+        let mut c = cloud();
+        let keep = SecretEdit::default();
+        assert!(
+            !Write::cloud(1, &c, &keep, &keep, &keep)
+                .unwrap()
+                .form
+                .iter()
+                .any(|(k, _)| k.starts_with("ntfy"))
+        );
+        c.ntfy_enabled = Some(false);
+        c.ntfy_host = Some("ntfy.sh".into());
+        c.ntfy_topic = Some("fixture-private".into());
+        c.ntfy_token_set = Some(false);
+        c.validate().unwrap();
+        c.ntfy_enabled = Some(true);
+        let token = SecretEdit {
+            mode: SecretMode::Replace,
+            value: "tk_fixture".into(),
+        };
+        let w = Write::cloud(1, &c, &keep, &keep, &token).unwrap();
+        assert!(w.form.contains(&("ntfy_enabled".into(), "true".into())));
+        assert!(w.form.contains(&("ntfy_token".into(), "tk_fixture".into())));
+        let Expected::Cloud(saved) = w.expected else {
+            panic!()
+        };
+        assert_eq!(saved.ntfy_token_set, Some(true));
+        for topic in ["", "bad/path", "bad\r\nheader"] {
+            c.ntfy_topic = Some(topic.into());
+            assert!(c.validate().is_err());
+        }
     }
     #[test]
     fn missing_required_fields_are_not_defaults() {
@@ -767,7 +1046,13 @@ mod tests {
     fn network_bounds_and_explicit_open_choice() {
         let mut n = network();
         assert!(Write::network(1, &n, "", false).is_ok());
-        assert!(!Write::network(1, &n, "", false).unwrap().form.iter().any(|(k,_)| k == "password"));
+        assert!(
+            !Write::network(1, &n, "", false)
+                .unwrap()
+                .form
+                .iter()
+                .any(|(k, _)| k == "password")
+        );
         assert!(Write::network(1, &n, "", true).is_ok());
         assert!(Write::network(1, &n, "fixture-pass", false).is_ok());
         n.ap_enabled = false;
@@ -779,24 +1064,50 @@ mod tests {
     }
     #[test]
     fn optional_addressing_preserves_unknown_and_validates_static_profile() {
-        let old: Network = serde_json::from_value(serde_json::json!({"station_enabled":true,"ap_enabled":true,"station_ssid":"Fixture"})).unwrap();
-        assert!(!old.addressing.observed()); assert!(old.validate().is_ok());
-        assert!(!serde_json::to_value(&old).unwrap().as_object().unwrap().contains_key("dhcp"));
+        let old: Network = serde_json::from_value(
+            serde_json::json!({"station_enabled":true,"ap_enabled":true,"station_ssid":"Fixture"}),
+        )
+        .unwrap();
+        assert!(!old.addressing.observed());
+        assert!(old.validate().is_ok());
+        assert!(
+            !serde_json::to_value(&old)
+                .unwrap()
+                .as_object()
+                .unwrap()
+                .contains_key("dhcp")
+        );
         let mut current = network();
-        current.addressing = Addressing {dhcp:Some(false),address:Some("192.168.7.8".into()),gateway:Some("192.168.7.1".into()),
-            subnet:Some("255.255.255.0".into()),dns1:Some(String::new()),dns2:Some(String::new())};
-        let write = Write::network(1,&current,"",false).unwrap();
-        assert!(write.form.contains(&("dns1".into(),"0.0.0.0".into())));
-        current.addressing.subnet=Some("255.0.255.0".into()); assert!(current.validate().is_err());
+        current.addressing = Addressing {
+            dhcp: Some(false),
+            address: Some("192.168.7.8".into()),
+            gateway: Some("192.168.7.1".into()),
+            subnet: Some("255.255.255.0".into()),
+            dns1: Some(String::new()),
+            dns2: Some(String::new()),
+        };
+        let write = Write::network(1, &current, "", false).unwrap();
+        assert!(write.form.contains(&("dns1".into(), "0.0.0.0".into())));
+        current.addressing.subnet = Some("255.0.255.0".into());
+        assert!(current.validate().is_err());
     }
     #[test]
     fn secret_keep_never_silently_turns_a_new_ssid_into_open_network() {
-        let mut editor = Editor {network:Some(Draft::new(network())),..Default::default()};
+        let mut editor = Editor {
+            network: Some(Draft::new(network())),
+            ..Default::default()
+        };
         assert!(editor.network_write(1).is_ok());
         editor.network.as_mut().unwrap().value.station_ssid = "Other network".into();
         assert!(editor.network_write(1).is_err());
-        editor.open_network=true;
-        assert!(editor.network_write(1).unwrap().form.contains(&("password".into(),String::new())));
+        editor.open_network = true;
+        assert!(
+            editor
+                .network_write(1)
+                .unwrap()
+                .form
+                .contains(&("password".into(), String::new()))
+        );
     }
     #[test]
     fn public_readback_cannot_confirm_different_configuration() {
@@ -826,8 +1137,14 @@ mod tests {
     }
     #[test]
     fn all_cloud_fields_and_secret_presence_are_verified() {
-        let write =
-            Write::cloud(2, &cloud(), &SecretEdit::default(), &SecretEdit::default(), &SecretEdit::default()).unwrap();
+        let write = Write::cloud(
+            2,
+            &cloud(),
+            &SecretEdit::default(),
+            &SecretEdit::default(),
+            &SecretEdit::default(),
+        )
+        .unwrap();
         assert!(
             write
                 .verify_readback(&serde_json::to_value(cloud()).unwrap())

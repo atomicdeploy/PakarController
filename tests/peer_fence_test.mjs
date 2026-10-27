@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const access=read('firmware/esp8266/src/WebAccess.h');
+const access=read('firmware/esp/src/WebAccess.h');
 assert.ok(access.indexOf('if (!allowed(request))') < access.indexOf('if (!peerAllowed(request))'));
 assert.match(access,/peer_changed.*accepted/);
 assert.match(access,/PeerFence::accepts/);
 const admission = access.slice(access.indexOf('bool peerAllowed('),access.indexOf('bool allowed('));
 assert.doesNotMatch(admission,/HTTP_GET|HTTP_HEAD|request->method/,
   'Pinned GET/HEAD are not exempt: ISP probe affects hardware and readback is boot-bound');
-const firmware=read('firmware/esp8266/esp8266.ino');
+const firmware=read('firmware/esp/application.ino');
 assert.match(firmware,/webAccess.configurePeerFence\(pcBoardId,\s*pcBootId,\s*hostname\)/,
   'Peer fences keep exact board/boot identity while HTTP identity receives the configured hostname');
 assert.doesNotMatch(firmware,/webAccess.configurePeerFence\(hostname,/,
@@ -64,9 +64,12 @@ assert.match(native,/if self\.command_route\(\) == Some\(Transport::WiFi\)[\s\S]
 function checkRemoteObservation(source) {
   const owner=source.indexOf('let Some(event) = current_event(event, &self.endpoint(), &self.serial_port)');
   const scoped=source.indexOf('Event::ForScope(scope, inner) if scope.current() => *inner',owner);
-  const network=source.indexOf('self.device_settings.remote_job=maintenance::parse_job(s.remote_firmware.clone()).ok()',scoped);
-  const usb=source.indexOf('self.device_settings.remote_job=maintenance::parse_job(snapshot.status.remote_firmware.clone()).ok()',network);
-  assert.ok(owner>=0 && scoped>owner && network>scoped && usb>network,
+  const compact=source.replace(/\s+/g,'');
+  const compactOwner=compact.indexOf('letSome(event)=current_event(event,&self.endpoint(),&self.serial_port)');
+  const compactScoped=compact.indexOf('Event::ForScope(scope,inner)ifscope.current()=>*inner',compactOwner);
+  const network=compact.indexOf('self.device_settings.remote_job=maintenance::parse_job(s.remote_firmware.clone()).ok()',compactScoped);
+  const usb=compact.indexOf('self.device_settings.remote_job=maintenance::parse_job(snapshot.status.remote_firmware.clone()).ok()',network);
+  assert.ok(owner>=0 && scoped>owner && compactOwner>=0 && compactScoped>compactOwner && network>compactScoped && usb>network,
     'Remote progress must follow selected route/scope ownership on both transports');
   assert.doesNotMatch(source,/self\.device_settings\.page\s*==\s*9[\s\S]{0,700}Operation::RemoteStatus/,
     'Do not restore per-page remote-job polling ahead of realtime status');

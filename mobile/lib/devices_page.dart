@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import 'device_registry.dart';
 import 'discovery.dart';
 import 'icons.dart';
+import 'cell_controls.dart';
+import 'application_artwork.dart';
+import 'dart:convert';
+
 import 'api.dart';
 import 'workspace_widgets.dart';
 import 'ble_transport.dart';
 import 'usb_transport.dart';
+final _discoveryFallbackArtwork = base64Decode(applicationArtworkBase64);
 
 class DeviceListEntry {
   const DeviceListEntry(
@@ -738,7 +743,12 @@ class _DevicesPageState extends State<DevicesPage> {
                     horizontal: 16,
                     vertical: 8,
                   ),
-                  leading: Icon(
+                  leading: entry.peer.application?.icon != null
+                      ? SizedBox(width: 40, height: 40, child: StableApplicationIcon(
+                          key: ValueKey(entry.identityKey),
+                          bytes: entry.peer.application!.icon!,
+                          fallback: _discoveryFallbackArtwork))
+                      : Icon(
                     entry.saved?.location == DeviceLocation.remote
                         ? PakarIcons.cloud
                         : PakarIcons.circuitry,

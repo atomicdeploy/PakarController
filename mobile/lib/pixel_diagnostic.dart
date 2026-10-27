@@ -1,11 +1,14 @@
 import 'dart:typed_data';
 
 import 'models.dart';
+import 'pixel_groups.dart';
 
 /// Adapted from desktop/pixel_diagnostic.rs and pixel_packet in main.rs.
-/// PCController AddressableLeds' clear/stage/show discipline is retained: each
-/// deliberate action replaces the entire frame, never patches a stale tail.
+/// PCController AddressableLeds' stage/show discipline is retained: each
+/// deliberate action publishes a complete frame, never patches a stale tail.
+/// Capable boards compose temporary diagnostic overlays on their own scene.
 const diagnosticPixels = 480;
+const diagnosticEffects = ['solid', 'blink', 'breathe', 'rainbow'];
 int diagnosticGroupSize(DeviceStatus status) =>
     status.peer.role == 'first-wins' ? 12 : 6;
 int diagnosticPixelCount(DeviceStatus status) =>
@@ -34,6 +37,7 @@ class PixelDiagnosticObservation {
     final output = status.json['led_output'];
     final pixels = diagnosticPixelCount(status);
     final groupSize = diagnosticGroupSize(status);
+    final layout = status.pixelGroups!;
     final value = output is Map ? output['diagnostic'] : null;
     if (value is! Map) return null;
     final revision = value['revision'], index = value['index'];
@@ -43,10 +47,10 @@ class PixelDiagnosticObservation {
         revision > 0xffffffff ||
         index is! int ||
         index < 0 ||
-        index >= pixels ||
-        (count != 1 && count != groupSize) ||
-        index + (count as int) > pixels ||
-        (count == groupSize && index % groupSize != 0) ||
+        count is! int ||
+        !layout.span(index, count) ||
+        status.peer.has('pixel-group-layout') &&
+            value['group_layout_revision'] != layout.revision ||
         rgb is! int ||
         rgb < 0 ||
         rgb > 0xffffff ||
@@ -55,13 +59,50 @@ class PixelDiagnosticObservation {
         (value['active'] == true && revision == 0)) {
       return null;
     }
+    final extended =
+        value.containsKey('effect') || value.containsKey('composite');
+    final probe = PixelProbe(
+      index: index,
+      group: count > 1,
+      rgb: rgb,
+      pixels: pixels,
+      groupSize: groupSize,
+      layout: status.peer.has('pixel-group-layout') ? layout : null,
+      effect: extended && value['effect'] is String
+          ? value['effect'] as String
+          : 'solid',
+      overlay: value['composite'] == 'overlay',
+      periodMs: extended && value['period_ms'] is int
+          ? value['period_ms'] as int
+          : 1000,
+      dutyPercent: extended && value['duty_percent'] is int
+          ? value['duty_percent'] as int
+          : 50,
+      minBrightness: extended && value['min_brightness'] is int
+          ? value['min_brightness'] as int
+          : 0,
+      maxBrightness: extended && value['max_brightness'] is int
+          ? value['max_brightness'] as int
+          : 255,
+      enabled: !extended || value['enabled'] == true,
+    );
+    if (!probe.valid ||
+        extended &&
+            (value['effect'] is! String ||
+                !['clear', 'overlay'].contains(value['composite']) ||
+                value['period_ms'] is! int ||
+                value['duty_percent'] is! int ||
+                value['min_brightness'] is! int ||
+                value['max_brightness'] is! int ||
+                value['enabled'] is! bool)) {
+      return null;
+    }
     return PixelDiagnosticObservation(
       status.json['board_id'] as String,
       status.json['boot_id'] as String,
       revision,
       value['active'] as bool,
-      PixelProbe(index: index, group: count == groupSize, rgb: rgb,
-          pixels: pixels, groupSize: groupSize),
+      probe,
       value['off'] as bool,
     );
   }
@@ -69,8 +110,10 @@ class PixelDiagnosticObservation {
   String get label => !active
       ? 'Board diagnostic inactive'
       : off
-      ? 'Board reports: all ${probe.pixels} pixels off'
-      : 'Board reports: ${probe.range} · #${probe.hex}';
+      ? probe.overlay
+            ? 'Board reports: ${probe.range} masked off'
+            : 'Board reports: all ${probe.pixels} pixels off'
+      : 'Board reports: ${probe.range} · #${probe.hex}${probe.extended ? ' · ${probe.effectLabel}${probe.overlay ? ' · overlay' : ''}' : ''}';
 }
 
 /// Cursor/colour are user-owned workspace state, not a claim about board output.
@@ -82,6 +125,26 @@ class PixelDiagnosticWorkspace {
       group: saved['group'] == true,
       rgb: rgb is int && rgb >= 0 && rgb <= 0xffffff ? rgb : 0xffffff,
     );
+    int bounded(String key, int minimum, int maximum, int fallback) {
+      final value = saved[key];
+      return value is int && value >= minimum && value <= maximum
+          ? value
+          : fallback;
+    }
+
+    final candidate = _probe.copyWith(
+      effect: diagnosticEffects.contains(saved['effect'])
+          ? saved['effect'] as String
+          : 'solid',
+      overlay: saved['overlay'] == true,
+      periodMs: bounded('period_ms', 100, 10000, 1000),
+      dutyPercent: bounded('duty_percent', 1, 99, 50),
+      minBrightness: bounded('min_brightness', 0, 255, 0),
+      maxBrightness: bounded('max_brightness', 0, 255, 255),
+    );
+    _probe = candidate.valid
+        ? candidate
+        : candidate.copyWith(minBrightness: 0, maxBrightness: 255);
     final text = saved['position'];
     _position = text is String && text.length <= 8
         ? text
@@ -94,12 +157,30 @@ class PixelDiagnosticWorkspace {
   PixelProbe _probe = const PixelProbe();
   PixelDiagnosticObservation? observation;
   bool observe(DeviceStatus status) {
+    var layoutChanged = false;
     if (supportsPixelDiagnostic(status)) {
       final pixels = diagnosticPixelCount(status);
       final groupSize = diagnosticGroupSize(status);
-      if (_probe.pixels != pixels || _probe.groupSize != groupSize) {
-        _probe = PixelProbe(index: _probe.index.clamp(0, pixels - 1),
-            group: _probe.group, rgb: _probe.rgb, pixels: pixels, groupSize: groupSize);
+      final layout = status.peer.has('pixel-group-layout')
+          ? status.pixelGroups
+          : null;
+      if (_probe.pixels != pixels ||
+          _probe.groupSize != groupSize ||
+          layout != null && _probe.layout == null ||
+          layout?.sameAs(
+                _probe.layout ?? PixelGroupLayout.defaults(keys: pixels == 216),
+              ) ==
+              false ||
+          layout == null && _probe.layout != null) {
+        _probe = _probe.copyWith(
+          index: _probe.index.clamp(0, (layout?.usedPixels ?? pixels) - 1),
+          pixels: pixels,
+          groupSize: groupSize,
+          layout: layout,
+          clearLayout: layout == null,
+        );
+        observation = null;
+        layoutChanged = true;
         _position = '${_probe.first + 1}';
       }
     }
@@ -123,12 +204,18 @@ class PixelDiagnosticWorkspace {
             old.board == next.board &&
             old.boot == next.boot &&
             next.revision <= old.revision)) {
-      if (retired) notifyListeners();
-      return retired;
+      if (retired || layoutChanged) notifyListeners();
+      return retired || layoutChanged;
     }
     observation = next;
     if (next.active && !next.off) {
-      _probe = next.probe;
+      // A one-pixel group has the same wire span as a single-pixel command.
+      // Retain the user's group-navigation mode for that ambiguous observation.
+      _probe = next.probe.copyWith(
+        group:
+            next.probe.group ||
+            _probe.group && next.probe.currentGroupSize == 1,
+      );
       _position = '${_probe.first + 1}';
     }
     notifyListeners();
@@ -165,10 +252,7 @@ class PixelDiagnosticWorkspace {
 
   PixelProbe get probe => _probe;
   set probe(PixelProbe value) {
-    if (!value.valid ||
-        (value.index == _probe.index &&
-            value.group == _probe.group &&
-            value.rgb == _probe.rgb)) {
+    if (!value.valid || value.sameAs(_probe)) {
       return;
     }
     _probe = value;
@@ -182,12 +266,21 @@ class PixelDiagnosticWorkspace {
     'rgb': probe.rgb,
     'position': position,
     'vertical': vertical,
+    if (probe.extended) ...{
+      'effect': probe.effect,
+      'overlay': probe.overlay,
+      'period_ms': probe.periodMs,
+      'duty_percent': probe.dutyPercent,
+      'min_brightness': probe.minBrightness,
+      'max_brightness': probe.maxBrightness,
+    },
   };
 }
 
 bool supportsPixelDiagnostic(DeviceStatus? status) =>
     status != null &&
     status.json['pixels'] == diagnosticPixelCount(status) &&
+    status.pixelGroups != null &&
     status.peer.has('leds') &&
     (status.peer.has('streaming') || status.peer.has('pixel-diagnostic')) &&
     status.json['board_id'] is String &&
@@ -196,27 +289,260 @@ bool supportsPixelDiagnostic(DeviceStatus? status) =>
     (status.json['boot_id'] as String).isNotEmpty;
 
 class PixelProbe {
-  const PixelProbe({this.index = 0, this.group = false, this.rgb = 0xffffff,
-    this.pixels = diagnosticPixels, this.groupSize = 6});
-  final int index, rgb, pixels, groupSize;
-  final bool group;
-  PixelProbe copyWith({int? index, bool? group, int? rgb}) =>
-      PixelProbe(index: index ?? this.index, group: group ?? this.group,
-          rgb: rgb ?? this.rgb, pixels: pixels, groupSize: groupSize);
-  int get count => group ? groupSize : 1;
-  int get first => group ? index ~/ groupSize * groupSize : index;
+  const PixelProbe({
+    this.index = 0,
+    this.group = false,
+    this.rgb = 0xffffff,
+    this.pixels = diagnosticPixels,
+    this.groupSize = 6,
+    this.layout,
+    this.effect = 'solid',
+    this.overlay = false,
+    this.periodMs = 1000,
+    this.dutyPercent = 50,
+    this.minBrightness = 0,
+    this.maxBrightness = 255,
+    this.enabled = true,
+  });
+  factory PixelProbe.forPhysicalGroup(
+    DeviceStatus status, {
+    required int physicalGroup,
+    bool group = true,
+    int rgb = 0xffffff,
+  }) {
+    final layout = status.pixelGroups;
+    if (layout == null ||
+        physicalGroup < 1 ||
+        physicalGroup > layout.groupCount) {
+      throw const FormatException('Physical group is unavailable');
+    }
+    final result = PixelProbe(
+      index: layout.start(physicalGroup),
+      group: group,
+      rgb: rgb,
+      pixels: diagnosticPixelCount(status),
+      groupSize: diagnosticGroupSize(status),
+      layout: status.peer.has('pixel-group-layout') ? layout : null,
+    );
+    if (!supportsPixelDiagnostic(status) || !result.valid) {
+      throw const FormatException('Physical group is unavailable');
+    }
+    return result;
+  }
+  factory PixelProbe.fromCommandFields(
+    DeviceStatus status,
+    Map<String, String> values,
+  ) {
+    if (values.containsKey('composite') &&
+            !status.peer.has('pixel-diagnostic-overlay') ||
+        [
+              'effect',
+              'period_ms',
+              'duty_percent',
+              'min_brightness',
+              'max_brightness',
+              'enabled',
+            ].any(values.containsKey) &&
+            !status.peer.has('pixel-diagnostic-effects')) {
+      throw const FormatException(
+        'Diagnostic options are not advertised by this board',
+      );
+    }
+    int number(String key, int fallback) => values.containsKey(key)
+        ? int.tryParse(values[key]!) ?? (throw FormatException('Invalid $key'))
+        : fallback;
+    bool boolean(String key, bool fallback) => values.containsKey(key)
+        ? switch (values[key]) {
+            'true' => true,
+            'false' => false,
+            _ => throw FormatException('Invalid $key'),
+          }
+        : fallback;
+    final size = diagnosticGroupSize(status),
+        count = number('count', 1),
+        index = number('index', 0);
+    final layout = status.pixelGroups;
+    if (layout == null ||
+        !layout.span(index, count) ||
+        status.peer.has('pixel-group-layout') &&
+            number('group_layout_revision', -1) != layout.revision ||
+        values.containsKey('composite') &&
+            !['clear', 'overlay'].contains(values['composite'])) {
+      throw const FormatException('Invalid diagnostic range or composition');
+    }
+    final result = PixelProbe(
+      index: index,
+      group: count > 1,
+      rgb: number('rgb', 0xffffff),
+      pixels: diagnosticPixelCount(status),
+      groupSize: size,
+      layout: status.peer.has('pixel-group-layout') ? layout : null,
+      effect: values['effect'] ?? 'solid',
+      overlay: values['composite'] == 'overlay',
+      periodMs: number('period_ms', 1000),
+      dutyPercent: number('duty_percent', 50),
+      minBrightness: number('min_brightness', 0),
+      maxBrightness: number('max_brightness', 255),
+      enabled: boolean('enabled', true),
+    );
+    final problem = result.unavailableReason(status);
+    if (problem != null) throw FormatException(problem);
+    return result;
+  }
+  final int index,
+      rgb,
+      pixels,
+      groupSize,
+      periodMs,
+      dutyPercent,
+      minBrightness,
+      maxBrightness;
+  final bool group, overlay, enabled;
+  final String effect;
+  final PixelGroupLayout? layout;
+  PixelProbe copyWith({
+    int? index,
+    bool? group,
+    int? rgb,
+    int? pixels,
+    int? groupSize,
+    PixelGroupLayout? layout,
+    bool clearLayout = false,
+    String? effect,
+    bool? overlay,
+    int? periodMs,
+    int? dutyPercent,
+    int? minBrightness,
+    int? maxBrightness,
+    bool? enabled,
+  }) => PixelProbe(
+    index: index ?? this.index,
+    group: group ?? this.group,
+    rgb: rgb ?? this.rgb,
+    pixels: pixels ?? this.pixels,
+    groupSize: groupSize ?? this.groupSize,
+    layout: clearLayout ? null : layout ?? this.layout,
+    effect: effect ?? this.effect,
+    overlay: overlay ?? this.overlay,
+    periodMs: periodMs ?? this.periodMs,
+    dutyPercent: dutyPercent ?? this.dutyPercent,
+    minBrightness: minBrightness ?? this.minBrightness,
+    maxBrightness: maxBrightness ?? this.maxBrightness,
+    enabled: enabled ?? this.enabled,
+  );
+  bool sameAs(PixelProbe other) =>
+      index == other.index &&
+      group == other.group &&
+      rgb == other.rgb &&
+      pixels == other.pixels &&
+      groupSize == other.groupSize &&
+      (layout == null && other.layout == null ||
+          layout != null &&
+              other.layout != null &&
+              layout!.sameAs(other.layout!)) &&
+      effect == other.effect &&
+      overlay == other.overlay &&
+      periodMs == other.periodMs &&
+      dutyPercent == other.dutyPercent &&
+      minBrightness == other.minBrightness &&
+      maxBrightness == other.maxBrightness &&
+      enabled == other.enabled;
+  bool get effectOptions =>
+      effect != 'solid' ||
+      periodMs != 1000 ||
+      dutyPercent != 50 ||
+      minBrightness != 0 ||
+      maxBrightness != 255 ||
+      !enabled;
+  bool get extended => effectOptions || overlay;
+  String get effectLabel =>
+      const {
+        'solid': 'Solid',
+        'blink': 'Flash',
+        'breathe': 'Breathing',
+        'rainbow': 'Rainbow',
+      }[effect] ??
+      effect;
+  String? unavailableReason(DeviceStatus? status) {
+    if (!valid) return 'Invalid pixel diagnostic values.';
+    if (status != null &&
+        status.peer.has('pixel-group-layout') &&
+        (layout == null || status.pixelGroups?.sameAs(layout!) != true)) {
+      return 'Pixel group layout changed or is unavailable. Select the current group again.';
+    }
+    if (effectOptions && status?.peer.has('pixel-diagnostic-effects') != true) {
+      return 'This board does not support diagnostic effects. Choose Solid with default timing, or update its firmware.';
+    }
+    if (overlay && status?.peer.has('pixel-diagnostic-overlay') != true) {
+      return 'This board does not support an overlay mask. Choose Solo, or update its firmware.';
+    }
+    return null;
+  }
+
+  Map<String, String> commandFields(DeviceStatus status, {bool off = false}) {
+    final problem = unavailableReason(status);
+    if (problem != null) throw FormatException(problem);
+    return {
+      'index': '$first',
+      'count': '$count',
+      'rgb': '$rgb',
+      'off': '$off',
+      if (status.peer.has('pixel-group-layout'))
+        'group_layout_revision': '${layout!.revision}',
+      if (extended) ...{
+        if (status.peer.has('pixel-diagnostic-effects')) ...{
+          'effect': effect,
+          'period_ms': '$periodMs',
+          'duty_percent': '$dutyPercent',
+          'min_brightness': '$minBrightness',
+          'max_brightness': '$maxBrightness',
+          'enabled': '$enabled',
+        },
+        if (status.peer.has('pixel-diagnostic-overlay'))
+          'composite': overlay ? 'overlay' : 'clear',
+      },
+    };
+  }
+
+  int get physicalGroup => layout?.groupAt(index) ?? index ~/ groupSize + 1;
+  int get groupFirst =>
+      layout?.start(physicalGroup) ?? index ~/ groupSize * groupSize;
+  int get currentGroupSize => layout?.count(physicalGroup) ?? groupSize;
+  int get groupCount => layout?.groupCount ?? pixels ~/ groupSize;
+  int get limit => layout?.usedPixels ?? pixels;
+  int get count => group ? currentGroupSize : 1;
+  int get first => group ? groupFirst : index;
   int get last => first + count - 1;
   bool get valid =>
       (pixels == 480 && groupSize == 6 || pixels == 216 && groupSize == 12) &&
-      index >= 0 && index < pixels && last < pixels && rgb >= 0 && rgb <= 0xffffff;
+      (layout == null ||
+          layout!.capacity == pixels && layout!.defaultCount == groupSize) &&
+      index >= 0 &&
+      index < limit &&
+      last < limit &&
+      rgb >= 0 &&
+      rgb <= 0xffffff &&
+      diagnosticEffects.contains(effect) &&
+      periodMs >= 100 &&
+      periodMs <= 10000 &&
+      dutyPercent >= 1 &&
+      dutyPercent <= 99 &&
+      minBrightness >= 0 &&
+      minBrightness <= maxBrightness &&
+      maxBrightness <= 255;
   bool get canPrevious => first > 0;
-  bool get canNext => last < pixels - 1;
+  bool get canNext => last < limit - 1;
   PixelProbe move(int direction) {
     if (!valid || ![-1, 1].contains(direction)) {
       throw const FormatException('Invalid pixel move');
     }
-    final next = first + direction * count;
-    if (next < 0 || next + count > pixels) {
+    final nextGroup = physicalGroup + direction;
+    final next = group && layout != null
+        ? nextGroup < 1 || nextGroup > groupCount
+              ? -1
+              : layout!.start(nextGroup)
+        : first + direction * count;
+    if (next < 0 || next >= limit) {
       throw const FormatException('End of strip');
     }
     return copyWith(index: next);
@@ -229,6 +555,11 @@ class PixelProbe {
     if (!valid) {
       throw FormatException('Pixel outside 1–$pixels or invalid RGB');
     }
+    if (extended) {
+      throw const FormatException(
+        'Diagnostic effects and overlays must be rendered by the board; no raw frame generated',
+      );
+    }
     final bytes = Uint8List(pixels * 3);
     if (!off) {
       for (var pixel = first; pixel <= last; pixel++) {
@@ -239,6 +570,31 @@ class PixelProbe {
     }
     return bytes;
   }
+}
+
+/// Animated/overlay output has no single expected RGB frame. Confirm the exact
+/// accepted diagnostic specification and its published revision instead, never
+/// render animation in the client or infer physical output from an ACK.
+bool matchesDiagnosticObservation(
+  DeviceStatus actual,
+  PixelProbe requested, {
+  bool off = false,
+  int? afterRevision,
+}) {
+  final observed = PixelDiagnosticObservation.read(actual);
+  if (observed == null ||
+      observed.active != requested.enabled ||
+      observed.off != off ||
+      observed.probe.first != requested.first ||
+      observed.probe.count != requested.count ||
+      !observed.probe
+          .copyWith(index: requested.index, group: requested.group)
+          .sameAs(requested)) {
+    return false;
+  }
+  if (afterRevision != null && observed.revision <= afterRevision) return false;
+  final frame = actual.json['pixel_frame'];
+  return frame is Map && frame['revision'] is int && frame['pending'] == false;
 }
 
 List<Uint8List> diagnosticPackets(Uint8List frame) {
@@ -253,13 +609,19 @@ List<Uint8List> diagnosticPackets(Uint8List frame) {
         ..[7] = offset >> 8
         ..[8] = (frame.length ~/ 3 - offset).clamp(0, 240)
         ..[9] = offset + 240 >= frame.length ~/ 3 ? 1 : 0
-        ..setRange(10, 10 + (frame.length ~/ 3 - offset).clamp(0, 240) * 3, frame, offset * 3),
+        ..setRange(
+          10,
+          10 + (frame.length ~/ 3 - offset).clamp(0, 240) * 3,
+          frame,
+          offset * 3,
+        ),
   ];
 }
 
 bool diagnosticReady(DeviceStatus status) =>
     supportsPixelDiagnostic(status) &&
-    (status.mode == 'cell' || status.peer.role == 'first-wins' && status.mode == 'first-wins') &&
+    (status.mode == 'cell' ||
+        status.peer.role == 'first-wins' && status.mode == 'first-wins') &&
     status.effect == 'none' &&
     status.ledOutputEnabled == true &&
     status.ledOutputMode == 'effects' &&

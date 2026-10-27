@@ -109,7 +109,7 @@ pub fn custom_menu_row(
     let response = crate::ui::dropdown::choice(ui, selected, label, Some(color));
     let field = egui::Rect::from_center_size(
         egui::pos2(response.rect.right() - 70.0, response.rect.center().y),
-        egui::vec2(124.0, 28.0),
+        egui::vec2(124.0, (response.rect.height() - 4.0).max(1.0)),
     );
     ui.painter().rect(
         field,
@@ -159,8 +159,8 @@ pub fn palette_popup(
             }
             ui.separator();
             let field = ui.add_sized(
-                [ui.available_width(), 28.0],
-                crate::ui::dialog::singleline_text_edit(&mut draft)
+                [ui.available_width(), crate::ui::control_density::height(ui)],
+                crate::ui::dialog::singleline_text_edit(ui, &mut draft)
                     .char_limit(7)
                     .hint_text("#RRGGBB"),
             );
@@ -196,7 +196,10 @@ pub fn palette_popup(
 
 /// Compact RGB-valued control with the same swatches as HEX fields.
 pub fn color_button_srgba(ui: &mut egui::Ui, color: &mut egui::Color32) -> egui::Response {
-    let (rect, mut response) = ui.allocate_exact_size(egui::vec2(28.0, 28.0), egui::Sense::click());
+    let (rect, mut response) = ui.allocate_exact_size(
+        egui::Vec2::splat(crate::ui::control_density::height(ui)),
+        egui::Sense::click(),
+    );
     ui.painter().circle_filled(rect.center(), 8.0, *color);
     ui.painter().circle_stroke(
         rect.center(),
@@ -299,15 +302,15 @@ pub fn color_field(
 ) -> egui::Response {
     let id = ui.next_auto_id().with("rgb-color-field");
     let mut response = ui.add_sized(
-        [width, 28.0],
-        crate::ui::dialog::singleline_text_edit(hex)
+        [width, crate::ui::control_density::height(ui)],
+        crate::ui::dialog::singleline_text_edit(ui, hex)
             .id(id)
             .desired_width(width)
             .margin(egui::Margin {
                 left: 30,
                 right: 6,
-                top: 5,
-                bottom: 5,
+                top: 0,
+                bottom: 0,
             })
             .char_limit(7)
             .hint_text("#RRGGBB"),

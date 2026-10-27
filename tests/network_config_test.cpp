@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cstddef>
-#include "../firmware/esp8266/src/NetworkConfig.h"
-#include "../firmware/esp8266/src/ConfigurationChanges.h"
+#include "../firmware/esp/src/NetworkConfig.h"
+#include "../firmware/esp/src/ConfigurationChanges.h"
 NetworkFixtureWiFi WiFi;
 
 namespace {
@@ -53,6 +53,25 @@ int main() {
   assert(!settings.setStation(String(33,'s'),"fixture-passphrase",false));
   assert(!settings.setStation("draft",String(64,'p'),false));
   assert(String(settings.stationSsid())=="Fixture WiFi");
+  const auto savedJournal=changes();
+  fs::FS profileFs;NetworkConfigStore profileDraft;assert(profileDraft.begin(profileFs));
+  assert(profileDraft.setStation("Fixture WiFi","fixture-passphrase",true));
+  assert(profileDraft.setFallback(0,"Fallback","fallback-pass"));
+  assert(!profileDraft.setFallback(1,"Fallback","fallback-pass"));
+  assert(!profileDraft.setFallback(1,"Fixture WiFi","fallback-pass"));
+  assert(!profileDraft.autoSwitch());assert(profileDraft.save());
+  NetworkConfigStore profiles;assert(profiles.begin(profileFs));
+  assert(String(profiles.profileSsid(1))=="Fallback");
+  profiles.configure("test","fixture-ap-passphrase");WiFi.connection=0;
+  profiles.service(14999);assert(profiles.activeProfile()==0);
+  profiles.service(15000);assert(profiles.activeProfile()==1&&WiFi.ssidValue=="Fallback");
+  WiFi.connection=WL_CONNECTED;profiles.service(16000);profiles.service(90000);
+  assert(profiles.activeProfile()==1); // No roaming by default.
+  profiles.setAutoSwitch(true);profiles.service(90001);
+  WiFi.scanResult=1;WiFi.scannedSsid="Fixture WiFi";profiles.service(90002);
+  assert(profiles.activeProfile()==0&&WiFi.ssidValue=="Fixture WiFi");
+  WiFi.connection=0;
+  changes()=savedJournal;
   assert(!settings.setAddressing(false,"192.168.10.7","192.168.11.1","255.255.255.0"));
   assert(!settings.setAddressing(false,"192.168.10.0","192.168.10.1","255.255.255.0"));
   assert(!settings.setAddressing(false,"192.168.10.255","192.168.10.1","255.255.255.0"));

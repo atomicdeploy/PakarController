@@ -255,12 +255,22 @@ P::Error PcControllerRuntime::dispatch(uint8_t op, uint8_t sequence,
 #endif
     case PC::TemperatureList: case PC::PwmSet: case PC::PwmAllOff: case PC::PwmGet:
     case PC::StatusRgb: case PC::StatusEffect: case PC::StatusProfileGet: case PC::StatusProfileSet:
-    case PC::AddressableLed: case PC::RadioTransmit: case PC::RadioLearnStart:
+    case PC::AddressableLed: case PC::RadioLearnStart:
     case PC::RadioLearnCancel: case PC::RadioLearnClear: case PC::RadioLearnList:
     case PC::RadioLearnRemove: case PC::RadioLearnReplace:
     case PC::RelaySet: case PC::RelaySide: case PC::RelayAllOff: case PC::RelayTest:
     case PC::I2cTransfer:
       return P::kHardwareUnavailable;
+    case PC::RadioTransmit:
+#if PAKAR_PC_RF
+      {
+        const auto error = hardware_.execute(op, p, n, now);
+        if (error != P::kNoError) return error;
+        break;
+      }
+#else
+      return P::kHardwareUnavailable;
+#endif
     default: return P::kUnsupported;
   }
   hardware_.showMenu(page_, menuActive_, running_);

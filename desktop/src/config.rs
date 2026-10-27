@@ -33,6 +33,33 @@ pub enum AppDirection {
     Rtl,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UiControlDensity {
+    #[default]
+    Compact,
+    Regular,
+    Comfortable,
+    Spacious,
+}
+impl UiControlDensity {
+    pub const ALL: [Self; 4] = [
+        Self::Compact,
+        Self::Regular,
+        Self::Comfortable,
+        Self::Spacious,
+    ];
+
+    pub const fn base_height(self) -> f32 {
+        match self {
+            Self::Compact => 24.0,
+            Self::Regular => 28.0,
+            Self::Comfortable => 32.0,
+            Self::Spacious => 36.0,
+        }
+    }
+}
+
 // Adapted from actual Pealayer config::parse_language_tag/resolve_language/
 // resolve_rtl. Keep old serialized English/Persian preferences compatible.
 pub fn parse_language_tag(value: &str) -> Option<AppLanguage> {
@@ -150,10 +177,13 @@ pub struct AppConfig {
     pub language: AppLanguage,
     pub direction: AppDirection,
     pub ui_scale: f32,
+    pub ui_control_density: UiControlDensity,
     pub single_instance: bool,
     pub close_to_tray: bool,
     pub always_on_top: bool,
     pub native_dialogs: bool,
+    pub keyboard_shortcuts_enabled: bool,
+    pub application_shortcuts: crate::application_shortcuts::ApplicationShortcuts,
     pub notifications: crate::platform::notifications::Preferences,
     pub endpoint: String,
     pub user: String,
@@ -161,8 +191,9 @@ pub struct AppConfig {
     pub connection_method: crate::connection::Method,
     pub connection_enabled: bool,
     pub auto_connect: bool,
-    pub last_network_route:Option<crate::peer_http::SavedRoute>,
+    pub last_network_route: Option<crate::peer_http::SavedRoute>,
     pub dock_layout: String,
+    pub events_auto_hide: bool,
     /// One-time recovery of layouts saved by the disconnected-workspace bug.
     pub dock_context_revision: u8,
     pub workspace_profiles: BTreeMap<String, WorkspaceProfile>,
@@ -172,6 +203,8 @@ pub struct AppConfig {
     pub additive_cell_selection: bool,
     pub animate_cells: bool,
     pub show_cell_indicators: bool,
+    /// Color the semantic lamp face; sampled per-pixel previews keep their RGB.
+    pub color_cell_backgrounds: bool,
     pub cell_order: Vec<u8>,
     pub cell_shape: crate::ui::cell_pixels::Shape,
     pub pixel_diagnostics: bool,
@@ -191,10 +224,13 @@ impl Default for AppConfig {
             language: AppLanguage::System,
             direction: AppDirection::Auto,
             ui_scale: 1.0,
+            ui_control_density: UiControlDensity::Compact,
             single_instance: true,
             close_to_tray: false,
             always_on_top: false,
             native_dialogs: true,
+            keyboard_shortcuts_enabled: true,
+            application_shortcuts: Default::default(),
             notifications: Default::default(),
             endpoint: "http://pakarcontroller".into(),
             user: "admin".into(),
@@ -202,8 +238,9 @@ impl Default for AppConfig {
             connection_method: Default::default(),
             connection_enabled: true,
             auto_connect: true,
-            last_network_route:None,
+            last_network_route: None,
             dock_layout: String::new(),
+            events_auto_hide: true,
             dock_context_revision: 0,
             workspace_profiles: BTreeMap::new(),
             native_workspaces: Default::default(),
@@ -211,6 +248,7 @@ impl Default for AppConfig {
             additive_cell_selection: false,
             animate_cells: true,
             show_cell_indicators: false,
+            color_cell_backgrounds: false,
             cell_order: (1..=80).collect(),
             cell_shape: Default::default(),
             pixel_diagnostics: false,
@@ -219,9 +257,13 @@ impl Default for AppConfig {
     }
 }
 impl AppConfig {
-    pub fn startup_connection_enabled(&self,fixture:bool)->bool {
-        if fixture{return self.connection_enabled;}
-        self.auto_connect&&(self.connection_method==crate::connection::Method::WiFi||!self.serial_port.trim().is_empty())
+    pub fn startup_connection_enabled(&self, fixture: bool) -> bool {
+        if fixture {
+            return self.connection_enabled;
+        }
+        self.auto_connect
+            && (self.connection_method == crate::connection::Method::WiFi
+                || !self.serial_port.trim().is_empty())
     }
     pub fn path() -> PathBuf {
         if let Some(path) = std::env::var_os("PAKAR_CONFIG_FILE") {
@@ -247,7 +289,9 @@ impl AppConfig {
     }
     pub fn save(&self) -> Result<(), String> {
         self.client_management.validate()?;
-        if self.bridge.enabled { self.bridge.validate()?; }
+        if self.bridge.enabled {
+            self.bridge.validate()?;
+        }
         if !self.ui_scale.is_finite()
             || self.stream_fps > crate::streaming::MAX_FPS
             || !(0.75..=2.0).contains(&self.ui_scale)
@@ -255,6 +299,7 @@ impl AppConfig {
         {
             return Err("Choose a valid accent and UI scale".into());
         }
+        self.application_shortcuts.validate()?;
         let path = Self::path();
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -327,8 +372,8 @@ pub fn apply(ctx: &eframe::egui::Context, config: &AppConfig) {
             font.size = font.size.min(13.0);
         }
         style.spacing.item_spacing = eframe::egui::vec2(8.0, 6.0);
-        style.spacing.button_padding = eframe::egui::vec2(8.0, 5.0);
-        style.spacing.interact_size.y = 28.0;
+        style.spacing.button_padding.x = 8.0;
+        crate::ui::control_density::configure(style, config.ui_control_density);
     });
     ctx.set_zoom_factor(config.ui_scale);
     crate::ui::elegance_theme::set_source_palette(ctx, config.color_palette);
@@ -345,6 +390,17 @@ pub fn apply(ctx: &eframe::egui::Context, config: &AppConfig) {
 #[cfg(test)]
 mod locale_tests {
     use super::*;
+    #[test]
+    fn cell_background_preference_is_opt_in_and_roundtrips_without_other_changes() {
+        let old: AppConfig = serde_json::from_str("{}").unwrap();
+        assert!(!old.color_cell_backgrounds);
+        let mut enabled = old.clone();
+        enabled.color_cell_backgrounds = true;
+        let mut restored: AppConfig = serde_json::from_slice(&serde_json::to_vec(&enabled).unwrap()).unwrap();
+        assert!(restored.color_cell_backgrounds);
+        restored.color_cell_backgrounds = false;
+        assert_eq!(restored, old);
+    }
     #[test]
     fn locale_tags_and_saved_preferences_remain_compatible() {
         for tag in ["fa", "fa_IR", "fa-AF", "Persian", "Farsi"] {
