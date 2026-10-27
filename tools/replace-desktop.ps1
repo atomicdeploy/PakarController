@@ -43,7 +43,10 @@ function OwnerStatus {
   $owner=Get-CimInstance Win32_Process -Filter "ProcessId=$ExpectedProcessId"
   if(-not $owner -or $owner.ExecutablePath -ine $ExecutablePath -or $owner.SessionId -ne $session){throw 'Owner PID/path/session changed'}
   AssertHash $ExecutablePath $ExpectedOldHash
-  $status=Invoke-PackageProbe $ExecutablePath '--app-status' $dir | ConvertFrom-Json
+  # The validated candidate can read larger snapshots than an older installed
+  # CLI. Still require the exact running owner/session and all draft guards.
+  AssertHash $CandidatePath $ExpectedNewHash
+  $status=Invoke-PackageProbe $CandidatePath '--app-status' $dir | ConvertFrom-Json
   if($status.process_id -ne $ExpectedProcessId -or $status.ready -ne $true -or $status.single_instance -ne $true){throw 'Expected ready single-instance IPC owner required'}
   foreach($key in @('preferences_open','preferences_dirty','mapping_open','workspaces_open')){if($status.$key -ne $false){throw "Open or unknown draft: $key"}}
   if($status.device_settings.open -ne $false -or $status.device_settings.write_pending -ne $false -or

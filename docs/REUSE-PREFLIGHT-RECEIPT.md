@@ -10193,3 +10193,53 @@ Scoped checklist published at
 https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6401982849;
 the production issue remains open. Use this exact comment ID for any follow-up
 edit, not the CLI's ambiguous last-comment selection.
+
+## 2026-10-27 keycontroller live shell/client recovery
+
+Owning issue: #29; checkpoint branch/PR: `fix/client-controls-presentations` / #27.
+Reviewed existing `PanelInventory` (adapted PCController retained peer catalog),
+Pealayer `src/platform/interop.rs` named-pipe implementation, the imported
+`package-probe-windows.ps1` and guarded desktop replacement, and the PU telemetry
+route binding. Pealayer's client also uses a 64 KiB reply buffer; copying that
+unchanged cannot accommodate Pakar's expanded device snapshots. The native reply
+budget is now bounded at 1 MiB, with a complete error response on overflow.
+Replacement uses the hash-verified candidate's reader while retaining the exact
+running PID/path/session, old/new hashes, draft and pending-operation checks.
+
+Flutter Output navigation now follows acknowledged LED capability rather than
+table geometry. The first-wins Overview shortcut opens the existing game page;
+no Table page or command authority is fabricated for a keys board. ESP telemetry
+uses its existing compact board serializer inside the aggregate; the full detail
+endpoint is unchanged. This avoids increasing its 24 KiB contiguous allocation
+on a live board whose largest free internal block was approximately 31 KiB.
+
+Focused verification: Flutter analyze and five panel inventory/widget tests;
+four native instance tests including a 180 KiB reply and oversized rejection;
+filesystem telemetry and desktop replacement source guards; PU route/hash gates;
+canonical S3, APK and native release builds. These are not physical acceptance.
+
+Actual delivery on David-ASUS:
+
+- Keycontroller identity `esp32s3-b81f3fbb0684`: original firmware downloaded and
+  SHA256 verified before OTA. Saved six-box game settings matched after the first
+  update. Telnet passed two simultaneous sessions, command/property completion,
+  history recall, TUI enter/exit and heap reads without output/settings writes.
+- Follow-up telemetry fix boot `cf6232cf6458bee3ca872fa8c38c72d3` reported AVR online
+  and valid 20468-byte telemetry. Running MD5 `3e914ba8628330c9a0619f168646fcbe`;
+  candidate SHA256 `36c7b8808caa49cbadbab6801dbcfe00b26d15b76c60b50d06f8ccc55226f1cd`.
+  OTA transfer completed; automatic ASUS roaming to the other AP interrupted the
+  updater's verification. Its identity fence correctly stopped without replay.
+  Correct-board status/telemetry were then inspected after reassociation.
+- Tablet SM-X906B / `R52T60C6V9B`: replacement APK installation succeeded, SHA256
+  `094384268de7515c536f18dbaf058a69fc2e8729e8a37e5b16d4bda8b2ce442d`.
+- Rust replacement receipt confirmed old PID 27356 -> new PID 22304, preserved
+  settings/rollback, no error. New executable SHA256
+  `035fda0342f40663686dc2614ce45ce71c4e1a871eba6a7a0d7e45ae3f64c2e0`.
+
+Remaining at this checkpoint: tablet disconnected from ADB after install, then
+ASUS's SSH tunnel stopped completing its banner handshake. Final updated-screen
+inspection, both-board switching/control acceptance and final full-image readback
+are therefore pending. ASUS's saved ledcontroller Wi-Fi profile was temporarily
+set to manual to prevent roaming during keycontroller OTA; restore its automatic
+mode when ASUS is reachable. No ledcontroller update, reset or actuation occurred.
+Do not mark the entire portable-shell/production acceptance checklist complete.

@@ -1186,7 +1186,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "final correctionPeer = (",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44"
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1"
         },
         {
           "path": "mobile/lib/pixel_correction_address.dart",
@@ -1750,7 +1750,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "selectionHasCellState(status!.json, selection, value)",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44"
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1"
         }
       ],
       "proof": [
@@ -3284,7 +3284,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
           "anchor": ": WorkspaceActivityStrip("
         },
         {
@@ -5791,7 +5791,7 @@
         },
         {
           "path": "firmware/esp/src/MaintenanceRoutes.h",
-          "sha256": "3e2ca1562541eea7218a6740c0ac9d2eba319072674fc0e0a3e86110a292adfc",
+          "sha256": "9b713fee1d69bed475354abcd39f11c4cbfd6d5ff10adc7f27beff848a64990e",
           "anchor": "e[F(\"uptime_text\")]=uptimeText"
         },
         {
@@ -8235,7 +8235,7 @@
         {
           "path": "mobile/lib/panel_inventory.dart",
           "anchor": "class PanelInventory",
-          "sha256": "3801e7700d83296997a29da253c44f2472e0b12415a25fb9350f4fd762435b2e"
+          "sha256": "f26e62bc7c5ae534546d4bcbfa1be3e75e1152e4a769d322962015bda12d5a4d"
         },
         {
           "path": "mobile/lib/ble_codec.dart",
@@ -8297,7 +8297,7 @@
         {
           "path": "mobile/test/panel_inventory_test.dart",
           "anchor": "testWidgets",
-          "sha256": "da040bcdd993c2a78185e4f5974c2be7dfd2d2447e9b0dbb5c4c98a0febff664"
+          "sha256": "b9a69a5356ccf8cdb49cb4771e0d5c952834e7c8717d7421369b5ab95c7400c8"
         },
         {
           "path": "mobile/test/read_deadline_transport_test.dart",
@@ -8393,7 +8393,7 @@
         {
           "path": "mobile/test/panel_inventory_test.dart",
           "anchor": "testWidgets",
-          "sha256": "da040bcdd993c2a78185e4f5974c2be7dfd2d2447e9b0dbb5c4c98a0febff664"
+          "sha256": "b9a69a5356ccf8cdb49cb4771e0d5c952834e7c8717d7421369b5ab95c7400c8"
         },
         {
           "path": "mobile/test/read_deadline_transport_test.dart",
@@ -8750,7 +8750,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/MaintenanceRoutes.h",
-          "sha256": "3e2ca1562541eea7218a6740c0ac9d2eba319072674fc0e0a3e86110a292adfc",
+          "sha256": "9b713fee1d69bed475354abcd39f11c4cbfd6d5ff10adc7f27beff848a64990e",
           "anchor": "bool prepareRemotePair("
         },
         {
@@ -8796,7 +8796,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/MaintenanceRoutes.h",
-          "sha256": "3e2ca1562541eea7218a6740c0ac9d2eba319072674fc0e0a3e86110a292adfc",
+          "sha256": "9b713fee1d69bed475354abcd39f11c4cbfd6d5ff10adc7f27beff848a64990e",
           "anchor": "bool prepareRemotePair("
         }
       ],
@@ -13178,7 +13178,7 @@
         },
         {
           "path": "firmware/esp/src/MaintenanceRoutes.h",
-          "sha256": "3e2ca1562541eea7218a6740c0ac9d2eba319072674fc0e0a3e86110a292adfc",
+          "sha256": "9b713fee1d69bed475354abcd39f11c4cbfd6d5ff10adc7f27beff848a64990e",
           "anchor": "internal_heap_largest_block_bytes"
         },
         {
@@ -15286,7 +15286,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
           "anchor": "api.onPeerChanged = ()"
         },
         {
@@ -18193,7 +18193,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
           "anchor": "Future<bool> _command"
         },
         {
@@ -18518,7 +18518,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -18592,7 +18592,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
           "anchor": "Future<void> _openConnection()"
         },
         {
@@ -18898,7 +18898,7 @@
         },
         {
           "path": "tools/replace-desktop.ps1",
-          "sha256": "13e5893983bf422449d0c35b94305a39bb662a1663511a3706125bb8e9fc484d",
+          "sha256": "95a7f84383869622426e97d7c21d579ce93fd5c55d2bd4607697b6b352bbe525",
           "anchor": "$reply=Invoke-PackageProbe"
         }
       ],
@@ -22584,7 +22584,7 @@
         {
           "path": "tools/replace-desktop.ps1",
           "anchor": "function OwnerStatus",
-          "sha256": "13e5893983bf422449d0c35b94305a39bb662a1663511a3706125bb8e9fc484d"
+          "sha256": "95a7f84383869622426e97d7c21d579ce93fd5c55d2bd4607697b6b352bbe525"
         },
         {
           "path": "tools/observe-desktop.ps1",
@@ -23097,7 +23097,7 @@
         },
         {
           "path": "firmware/esp/src/MaintenanceRoutes.h",
-          "sha256": "3e2ca1562541eea7218a6740c0ac9d2eba319072674fc0e0a3e86110a292adfc",
+          "sha256": "9b713fee1d69bed475354abcd39f11c4cbfd6d5ff10adc7f27beff848a64990e",
           "anchor": "if(plan.targets==RemotePolicy::Esp && !programmingLatched) return true;"
         },
         {
@@ -23336,7 +23336,7 @@
         {
           "path": "tests/filesystem_telemetry_test.mjs",
           "anchor": "cachedTelemetry(routes,main)",
-          "sha256": "fcea3053befe897b11dbf43f03420ea299dbdbfabef28935cb00c3c2e8f6ecd2"
+          "sha256": "10d66d713caf36f3807e480d945879306c45559a67ddd2165d0388e452d3d6d9"
         }
       ],
       "improvement": "Explicit inactive-slot staging with independent apply, instead of an image that cannot fit its filesystem or an upload that chooses boot before separate consent. USB provisioning continuation reread the actual AsyncOTA source/header: its automatic filesystem upload/final boot selection is not copied. New bounded transaction and erased-partition guards have native fixture proof only. UsbApiService integration is uncompiled because the existing WebUi donor gate is stale. USB firmware upload, atomic settings restore, file writes, optional cloud sync, single-pass installer integration and physical interruption acceptance remain unfinished."
@@ -24260,7 +24260,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -24436,7 +24436,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44"
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1"
         }
       ],
       "proof": [
@@ -24476,7 +24476,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44"
+          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1"
         }
       ],
       "proof": [

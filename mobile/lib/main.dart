@@ -1459,7 +1459,7 @@ class _ControlShellState extends State<ControlShell>
       ('overview', 'Overview', PakarIcons.broadcast),
       if (panelInventory.tableSelection)
         ('table', 'Table', PakarIcons.gridFour),
-      if (panelInventory.has('table')) ('output', 'Output', PakarIcons.gauge),
+      if (panelInventory.output) ('output', 'Output', PakarIcons.gauge),
       if (panelInventory.frontPanel)
         ('front-panel', 'Front panel', PakarIcons.gauge),
       if (panelInventory.known &&

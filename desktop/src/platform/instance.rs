@@ -265,6 +265,15 @@ pub fn acquire_gui_ownership() -> Result<GuiOwnership, String> {
 pub fn acquire_gui_ownership() -> Result<GuiOwnership, String> {
     Ok(GuiOwnership::Primary(GuiOwnershipGuard))
 }
+// Live snapshots include board capabilities, artwork and pixel state. Keep
+// requests small, but do not truncate replies at the pipe's 64 KiB buffer hint.
+const MAX_REPLY_BYTES: usize = 1024 * 1024;
+fn encode_reply(response: &serde_json::Value) -> Vec<u8> {
+    match serde_json::to_vec(response) {
+        Ok(bytes) if bytes.len() <= MAX_REPLY_BYTES => bytes,
+        _ => br#"{"accepted":false,"error":"IPC snapshot exceeds reply budget"}"#.to_vec(),
+    }
+}
 #[cfg(windows)]
 pub fn send(command: &Command, timeout: Duration) -> Result<serde_json::Value, String> {
     use windows::{
@@ -273,7 +282,7 @@ pub fn send(command: &Command, timeout: Duration) -> Result<serde_json::Value, S
     };
     let name: Vec<u16> = pipe_name().encode_utf16().chain(Some(0)).collect();
     let request = serde_json::to_vec(command).map_err(|e| e.to_string())?;
-    let mut buffer = vec![0u8; 65536];
+    let mut buffer = vec![0u8; MAX_REPLY_BYTES];
     let mut read = 0;
     let ok = unsafe {
         CallNamedPipeW(
@@ -356,7 +365,7 @@ fn listener(
                     }
                     Err(error)=>serde_json::json!({"accepted":false,"error":error.to_string()}),
                 };
-                let reply=serde_json::to_vec(&response).unwrap_or_default();let mut written=0;
+                let reply=encode_reply(&response);let mut written=0;
                 unsafe {let _=WriteFile(handle,Some(&reply),Some(&mut written),None);let _=FlushFileBuffers(handle);}
             }
             unsafe {let _=DisconnectNamedPipe(handle);}
@@ -368,6 +377,17 @@ fn listener(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn live_snapshot_reply_is_complete_and_bounded() {
+        let snapshot = serde_json::json!({"ready":true,"pixels":"x".repeat(180_000)});
+        let encoded = encode_reply(&snapshot);
+        assert!(encoded.len() > 65536);
+        assert_eq!(serde_json::from_slice::<serde_json::Value>(&encoded).unwrap(), snapshot);
+        let oversized = serde_json::json!({"pixels":"x".repeat(MAX_REPLY_BYTES)});
+        let rejected: serde_json::Value = serde_json::from_slice(&encode_reply(&oversized)).unwrap();
+        assert_eq!(rejected["accepted"], false);
+        assert!(rejected["error"].is_string());
+    }
     #[test]
     fn connection_and_led_ipc_are_explicit_typed_and_bounded() {
         assert!(matches!(

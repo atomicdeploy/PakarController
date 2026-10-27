@@ -266,9 +266,9 @@ String buildTelemetryJson() {
   if(out.length()<2)return "{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}";
   out.remove(out.length()-1);
 #if defined(ARDUINO_ARCH_ESP32)
-  // The S3's detailed first-wins status now exceeds the old 16 KiB aggregate
-  // cap even with healthy heap. Reserve once so appending full board and peer
-  // sections does not fragment the internal heap during OTA verification.
+  // Reuse the compact live snapshot below instead of duplicating all detail
+  // endpoints inside telemetry. Raising this allocation beyond 24 KiB fails
+  // on otherwise healthy devices with a smaller contiguous internal heap.
   constexpr size_t telemetryLimit=24576;
   if(!out.reserve(telemetryLimit))return "{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap\"}";
 #else
@@ -284,7 +284,7 @@ String buildTelemetryJson() {
     return out.length()==expected;
   };
   if(!add("network",networkTelemetry()) || !add("clock",clockJson()) ||
-     !add("remote_firmware",remoteFirmware.json()) || !add("board",buildStatusJson()) ||
+     !add("remote_firmware",remoteFirmware.json()) || !add("board",buildStatusJson(true)) ||
      !add("clients",clientTelemetry.json(now)))
     return "{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap_or_snapshot_limit\"}";
   const size_t expected=out.length()+1;out+='}';
