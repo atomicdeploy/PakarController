@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const access=read('firmware/esp8266/src/WebAccess.h');
+const access=read('firmware/esp/src/WebAccess.h');
 assert.ok(access.indexOf('if (!allowed(request))') < access.indexOf('if (!peerAllowed(request))'));
 assert.match(access,/peer_changed.*accepted/);
 assert.match(access,/PeerFence::accepts/);
 const admission = access.slice(access.indexOf('bool peerAllowed('),access.indexOf('bool allowed('));
 assert.doesNotMatch(admission,/HTTP_GET|HTTP_HEAD|request->method/,
   'Pinned GET/HEAD are not exempt: ISP probe affects hardware and readback is boot-bound');
-const firmware=read('firmware/esp8266/esp8266.ino');
+const firmware=read('firmware/esp/application.ino');
 assert.match(firmware,/webAccess.configurePeerFence\(pcBoardId,\s*pcBootId,\s*hostname\)/,
   'Peer fences keep exact board/boot identity while HTTP identity receives the configured hostname');
 assert.doesNotMatch(firmware,/webAccess.configurePeerFence\(hostname,/,
@@ -37,24 +37,27 @@ const batch=read('desktop/src/cell_batch.rs');
 function checkTuiBatch(source,batchSource) {
   const start=source.indexOf('fn cell_request('),end=source.indexOf('fn command_allowed(');
   assert.ok(start>=0 && end>start);
-  const cells=source.slice(start,end);
-  assert.match(cells,/let current=blocking_status\(client,endpoint\)\?/);
-  assert.match(cells,/if peer_key\(&current\)!=peer\{return Err/);
-  assert.match(cells,/let pin=crate::peer_http::Pin::from_status\(&current\).ok_or\("Verified peer required"\)\?/);
+  const cells=source.slice(start,end).replace(/\s+/g,'');
+  batchSource=batchSource.replace(/\s+/g,'');
+  assert.match(cells,/letcurrent=blocking_status\(client,endpoint\)\?/);
+  assert.match(cells,/ifpeer_key\(&current\)!=peer\{returnErr/);
+  assert.match(cells,/letpin=crate::peer_http::Pin::from_status\(&current\).ok_or\("Verifiedpeerrequired"\)\?/);
   assert.match(cells,/crate::cell_batch::Request::new\(ids,state,"fade"\)\?/);
   assert.match(cells,/crate::cell_batch::send\(client,endpoint,&request,Some\(&pin\),Some\(stop\),None\)/);
-  assert.doesNotMatch(cells,/\.post\(|for .*\bids\b/,'No unfenced scalar fallback');
-  assert.match(batchSource,/expected.is_some_and\(\|expected\|expected!=&pin\) \|\| !Request::supported\(&?current\)/);
-  assert.match(batchSource,/let pinned=pin.client\(\)\?/);
-  assert.match(batchSource,/let response=pinned.post\(format!\("\{\}\/api\/cells"/);
-  assert.match(batchSource,/receipt\["accepted"\].as_bool\(\)!=Some\(true\) \|\| receipt\["count"\].as_u64\(\)!=Some\(request.ids.len\(\) as u64\)/);
-  assert.match(batchSource,/Pin::from_status\(&observed\).as_ref\(\)!=Some\(&pin\) \|\| !request.verify\(&observed\)/);
+  assert.doesNotMatch(cells,/\.post\(|for.*\bids\b/,'No unfenced scalar fallback');
+  assert.match(batchSource,/expected.is_some_and\(\|expected\|expected!=&pin\)\|\|!Request::supported\(&?current\)/);
+  assert.match(batchSource,/letpinned=pin.client\(\)\?/);
+  assert.match(batchSource,/letresponse=pinned.post\(format!\("\{\}\/api\/cells"/);
+  assert.match(batchSource,/receipt\["accepted"\].as_bool\(\)!=Some\(true\)\|\|receipt\["count"\].as_u64\(\)!=Some\(request.ids.len\(\)asu64\)/);
+  assert.match(batchSource,/Pin::from_status\(&observed\).as_ref\(\)!=Some\(&pin\)\|\|!request.verify\(&observed\)/);
 }
 checkTuiBatch(tui,batch);
-assert.throws(()=>checkTuiBatch(tui.replace('if peer_key(&current)!=peer','if false'),batch));
-assert.throws(()=>checkTuiBatch(tui.replace('send(client,endpoint,&request,Some(&pin),Some(stop),None)','send(client,endpoint,&request,None,Some(stop),None)'),batch));
-assert.throws(()=>checkTuiBatch(tui,batch.replace('let response=pinned.post','let response=client.post')));
-assert.throws(()=>checkTuiBatch(tui,batch.replace(' || !request.verify(&observed)','')));
+// Preserve function boundaries for the source extractor while injecting faults
+// into the actual formatted source, not a stale spelling that replaces nothing.
+assert.throws(()=>checkTuiBatch(tui.replace(/if\s+peer_key\(&current\)\s*!=\s*peer/,'if false'),batch));
+assert.throws(()=>checkTuiBatch(tui.replace(/send\(client,\s*endpoint,\s*&request,\s*Some\(&pin\),\s*Some\(stop\),\s*None\)/,'send(client,endpoint,&request,None,Some(stop),None)'),batch));
+assert.throws(()=>checkTuiBatch(tui,batch.replace(/let\s+response\s*=\s*pinned\s*\.post/,'let response=client.post')));
+assert.throws(()=>checkTuiBatch(tui,batch.replace(/\s*\|\|\s*!request.verify\(&observed\)/,'')));
 const native=read('desktop/src/main.rs');
 assert.match(native,/if self\.command_route\(\) == Some\(Transport::WiFi\)[\s\S]*?self\.configuration_reads.take_due\(\)/,
   'Bounded optional settings dispatch must wait for fresh selected Wi-Fi status, not add offline preflight incidents');
@@ -64,9 +67,12 @@ assert.match(native,/if self\.command_route\(\) == Some\(Transport::WiFi\)[\s\S]
 function checkRemoteObservation(source) {
   const owner=source.indexOf('let Some(event) = current_event(event, &self.endpoint(), &self.serial_port)');
   const scoped=source.indexOf('Event::ForScope(scope, inner) if scope.current() => *inner',owner);
-  const network=source.indexOf('self.device_settings.remote_job=maintenance::parse_job(s.remote_firmware.clone()).ok()',scoped);
-  const usb=source.indexOf('self.device_settings.remote_job=maintenance::parse_job(snapshot.status.remote_firmware.clone()).ok()',network);
-  assert.ok(owner>=0 && scoped>owner && network>scoped && usb>network,
+  const compact=source.replace(/\s+/g,'');
+  const compactOwner=compact.indexOf('letSome(event)=current_event(event,&self.endpoint(),&self.serial_port)');
+  const compactScoped=compact.indexOf('Event::ForScope(scope,inner)ifscope.current()=>*inner',compactOwner);
+  const network=compact.indexOf('self.device_settings.remote_job=maintenance::parse_job(s.remote_firmware.clone()).ok()',compactScoped);
+  const usb=compact.indexOf('self.device_settings.remote_job=maintenance::parse_job(snapshot.status.remote_firmware.clone()).ok()',network);
+  assert.ok(owner>=0 && scoped>owner && compactOwner>=0 && compactScoped>compactOwner && network>compactScoped && usb>network,
     'Remote progress must follow selected route/scope ownership on both transports');
   assert.doesNotMatch(source,/self\.device_settings\.page\s*==\s*9[\s\S]{0,700}Operation::RemoteStatus/,
     'Do not restore per-page remote-job polling ahead of realtime status');

@@ -1,5 +1,5 @@
-#include "../firmware/esp8266/src/ShellWire.h"
-#include "../firmware/esp8266/src/ShellSettings.h"
+#include "../firmware/esp/src/ShellWire.h"
+#include "../firmware/esp/src/ShellSettings.h"
 #include <cassert>
 #include <cstdio>
 int main(){

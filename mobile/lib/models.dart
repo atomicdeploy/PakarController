@@ -1,11 +1,96 @@
 import 'settings_catalog.dart';
 import 'peer_context.dart';
 import 'upgrade_observation.dart';
+import 'pixel_groups.dart';
 
 class DeviceStatus {
   DeviceStatus(this.json);
   final Map<String, dynamic> json;
   late final peer = PeerContext.fromStatus(json);
+  PixelGroupLayout? get pixelGroups {
+    if (!peer.table && peer.role != 'first-wins') return null;
+    if (!peer.has('pixel-group-layout')) {
+      return PixelGroupLayout.defaults(keys: peer.role == 'first-wins');
+    }
+    try {
+      return PixelGroupLayout.fromJson(
+        json['pixel_groups'],
+        keys: peer.role == 'first-wins',
+      );
+    } on FormatException {
+      return null;
+    }
+  }
+
+  PixelGroupLayout? frameGroups(Object? frame) => peer.has('pixel-group-layout')
+      ? PixelGroupLayout.fromFrame(frame, keys: peer.role == 'first-wins')
+      : pixelGroups;
+  DeviceStatus? withPixelFrameEvent(Map<String, dynamic> event) {
+    if (event['type'] != 'pixel-frame' ||
+        event['pixel_preview_requested'] != true ||
+        json['board_id'] is! String ||
+        json['boot_id'] is! String ||
+        event['board_id'] != json['board_id'] ||
+        event['boot_id'] != json['boot_id']) {
+      return null;
+    }
+    final frame = event['pixel_frame'];
+    final groups = peer.role == 'first-wins'
+        ? 18
+        : peer.table
+        ? 80
+        : 0;
+    final pixels = groups == 18 ? 216 : 480;
+    if (groups == 0 ||
+        frame is! Map<String, dynamic> ||
+        frameGroups(frame) == null) {
+      return null;
+    }
+    final revision = frame['revision'],
+        rgb = frame['rgb'],
+        physical = frame['physical'];
+    if (revision is! int ||
+        revision < 0 ||
+        revision > 0xffffffff ||
+        frame['pending'] == true ||
+        rgb is! String ||
+        rgb.length != pixels * 6 ||
+        !RegExp(r'^[0-9a-fA-F]+$').hasMatch(rgb) ||
+        physical is! List ||
+        physical.length != groups ||
+        physical.toSet().length != groups ||
+        physical.any((v) => v is! int || v < 1 || v > groups)) {
+      return null;
+    }
+    final old = json['pixel_frame'];
+    if (old is Map &&
+        old['revision'] is int &&
+        revision <= (old['revision'] as int)) {
+      return null;
+    }
+    return DeviceStatus({
+      ...json,
+      'pixel_preview_requested': true,
+      'pixel_frame': Map<String, dynamic>.of(frame),
+    });
+  }
+
+  DeviceStatus preservingNewerPixels(DeviceStatus? current) {
+    if (current == null ||
+        current.json['board_id'] != json['board_id'] ||
+        current.json['boot_id'] != json['boot_id']) {
+      return this;
+    }
+    return withPixelFrameEvent({
+          'type': 'pixel-frame',
+          'board_id': json['board_id'],
+          'boot_id': json['boot_id'],
+          'pixel_preview_requested': true,
+          'pixel_frame': current.json['pixel_frame'],
+        }) ??
+        this;
+  }
+
   DeviceStatus? withStatusRgbEvent(Map<String, dynamic> event) {
     if (event['type'] != 'status-rgb' ||
         !peer.has('status-rgb') ||
@@ -199,9 +284,10 @@ const audioCueNames = [
 ];
 
 class CellMap {
-  CellMap({required this.physical, required this.names});
+  CellMap({required this.physical, required this.names, this.pixelGroups});
   final List<int> physical;
   final List<String> names;
+  final PixelGroupLayout? pixelGroups;
 
   bool get valid =>
       physical.length == 80 &&
@@ -221,6 +307,9 @@ class CellMap {
     final map = CellMap(
       physical: physical.cast<int>(),
       names: names.cast<String>(),
+      pixelGroups: json.containsKey('pixel_groups')
+          ? PixelGroupLayout.fromJson(json['pixel_groups'], keys: false)
+          : null,
     );
     if (!map.valid) {
       throw const FormatException('Invalid physical cell mapping');

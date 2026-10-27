@@ -73,9 +73,9 @@ test('Restart and idempotent teardown remove all old listeners while preserving 
   f.change(['fa-IR']);assert.equal(f.root.lang,'en');
 });
 test('Storage-restricted sessions still change language; dynamic owned labels and numbers are reversible',()=>{
-  const f=fixture({blocked:true});f.run("var label={isConnected:true};setUiText(label,'Station SSID');var progress={isConnected:true};setUiText(progress,'Verified {total} requested cell states on the device. Inspect the actual LEDs.',{total:12})");
-  f.select('fa');assert.equal(f.run('label.textContent'),'نام شبکهٔ ایستگاه');assert.equal(f.run('progress.textContent'),'وضعیت درخواستی ۱۲ خانه با بازخوانی دستگاه تأیید شد؛ LEDهای واقعی را بررسی کنید.');
-  f.select('en');assert.equal(f.run('label.textContent'),'Station SSID');assert.equal(f.run('progress.textContent'),'Verified 12 requested cell states on the device. Inspect the actual LEDs.');
+  const f=fixture({blocked:true});f.run("var label={isConnected:true};setUiText(label,'Station SSID');var progress={isConnected:true};setUiText(progress,'Device confirmed colors for {total} cells',{total:12})");
+  f.select('fa');assert.equal(f.run('label.textContent'),'نام شبکهٔ ایستگاه');assert.equal(f.run('progress.textContent'),'رنگ ۱۲ خانه توسط دستگاه تأیید شد');
+  f.select('en');assert.equal(f.run('label.textContent'),'Station SSID');assert.equal(f.run('progress.textContent'),'Device confirmed colors for 12 cells');
   f.run('label.isConnected=false;applyLocalization()');assert.equal(f.run('ownedDynamicCopy.size'),1,'Detached labels are not leaked');
   assert.equal(f.requests,0);
 });
@@ -102,7 +102,7 @@ test('Actual donor date formatter switches calendars only for presentation',()=>
   assert.equal(f.context.observedEpoch,epoch);assert.equal(f.writes,1,'Unchanged direction is not rewritten');assert.equal(f.requests,0);
 });
 test('Generated embedding, actual dynamic consumers and logical grid ownership stay coordinated',()=>{
-  const web=read('firmware/esp8266/src/WebUi.h');
+  const web=read('firmware/esp/src/WebUi.h');
   assert.equal(web.split('// BEGIN SHARED LOCALIZATION')[1].split('// END SHARED LOCALIZATION')[0].trim(),read('assets/web/localization.js').trim());
   assert(web.includes("setUiText(label,title)"));assert(web.includes('setUiText(text,label)'));
   assert(web.includes("[uiLanguage,panels.map(p=>p.dataset.panelId),panelPreferences]"));

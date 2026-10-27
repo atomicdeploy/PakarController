@@ -10,6 +10,10 @@ import 'cell_assignments.dart';
 import 'pixel_diagnostic.dart';
 import 'board_sound.dart';
 import 'panel_event.dart';
+import 'command_readback.dart';
+import 'game_settings_command.dart';
+import 'led_backend.dart';
+import 'command_wire.dart';
 
 /// Same fixed COBS/CRC-8 envelope as BoardCore::Protocol and the Rust USB actor.
 class UsbFrame {
@@ -226,9 +230,10 @@ class PakarUsbTransport {
           'USB board identity/capabilities do not match the selected board',
         );
       }
-      if (!actual.peer.table || !actual.peer.tableSelection) {
+      if (!actual.peer.tableSelection &&
+          !(actual.peer.role == 'first-wins' && actual.peer.has('leds'))) {
         throw const FormatException(
-          'This Android USB build supports the table-selection board role only',
+          'This Android USB build requires an acknowledged LED game board',
         );
       }
       latest = actual;
@@ -475,7 +480,37 @@ class PakarUsbTransport {
         value['status'] is! Map<String, dynamic>) {
       throw const FormatException('Malformed USB table snapshot');
     }
-    final status = DeviceStatus(Map<String, dynamic>.from(value['status']));
+    final capturedStatus = Map<String, dynamic>.from(value['status']);
+    if (value['status_partial'] == true &&
+        value['omitted_fields'] is List &&
+        (value['omitted_fields'] as List).length == 1 &&
+        (value['omitted_fields'] as List).single ==
+            'capabilities.application.icon_png_base64' &&
+        latest?.json['board_id'] == capturedStatus['board_id'] &&
+        latest?.json['boot_id'] == capturedStatus['boot_id']) {
+      final previous = (latest?.json['capabilities'] as Map?)?['application'];
+      final capabilities = capturedStatus['capabilities'];
+      final application = capabilities is Map
+          ? capabilities['application']
+          : null;
+      if (application is Map &&
+          previous is Map &&
+          application['id'] == previous['id'] &&
+          !application.containsKey('icon_png_base64') &&
+          previous['icon_png_base64'] is String) {
+        capturedStatus['capabilities'] = {
+          ...capabilities as Map,
+          'application': {
+            ...application,
+            'icon_png_base64': previous['icon_png_base64'],
+          },
+        };
+      }
+    }
+    final status = DeviceStatus(capturedStatus);
+    if (status.peer.has('pixel-group-layout') && status.pixelGroups == null) {
+      throw const FormatException('USB pixel group layout is malformed');
+    }
     if (latest != null &&
         (latest!.json['board_id'] != status.json['board_id'] ||
             latest!.json['boot_id'] != status.json['boot_id'])) {
@@ -484,15 +519,80 @@ class PakarUsbTransport {
       );
     }
     // Mapping/cell/RGB remain actual captured values, never guessed defaults.
-    CellMap.fromJson(value);
-    final cells = status.json['cells'];
+    final keys =
+        status.peer.known &&
+        status.peer.role == 'first-wins' &&
+        status.peer.has('leds');
+    if (keys) {
+      final physical = value['physical'];
+      if (physical is! List ||
+          physical.length != 18 ||
+          physical.any((p) => p is! int || p < 1 || p > 18) ||
+          physical.toSet().length != 18) {
+        throw const FormatException('Invalid USB key group mapping');
+      }
+    } else {
+      CellMap.fromJson(value);
+    }
+    // The first-wins image intentionally has no legacy table cells. Its
+    // authoritative group states, and current table semantic states, live in
+    // cell_states. Never fill missing rows or turn an unknown state into idle.
+    final semantic = status.json.containsKey('cell_states');
+    final cells = status.json[semantic ? 'cell_states' : 'cells'];
+    final allowedStates = semantic
+        ? const ['idle', 'lost', 'won', 'off']
+        : const ['white', 'red', 'won', 'off'];
     if (cells is! List ||
-        cells.length != 80 ||
-        cells.any((v) => !['white', 'red', 'off'].contains(v))) {
+        cells.length != (keys ? 18 : 80) ||
+        cells.any((v) => !allowedStates.contains(v))) {
       throw const FormatException('USB table state incomplete');
     }
     if (value['pixels'] is Map<String, dynamic>) {
       status.json['pixel_frame'] = value['pixels'];
+    }
+    if (value['pixel_frame_partial'] == true &&
+        (value['pixels'] as Map?)?['pending'] != true &&
+        _foreground &&
+        (_diagnosticPixels || _demand & 8 != 0) &&
+        ready &&
+        status.peer.has('usb-api')) {
+      final owner = _epoch;
+      final full = await _apiJson('GET', '/api/pixels/frame', {
+        'group_layout_revision': status.pixelGroups!.revision,
+      }, () => owner == _epoch && ready);
+      final frame = full['pixel_frame'];
+      if (full['board_id'] != status.json['board_id'] ||
+          full['boot_id'] != status.json['boot_id'] ||
+          frame is! Map<String, dynamic> ||
+          status.frameGroups(frame)?.sameAs(status.pixelGroups!) != true ||
+          frame['pending'] == true) {
+        throw const FormatException(
+          'USB RGB capture differs from current peer/layout',
+        );
+      }
+      final combined = status.withPixelFrameEvent({
+        'type': 'pixel-frame',
+        'pixel_preview_requested': true,
+        'board_id': full['board_id'],
+        'boot_id': full['boot_id'],
+        'pixel_frame': frame,
+      });
+      // The compact frame may carry the same revision. Validate independently
+      // without preserving absent RGB from an earlier observation.
+      final isolated = DeviceStatus({...status.json}..remove('pixel_frame'));
+      final validated =
+          combined ??
+          isolated.withPixelFrameEvent({
+            'type': 'pixel-frame',
+            'pixel_preview_requested': true,
+            'board_id': full['board_id'],
+            'boot_id': full['boot_id'],
+            'pixel_frame': frame,
+          });
+      if (validated == null) {
+        throw const FormatException('USB RGB capture is malformed');
+      }
+      status.json['pixel_frame'] = validated.json['pixel_frame'];
     }
     table = value;
     latest = status;
@@ -556,6 +656,276 @@ class PakarUsbTransport {
     }
   }
 
+  // Reuse the common boot-fenced USB API transaction for additive diagnostic
+  // options. Its mutation executes once; all subsequent packets are read-only.
+  // The HTTP form wrapper is deliberately NOT used: USB body is the command.
+  Future<Map<String, dynamic>> _apiJson(
+    String method,
+    String path,
+    Map<String, dynamic> body,
+    bool Function() authorize,
+  ) async {
+    final owner = _epoch;
+    void admit() {
+      if (owner != _epoch || !ready || !authorize()) {
+        throw const FormatException('USB diagnostic owner retired; no replay');
+      }
+    }
+
+    admit();
+    final before = latest!;
+    admit();
+    if (!before.peer.has('usb-api')) {
+      throw const FormatException(
+        'Advanced diagnostics require USB API support; update the board firmware. Nothing was sent.',
+      );
+    }
+    final boot = '${before.json['boot_id']}';
+    final fence = [
+      for (var i = 0; i < 32; i += 2)
+        int.parse(boot.substring(i, i + 2), radix: 16),
+    ];
+    final bytes = utf8.encode(
+      jsonEncode({
+        'method': method,
+        'path': path,
+        'board_id': before.json['board_id'],
+        'boot_id': boot,
+        'body': body,
+      }),
+    );
+    if (bytes.length > 4096) {
+      throw const FormatException(
+        'USB diagnostic request exceeds the bounded API size',
+      );
+    }
+    final clock = Stopwatch()..start();
+    var token = 0;
+    List<int> tokenBytes() => List.generate(4, (i) => token >> (i * 8) & 255);
+    Future<List<int>> exchange(
+      int action,
+      List<int> payload, {
+      int? total,
+      int offset = 0,
+      bool opening = false,
+    }) async {
+      admit();
+      if (clock.elapsed > const Duration(seconds: 15)) {
+        throw const FormatException(
+          'USB diagnostic response timed out; outcome unknown, no replay',
+        );
+      }
+      if (_demandAge.elapsedMilliseconds >= 900) await _renewDemand();
+      admit();
+      final frame = await _exchange(0x6a, [action, ...payload], {0xbd});
+      admit();
+      final p = frame.payload;
+      if (p.length < 9 ||
+          p[0] != action ||
+          _le(p, 1, 4) == 0 ||
+          (!opening && _le(p, 1, 4) != token) ||
+          _le(p, 7, 2) != offset ||
+          (total != null && _le(p, 5, 2) != total)) {
+        throw const FormatException(
+          'USB API chunk identity differs; no replay',
+        );
+      }
+      return p;
+    }
+
+    try {
+      final opened = await exchange(
+        0,
+        [...fence, ..._u16(bytes.length)],
+        total: 0,
+        opening: true,
+      );
+      token = _le(opened, 1, 4);
+      for (var offset = 0; offset < bytes.length; offset += 41) {
+        await exchange(1, [
+          ...tokenBytes(),
+          ..._u16(offset),
+          ...bytes.skip(offset).take(41),
+        ], total: 0);
+      }
+      // Command expiry is based on the board clock. Never execute a staged
+      // request after its admission window, even if a slow USB link recovered.
+      if (clock.elapsed >= const Duration(seconds: 7)) {
+        throw const FormatException(
+          'USB diagnostic admission expired before execution; nothing replayed',
+        );
+      }
+      final executed = await exchange(2, tokenBytes());
+      final total = _le(executed, 5, 2);
+      if (total < 1 || total > 8192 || executed.length != 9) {
+        throw const FormatException(
+          'USB API response length invalid; outcome unknown, no replay',
+        );
+      }
+      final response = <int>[];
+      while (response.length < total) {
+        final part = await exchange(
+          3,
+          [...tokenBytes(), ..._u16(response.length)],
+          total: total,
+          offset: response.length,
+        );
+        if (part.length == 9 || response.length + part.length - 9 > total) {
+          throw const FormatException(
+            'USB API response overrun or empty chunk; no replay',
+          );
+        }
+        response.addAll(part.skip(9));
+      }
+      final decoded = jsonDecode(utf8.decode(response));
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('USB API command receipt invalid');
+      }
+      if (path != '/api/command' &&
+          (decoded['accepted'] == false ||
+              decoded['error'] is String &&
+                  (decoded['error'] as String).isNotEmpty)) {
+        throw FormatException(
+          'USB API rejected: ${decoded['error'] ?? 'not accepted'}; no replay',
+        );
+      }
+      return decoded;
+    } finally {
+      if (token != 0 && owner == _epoch && ready && authorize()) {
+        try {
+          await _ack(0x6a, [4, ...tokenBytes()]);
+        } on Object {
+          /* No replay. */
+        }
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>> pixelGroupsApi({
+    Map<String, dynamic>? configuration,
+    required bool Function() authorize,
+  }) => _exclusive(() async {
+    if (!ready ||
+        !authorize() ||
+        !latest!.peer.has('pixel-group-layout') ||
+        !latest!.peer.has('usb-api')) {
+      throw const FormatException(
+        'USB pixel group configuration is unavailable',
+      );
+    }
+    return _apiJson(
+      configuration == null ? 'GET' : 'POST',
+      '/api/pixels/groups',
+      configuration ?? const {},
+      authorize,
+    );
+  });
+
+  Future<DeviceStatus> _advancedDiagnostic(
+    PixelProbe probe,
+    bool off,
+    bool Function() authorize,
+  ) async {
+    final owner = _epoch;
+    void admit() {
+      if (owner != _epoch || !ready || !authorize()) {
+        throw const FormatException('USB diagnostic owner retired; no replay');
+      }
+    }
+
+    admit();
+    _diagnosticPixels = true;
+    await _renewDemand();
+    final before = await _snapshot();
+    admit();
+    final fields = probe.commandFields(before, off: off);
+    final packet = commandPacket(before, '/api/led/diagnostic', fields);
+    final decoded = await _apiJson(
+      'POST',
+      '/api/command',
+      Map<String, dynamic>.from(jsonDecode(packet) as Map),
+      authorize,
+    );
+    if (decoded['status_partial'] == true && decoded['accepted'] == true) {
+      // Only the explicit compact USB receipt permits a merge. Identity is
+      // checked BEFORE inheriting any old state. Fresh diagnostic/frame data
+      // replaces its old value entirely; old RGB must not masquerade as live.
+      final fragment = decoded['status'];
+      if (fragment is! Map<String, dynamic> ||
+          fragment['board_id'] != before.json['board_id'] ||
+          fragment['boot_id'] != before.json['boot_id'] ||
+          fragment['capabilities'] is! Map ||
+          fragment['pixels'] is! int ||
+          fragment['led_output'] is! Map ||
+          !fragment.containsKey('pixel_frame') ||
+          (fragment['pixel_frame'] != null &&
+              fragment['pixel_frame'] is! Map)) {
+        throw const FormatException(
+          'USB partial diagnostic receipt lacks same-peer output state; no replay',
+        );
+      }
+      final output = fragment['led_output'] as Map;
+      if (output['diagnostic'] is! Map) {
+        throw const FormatException(
+          'USB partial diagnostic specification is missing; no replay',
+        );
+      }
+      decoded['status'] = <String, dynamic>{
+        ...before.json,
+        ...fragment,
+        'led_output': <String, dynamic>{
+          if (before.json['led_output'] is Map)
+            ...Map<String, dynamic>.from(before.json['led_output'] as Map),
+          ...Map<String, dynamic>.from(output),
+        },
+      };
+    }
+    var actual = verifyCommandReply(
+      decoded,
+      packet,
+      '/api/led/diagnostic',
+      fields,
+    );
+    final prior = PixelDiagnosticObservation.read(before)?.revision;
+    final settle = Stopwatch()..start();
+    while (!matchesDiagnosticObservation(
+          actual,
+          probe,
+          off: off,
+          afterRevision: prior,
+        ) &&
+        settle.elapsed < const Duration(seconds: 3)) {
+      admit();
+      final observed = PixelDiagnosticObservation.read(actual);
+      if (observed != null &&
+          (prior == null || observed.revision > prior) &&
+          (!observed.probe
+                  .copyWith(index: probe.index, group: probe.group)
+                  .sameAs(probe) ||
+              observed.off != off)) {
+        throw const FormatException(
+          'USB diagnostic was superseded by another command; no replay',
+        );
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      admit();
+      actual = await _snapshot();
+    }
+    admit();
+    if (!matchesDiagnosticObservation(
+      actual,
+      probe,
+      off: off,
+      afterRevision: prior,
+    )) {
+      throw const FormatException(
+        'USB diagnostic accepted but completed output is unconfirmed; no replay',
+      );
+    }
+    latest = actual;
+    return actual;
+  }
+
   Future<DeviceStatus> command(
     String path,
     Map<String, String> values, {
@@ -565,10 +935,41 @@ class PakarUsbTransport {
       throw const FormatException('USB board not ready; nothing sent');
     }
     final before = latest!, features = before.peer;
-    if (!features.tableSelection || before.json['programming_latch'] == true) {
+    const gamePaths = {
+      '/api/game/settings',
+      '/api/game/reset',
+      '/api/game/press',
+      '/api/brightness',
+      '/api/effect',
+      '/api/mode',
+      '/api/led/output',
+      '/api/led/diagnostic',
+    };
+    final keyOperation =
+        features.known &&
+        features.role == 'first-wins' &&
+        features.has('leds') &&
+        gamePaths.contains(path);
+    if ((!features.tableSelection && !keyOperation) ||
+        before.json['programming_latch'] == true) {
       throw const FormatException(
         'USB table controls unavailable for this board role or during programming',
       );
+    }
+    if (path == '/api/led/diagnostic') {
+      final probe = PixelProbe.fromCommandFields(before, values);
+      if (probe.extended || features.has('pixel-group-layout')) {
+        if (!features.has('usb-api') || !features.has('usb-demand')) {
+          throw const FormatException(
+            'Advanced diagnostics require USB API support; update the board firmware. Nothing was sent.',
+          );
+        }
+        return _advancedDiagnostic(
+          probe,
+          _boolean(values['off']) == 1,
+          authorize,
+        );
+      }
     }
     int op;
     List<int> payload;
@@ -581,12 +982,127 @@ class PakarUsbTransport {
     }
 
     int state(String? v) => switch (v) {
-      'white' => 0,
-      'red' => 1,
+      'white' || 'idle' => 0,
+      'red' || 'lost' => 1,
+      'won' => 3,
       'off' => 2,
       _ => throw const FormatException('Invalid cell state'),
     };
     switch (path) {
+      case '/api/game/press':
+        if (!features.has('game-press') ||
+            !before.avrOnline ||
+            before.json['key_mask_applied'] != true) {
+          throw const FormatException(
+            'Acknowledged AVR game press unavailable',
+          );
+        }
+        op = 0x68;
+        payload = [integer('key', 1, 9)];
+      case '/api/game/settings':
+        if (values.containsKey('presentation')) {
+          if (!features.has('game-presentation') || values.length != 1) {
+            throw const FormatException(
+              'Save presentation separately over USB',
+            );
+          }
+          final patch = gameSettingsPatch(values)['presentation'] as Map;
+          final current = (before.json['key_game'] as Map?)?['presentation'];
+          if (current is! Map) {
+            throw const FormatException('Presentation readback unavailable');
+          }
+          op = 0x69;
+          if (patch.containsKey('groups')) {
+            final groups = patch['groups'] as List;
+            if (patch.length != 1 || groups.length != 1) {
+              throw const FormatException('Save one group at a time over USB');
+            }
+            final selected = groups.single as Map;
+            final existing = (current['groups'] as List).where(
+              (g) => g['id'] == selected['id'],
+            );
+            if (existing.length != 1) {
+              throw const FormatException('Group readback unavailable');
+            }
+            final group = <String, dynamic>{
+              ...Map<String, dynamic>.from(existing.single as Map),
+              ...Map<String, dynamic>.from(selected),
+            };
+            presentationPatch({
+              'groups': [group],
+            });
+            payload = [
+              1,
+              group['id'] as int,
+              group['override_colors'] == true ? 1 : 0,
+              for (final key in ['win_rgb', 'lose_rgb'])
+                for (var byte = 0; byte < 3; byte++)
+                  ((group[key] as int) >> (byte * 8)) & 255,
+              group['win_motion'] as int,
+              group['lose_motion'] as int,
+            ];
+          } else {
+            final timing = {
+              for (final key in presentationLimits.keys)
+                key: patch[key] ?? current[key],
+            };
+            presentationPatch(timing);
+            payload = [
+              0,
+              timing['flashes'] as int,
+              for (final key in [
+                'flash_on_ms',
+                'flash_off_ms',
+                'fade_ms',
+                'pulse_ms',
+                'chase_ms',
+              ])
+                ..._u16(timing[key] as int),
+            ];
+          }
+          break;
+        }
+        if (features.role != 'first-wins' ||
+            !features.has('usb-key-settings')) {
+          throw const FormatException('USB key settings not acknowledged');
+        }
+        final hasMelodies = gameMelodyPatch(values);
+        if (hasMelodies && !features.has('game-melodies')) {
+          throw const FormatException('USB game melodies not acknowledged');
+        }
+        op = 0x67;
+        payload = List.filled(hasMelodies ? 19 : 17, 0);
+        const fields = [
+          'enabled_mask',
+          'idle_rgb',
+          'win_rgb',
+          'lose_rgb',
+          'extended_effects',
+          'auto_reset_ms',
+          'winner_cue',
+          'reset_cue',
+        ];
+        const offsets = [1, 3, 6, 9, 12, 13, 17, 18],
+            widths = [2, 3, 3, 3, 1, 4, 1, 1];
+        final patch = gameSettingsPatch(values);
+        if (patch.keys.any((field) => !fields.contains(field))) {
+          throw const FormatException(
+            'This game setting is not supported over USB',
+          );
+        }
+        for (var i = 0; i < fields.length; i++) {
+          final selected = patch[fields[i]];
+          if (selected == null) continue;
+          final value = selected is bool
+              ? (selected ? 1 : 0)
+              : selected is String
+              ? (selected == 'silent' ? 255 : audioCueNames.indexOf(selected))
+              : selected as int;
+          payload[0] |= 1 << i;
+          for (var byte = 0; byte < widths[i]; byte++) {
+            payload[offsets[i] + byte] = (value >> (byte * 8)) & 255;
+          }
+        }
       case '/api/cell':
         if (!features.has('leds')) {
           throw const FormatException('USB LEDs not acknowledged');
@@ -660,9 +1176,31 @@ class PakarUsbTransport {
             _ => throw const FormatException('Unsupported mode'),
           },
         ];
+      case '/api/game/reset':
+        if (!features.has('reset-ack')) {
+          throw const FormatException(
+            'Acknowledged game reset is not supported by this firmware',
+          );
+        }
+        op = 0x4d;
+        payload = [];
       case '/api/led/output':
         op = 0x5c;
-        payload = values.containsKey('mode')
+        if (values.containsKey('backend') && !features.allows(path, values)) {
+          throw const FormatException(
+            'This LED transmitter is not available on the connected board',
+          );
+        }
+        payload = values.containsKey('backend')
+            ? [
+                3,
+                switch (values['backend']) {
+                  'gpio-static' => 1,
+                  'rmt-dma' => 2,
+                  _ => throw const FormatException('Unknown LED transmitter'),
+                },
+              ]
+            : values.containsKey('mode')
             ? [
                 2,
                 switch (values['mode']) {
@@ -677,12 +1215,14 @@ class PakarUsbTransport {
             !features.has('usb-demand')) {
           throw const FormatException('USB pixel diagnostics not acknowledged');
         }
-        final index = integer('index', 0, 479),
-            count = integer('count', 1, 6),
+        final pixels = diagnosticPixelCount(before),
+            groupSize = diagnosticGroupSize(before);
+        final index = integer('index', 0, pixels - 1),
+            count = integer('count', 1, groupSize),
             rgb = integer('rgb', 0, 0xffffff);
-        if (count != 1 && count != 6 ||
-            index + count > 480 ||
-            count == 6 && index % 6 != 0) {
+        if (count != 1 && count != groupSize ||
+            index + count > pixels ||
+            count == groupSize && index % groupSize != 0) {
           throw const FormatException('Invalid pixel range');
         }
         _diagnosticPixels = true;
@@ -719,6 +1259,28 @@ class PakarUsbTransport {
       throw const FormatException('USB command receipt mismatch; no replay');
     }
     var actual = await _snapshot();
+    if (op == 0x67 && gameMelodyPatch(values) ||
+        op == 0x5c && values.containsKey('backend')) {
+      // The ESP persists first; AVR playback configuration settles on its next
+      // service turn. Observe that receipt without replaying the mutation.
+      final started = Stopwatch()..start();
+      while (!commandReadbackMatches(actual, path, values) &&
+          started.elapsed < const Duration(seconds: 3)) {
+        if (!authorize() ||
+            actual.json['board_id'] != before.json['board_id'] ||
+            actual.json['boot_id'] != before.json['boot_id']) {
+          throw const FormatException('Command owner retired; no replay');
+        }
+        if (op == 0x5c) {
+          final driver = LedBackendState.fromStatus(actual.json);
+          if (driver?.failed == true) {
+            throw FormatException(driver!.failureDescription);
+          }
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        actual = await _snapshot();
+      }
+    }
     if (op == 0x65) {
       final start = Stopwatch()..start();
       while ((actual.json['pixel_frame'] as Map?)?['pending'] == true &&
@@ -728,8 +1290,10 @@ class PakarUsbTransport {
       }
       final probe = PixelProbe(
         index: payload[0] | payload[1] << 8,
-        group: payload[2] == 6,
+        group: payload[2] == diagnosticGroupSize(before),
         rgb: payload[3] << 16 | payload[4] << 8 | payload[5],
+        pixels: diagnosticPixelCount(before),
+        groupSize: diagnosticGroupSize(before),
       );
       if (!matchesDiagnosticFrame(actual, probe.frame(off: payload[6] == 1))) {
         throw const FormatException(
@@ -742,7 +1306,13 @@ class PakarUsbTransport {
         'USB command owner retired; outcome not claimed',
       );
     }
-    if (op == 0x4c && actual.json['cells'][payload[0] - 1] != values['state'] ||
+    if ((op == 0x67 || op == 0x69) &&
+            !commandReadbackMatches(actual, path, values) ||
+        op == 0x4d &&
+            (actual.winner != 0 ||
+                actual.effect != 'none' ||
+                actual.ledOutputEnabled != true) ||
+        op == 0x4c && actual.json['cells'][payload[0] - 1] != values['state'] ||
         op == 0x5f &&
             _ids(values['ids'])
                 .any((id) => actual.json['cells'][id - 1] != values['state']) ||
@@ -750,10 +1320,7 @@ class PakarUsbTransport {
         op == 0x51 && actual.brightness != payload[0] ||
         op == 0x52 && actual.effect != values['value'] ||
         op == 0x4b && actual.mode != values['value'] ||
-        op == 0x5c &&
-            (payload.length == 1
-                ? actual.ledOutputEnabled != (payload[0] == 1)
-                : actual.ledOutputMode != values['mode']) ||
+        op == 0x5c && !commandReadbackMatches(actual, path, values) ||
         op == 0x62 &&
             CellAssignments.fromRows(jsonDecode(values['assignments']!))
                 .values

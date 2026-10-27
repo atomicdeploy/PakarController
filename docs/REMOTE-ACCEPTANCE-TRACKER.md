@@ -1,6 +1,18 @@
 # Remote updater / telemetry / PU850 route acceptance
 
-Scope: version 0.2.7 integrated ESP + AVR maintenance, client/cloud telemetry and route adaptations. This is not a claim that all older whole-project requirements are complete.
+Current contracts are in [architecture and gaps](ARCHITECTURE.md),
+[duplex control](DUPLEX-CONTROL.md) and [remote maintenance](REMOTE-MAINTENANCE.md).
+Source is0.2.8/client build23; installed-board/client identities require fresh
+inspection. The checklist below records the older0.2.7 feature checkpoint,
+not a claim that its host status or all accepted operations are current.
+
+Current blockers include interrupted/unverified GPIO-fallback OTA, current AVR
+pair recovery, cold-boot NTP/standalone Internet and full LAN/cloud soak.
+ASUS was reached on localhost:8022 with CH343/COM24 in the latest inventory;
+ledboard.local was unresolved. The old1022 observation below is historical.
+No board action is authorized by this document.
+
+## Historical source/test milestone
 
 - [x] Pinned manifest download, selected-board staging, SHA-256/profile/size checks and exact job/boot identity.
 - [x] Durable recovery/Prog gates, EESAVE-independent EEPROM restoration, full flash readback, no automatic mutation replay.

@@ -1,5 +1,7 @@
 // Pealayer ci-cd.yml packaging, curated notes, manifest and checksum policy
-// adapted for two matched firmware pairs plus Windows and Android preview.
+// adapted for the ESP32-S3/AVR pair plus Windows and Android preview.
+// Explicit legacy packaging remains available; unfinished ESP8266 is not a
+// default release target and is never substituted for the S3 application.
 import {readFileSync,writeFileSync,copyFileSync,mkdirSync,existsSync,readdirSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -15,7 +17,7 @@ export function releaseIdentity(repository,tag,commit,version){
 }
 export function firmwareManifest(esp,avr,identity,mode){
   const base=`https://github.com/${identity.repository}/releases/download/${identity.tag}/`;
-  const value=manifest(esp,avr,base,identity.version,mode);
+  const value=manifest(esp,avr,base,identity.version,mode,mode==='buffered'?'esp32s3':'esp8266');
   value.esp.url=new URL(`esp-${mode}.bin`,base).href;
   value.avr.url=new URL(`avr-${mode}.bin`,base).href;
   return value;
@@ -27,8 +29,8 @@ export function checksumList(files){
   }).join('');
 }
 function prepare(){
-  const [incoming,out,tag,commit,repository,run]=process.argv.slice(2);
-  if(!run||!/^https:\/\/github.com\/[\w.-]+\/[\w.-]+\/actions\/runs\/\d+$/.test(run))throw Error('Usage: prepare-release INCOMING OUTPUT TAG SHA REPO RUN_URL');
+  const [incoming,out,tag,commit,repository,run,legacy]=process.argv.slice(2);
+  if(!run||!/^https:\/\/github.com\/[\w.-]+\/[\w.-]+\/actions\/runs\/\d+$/.test(run)||(legacy!==undefined&&legacy!=='--legacy')||process.argv.length>9)throw Error('Usage: prepare-release INCOMING OUTPUT TAG SHA REPO RUN_URL [--legacy]');
   const source=readFileSync('libraries/BoardCore/src/BuildInfo.h','utf8');
   const version=/kVersion\[\]\s*=\s*"(\d+\.\d+\.\d+)"/.exec(source)?.[1];
   const identity=releaseIdentity(repository,tag,commit,version);
@@ -51,9 +53,10 @@ function prepare(){
     if(verify.status!==0)throw Error('Archive integrity test failed');
   };
   const docs=[['README.md',readFileSync('README.md')],['LICENSE',readFileSync('LICENSE')],['Pealayer-MIT.txt',readFileSync('docs/licenses/Pealayer-MIT.txt')],['RELEASE-NOTES.md',Buffer.from(notes)]];
-  for(const mode of ['polling','busy-wire']){
+  for(const mode of ['buffered',...(legacy?['polling','busy-wire']:[])]){
     const suffix=mode==='polling'?'':`-${mode}`;
-    const esp=readFileSync(join(input,'firmware',`esp8266${suffix}`,'esp8266.ino.bin'));
+    const platform=mode==='buffered'?'esp32s3':'esp8266';
+    const esp=readFileSync(join(input,'firmware',`${platform}${suffix}`,`${platform}.ino.bin`));
     const avr=readFileSync(join(input,'firmware',`avr${suffix}`,'avr.ino.with_bootloader.bin'));
     const value=firmwareManifest(esp,avr,identity,mode);
     const json=Buffer.from(JSON.stringify(value,null,2)+'\n');
@@ -68,6 +71,7 @@ function prepare(){
   emit('PakarController-Android-preview.apk',apk);
   const assets=()=>readdirSync(output).filter(name=>!name.startsWith('.')).map(name=>({name,data:readFileSync(join(output,name))}));
   emit('release-manifest.json',JSON.stringify({product:'PakarController',...identity,run,physicalAcceptance:false,
+    releaseTargets:['esp32s3','atmega328p'],legacyEsp8266:legacy?'explicit unfinished legacy artifacts included':'source/tooling preserved; resource-budget failures; not packaged',
     androidSigning:'preview',assets:assets().map(({name,data})=>({name,size:data.length,sha256:sha256(data)}))},null,2)+'\n');
   emit('RELEASE-NOTES.md',notes+`\n\nDraft prerelease; no automatic board flashing or physical acceptance.\n\n[Exact build](${run})\n\nVerify with \`sha256sum --check SHA256SUMS.txt\` and \`gh attestation verify ASSET --repo ${repository}\`. Firmware manifests pin both board images and the link mode; distribute the manifest hash through a separately trusted channel.\n`);
   emit('SHA256SUMS.txt',checksumList(assets()));

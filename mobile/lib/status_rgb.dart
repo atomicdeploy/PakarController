@@ -225,7 +225,7 @@ class _StatusRgbSettingsState extends State<StatusRgbSettings> {
         saved = Map.of(actual);
         draft = Map.of(actual);
         message =
-            'RGB settings persisted and read back. Inspect the physical LED.';
+            'Status LED settings saved on device';
       } else {
         await widget.api.status();
         check();
@@ -375,7 +375,6 @@ class _StatusRgbSettingsState extends State<StatusRgbSettings> {
                 ),
               ],
             ),
-            const Text('Driver submission is not optical verification.'),
           ],
         ),
       ),

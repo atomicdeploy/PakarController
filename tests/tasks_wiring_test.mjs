@@ -9,6 +9,8 @@ assert.match(safety,/cancelDeferredReset\(\)/,'Prog cancels old reset ownership'
 assert.match(safety,/if \(programmingLatch.active\(\)\) return;[\s\S]*wdt_enable/,'Last reset dispatch must check the latch');
 assert.match(avr,/taskManager.update\(now\)/);
 assert.doesNotMatch(avr,/resetPendingAt|resetRequested/,'No parallel uncancellable reset timer');
+assert.match(avr,/constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED \? 1 : 5;/,
+  'First-wins must not inherit the table role\'s five-millisecond input sampling delay');
 assert.match(read('tools/test-protocol.ps1'),/test-tasks.ps1/);
 assert.match(read('tools/test-protocol.sh'),/test-tasks.ps1/);
 assert.match(read('tools/build-firmware.ps1'),/-Concern cooperative-tasks -Gate/);

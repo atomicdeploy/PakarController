@@ -5,6 +5,11 @@ The endpoint is configurable; it is independent of ESP/AVR firmware updates.
 APIs remain unversioned. The dashboard requires the private operator token;
 public catalogs/package downloads do not grant management access.
 
+Current source identity is0.2.8/client build23. The exact installed/published
+package still needs its own receipt; source values are not installation proof.
+See [system ownership and open gates](ARCHITECTURE.md). App distribution here
+is separate from the MQTT board-control relay and from ESP/AVR firmware jobs.
+
 ## Controls and limits
 
 - Windows: Preferences → App updates. Automatic checks/download/cleanup are
@@ -13,9 +18,12 @@ public catalogs/package downloads do not grant management access.
   active device/firmware/stream operation. The app exits through normal Quit;
   its verified helper preserves the prior executable and profile and checks
   the replacement's startup receipt. It never force-kills an unhealthy process.
-- Android: context menu → App updates. Automatic foreground checks default on;
-  download, installation requests, cleanup and enrollment are independently
-  opt-in. Installation still requires Android permission/confirmation, exact
+- Android: context menu → Updates & support. Automatic foreground checks,
+  package download, installer requests, peer sharing/discovery and owned cleanup
+  currently default on in `AppUpdateCoordinator.defaults`; saved explicit
+  policies remain authoritative. Enrollment, management telemetry and remote
+  check/cleanup authority remain separate opt-ins. Installation still requires
+  Android permission/confirmation, exact
   package/signers, newer build, SDK/ABI, length and SHA256 validation.
 - Android automation runs while the app is foregrounded, not as an installed
   background service. Disabled/closed clients cannot report or act. Desktop

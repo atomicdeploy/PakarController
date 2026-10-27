@@ -12,7 +12,11 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'models.dart';
 import 'board_sound.dart';
 import 'lan_resolver.dart';
+import 'discovery_datagrams.dart';
 import 'command_wire.dart';
+import 'command_readback.dart';
+import 'game_settings_command.dart';
+import 'led_backend.dart';
 import 'command_failure.dart';
 import 'pixel_diagnostic.dart';
 import 'ble_transport.dart';
@@ -75,6 +79,7 @@ class PakarApi {
     if (value == _appForeground) return;
     _appForeground = value;
     usb.demand(_effectiveUsbDemand, foreground: value);
+    _syncPixelSubscription();
     if (!_connectionUpdates.isClosed) _connectionUpdates.add(null);
   }
 
@@ -176,15 +181,44 @@ class PakarApi {
   int _usbPixelConsumers = 0;
   int get _effectiveUsbDemand =>
       _usbDemandFlags | (_usbPixelConsumers > 0 ? 8 : 0);
+  bool? _sentPixelDemand;
+  bool get _wantsNetworkPixels =>
+      connectionWanted &&
+      appForeground &&
+      !isUsb &&
+      !isBluetooth &&
+      (_effectiveUsbDemand & 8) != 0;
+  void _syncPixelSubscription() {
+    if (!_socketReady ||
+        _channel == null ||
+        _verifiedBoard == null ||
+        _verifiedBoot == null) {
+      return;
+    }
+    final enabled = _wantsNetworkPixels;
+    if (_sentPixelDemand == enabled) return;
+    if (_sentPixelDemand == null && !enabled) {
+      _sentPixelDemand = false;
+      return; // New sockets default to no optional pixel traffic.
+    }
+    // Optional preview demand never dispatches a hardware command or HTTP read.
+    _channel!.sink.add(
+      jsonEncode({'type': 'pixel-subscribe', 'enabled': enabled}),
+    );
+    _sentPixelDemand = enabled;
+  }
+
   void Function() retainUsbPixels() {
     ++_usbPixelConsumers;
     usb.demand(_effectiveUsbDemand, foreground: appForeground);
+    _syncPixelSubscription();
     var active = true;
     return () {
       if (!active) return;
       active = false;
       --_usbPixelConsumers;
       usb.demand(_effectiveUsbDemand, foreground: appForeground);
+      _syncPixelSubscription();
     };
   }
 
@@ -198,6 +232,7 @@ class PakarApi {
     _usbDemandFlags =
         1 | (panel ? 2 : 0) | (peripheral ? 4 : 0) | (pixels ? 8 : 0);
     usb.demand(_effectiveUsbDemand, foreground: appForeground);
+    _syncPixelSubscription();
   }
 
   String expectedBluetoothBoard = '';
@@ -256,6 +291,8 @@ class PakarApi {
   // RGB-only observations never drive full-status consumers/firmware policy.
   final _rgbUpdates = StreamController<DeviceStatus>.broadcast(sync: true);
   Stream<DeviceStatus> get rgbUpdates => _rgbUpdates.stream;
+  final _pixelUpdates = StreamController<DeviceStatus>.broadcast(sync: true);
+  Stream<DeviceStatus> get pixelUpdates => _pixelUpdates.stream;
   DeviceStatus? get latestStatus => _latestStatus;
   Duration? get statusObservationAge => _statusAge?.elapsed;
 
@@ -338,12 +375,13 @@ class PakarApi {
     required bool Function() authorize,
   }) async {
     if (isUsb) {
-      final actual = await _usbCommand('/api/led/diagnostic', {
-        'index': '${probe.first}',
-        'count': '${probe.count}',
-        'rgb': '${probe.rgb}',
-        'off': '$off',
-      }, authorize);
+      final current = freshStatus;
+      if (current == null) throw const StaleConnection();
+      final actual = await _usbCommand(
+        '/api/led/diagnostic',
+        probe.commandFields(current, off: off),
+        authorize,
+      );
       return actual;
     }
     _requireNetwork();
@@ -367,7 +405,7 @@ class PakarApi {
 
     _diagnosticPending = true;
     try {
-      final frame = probe.frame(off: off);
+      final frame = probe.extended ? null : probe.frame(off: off);
       admit();
       var current = await _commandStatus(authorize);
       admit();
@@ -381,17 +419,72 @@ class PakarApi {
       if (current.peer.has('pixel-diagnostic')) {
         // Board owns clear/stage/show in one transaction. Existing request IDs
         // allow lost WS receipts to recover over HTTP without a second intent.
-        final actual = await fastCommand('/api/led/diagnostic', {
-          'index': '${probe.first}',
-          'count': '${probe.count}',
-          'rgb': '${probe.rgb}',
-          'off': '$off',
-        }, authorize: authorize);
+        final fields = probe.commandFields(current, off: off);
+        final priorRevision = PixelDiagnosticObservation.read(current)
+            ?.revision;
+        final received = await fastCommand(
+          '/api/led/diagnostic',
+          fields,
+          authorize: authorize,
+        );
         admit();
-        if (actual == null) {
+        if (received == null) {
           throw const FormatException(
             'The board advertises pixel diagnostics but did not acknowledge the command contract',
           );
+        }
+        DeviceStatus actual = received;
+        if (current.peer.has('pixel-group-layout') ||
+            current.peer.has('pixel-diagnostic-effects') ||
+            current.peer.has('pixel-diagnostic-overlay')) {
+          // The board renders effects and preserves the underlying scene. A
+          // static RGB comparison cannot verify a moving phase or overlay.
+          final clock = Stopwatch()..start();
+          while (!matchesDiagnosticObservation(
+                actual,
+                probe,
+                off: off,
+                afterRevision: priorRevision,
+              ) &&
+              clock.elapsed < const Duration(seconds: 3)) {
+            admit();
+            final observed = PixelDiagnosticObservation.read(actual);
+            if (observed != null &&
+                (priorRevision == null || observed.revision > priorRevision) &&
+                (observed.probe.first != probe.first ||
+                    observed.probe.count != probe.count ||
+                    !observed.probe
+                        .copyWith(index: probe.index, group: probe.group)
+                        .sameAs(probe) ||
+                    observed.off != off)) {
+              throw const OperationUncertain(
+                'Another diagnostic replaced this request before readback. No frame was replayed.',
+              );
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 80));
+            admit();
+            if (_socketReady && _channel != null) {
+              requestLiveStatus();
+              actual = _latestStatus ?? actual;
+            } else if (commandHttpFallback || isBluetooth) {
+              actual = DeviceStatus(await _get('/api/status?pixels=1'));
+              admit();
+              _acceptIdentity(actual.json);
+            }
+          }
+          admit();
+          if (!matchesDiagnosticObservation(
+            actual,
+            probe,
+            off: off,
+            afterRevision: priorRevision,
+          )) {
+            throw const OperationUncertain(
+              'Diagnostic settings were accepted but completed board output was not confirmed. No frame was replayed.',
+            );
+          }
+          _rememberStatus(actual);
+          return actual;
         }
         if (!diagnosticReady(actual)) {
           throw const OperationUncertain(
@@ -409,12 +502,17 @@ class PakarApi {
             'The LED frame is still pending; completed output has not been observed.',
           );
         }
-        if (!matchesDiagnosticFrame(actual, frame)) {
+        if (!matchesDiagnosticFrame(actual, frame!)) {
           throw const OperationUncertain(
             'The board pixel readback differs from the requested frame.',
           );
         }
         return actual;
+      }
+      if (probe.extended) {
+        throw const FormatException(
+          'Diagnostic effects and overlays require acknowledged board support; no frame was sent.',
+        );
       }
       if (!_socketReady || _channel == null) {
         throw const FormatException(
@@ -461,7 +559,7 @@ class PakarApi {
         throw const FormatException('Diagnostic output mode not acknowledged');
       }
       final socket = _channel!;
-      for (final packet in diagnosticPackets(frame)) {
+      for (final packet in diagnosticPackets(frame!)) {
         admit();
         if (!identical(socket, _channel)) throw const StaleConnection();
         socket.sink.add(packet);
@@ -497,6 +595,7 @@ class PakarApi {
     if (status.olderThan(_latestStatus)) return false;
     status = status.preservingNewerUpgrade(_latestStatus);
     status = status.preservingNewerRgb(_latestStatus);
+    status = status.preservingNewerPixels(_latestStatus);
     _latestStatus = status;
     _statusAge = Stopwatch()..start();
     if (!_statusUpdates.isClosed) _statusUpdates.add(status);
@@ -601,6 +700,9 @@ class PakarApi {
     if (isUsb) return _usbCommand(path, values, authorize);
     var snapshot = _latestStatus;
     if (snapshot?.peer.has('command-ack') != true) return null;
+    if (path == '/api/game/reset' && snapshot?.peer.has('reset-ack') != true) {
+      return null;
+    }
     final revision = connectionRevision;
     final allowHttp = commandHttpFallback;
     void requireSelectedCommandPath() {
@@ -640,7 +742,14 @@ class PakarApi {
       if (revision != connectionRevision || !authorize()) {
         throw const StaleConnection();
       }
-      final actual = verifyCommandReply(reply, packet, path, values);
+      final actual = await _settleAppliedReply(
+        reply,
+        packet,
+        path,
+        values,
+        revision,
+        authorize,
+      );
       _acceptIdentity(actual.json);
       _rememberStatus(actual);
       return actual;
@@ -743,7 +852,14 @@ class PakarApi {
           'The command owner retired before a receipt arrived.',
         );
       }
-      final actual = verifyCommandReply(reply, packet, path, values);
+      final actual = await _settleAppliedReply(
+        reply,
+        packet,
+        path,
+        values,
+        revision,
+        authorize,
+      );
       _acceptIdentity(actual.json);
       _rememberStatus(actual);
       return actual;
@@ -752,6 +868,118 @@ class PakarApi {
         _commandReplies.remove(id);
         if (!pending.isCompleted) pending.complete(null);
       }
+    }
+  }
+
+  Future<DeviceStatus> _settleAppliedReply(
+    Map<String, dynamic> reply,
+    String packet,
+    String path,
+    Map<String, String> values,
+    int revision,
+    bool Function() authorize,
+  ) async {
+    final melodies = path == '/api/game/settings' && gameMelodyPatch(values);
+    final backend = path == '/api/led/output' && values.containsKey('backend');
+    final receipt = verifyCommandReply(
+      reply,
+      packet,
+      path,
+      values,
+      requireGameReadback: !melodies,
+    );
+    if ((!melodies && !backend) ||
+        commandReadbackMatches(receipt, path, values)) {
+      return receipt;
+    }
+    void admit() {
+      if (revision != connectionRevision ||
+          !connectionWanted ||
+          !authorize() ||
+          _verifiedBoard != receipt.json['board_id'] ||
+          _verifiedBoot != receipt.json['boot_id']) {
+        throw const StaleConnection();
+      }
+    }
+
+    final completed = Completer<DeviceStatus>();
+    void observe(DeviceStatus value) {
+      if (completed.isCompleted) return;
+      try {
+        admit();
+        if (value.json['board_id'] != receipt.json['board_id'] ||
+            value.json['boot_id'] != receipt.json['boot_id']) {
+          throw const StaleConnection();
+        }
+        if (backend && value.olderThan(receipt)) return;
+        if (backend) {
+          final driver = LedBackendState.fromStatus(value.json);
+          if (driver?.failed == true) {
+            throw FormatException(driver!.failureDescription);
+          }
+        }
+        if (commandReadbackMatches(value, path, values)) {
+          completed.complete(value);
+        }
+      } on Object catch (error, stack) {
+        completed.completeError(error, stack);
+      }
+    }
+
+    final updates = statusUpdates.listen(observe);
+    final connection = connectionUpdates.listen((_) {
+      if (completed.isCompleted) return;
+      try {
+        admit();
+      } on Object catch (error, stack) {
+        completed.completeError(error, stack);
+      }
+    });
+    final clock = Stopwatch()..start();
+    try {
+      admit();
+      // Publish the accepted handoff, not an optimistic active driver. This
+      // also retires any previous failed attempt's status before observing it.
+      if (backend) _rememberStatus(receipt);
+      if (_latestStatus case final current?) observe(current);
+      while (!completed.isCompleted && clock.elapsedMilliseconds < 3000) {
+        // Only read requests after the one correlated mutation. A late AVR ACK
+        // or LED driver handoff is not a reason to replay the user's intent.
+        if (_socketReady && _channel != null) {
+          requestLiveStatus();
+        } else if (isBluetooth || commandHttpFallback) {
+          _retireStatusRead();
+          try {
+            observe(await status().timeout(const Duration(milliseconds: 500)));
+          } on TimeoutException {
+            /* Keep the original bounded receipt wait. */
+          }
+        }
+        if (completed.isCompleted) break;
+        await Future.any<void>([
+          completed.future.then<void>((_) {}),
+          Future<void>.delayed(const Duration(milliseconds: 100)),
+        ]);
+        admit();
+      }
+      if (!completed.isCompleted) {
+        throw OperationUncertain(
+          backend
+              ? 'The LED transmitter change was accepted, but the active driver was not confirmed; no command was replayed.'
+              : 'Game melodies were saved, but AVR application was not confirmed; no command was replayed.',
+        );
+      }
+      final actual = await completed.future;
+      admit();
+      return verifyCommandReply(
+        {...reply, 'status': actual.json},
+        packet,
+        path,
+        values,
+      );
+    } finally {
+      await updates.cancel();
+      await connection.cancel();
     }
   }
 
@@ -803,7 +1031,7 @@ class PakarApi {
       }
     });
     unawaited(
-      status().then<void>(
+      settledStatus(stillNeeded: () => !result.isCompleted).then<void>(
         (value) {
           if (!result.isCompleted) result.complete(value);
         },
@@ -1052,7 +1280,7 @@ class PakarApi {
     const maximum = 64 * 1024;
     final abort = Completer<void>();
     _readAborts.add(abort);
-    if (path == '/api/status') _statusReadAbort = abort;
+    if (Uri.parse(path).path == '/api/status') _statusReadAbort = abort;
     var timedOut = false;
     void stop() {
       if (!abort.isCompleted) abort.complete();
@@ -1158,21 +1386,26 @@ class PakarApi {
 
   Future<Map<String, dynamic>> _get(String path) async {
     _requireNetwork();
+    final statusRead = Uri.parse(path).path == '/api/status';
     if (isUsb) {
       await _ensureUsb();
-      if (path == '/api/status') return (await usb.status()).json;
+      if (statusRead) return (await usb.status()).json;
       if (path == '/api/cells/mapping') {
         await usb.status();
         return usb.table!;
+      }
+      if (path == '/api/pixels/groups') {
+        final owner = connectionRevision;
+        return usb.pixelGroupsApi(
+          authorize: () => owner == connectionRevision && connectionWanted,
+        );
       }
       throw const FormatException(
         'This read is unavailable through USB; no network fallback attempted',
       );
     }
     if (isBluetooth) return _bleRequest('GET', path, const {});
-    if (path != '/api/status' &&
-        _verifiedEndpoint != baseUrl &&
-        enforcePeerVersions) {
+    if (!statusRead && _verifiedEndpoint != baseUrl && enforcePeerVersions) {
       await status();
       _requireNetwork();
     }
@@ -1383,6 +1616,21 @@ class PakarApi {
   }) async {
     _requireNetwork();
     if (isUsb) {
+      if (path == '/api/pixels/groups') {
+        await _ensureUsb();
+        final owner = connectionRevision;
+        final configuration = jsonDecode(values['configuration'] ?? 'null');
+        if (configuration is! Map<String, dynamic>) {
+          throw const FormatException('Invalid pixel group configuration');
+        }
+        return usb.pixelGroupsApi(
+          configuration: configuration,
+          authorize: () =>
+              owner == connectionRevision &&
+              connectionWanted &&
+              authorize?.call() != false,
+        );
+      }
       final actual = await _usbCommand(path, values, authorize ?? () => true);
       return {
         'accepted': true,
@@ -1536,15 +1784,51 @@ class PakarApi {
     return _statusTask = task;
   }
 
+  /// Internal read retirement is not a failed user command. Only retry reads;
+  /// never replay a mutation or let a different peer complete this intent.
+  Future<DeviceStatus> settledStatus({bool Function()? stillNeeded}) async {
+    final owner = connectionRevision;
+    final deadline = Stopwatch()..start();
+    for (var attempt = 0; attempt < 3; attempt++) {
+      if (stillNeeded != null && !stillNeeded()) throw const SupersededRead();
+      if (owner != connectionRevision) throw const StaleConnection();
+      final remaining = readTimeout - deadline.elapsed;
+      if (remaining <= Duration.zero) break;
+      try {
+        final result = await status().timeout(remaining);
+        if (owner != connectionRevision) throw const StaleConnection();
+        return result;
+      } on SupersededRead {
+        if (owner != connectionRevision) throw const StaleConnection();
+        // Ask for the current snapshot, not the retired request's cached value.
+      }
+    }
+    throw TimeoutException(
+      'Device state could not be confirmed. No command was replayed.',
+      readTimeout,
+    );
+  }
+
   Future<DeviceStatus> _readStatus(int sequence) async {
     late final DeviceStatus result;
     try {
-      result = DeviceStatus(await _get('/api/status'));
+      result = DeviceStatus(
+        await _get(
+          connectionMethod == ConnectionMethod.network &&
+                  (_usbDemandFlags & 8) != 0
+              ? '/api/status?pixels=1'
+              : '/api/status',
+        ),
+      );
     } on Object {
       if (sequence != _statusReadSequence) throw const SupersededRead();
       rethrow;
     }
     if (sequence != _statusReadSequence) throw const SupersededRead();
+    // Invalid critical identity must retire captured owners even when hostname
+    // validation would reject the same response first. Never accept the peer
+    // before the requested-host check below.
+    _validateIdentity(result.json);
     if (!_matchesLocalIdentity(result.json)) {
       throw const FormatException(
         'Device identity does not match the requested hostname',
@@ -1560,8 +1844,7 @@ class PakarApi {
 
   // Adapt Session's synchronous retirement boundary: retire captured owners
   // before a new board/boot may authorize any old dialog or in-flight request.
-  bool _acceptIdentity(Map<String, dynamic> value) {
-    _checkPeerVersion(value);
+  void _validateIdentity(Map<String, dynamic> value) {
     final board = value['board_id'], boot = value['boot_id'];
     bool identity(Object? v) =>
         v is String && RegExp(r'^[!-~]{1,80}$').hasMatch(v);
@@ -1575,6 +1858,14 @@ class PakarApi {
       }
       throw const StaleConnection();
     }
+  }
+
+  bool _acceptIdentity(Map<String, dynamic> value) {
+    _checkPeerVersion(value);
+    _validateIdentity(value);
+    final board = value['board_id'], boot = value['boot_id'];
+    bool identity(Object? v) =>
+        v is String && RegExp(r'^[!-~]{1,80}$').hasMatch(v);
     final changed =
         _verifiedBoard != null &&
         (board != _verifiedBoard || boot != _verifiedBoot);
@@ -1701,14 +1992,62 @@ class PakarApi {
     return value;
   }
 
-  Future<CellMap> mapping() async {
+  Future<CellMap>? _mappingRead;
+  int? _mappingOwner;
+  int? _mappingConfiguration;
+
+  Future<CellMap> mapping() {
+    final pending = _mappingRead;
+    if (pending != null &&
+        _mappingOwner == connectionRevision &&
+        _mappingConfiguration == _configurationRevision) {
+      return pending;
+    }
+    _mappingOwner = connectionRevision;
+    _mappingConfiguration = _configurationRevision;
+    late final Future<CellMap> task;
+    task = _readMapping().whenComplete(() {
+      if (identical(_mappingRead, task)) {
+        _mappingRead = null;
+        _mappingOwner = null;
+        _mappingConfiguration = null;
+      }
+    });
+    _mappingRead = task;
+    return task;
+  }
+
+  Future<CellMap> _readMapping() async {
     final revision = connectionRevision;
-    await status();
+    final configuration = _configurationRevision;
+    final before = freshStatus ?? await settledStatus();
     if (revision != connectionRevision) throw const StaleConnection();
-    final value = await _get('/api/cells/mapping');
-    await status();
+    final board = before.json['board_id'], boot = before.json['boot_id'];
+    if (board == null || boot == null) {
+      throw const FormatException('A current board identity is required');
+    }
+    final value = await getJson('/api/cells/mapping');
     if (revision != connectionRevision) throw const StaleConnection();
-    return CellMap.fromJson(value);
+    final result = CellMap.fromJson(value);
+    final identified =
+        value.containsKey('board_id') || value.containsKey('boot_id');
+    if (identified &&
+        (value['board_id'] != board || value['boot_id'] != boot)) {
+      throw const StaleConnection();
+    }
+    // The response already identifies its producer. A healthy full WS status
+    // fences it without a second HTTP read that can be superseded by a command.
+    // A response omitting additive identity still needs explicit status fencing.
+    final after = identified
+        ? freshStatus ?? await settledStatus()
+        : await settledStatus();
+    if (revision != connectionRevision ||
+        after.json['board_id'] != board ||
+        after.json['boot_id'] != boot) {
+      throw const StaleConnection();
+    }
+    if (configuration != _configurationRevision) throw const SupersededRead();
+    return result;
   }
 
   Stream<DeviceStatus> liveStatus() async* {
@@ -1726,6 +2065,7 @@ class PakarApi {
     // Do not make working real-time control depend on a slow HTTP preflight.
     if (revision != connectionRevision) throw const StaleConnection();
     final previous = _channel;
+    _sentPixelDemand = null;
     _channel = null;
     _socketReady = false;
     _liveAge = _socketAge = null;
@@ -1798,6 +2138,19 @@ class PakarApi {
           }
           continue;
         }
+        if (value is Map<String, dynamic> && value['type'] == 'pixel-frame') {
+          if (_wantsNetworkPixels &&
+              liveFresh &&
+              value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot) {
+            final next = _latestStatus?.withPixelFrameEvent(value);
+            if (next != null) {
+              _latestStatus = next;
+              if (!_pixelUpdates.isClosed) _pixelUpdates.add(next);
+            }
+          }
+          continue; // No lease renewal, full-status emission or firmware work.
+        }
         if (value is Map<String, dynamic> && value['type'] == 'status-rgb') {
           if (liveFresh &&
               value['board_id'] == _verifiedBoard &&
@@ -1861,6 +2214,7 @@ class PakarApi {
           final status = DeviceStatus(value);
           if (!_rememberStatus(status)) continue;
           _liveAge = Stopwatch()..start();
+          _syncPixelSubscription();
           yield _latestStatus!;
         }
       }
@@ -2258,6 +2612,7 @@ class PakarApi {
       unawaited(_statusUpdates.close());
       unawaited(_connectionUpdates.close());
       unawaited(_rgbUpdates.close());
+      unawaited(_pixelUpdates.close());
       _ioClient.close(force: true);
     }
   }
@@ -2487,14 +2842,8 @@ class PakarApi {
 
   Future<Set<String>> _discoverSsdp() async {
     final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-    socket.multicastHops = 2;
     final results = <String>{};
-    final done = Completer<void>();
-    late final StreamSubscription<RawSocketEvent> subscription;
-    subscription = socket.listen((event) {
-      if (event != RawSocketEvent.read) return;
-      final packet = socket.receive();
-      if (packet == null) return;
+    void receive(Datagram packet) {
       final text = utf8.decode(packet.data, allowMalformed: true);
       final lines = const LineSplitter().convert(text);
       if (lines.isEmpty ||
@@ -2516,18 +2865,29 @@ class PakarApi {
               .replaceFirst(RegExp(r'/$'), ''),
         );
       }
-    });
+    }
+
     const request =
         'M-SEARCH * HTTP/1.1\r\n'
         'HOST: 239.255.255.250:1900\r\n'
         'MAN: "ssdp:discover"\r\n'
         'MX: 1\r\n'
         'ST: ssdp:all\r\n\r\n';
-    socket.send(utf8.encode(request), InternetAddress('239.255.255.250'), 1900);
-    Timer(const Duration(milliseconds: 1400), done.complete);
-    await done.future;
-    await subscription.cancel();
-    socket.close();
+    await collectDiscoveryDatagrams(
+      events: socket,
+      receive: socket.receive,
+      close: socket.close,
+      onPacket: receive,
+      window: const Duration(milliseconds: 1400),
+      send: () {
+        socket.multicastHops = 2;
+        socket.send(
+          utf8.encode(request),
+          InternetAddress('239.255.255.250'),
+          1900,
+        );
+      },
+    );
     return results;
   }
 }

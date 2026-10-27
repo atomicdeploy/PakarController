@@ -45,7 +45,11 @@ pub fn hash(path: &Path) -> Result<String, String> {
         }
         digest.update(&data[..n]);
     }
-    Ok(digest.finalize().iter().map(|b|format!("{b:02x}")).collect())
+    Ok(digest
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect())
 }
 pub fn regular(path: &Path) -> Result<(), String> {
     let m = fs::symlink_metadata(path).map_err(|_| "Owned file unavailable")?;
@@ -103,9 +107,10 @@ fn managed_at(root: &Path) -> Result<Managed, String> {
     if m.product != "PakarController"
         || uuid::Uuid::parse_str(&m.owner).is_err()
         || m.executable.parent() != Some(root)
-        || m.executable
-            .file_name()
-            .is_none_or(|n| !n.to_string_lossy().eq_ignore_ascii_case("PakarController.exe"))
+        || m.executable.file_name().is_none_or(|n| {
+            !n.to_string_lossy()
+                .eq_ignore_ascii_case("PakarController.exe")
+        })
         || m.executable.canonicalize().ok().as_ref() != Some(&m.executable)
         || m.preferences.canonicalize().ok().as_ref() != Some(&m.preferences)
     {
@@ -140,10 +145,10 @@ pub fn initialize() -> Result<(), String> {
         .map_err(|_| "Executable unavailable")?
         .canonicalize()
         .map_err(|_| "Executable unavailable")?;
-    if executable
-        .file_name()
-        .is_none_or(|n| !n.to_string_lossy().eq_ignore_ascii_case("PakarController.exe"))
-    {
+    if executable.file_name().is_none_or(|n| {
+        !n.to_string_lossy()
+            .eq_ignore_ascii_case("PakarController.exe")
+    }) {
         return Err("Only the canonical PakarController.exe can initialize management".into());
     }
     let preferences = crate::config::AppConfig::path()

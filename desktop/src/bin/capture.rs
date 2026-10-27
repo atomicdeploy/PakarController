@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let title = env::args()
         .nth(2)
         .unwrap_or_else(|| "PakarController".into());
-    let expected_pid=env::args().nth(3).map(|v|v.parse::<u32>()).transpose()?;
+    let expected_pid = env::args().nth(3).map(|v| v.parse::<u32>()).transpose()?;
     for _ in 0..30 {
         for window in Window::all()? {
             let actual_title = window.title()?;
@@ -26,7 +26,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             } else {
                 actual_title.contains(&title)
             };
-            if matches && expected_pid.is_none_or(|pid|window.pid().ok()==Some(pid)) && !window.is_minimized()? {
+            if matches
+                && expected_pid.is_none_or(|pid| window.pid().ok() == Some(pid))
+                && !window.is_minimized()?
+            {
                 println!(
                     "window bounds: {},{} {}x{}",
                     window.x()?,

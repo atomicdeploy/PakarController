@@ -1,9 +1,9 @@
 #define ARDUINOJSON_ENABLE_ARDUINO_STRING 1
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include "../firmware/esp8266/src/CloudConfig.h"
-#include "../firmware/esp8266/src/NetworkConfig.h"
-#include "../firmware/esp8266/src/EthernetConfig.h"
+#include "../firmware/esp/src/CloudConfig.h"
+#include "../firmware/esp/src/NetworkConfig.h"
+#include "../firmware/esp/src/EthernetConfig.h"
 #include "../firmware/esp32s3/src/Lldp.h"
 #include <cassert>
 #include <iostream>
@@ -52,8 +52,8 @@ Ethernet& ethernet(){return port;}
 }
 // Both actual management headers are compiled together, not a reimplemented
 // validation helper. Only driver/runtime observations are fixture substitutes.
-#include "../firmware/esp8266/src/CloudManagement.h"
-#include "../firmware/esp8266/src/EthernetManagement.h"
+#include "../firmware/esp/src/CloudManagement.h"
+#include "../firmware/esp/src/EthernetManagement.h"
 namespace {
 bool update(const char* text,String& result) {
   JsonDocument d;assert(!deserializeJson(d,text));

@@ -8,7 +8,9 @@ button{display:inline-flex;align-items:center;justify-content:center;vertical-al
 .card,.manager{box-shadow:var(--shadow)}
 .layout>*,.stack,.card,.brand,.brand>div{min-width:0}
 .status{overflow-wrap:anywhere}
-.row>*{min-width:0;flex:1 1 90px}
+.row>*{min-width:0}
+.row>input:not([type=checkbox]):not([type=color]),.row>select,.row>label{flex:1 1 120px}
+.row>button,.row>details,.row>output{flex:0 1 auto}
 .row input,.row select{max-width:100%}
 .form-grid{grid-template-columns:minmax(0,1fr) 100px}
 .form-grid>input{min-width:0;max-width:100%}

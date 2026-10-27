@@ -15,9 +15,17 @@ const CONTROL_TEXT_SIZE: f32 = 13.0;
 
 /// Single-line input text stays centered when its row supplies extra height.
 /// Multiline/wrapped editors intentionally keep TextEdit's top alignment.
-pub fn singleline_text_edit(text: &mut dyn egui::TextBuffer) -> egui::TextEdit<'_> {
+pub fn singleline_text_edit<'a>(
+    ui: &egui::Ui,
+    text: &'a mut dyn egui::TextBuffer,
+) -> egui::TextEdit<'a> {
     let align = crate::ui::i18n::input_alignment(crate::ui::i18n::rtl(), text.as_str());
-    egui::TextEdit::singleline(text).horizontal_align(align).vertical_align(egui::Align::Center)
+    egui::TextEdit::singleline(text)
+        .horizontal_align(align)
+        .vertical_align(egui::Align::Center)
+        .font(egui::TextStyle::Button)
+        .margin(egui::Margin::symmetric(4, 0))
+        .min_size(egui::vec2(0.0, crate::ui::control_density::height(ui)))
 }
 
 /// Workspace overlays paint immediately above their panel, never above dialogs.
@@ -153,22 +161,51 @@ fn action_button_with_kind(
     // their geometry. Equal widths keep paired actions such as Open / Cancel
     // visually balanced in every dialog host.
     let minimum_width = ACTION_BUTTON_WIDTH;
-    let mut text = egui::RichText::new(format!("{icon}  {}", crate::ui::i18n::text(label))).size(CONTROL_TEXT_SIZE);
-    let mut button = egui::Button::new(text.clone())
-        .min_size(egui::vec2(minimum_width, ACTION_HEIGHT))
-        .corner_radius(CONTROL_CORNER_RADIUS);
-    if primary {
-        text = text.color(selection.stroke.color);
-        button = egui::Button::new(text)
-            .min_size(egui::vec2(minimum_width, ACTION_HEIGHT))
-            .corner_radius(CONTROL_CORNER_RADIUS)
-            .fill(selection.bg_fill)
-            .stroke(egui::Stroke::new(
-                1.0_f32,
-                selection.bg_fill.gamma_multiply(1.35),
-            ));
-    }
-    ui.add(button)
+    // Exact Pealayer 5b3d5c1 contract: colored RichText keeps the button font
+    // and a semantic border recolors the existing stroke, never its width.
+    let border_width = ui.visuals().widgets.inactive.bg_stroke.width;
+    let text = egui::RichText::new(format!("{icon}  {}", crate::ui::i18n::text(label)))
+        .font(egui::TextStyle::Button.resolve(ui.style()));
+    ui.scope(|ui| {
+        // Adapt Pealayer's contextual_transport_style: semantic ink/fill
+        // belongs to the enabled action, including hover and press, while
+        // disabled controls retain the host's actual disabled appearance.
+        if primary && ui.is_enabled() {
+            let style = ui.style_mut();
+            style.visuals.override_text_color = None;
+            let fill = selection.bg_fill;
+            let lifted = |amount: u16| {
+                egui::Color32::from_rgb(
+                    ((u16::from(fill.r()) * (100 - amount) + 255 * amount) / 100) as u8,
+                    ((u16::from(fill.g()) * (100 - amount) + 255 * amount) / 100) as u8,
+                    ((u16::from(fill.b()) * (100 - amount) + 255 * amount) / 100) as u8,
+                )
+            };
+            let pressed = egui::Color32::from_rgb(
+                (u16::from(fill.r()) * 88 / 100) as u8,
+                (u16::from(fill.g()) * 88 / 100) as u8,
+                (u16::from(fill.b()) * 88 / 100) as u8,
+            );
+            for (visuals, fill) in [
+                (&mut style.visuals.widgets.inactive, fill),
+                (&mut style.visuals.widgets.hovered, lifted(8)),
+                (&mut style.visuals.widgets.active, pressed),
+                (&mut style.visuals.widgets.open, lifted(8)),
+            ] {
+                visuals.fg_stroke.color = selection.stroke.color;
+                visuals.bg_fill = fill;
+                visuals.weak_bg_fill = fill;
+                visuals.bg_stroke = egui::Stroke::new(border_width, fill);
+                visuals.expansion = 0.0;
+            }
+        }
+        ui.add(
+            egui::Button::new(text)
+                .min_size(egui::vec2(minimum_width, ACTION_HEIGHT))
+                .corner_radius(CONTROL_CORNER_RADIUS),
+        )
+    })
+    .inner
 }
 
 /// A shared, left-aligned navigation row for modal/dialog side rails.
@@ -238,7 +275,11 @@ fn navigation_control(
         );
 
         let rtl = crate::ui::i18n::rtl();
-        let icon_x = if rtl { rect.right() - 17.0 } else { rect.left() + 17.0 };
+        let icon_x = if rtl {
+            rect.right() - 17.0
+        } else {
+            rect.left() + 17.0
+        };
         painter.text(
             egui::pos2(icon_x, rect.center().y),
             egui::Align2::CENTER_CENTER,
@@ -250,7 +291,11 @@ fn navigation_control(
                 visuals.fg_stroke.color
             },
         );
-        let text_x = if rtl { rect.right() - 33.0 } else { rect.left() + 33.0 };
+        let text_x = if rtl {
+            rect.right() - 33.0
+        } else {
+            rect.left() + 33.0
+        };
         let title_y = if metadata.is_some() {
             rect.center().y - 7.0
         } else {
@@ -258,7 +303,11 @@ fn navigation_control(
         };
         painter.text(
             egui::pos2(text_x, title_y),
-            if rtl { egui::Align2::RIGHT_CENTER } else { egui::Align2::LEFT_CENTER },
+            if rtl {
+                egui::Align2::RIGHT_CENTER
+            } else {
+                egui::Align2::LEFT_CENTER
+            },
             crate::ui::i18n::text(label),
             egui::FontId::proportional(CONTROL_TEXT_SIZE),
             if selected {
@@ -270,7 +319,11 @@ fn navigation_control(
         if let Some(metadata) = metadata {
             painter.text(
                 egui::pos2(text_x, rect.center().y + 9.0),
-                if rtl { egui::Align2::RIGHT_CENTER } else { egui::Align2::LEFT_CENTER },
+                if rtl {
+                    egui::Align2::RIGHT_CENTER
+                } else {
+                    egui::Align2::LEFT_CENTER
+                },
                 metadata,
                 egui::FontId::proportional(10.5),
                 ui.visuals().weak_text_color(),
@@ -380,7 +433,11 @@ pub fn setting_row(
                 ui.label(egui::RichText::new(crate::ui::i18n::text(label)).strong());
             });
             if let Some(description) = description {
-                ui.label(egui::RichText::new(crate::ui::i18n::text(description)).small().weak());
+                ui.label(
+                    egui::RichText::new(crate::ui::i18n::text(description))
+                        .small()
+                        .weak(),
+                );
             }
             ui.add_space(3.0);
             body(ui);
@@ -397,7 +454,11 @@ pub fn setting_row(
                         ui.label(egui::RichText::new(crate::ui::i18n::text(label)).strong());
                     });
                     if let Some(description) = description {
-                        ui.label(egui::RichText::new(crate::ui::i18n::text(description)).small().weak());
+                        ui.label(
+                            egui::RichText::new(crate::ui::i18n::text(description))
+                                .small()
+                                .weak(),
+                        );
                     }
                 },
             );

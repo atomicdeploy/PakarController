@@ -251,7 +251,10 @@ mod tests {
             "capabilities":{"board_kind":"controller","acknowledged_features":["ota"]},"remote_firmware":{"busy":false,"phase":"idle"}});
         let s: DeviceStatus = serde_json::from_value(status.clone()).unwrap();
         let mut image = vec![0; 2_220_352];
-        image[0] = 0xe9;image[1]=4;image[12]=9;image[23]=1;
+        image[0] = 0xe9;
+        image[1] = 4;
+        image[12] = 9;
+        image[23] = 1;
         let hash = digest(&image);
         let expected = image.clone();
         let worker = std::thread::spawn(move || {
@@ -289,7 +292,7 @@ mod tests {
                     serde_json::to_vec(&status).unwrap()
                 } else {
                     assert!(text.starts_with("POST /update "));
-                    assert!(lower.contains(&format!("x-pakar-firmware-size: {}",expected.len())));
+                    assert!(lower.contains(&format!("x-pakar-firmware-size: {}", expected.len())));
                     assert!(
                         lower.contains("x-pakar-board: esp32s3-fixture")
                             && lower.contains(&format!("x-pakar-boot: {}", "b".repeat(32)))

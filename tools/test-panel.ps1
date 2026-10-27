@@ -12,7 +12,7 @@ if($LASTEXITCODE){throw 'AVR presentation fixture compilation failed'}
 & (Join-Path $taskNative 'front_panel_test.exe')
 if($LASTEXITCODE){throw 'AVR presentation fixture failed'}
 $taskSources=@('firmware/avr/PcControllerRuntime.cpp','firmware/avr/BoardSettings.cpp','firmware/avr/SevenSegments.cpp','libraries/BoardCore/src/pccontroller/MacroRing.cpp','libraries/BoardCore/src/pccontroller/Keys.cpp','libraries/BoardCore/src/pccontroller/ControllerEvents.cpp','libraries/BoardCore/src/pccontroller/AutomationStore.cpp') | ForEach-Object { Join-Path $taskRoot $_ }
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $taskRoot 'tests/pc_stubs') -I (Join-Path $taskRoot 'libraries/BoardCore/src') -I (Join-Path $taskRoot 'firmware/avr') -I (Join-Path $taskRoot 'firmware/esp8266/src') (Join-Path $taskRoot 'tests/esp_front_panel_test.cpp') @taskSources -o (Join-Path $taskNative 'esp_front_panel_test.exe')
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $taskRoot 'tests/pc_stubs') -I (Join-Path $taskRoot 'libraries/BoardCore/src') -I (Join-Path $taskRoot 'firmware/avr') -I (Join-Path $taskRoot 'firmware/esp/src') (Join-Path $taskRoot 'tests/esp_front_panel_test.cpp') @taskSources -o (Join-Path $taskNative 'esp_front_panel_test.exe')
 if($LASTEXITCODE){throw 'Paired menu fixture compilation failed'}
 & (Join-Path $taskNative 'esp_front_panel_test.exe')
 if($LASTEXITCODE){throw 'Paired menu fixture failed'}

@@ -10,7 +10,7 @@ param(
     [switch]$DisablePeerVersionChecks,
     [ValidatePattern('^test/[A-Za-z0-9_/-]+_test\.dart$')][string]$TestPath,
     [string]$CapturePath,
-    [ValidateSet('Table','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone','FrontPanelTablet','FrontPanelPhone','DevicesTablet','DevicesPhone','AppUpdatesTablet','AppUpdatesPhone','AutomationTablet','AutomationPhone')][string]$CaptureView='Table',
+    [ValidateSet('Table','TableTablet','TablePhone','SettingsTablet','SettingsPhone','FirmwareTablet','FirmwarePhone','BridgeTablet','BridgePhone','FrontPanelTablet','FrontPanelPhone','DevicesTablet','DevicesPhone','AppUpdatesTablet','AppUpdatesPhone','AutomationTablet','AutomationPhone')][string]$CaptureView='Table',
     [switch]$Plan
 )
 $ErrorActionPreference='Stop'

@@ -27,8 +27,8 @@ the same feature commit in both push and PR workflows. Other branches can dispat
 explicitly. This adapts Pealayer's all-branch push trigger to avoid duplicate work.
 Run artifacts expire after seven days. Local binaries are not rebuilt for README/governance edits.
 
-Build stages: workflow lint → repository/interface checks → ESP/AVR (both UART
-flags), Windows test/release, Android preview. One aggregate check fails for a
+Build stages: workflow lint → repository/interface checks → ESP32-S3 and AVR
+(polling/busy-wire/buffered profiles), Windows test/release, Android preview. One aggregate check fails for a
 missing, cancelled or failed required build. CodeQL has a separate aggregate check.
 
 `vX.Y.Z` or `vX.Y.Z-preview` tags must match the shared firmware source version.
@@ -40,6 +40,12 @@ flashed. The remote firmware manifests include raw ESP/AVR URLs, SHA-256, model,
 signature, full 32-KiB Urboot image and matched UART mode. Draft asset URLs become
 public only after an owner publishes the reviewed release. Checksums alone are
 not authentication: independently trust the manifest hash and verify provenance.
+Default firmware packages are the buffered S3+AVR pair. ESP8266 source, direct
+build commands, optional raw/gzip reports (`firmware-report.mjs --legacy`) and
+explicit legacy packaging (`prepare-release.mjs ... --legacy`) remain available,
+but the current full image overflows real hardware budgets and is not required
+or advertised as a release artifact. Legacy packaging still validates actual
+images; opting in is not proof that today's source fits or boots.
 
 No production-signing key is configured here. Android remains preview-signed.
 The complete build/release upgrade is on the application PR. Main's repository-only

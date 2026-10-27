@@ -61,6 +61,26 @@ pub fn apply(visuals: &mut eframe::egui::Visuals, palette: Palette) {
     visuals.widgets.hovered.bg_stroke = hover_border;
     visuals.widgets.hovered.bg_fill = rgb("surface-3");
     visuals.widgets.hovered.weak_bg_fill = rgb("surface-3");
+    // PCController's fixed border / color-only hover contract, adapted to
+    // egui. Never leave pressed/open controls on egui's stock white 2px edge.
+    visuals.widgets.active.fg_stroke = Stroke::new(1.0, rgb("text"));
+    visuals.widgets.active.bg_stroke = hover_border;
+    visuals.widgets.active.bg_fill = rgb("surface-1");
+    visuals.widgets.active.weak_bg_fill = rgb("surface-1");
+    visuals.widgets.open.fg_stroke = Stroke::new(1.0, rgb("text"));
+    visuals.widgets.open.bg_stroke = hover_border;
+    visuals.widgets.open.bg_fill = rgb("surface-3");
+    visuals.widgets.open.weak_bg_fill = rgb("surface-3");
+    for widget in [
+        &mut visuals.widgets.noninteractive,
+        &mut visuals.widgets.inactive,
+        &mut visuals.widgets.hovered,
+        &mut visuals.widgets.active,
+        &mut visuals.widgets.open,
+    ] {
+        widget.corner_radius = eframe::egui::CornerRadius::same(6);
+        widget.expansion = 0.0;
+    }
 }
 
 #[cfg(test)]

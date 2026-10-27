@@ -30,6 +30,10 @@ foreach ($taskBoard in $taskFirmware) {
     Assert-Storage ($taskBoard.Arguments -contains '--build-path') 'Stable Arduino build path'
     Assert-Storage (-not ($taskBoard.Arguments -contains '--clean')) 'No forced clean by default'
 }
+$taskAvrPlan=$taskFirmware | Where-Object Board -eq 'avr'
+Assert-Storage (($taskAvrPlan.Arguments -join ' ') -match 'LTO=Os_flto') 'AVR retains selected bootloader-safe MiniCore LTO profile'
+$taskCppFlags=@($taskAvrPlan.Arguments | Where-Object { $_ -like 'compiler.cpp.extra_flags=*' })
+Assert-Storage ($taskCppFlags.Count -eq 1 -and $taskCppFlags[0] -match '(?:=|\s)-flto(?:\s|$)') 'Custom AVR macros must not erase the selected MiniCore C++ LTO option'
 $taskEsp = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -Plan )
 $taskPolling = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target avr -LinkMode polling -Clean -Plan )
 Assert-Storage ($taskEsp.Count -eq 1 -and $taskEsp[0].Board -eq 'esp8266') 'Selective ESP build'
@@ -38,22 +42,42 @@ Assert-Storage (($taskPolling[0].Arguments -join ' ') -match 'PAKAR_USE_BUSY_WIR
 $taskBuffered = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target avr -LinkMode buffered -Plan )
 Assert-Storage ($taskBuffered.Count -eq 1 -and ($taskBuffered[0].Arguments -join ' ') -match 'PAKAR_USE_BUSY_WIRE=0 -DPAKAR_UART_BUFFERED=1') 'Paired AVR buffered flags'
 Assert-Storage (($taskBuffered[0].Arguments -join ' ') -match 'cache[\\/]avr-buffered') 'Stable buffered AVR cache'
+foreach($taskCase in @(@('first-wins','auto',0),@('table-selection','auto',1),@('first-wins','enabled',1),@('table-selection','disabled',0))) {
+    $taskGate = & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target avr -LinkMode buffered -GameMode $taskCase[0] -AvrAutomations $taskCase[1] -Plan
+    Assert-Storage (($taskGate.Arguments -join ' ') -match "-DPAKAR_PC_AUTOMATIONS=$($taskCase[2])(?:\s|$)") "AVR automation profile $taskCase"
+}
+$taskRadio = & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target avr -LinkMode buffered -GameMode first-wins -AvrRadio -Plan
+Assert-Storage (($taskRadio.Arguments -join ' ') -match '-DPAKAR_PC_RF=1') 'Explicit raw RF adapter'
+Assert-Storage (($taskBuffered[0].Arguments -join ' ') -notmatch '-DPAKAR_PC_RF=1') 'RF remains opt-in until physical acceptance'
 $taskStaticS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -Plan )
 $taskNoBleS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -S3Bluetooth disabled -Plan )
 Assert-Storage ($taskNoBleS3[0].LedBackendProfile.Content -match 'PAKAR_S3_BLE_ENABLED 0') 'Explicit Bluetooth exclusion reaches the application profile'
 Assert-Storage ($taskStaticS3[0].LedBackendProfile.Content -match 'PAKAR_S3_BLE_ENABLED 1') 'Runtime BLE choice remains available in the default profile'
 Assert-Storage (($taskNoBleS3[0].Arguments -join ' ') -eq ($taskStaticS3[0].Arguments -join ' ')) 'BLE policy must not invalidate unrelated SDK objects'
-Assert-Storage (($taskNoBleS3[0].Arguments -join ' ') -match 'ARDUINO_USB_CDC_ON_BOOT=1 -DARDUINO_USB_MODE=1') 'Bluetooth exclusion must not remove USB recovery'
+Assert-Storage (($taskNoBleS3[0].Arguments -join ' ') -match 'CDCOnBoot=cdc,USBMode=hwcdc') 'Bluetooth exclusion must not remove board-selected USB recovery'
+Assert-Storage (($taskNoBleS3[0].Arguments -join ' ') -match 'PAKAR_S3_HOST_TRANSPORT=0') 'Default command path remains the USB-to-UART connector'
+$taskFourBoxS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -GameMode first-wins -InitialKeyMask 15 -DeviceName keycontroller4 -Plan )
+Assert-Storage ($taskFourBoxS3[0].LedBackendProfile.Content -match '(?m)^#define PAKAR_GAME_MODE 2$') 'Four-box profile must remain first-wins'
+Assert-Storage ($taskFourBoxS3[0].LedBackendProfile.Content -match '(?m)^#define PAKAR_INITIAL_KEY_MASK 15$') 'Four-box profile must boot with exactly boxes one through four enabled'
+Assert-Storage ($taskFourBoxS3[0].LedBackendProfile.Content -match '(?m)^#define PAKAR_INITIAL_NAME keycontroller4$') 'Four-box profile must keep its unique hostname'
+Assert-Storage (($taskFourBoxS3[0].Arguments -join ' ') -notmatch 'PAKAR_INITIAL_NAME=') 'Changing an S3 hostname must not invalidate every SDK/library object'
+$taskProductionS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -S3FlashMB 16 -S3Psram opi -Plan )
+$taskProductionCache=$taskProductionS3[0].Arguments[[Array]::IndexOf($taskProductionS3[0].Arguments,'--build-path')+1]
+$taskRecoveryCache=$taskStaticS3[0].Arguments[[Array]::IndexOf($taskStaticS3[0].Arguments,'--build-path')+1]
+Assert-Storage ($taskProductionCache -ne $taskRecoveryCache) 'Different hardware profiles cannot evict one another, including an adopted matching warm cache'
+Assert-Storage ($taskProductionCache -match 'cache[\\/]esp32s3-buffered(?:-f16m-psram-opi-host-uart0-wifi)?$') 'Production hardware profile owns its keyed or exact-matching adopted cache'
 try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -S3Bluetooth disabled -Plan; throw 'Must reject S3 Bluetooth flag on ESP8266' }
 catch { Assert-Storage ($_.Exception.Message -like 'Bluetooth build selection requires ESP32-S3*') 'Bluetooth exclusion is S3-specific' }
-$taskDmaS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -S3LedBackend rmt-dma -Plan )
-Assert-Storage ($taskStaticS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_USE_DMA 0') 'Non-DMA remains the safe default'
-Assert-Storage ($taskDmaS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_USE_DMA 1') 'Explicit RMT-DMA build reaches the application-only profile'
+$taskDmaS3 = @( & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -S3LedGpio -S3LedRmtDma -Plan )
+Assert-Storage ($taskStaticS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_GPIO_ENABLED 0' -and $taskStaticS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_RMT_ENABLED 0') 'No explicit driver flags means no strip GPIO control'
+Assert-Storage ($taskDmaS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_GPIO_ENABLED 1' -and $taskDmaS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_RMT_ENABLED 1' -and $taskDmaS3[0].LedBackendProfile.Content -match 'PAKAR_S3_LED_DEFAULT_BACKEND 1') 'Both drivers, default GPIO, one image'
 Assert-Storage (($taskDmaS3[0].Arguments -join ' ') -eq ($taskStaticS3[0].Arguments -join ' ')) 'Backend changes must not invalidate global SDK/library compiler flags'
 Assert-Storage ($taskDmaS3[0].LedBackendProfile.Path -eq $taskStaticS3[0].LedBackendProfile.Path) 'One stable LED profile, not another cache'
 Assert-Storage (($taskDmaS3[0].Arguments -join ' ') -notmatch '--clean') 'Backend selection does not force clean or a duplicate cache'
-try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -S3LedBackend rmt-dma -Plan; throw 'Must reject DMA ESP8266' }
-catch { Assert-Storage ($_.Exception.Message -like 'The RMT-DMA LED backend requires ESP32-S3*') 'DMA is S3-specific' }
+try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -S3LedRmtDma -Plan; throw 'Must reject DMA ESP8266' }
+catch { Assert-Storage ($_.Exception.Message -like 'LED driver build flags require ESP32-S3*') 'DMA is S3-specific' }
+try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp32s3 -S3LedGpio -S3LedDefault rmt-dma -Plan; throw 'Must reject unavailable default' }
+catch { Assert-Storage ($_.Exception.Message -like 'Default LED driver must be explicitly included*') 'Default cannot bypass inclusion flags' }
 try { & (Join-Path $taskRoot 'tools/build-firmware.ps1') -Target esp8266 -LinkMode buffered -Plan; throw 'Must reject buffered ESP8266' }
 catch { Assert-Storage ($_.Exception.Message -like 'Buffered mode currently targets*') 'Do not accidentally enable buffered ESP8266' }
 $taskManifest = Get-Content -LiteralPath (Join-Path $taskRoot 'desktop/Cargo.toml') -Raw

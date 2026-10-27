@@ -1,5 +1,16 @@
 # PakarController mobile
 
+Current source identity is **0.2.8+23**, shared with
+`../interfaces/client-release.json`; read the installed package to identify an
+actual phone/tablet. Historical build/test receipts below do not establish the
+current installation. See [system architecture and gaps](../docs/ARCHITECTURE.md).
+
+The Table and Keys roles are explicitly advertised build profiles. Table is
+480 pixels; the newer first-wins Keys profile is216 pixels. Several diagnostic
+and transport controls remain table-specific; universal role parity is not
+claimed. Native Android USB CDC is also a selected offline path with the
+limited scope in [USB-OTG](../docs/USB-OTG.md), not a generic CH343/CH340 driver.
+
 ESP32-S3 Bluetooth LE is a separate offline connection choice in Devices and
 connection settings. Android requests Nearby Devices (legacy Location) access,
 verifies INFO/full board identity, and routes normal controls/settings/live state
@@ -67,8 +78,8 @@ from the simulated layout and transport tests.
 The Flutter control surface targets Android phones and tablets with the same
 truthful board-state contract as the native and embedded Web interfaces.
 
-It provides the row-major 80-cell table with the physical/logical identity
-editor and half-cell column/row stagger, game modes, front-panel marquee and live
+It provides the 80-cell table with the physical/logical identity
+editor and interleaved half-cell column stagger, the board's one baked mode, front-panel marquee and live
 seven-segment preview, hardware/discovery state, and persistent authenticated
 connection preferences. The user-facing endpoint defaults to
 `http://ledboard.local`; any valid renamed `.local` hostname is supported. An SSDP origin is used only as a matching identity-checked
@@ -79,11 +90,12 @@ are retained in release builds. The visual colors follow Pealayer's Studio
 palette roles. Logical-ID search supports exact numbers and ranges with
 one shared selection; alternating colors are on cells, not column backgrounds,
 and odd columns use +0.5. Finding or tapping selects without physical writes;
-explicit bulk output stops at the first failed/uncertain command. Indicators
-are optional and initially hidden. The display starts `1, 11, 2, 12…`: cell 1 is
-at the upper-left, and 11 is to its right and half a cell lower. Alternate display
-rows shift half a cell right. The preview uses 1.5-cell row spacing to keep square
-touch targets disjoint; exact physical row spacing still needs user confirmation.
+explicit bulk output stops at the first failed/uncertain command. LED indicators
+default On and multiselect defaults Off; both are saved per board. The display starts `1, 11, 2, 12…`: cell 1 is
+at the upper-left, and 11 is to its right and half a cell lower. There are20
+visual columns and four rows. Rows share exact column centers with1.0-cell row
+pitch; there is no alternating horizontal row shift. The first column is
+1,21,41,61 and the second is11,31,51,71. This follows `lib/table_layout.dart`.
 RTL changes application text direction, not the physical table orientation. The
 canvas includes the final half-cell offset and pans horizontally rather than
 shrinking phone targets. Display coordinates never rewrite logical IDs or the
@@ -115,8 +127,9 @@ is a **preview**, not a production-signed Android release. A durable signing
 key, physical phone/tablet verification, full preference/menu parity and
 actual board round-trips remain open in GitHub master issue #2. No keystore or
 device credentials are committed. Flutter/Dart versions used for this
-checkpoint are 3.47.3/3.13.3; this paired source checkpoint is 0.2.8
-(Android build 15). An already-installed package reports its actual package version.
+historical checkpoint were 3.47.3/3.13.3; the current Dart SDK constraint is
+^3.13.3. The shared source identity at this documentation review is0.2.8+23.
+An already-installed package reports its actual package version.
 
 Peer version admission is enabled by default with a 0.2.8 support floor;
 `PAKAR_ENFORCE_PEER_VERSIONS=false` disables only version checks in a build,

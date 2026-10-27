@@ -5,7 +5,7 @@ import {webcrypto} from 'node:crypto';
 const js=readFileSync(new URL('../assets/web/basic-cells.js',import.meta.url),'utf8');
 const peer=readFileSync(new URL('../assets/web/peer-http.js',import.meta.url),'utf8');
 const html=readFileSync(new URL('../assets/web/basic.html',import.meta.url),'utf8');
-const firmware=readFileSync(new URL('../firmware/esp8266/esp8266.ino',import.meta.url),'utf8');
+const firmware=readFileSync(new URL('../firmware/esp/application.ino',import.meta.url),'utf8');
 assert.match(firmware,/server\.native\(\)\.on\(AsyncURIMatcher::exact\("\/basic"\)/,'Immutable page bypasses the hardware queue');
 assert.match(firmware,/request->send\(200, "text\/html; charset=utf-8",\s*reinterpret_cast<const uint8_t \*>\(kBasicUi\), sizeof\(kBasicUi\) - 1\)/,'Use bounded flash response, not ESP32 char* send_P heap overload');
 const {createBasicCells,createPeerHttp}=vm.runInNewContext(peer+'\n'+js+'\n({createBasicCells,createPeerHttp})',{URLSearchParams,Headers,AbortController,setTimeout,clearTimeout,crypto:webcrypto});
@@ -80,7 +80,7 @@ for(const driver of [{backend:'rmt-dma',dma:false,ready:true},{backend:'gpio-sta
 }
 {
   const f=fixture();f.status.capabilities.acknowledged_features=['table','leds'];await f.app.refresh();assert(!f.app.snapshot().canWrite);assert(!f.app.snapshot().canEnable);
-  assert(!await f.app.setColor('red'));assert.equal(posts(f).length,0,'No legacy per-cell fallback for old firmware');assert.match(f.app.snapshot().reason,/atomic cell batches/);
+  assert(!await f.app.setColor('red'));assert.equal(posts(f).length,0,'No legacy per-cell fallback for old firmware');assert.match(f.app.snapshot().reason,/Update board firmware to enable bulk cell control/);
 }
 {
   const f=fixture();await f.app.refresh();f.ackCount=80;assert(!await f.app.setColor('red'));assert.equal(posts(f).length,1);assert(!f.app.snapshot().known);assert.match(f.app.snapshot().message,/not acknowledged/);

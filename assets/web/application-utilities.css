@@ -1,0 +1,23 @@
+.application-activity{margin:18px 0 0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.application-activity>summary{min-height:38px;display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;list-style:none;font-size:12px;font-weight:600;line-height:1.25}
+.application-activity>summary::-webkit-details-marker{display:none}.application-activity>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.application-activity-count{font-size:11px;font-variant-numeric:tabular-nums;line-height:1.3;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.application-activity-tools{display:flex;justify-content:flex-end;padding:4px 10px;border-block:1px solid var(--line)}
+.application-activity-clear{min-height:28px;font-size:11px;display:inline-flex;align-items:center;gap:5px;background:transparent;border-color:transparent}
+.application-activity-list{max-height:min(230px,35vh);overflow:auto;overscroll-behavior:contain}
+.application-event{display:grid;grid-template-columns:16px minmax(60px,auto) minmax(0,1fr) auto;gap:9px;align-items:start;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.4}
+.application-event:last-child{border-bottom:0}.application-event time{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.application-event-copy{overflow-wrap:anywhere;min-width:0}
+.application-event.error>.web-icon,.application-event.error>svg{color:var(--danger,#e56b77)}.application-event.success>.web-icon,.application-event.success>svg{color:var(--success,#67c995)}
+.application-activity svg,.application-command-item svg,.application-command-open svg{width:16px;height:16px;flex:0 0 16px}
+.application-command-palette{display:grid;gap:10px;min-width:min(440px,calc(100vw - 64px))}.application-command-palette>input{width:100%;min-height:38px}
+.application-command-results{display:grid;gap:4px;max-height:50vh;overflow:auto}.application-command-item{width:100%;display:flex;align-items:center;gap:10px;text-align:start;min-height:36px;padding:7px 10px;background:transparent;border:1px solid transparent;border-radius:8px;line-height:1.25}
+.application-command-item:hover{background:var(--surface-2);border-color:var(--line)}.application-command-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.application-command-open{display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.25}
+.application-preferences{border:0;border-top:1px solid var(--line);margin:14px 0 0;padding:14px 0 0;display:grid;gap:10px;min-width:0}.application-preferences legend{padding-inline-end:10px;font-size:13px;font-weight:600;line-height:1.4}
+.application-check{display:flex;align-items:center;gap:8px;font-size:12px;line-height:1.4}.application-check>input{flex:0 0 16px;width:16px;height:16px;margin:0}
+.pixel-group-rules{display:grid;gap:10px}.pixel-group-rule{display:grid;grid-template-columns:minmax(72px,1fr) minmax(140px,1.5fr) minmax(80px,1fr) auto;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.pixel-count-stepper{display:flex;align-items:center;gap:6px;min-width:0}.pixel-count-stepper>input{width:64px;min-width:0;text-align:center;font-variant-numeric:tabular-nums}.pixel-count-stepper>.icon-button{flex:0 0 32px;width:32px;height:32px;min-height:32px;padding:5px}.pixel-group-rule .field{min-width:0;margin:0}.pixel-group-rule .muted{color:var(--muted);font-variant-numeric:tabular-nums}
+@media(max-width:600px){.pixel-group-rule{grid-template-columns:minmax(72px,1fr) minmax(140px,2fr)}.pixel-group-rule>button{justify-self:end}}
+[data-control-density=compact] #workspace :is(button,select,input:not([type=range]):not([type=checkbox]):not([type=color]):not([type=file])){min-height:30px;padding-block:5px;line-height:1.25}
+[data-control-density=compact] #workspace .studio-square{width:30px;height:30px;padding:5px}
+@media(max-width:600px){.application-event{grid-template-columns:16px minmax(0,1fr) auto}.application-event time{grid-column:2;grid-row:2}.application-command-open>span{display:none}.application-command-open{width:36px;min-width:36px;height:36px;padding:8px}}

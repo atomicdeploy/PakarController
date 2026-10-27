@@ -160,8 +160,8 @@ backs up and verifies all flash/EEPROM through UART before page writes, checks
 that the candidate's entire384-byte boot region matches the current bootloader,
 rechecks the source digest, writes complete128-byte application pages (page0
 last), then reads all32768 flash and1024 EEPROM bytes back before returning to
-the application and releasing Prog once. It never issues chip erase, EEPROM
-write, fuse write or a boot-region write. Only the reviewed stock MiniCore
+the application and releasing Prog once. The flash-program operation never
+issues chip erase, EEPROM write, fuse write or a boot-region write. Only the reviewed stock MiniCore
 ATmega328P profile is accepted; custom/larger bootloaders require explicit ISP
 review. Raw UART restores38400baud and a fresh COBS parser on every exit.
 
@@ -182,6 +182,29 @@ a reliable Urboot uploader. Dedicated native/mobile method-selection controls,
 UART-dead interrupted-write recovery and power-loss acceptance remain separate;
 the API and shared progress do not certify them.
 
+Explicit EEPROM provisioning uses the same queued maintenance endpoint with
+`method=urboot`, `operation=eeprom-write` or `eeprom-initialize`, matching
+`confirm`, a complete 1024-byte `data_hex` (2048 hex characters), and its lowercase
+SHA256. Initialization uses the caller's explicit image; it never invents factory
+settings or erases automatically. Existing board/boot, request ID, deadline and
+maintenance ownership checks apply. The bootloader must advertise the reviewed
+EEPROM capability. Full flash/EEPROM backups precede writes; unchanged chunks
+are skipped and changed chunks verified. No retry follows an ambiguous write.
+Download these per-request backups using `artifact=urboot-flash|urboot-eeprom`
+and `request_id` on `/file/download`. Retain the request ID across ESP reboots.
+
+An ESP32-S3 build may include `-AvrRecoveryImage <complete-32768-byte-bin>`.
+`GET /api/avr/recovery-image` reports availability/hash. POST the same endpoint
+with board/boot headers, `sha256` and `confirm=STAGE AVR RECOVERY` to stage it
+without touching AVR. Then use the existing explicitly confirmed ISP recovery
+workflow. No boot-time auto-flash or fuse guessing occurs. A virgin MCU whose
+clock/fuses differ from the reviewed board profile requires separate provisioning.
+
+Cell export at `GET /api/cells/assignments` uses semantic `idle/lost/won/off`,
+not rendered RGB. Import at POST accepts an `assignments` array and requests an
+immediate scene checkpoint; `persisted` and `persistence_pending` describe storage
+separately from accepted in-memory state. Ordinary edits retain coalesced saving.
+
 ## LED output implementation capability
 
 Peers advertising `leds` additionally report optional
@@ -196,8 +219,26 @@ The same manifest travels in HTTP, WebSocket, MQTT telemetry and full USB table
 snapshots, and is preserved through native bridge serialization. Rust, Flutter
 and Web show its explicit driver label only when valid and LED support is ACKed;
 old/malformed/unknown optional metadata is unknown, never inferred false from a
-missing field or the board's CPU model. No API generation or editable backend
-setting is introduced; backend selection remains a firmware build option.
+missing field or the board's CPU model.
+
+S3 runtime-capable images additionally advertise `available_backends` and
+`runtime_switch`. GPIO and RMT/DMA are independently included with
+`PAKAR_S3_LED_GPIO_ENABLED` / `PAKAR_S3_LED_RMT_ENABLED`; both default to zero.
+The canonical dual-driver build passes `-S3LedGpio -S3LedRmtDma` and defaults
+to GPIO when no saved choice exists. A no-driver image never owns the LED pin.
+
+Select with `POST /api/led/output` (`backend=gpio-static` or `backend=rmt-dma`),
+WebSocket/MQTT command `{"command":"led-output","backend":"rmt-dma"}`, or
+USB `0x5c [3,1]` / `[3,2]`. General USB API requests expose the same GET/POST
+route. Backend selection cannot be combined with renderer/output mutations.
+The accepted receipt confirms durable intent, not physical output. Observe
+`led_output.driver.requested_backend`, `backend`, `switch_pending`,
+`switch_error`, `backend_revision`, and `ready`, alongside top-level
+`led_output.backend_saved` / `backend_settings_error`. A switch is applied only
+after complete-frame resend, including the latch interval; failures remain
+visible even when a safe GPIO fallback is active. No mutation is automatically
+replayed after uncertain delivery. Preferences use a separately validated,
+atomic LittleFS record; scenes, mapping and the effects engine remain shared.
 
 ## Board Silent mode
 
@@ -273,7 +314,7 @@ are valid.
 
 Peers advertising `pixel-diagnostic` accept one `pixel-diagnostic` command via
 the existing `/ws` or `POST /api/command` envelope. Fields are zero-based `index`
-(0..479), `count` (1 or6, six-pixel groups aligned to a multiple of6), integer
+(within the board's used pixel range), `count` (1 or one complete physical group), integer
 `rgb` (0..16777215) and boolean `off`. It validates before mutation, respects
 another stream's staging lease, clears the full480-pixel frame, enables raw
 effects output and publishes exactly the requested physical pixel/group with no
@@ -285,6 +326,40 @@ the same deduplicated WS-to-HTTP receipt recovery as cell commands; an uncertain
 outcome never becomes a fresh write. This is buffer publication, not optical
 proof. Flutter's internal path selector `/api/led/diagnostic` names this command;
 it is not a separate REST endpoint.
+
+### Per-group pixel counts
+
+`pixel-group-layout` advertises runtime physical-group sizing. `GET /api/pixels/groups`
+returns `revision`, `default_count`, `group_count`, `capacity`, `used_pixels`,
+zero-based `starts`, effective `counts`, `overrides` and `index_base:0`.
+Physical group IDs in overrides are one-based. Logical cell renaming/remapping
+does not move these overrides: the cable topology is independent of cell names.
+Table builds default to 80 groups of 6 (480 total capacity); keycontroller builds
+default to 18 groups of 12 (216 total capacity, two groups per box).
+
+POST the complete replacement list as form field `configuration`:
+
+```json
+{"revision":0,"overrides":[{"group":1,"count":5},{"group":2,"count":7}]}
+```
+
+Omitted groups or count zero inherit the default. Effective counts are 1–255,
+the cumulative sum cannot exceed the compiled capacity, and duplicate group IDs,
+stale revisions or active maintenance/preview ownership reject the whole change.
+The independent checksummed file uses staged readback and atomic rename; ordinary
+scene states and logical mapping are not reset. Any unused tail is sent black.
+
+Diagnostics on these peers include `group_layout_revision` from the current
+layout; a custom layout requires it. A full-group probe must use its exact
+`starts[group-1]` and `counts[group-1]`, not fixed multiples of six or twelve.
+Published RGB frames carry capture-time `group_layout_revision`, `group_counts`
+and `group_starts`; clients must not relabel an old frame using a new topology.
+USB uses the same guarded API via its generic API command, with no TCP fallback.
+Compact status may mark `pixel_groups.partial:true` and omit redundant starts
+and overrides; derive starts only from validated counts and fetch the full group
+resource before editing. An oversized USB snapshot explicitly omits RGB with
+`pixel_frame_partial:true` / `rgb_omitted:true`; on-demand `/api/pixels/frame`
+provides the complete captured frame without increasing the bounded snapshot.
 
 Normal selection edits are not streamed RGB frames. `/api/cells` validates the
 complete selection before changing anything, stages all targets together and
@@ -550,3 +625,36 @@ loss, ready, AP-only, warning. Disabled AVR builds do not manufacture peer loss.
 Initial Off and disable/reassignment submit black to the confirmed pin. The
 writer exposes real bounded RMT completion, not unconditional success from a
 void SDK helper.
+
+## ESP peer relay (bounded LAN candidate)
+
+`GET /api/peers` reports the actually implemented transports and limits. S3
+network builds advertise `peer-relay-http`; offline builds do not. This is an
+application relay, not NAT, a Wi-Fi extender or a completed mesh.
+
+`POST /api/peers/request` accepts JSON: `request_id` (32 lowercase hex digits),
+`hostname`, destination `board_id`, `boot_id`, `method`, `path`, and optional
+`packet`. Only approved read paths and `POST /api/command` are forwarded. For
+public `GET /api/peer/info` only, boot_id may be empty to learn the current boot
+of an explicitly identified board. Other calls require that observed boot.
+Commands carry the original JSON packet string with the same request ID,
+destination identity and expiry; no new command is manufactured on timeout.
+
+`GET /api/peers/result?request_id=...` returns queued/complete/failed transport
+status and a verified downstream JSON string. `response_verified` is NOT an
+actuation ACK: inspect the downstream `accepted` and hardware result. WebSocket
+clients receive `peer-relay-result` completion notifications. USB maintenance
+API envelopes can use these same request/result routes. Large downstream JSON
+may exceed the existing USB API response limit; no binary USB relay is claimed.
+
+One background job and one hop are allowed. Unexpired IDs cannot be evicted;
+retired results are never resubmitted automatically. DNS resolves a configured
+hostname, the resulting private LAN IP is pinned, and destination board/boot
+headers and identity are checked. No credentials are forwarded; authenticated
+destinations reject access normally. This LAN HTTP identity check does not
+provide cryptographic peer authentication. Raw files, firmware writes, general
+URLs and recursive relay endpoints are not admitted.
+
+Pending: persistent trust/routes and discovery, continuous peer events,
+BLE-central/ESP-NOW/USB-host adapters, remote TLS peers, and resumable verified
+file/firmware transfer. Existing direct OTA remains the update owner.

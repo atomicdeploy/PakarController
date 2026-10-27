@@ -30,7 +30,8 @@ int main() {
     dispatch(request);assert(request.status==426&&admitted==before);
   }
   AsyncWebServerRequest missing;missing.path="/api/cell";missing.requestMethod=HTTP_POST;
-  missing.headers.erase("X-Pakar-Version");dispatch(missing);assert(missing.status==426);
+  missing.headers.erase("X-Pakar-Version");missing.headers.erase("User-Agent");
+  const unsigned beforeGeneric=admitted;dispatch(missing);assert(admitted==beforeGeneric+1);
   AsyncWebServerRequest releaseBootstrap;releaseBootstrap.path="/api/status";releaseBootstrap.headers.erase("X-Pakar-Version");
   unsigned count=admitted;dispatch(releaseBootstrap);assert(admitted==count+1);
   AsyncWebServerRequest query;query.path="/ws";query.headers.erase("X-Pakar-Version");query.arguments["version"]="0.2.8";
@@ -162,6 +163,17 @@ int main() {
   auto moveBody=jsonRequest();jsonServer.native().dispatchBody(moveBody.get(),reinterpret_cast<uint8_t*>(&part[0]),4,0,assignment.size());
   void *allocation=moveBody->_tempObject;assert(allocation);
   AsyncWebServerRequest movedBody(std::move(*moveBody));assert(movedBody._tempObject==allocation&&!moveBody->_tempObject);
+  // Peer/maintenance JSON must use this same bounded callback owner, not a
+  // handler that asks jsonBody() after the SDK has already discarded its bytes.
+  for(const char *path:{"/api/peers/request","/api/maintenance/request"}) {
+    jsonServer.on(path,HTTP_POST,[&](){capturedJson=jsonServer.jsonBody();jsonServer.send(200,"text/plain",capturedJson);});
+    auto request=jsonRequest();request->path=path;
+    String payload="{\"method\":\"GET\",\"path\":\"/api/peer/info\"}";
+    jsonServer.native().dispatchBody(request.get(),reinterpret_cast<uint8_t*>(&payload[0]),5,0,payload.size());
+    jsonServer.native().dispatchBody(request.get(),reinterpret_cast<uint8_t*>(&payload[5]),payload.size()-5,5,payload.size());
+    jsonServer.native().dispatch(request.get());jsonServer.service();request->connection.poll();
+    assert(capturedJson==payload);
+  }
   // An immutable socket ID does not grant authorization after logout or a
   // credential reset. Admission is rechecked when a queued operation dispatches.
   AsyncWebServer routes(80); unsigned transportsClosed = 0;

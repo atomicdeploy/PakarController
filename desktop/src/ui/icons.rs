@@ -291,7 +291,7 @@ pub fn searchable_icon_picker_contents(
                 .max(70.0);
             let search_response = ui.add_sized(
                 [search_width, ui.spacing().interact_size.y],
-                crate::ui::dialog::singleline_text_edit(search)
+                crate::ui::dialog::singleline_text_edit(ui, search)
                     .id_salt(search_id.with("input"))
                     .hint_text(config.search_hint)
                     .desired_width(search_width),
@@ -379,7 +379,8 @@ pub fn searchable_icon_picker_contents(
                                 selected_state,
                                 label,
                             );
-                            let response = super::dropdown::register_choice(ui, response, selected_state);
+                            let response =
+                                super::dropdown::register_choice(ui, response, selected_state);
                             if response.clicked() {
                                 selected = Some(*key);
                             }
@@ -529,7 +530,14 @@ pub fn searchable_icon_button(
                 ui.ctx().content_rect().width(),
             ));
             super::dropdown::menu_ui(ui, picker_id, |ui| {
-                searchable_icon_picker_contents(ui, value, &mut search, search_id, !was_open, config);
+                searchable_icon_picker_contents(
+                    ui,
+                    value,
+                    &mut search,
+                    search_id,
+                    !was_open,
+                    config,
+                );
             });
         });
     if egui::Popup::is_id_open(ui.ctx(), popup_id) {

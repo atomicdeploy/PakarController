@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/ShellProperties.h"
+#include "../firmware/esp/src/ShellProperties.h"
 #include <cassert>
 #include <cstdio>
 int main(){

@@ -6,6 +6,8 @@ const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'
 const controls = read('desktop/src/ui/connection_controls.rs');
 const shell = read('desktop/src/ui/shell.rs');
 const worker = read('desktop/src/main.rs');
+const portGuardPattern = /if\s+self\.connection_change_guard\(\)\s*\{\s*continue;\s*\}/;
+const releaseGuardPattern = /if\s+self\.connection_enabled\s*\{\s*continue;\s*\}/;
 function slice(source, start, end) {
   assert.ok(source.includes(start) && source.includes(end), `Missing source anchors: ${start}`);
   return source.split(start)[1].split(end)[0];
@@ -22,14 +24,14 @@ function check({ controls, shell, worker }) {
   assert.ok(toolbar.includes('self.set_connection(self.transport, enabled)'), 'Lifecycle uses the owner setter');
   assert.ok(!toolbar.includes('self.transport ='), 'Painting must not mutate method before handoff');
   const port = slice(toolbar, 'Action::Port(port)', 'Action::Configure');
-  const guard = port.indexOf('if self.connection_change_guard() { continue; }');
+  const guard = port.search(portGuardPattern);
   const release = port.indexOf('self.set_connection(self.transport, false)');
   const assign = port.indexOf('self.serial_port = port');
   assert.ok(guard >= 0 && guard < release && release < assign, 'Port draft guard precedes release and mutation');
-  assert.ok(port.includes('if self.connection_enabled { continue; }'), 'Refused release cannot mutate port');
+  assert.ok(releaseGuardPattern.test(port), 'Refused release cannot mutate port');
   assert.ok(port.includes('self.config.serial_port = self.serial_port.clone();'), 'Selected port persists');
   assert.ok(!/Action::Port\(String::new\(\)\)|dropdown_value\([^;]*String::new\(\)/s.test(controls), 'Disconnect retains configured port');
-  assert.ok(toolbar.includes('|| serialport::available_ports()'), 'OS enumeration remains a lazy callback');
+  assert.ok(/\|\|\s*\{\s*serialport::available_ports\(\)/.test(toolbar), 'OS enumeration remains a lazy callback');
   assert.equal(controls.match(/let menu = ui.menu_button\(/g)?.length, 1, 'One dropdown trigger');
   assert.equal(controls.match(/let lifecycle = ui.add_enabled\(/g)?.length, 1, 'One guarded lifecycle action');
   assert.ok(controls.includes('Action::Lifecycle(!state.enabled)'), 'Connect and disconnect share one lifecycle');
@@ -62,8 +64,8 @@ function check({ controls, shell, worker }) {
 const source = { controls, shell, worker };
 check(source);
 // Mutation checks prove these guards reject regressions, not just today's text.
-assert.throws(() => check({ ...source, shell: shell.replace('if self.connection_change_guard() { continue; }', '') }), /Port draft guard/);
-assert.throws(() => check({ ...source, shell: shell.replace('if self.connection_enabled { continue; }', '') }), /Refused release/);
+assert.throws(() => check({ ...source, shell: shell.replace(portGuardPattern, '') }), /Port draft guard/);
+assert.throws(() => check({ ...source, shell: shell.replace(releaseGuardPattern, '') }), /Refused release/);
 assert.throws(() => check({ ...source, controls: controls.replace('if state.method == Transport::Serial && !state.identity_pending', 'if !state.identity_pending') }), /Only selected idle USB/);
 assert.throws(() => check({ ...source, controls: controls.replace('if !ui.is_enabled()', 'if false') }), /Disabled sizing pass/);
 assert.throws(() => check({ ...source, controls: `${controls}\n// Transport::Both` }), /No implicit dual/);

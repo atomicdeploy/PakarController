@@ -3,7 +3,7 @@
 //! deadlines and no-replay semantics from hostbridge/buzzer_mirror.go. The
 //! donor's motion/relay/menu-page IDs do not describe this board and are not
 //! imported as capability authority (Project/FrontPanelModel.h).
-use serde::{Deserialize,Serialize};
+use serde::{Deserialize, Serialize};
 use std::{
     collections::VecDeque,
     time::{Duration, Instant},

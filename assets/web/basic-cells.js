@@ -7,7 +7,7 @@ function createBasicCells({http,changed=()=>{}}){
   function batch(s){return selectionRole(s)&&s?.capabilities?.acknowledged_features?.includes('cell-batch')===true}
   function supportedDriver(s){const d=s?.led_output?.driver;return d?.ready===true&&((d.backend==='gpio-static'&&d.dma===false)||(d.backend==='rmt-dma'&&d.dma===true))}
   function ready(s){return table(s)&&batch(s)&&s.led_output?.enabled===true&&s.led_output.mode==='static'&&supportedDriver(s)}
-  function reason(){if(!observed)return 'Unknown. Refresh needed before another command.';if(!batch(observed))return 'This board has not acknowledged atomic cell batches. Update its firmware; no per-cell fallback is used.';if(!supportedDriver(observed))return 'LED output driver is unavailable. Refresh after updating the board.';if(observed.led_output?.enabled!==true||observed.led_output.mode!=='static')return 'LED output is disabled or in effects mode. Enable static output explicitly.';return 'Static rendering ready via '+(observed.led_output.driver.dma?'RMT DMA':'GPIO')+'. Board readback is not optical verification.'}
+  function reason(){if(!observed)return 'Refresh to load device state.';if(!batch(observed))return 'Update board firmware to enable bulk cell control.';if(!supportedDriver(observed))return 'LED driver unavailable. Check device settings.';if(observed.led_output?.enabled!==true||observed.led_output.mode!=='static')return 'Enable static output to control cells here.';return 'Static output ready · '+(observed.led_output.driver.dma?'RMT DMA':'GPIO')}
   function snapshot(){return {selected,busy,known:!!observed,cells:observed?observed.cells.slice():Array(80).fill(null),hostname:observed?.hostname||'',message,reason:reason(),canWrite:!busy&&ready(observed),canEnable:!busy&&table(observed)&&batch(observed)&&supportedDriver(observed),authInfo:authInfo?{...authInfo}:null}}
   function publish(){changed(snapshot())}
   function check(s){if(!table(s))throw Error('This peer has not acknowledged the 80-cell / 480-pixel table.');return s}
@@ -36,7 +36,7 @@ function createBasicCells({http,changed=()=>{}}){
       if(kind==='cell'?ack?.accepted!==true||ack.count!==1:ack?.enabled!==true||ack.mode!=='static')throw Error('Command was not acknowledged.');
       const after=check(await http.request('/api/status',{peer}));
       if(!ready(after)||(kind==='cell'&&after.cells[id-1]!==value))throw Error('Board readback did not confirm the requested state and static rendering.');
-      observed=after;message=kind==='cell'?`Logical cell ${id}: ${value} verified by board readback. Inspect the actual LEDs.`:'Static output enabled and verified by board readback.';return true;
+      observed=after;message=kind==='cell'?`Device confirmed cell ${id}: ${value}`:'Static output enabled';return true;
     });
   }
   return {snapshot,select,refresh,loadAuthInfo,login,setColor:value=>write('cell',value),enableStatic:()=>write('enable')};

@@ -2,6 +2,7 @@
 pub use crate::brand_image::icon_bytes;
 use eframe::egui;
 use std::hash::{Hash, Hasher};
+use base64::Engine;
 
 // Adapted from Pealayer's sync_native_window_icon and icon_source_signature:
 // peer-owned application metadata replaces playback/config; no disk cache.
@@ -12,6 +13,7 @@ pub fn sync_peer(
     let app = peer.and_then(|p| p.application());
     let mut hash = std::collections::hash_map::DefaultHasher::new();
     app.hash(&mut hash);
+    peer.map(|p| &p.role).hash(&mut hash);
     let signature = hash.finish();
     let changed = ctx.data_mut(|data| {
         let id = egui::Id::new("pakar-peer-window-icon");
@@ -27,7 +29,17 @@ pub fn sync_peer(
     }
     let icon = app
         .and_then(|a| a.icon_bytes())
+        .filter(|b| b.as_slice() != icon_bytes())
         .and_then(|b| icon_data_from_bytes(&b))
+        .or_else(|| {
+            let encoded = match peer.filter(|p| p.known()).map(|p| p.role.as_str()) {
+                Some("table-selection") => include_str!("../../assets/branding/table.png.base64"),
+                Some("first-wins") => include_str!("../../assets/branding/keys.png.base64"),
+                _ => return None,
+            };
+            base64::engine::general_purpose::STANDARD.decode(encoded.trim()).ok()
+                .and_then(|bytes| icon_data_from_bytes(&bytes))
+        })
         .unwrap_or_else(window_icon);
     let texture = ctx.load_texture(
         "Connected application artwork",
@@ -102,23 +114,36 @@ mod tests {
     use super::*;
     #[test]
     fn peer_icon_lifecycle_reuses_refresh_and_revokes_on_disconnect() {
-        let ctx=egui::Context::default();
-        let mut peer=crate::capabilities::Manifest{board_kind:"controller".into(),application:Some(crate::identity::Application{
-            id:"table.app".into(),name:"Pakar Table".into(),title:"Table controller".into(),
-            icon_png_base64:include_str!("../../assets/branding/app-icon.png.base64").trim().into()}),..Default::default()};
-        let mut changes=0;
-        let mut output=ctx.run_ui(egui::RawInput::default(),|_|{
-            changes+=usize::from(sync_peer(&ctx,Some(&peer)).is_some());
-            assert!(sync_peer(&ctx,Some(&peer)).is_none());
+        let ctx = egui::Context::default();
+        let mut peer = crate::capabilities::Manifest {
+            board_kind: "controller".into(),
+            application: Some(crate::identity::Application {
+                id: "table.app".into(),
+                name: "Pakar Table".into(),
+                title: "Table controller".into(),
+                icon_png_base64: include_str!("../../assets/branding/app-icon.png.base64")
+                    .trim()
+                    .into(),
+            }),
+            ..Default::default()
+        };
+        let mut changes = 0;
+        let mut output = ctx.run_ui(egui::RawInput::default(), |_| {
+            changes += usize::from(sync_peer(&ctx, Some(&peer)).is_some());
+            assert!(sync_peer(&ctx, Some(&peer)).is_none());
         });
         output.textures_delta.clear();
-        assert_eq!(changes,1);
-        assert!(output.viewport_output.values().any(|v|v.commands.iter().any(|c|matches!(c,egui::ViewportCommand::Icon(Some(_))))));
-        peer.application.as_mut().unwrap().name="Pakar Keys".into();
-        let mut output=ctx.run_ui(egui::RawInput::default(),|_|{
-            assert!(sync_peer(&ctx,Some(&peer)).is_some());
-            assert!(sync_peer(&ctx,None).is_some());
-            assert!(sync_peer(&ctx,None).is_none());
+        assert_eq!(changes, 1);
+        assert!(output.viewport_output.values().any(|v| {
+            v.commands
+                .iter()
+                .any(|c| matches!(c, egui::ViewportCommand::Icon(Some(_))))
+        }));
+        peer.application.as_mut().unwrap().name = "Pakar Keys".into();
+        let mut output = ctx.run_ui(egui::RawInput::default(), |_| {
+            assert!(sync_peer(&ctx, Some(&peer)).is_some());
+            assert!(sync_peer(&ctx, None).is_some());
+            assert!(sync_peer(&ctx, None).is_none());
         });
         output.textures_delta.clear();
     }
@@ -179,11 +204,11 @@ mod tests {
                 logo(ui, 48.0);
             });
             let uploaded_master = output
-                    .textures_delta
-                    .set
-                    .values()
-                    .flatten()
-                    .any(|delta| delta.image.size() == [64, 64]);
+                .textures_delta
+                .set
+                .values()
+                .flatten()
+                .any(|delta| delta.image.size() == [64, 64]);
             // Headless tests have no texture backend. Drain before assertions
             // so a failed assertion cannot cause a second destructor panic.
             output.textures_delta.clear();
@@ -193,16 +218,13 @@ mod tests {
                 logo(ui, 48.0);
             });
             let uploaded_again = output
-                    .textures_delta
-                    .set
-                    .values()
-                    .flatten()
-                    .any(|delta| delta.image.size() == [64, 64]);
+                .textures_delta
+                .set
+                .values()
+                .flatten()
+                .any(|delta| delta.image.size() == [64, 64]);
             output.textures_delta.clear();
-            assert!(
-                !uploaded_again,
-                "do not decode/upload on every frame"
-            );
+            assert!(!uploaded_again, "do not decode/upload on every frame");
         }
     }
 }

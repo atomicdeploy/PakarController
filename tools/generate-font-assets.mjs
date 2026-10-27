@@ -16,13 +16,32 @@ async function sync(path,bytes){const url=new URL(path,root);let old;try{old=awa
 if(old?.equals(Buffer.from(bytes)))return;
 assert(!process.argv.includes('--check'),'Font assets stale: '+path);
 await mkdir(new URL('.',url),{recursive:true});await writeFile(url,bytes);}
-await sync('firmware/esp8266/src/FontAssets.h',header);
+await sync('firmware/esp/src/FontAssets.h',header);
+// Install/shortcut artwork uses the same board masters as native/mobile.
+let installArtwork='#pragma once\n#include <Arduino.h>\n';
+for(const [i,role] of ['keys','table'].entries()){
+ const png=await readFile(new URL('assets/branding/'+role+'-256.png',root));
+ installArtwork+=(i?'#else\n':'#if PAKAR_GAME_MODE == 2\n')+'static const uint8_t kWebAppPng[] PROGMEM={'+[...png].join(',')+'};\n';
+}
+await sync('firmware/esp/src/WebInstallArtwork.h',installArtwork+'#endif\n');
 await sync('mobile/assets/fonts/Vazirmatn-Regular.ttf',font);
 await sync('mobile/assets/fonts/Vazirmatn-OFL.txt',await readFile(new URL('desktop/licenses/Vazirmatn-OFL.txt',root)));
 // Import the actual native translation table into the standalone Web surface.
 // Only keys occurring in this application are retained: no media/timeline UI.
 const native=await readFile(new URL('desktop/src/ui/i18n.rs',root),'utf8');
-let web=await readFile(new URL('firmware/esp8266/src/WebUi.h',root),'utf8');
+let web=await readFile(new URL('web/index.html',root),'utf8');
+const studioCss=await readFile(new URL('assets/web/studio.css',root),'utf8')+'\n'+await readFile(new URL('assets/web/application-utilities.css',root),'utf8');
+const componentJs=await readFile(new URL('web/modules/components.js',root),'utf8');
+const layoutJs=await readFile(new URL('web/modules/workspace.js',root),'utf8');
+const tableLayoutJs=await readFile(new URL('web/modules/table-layout.js',root),'utf8');
+const studioJs=await readFile(new URL('assets/web/workspace-studio.js',root),'utf8');
+const commandJs=await readFile(new URL('assets/web/command-transport.js',root),'utf8');
+const featuresJs=await readFile(new URL('assets/web/pixel-groups.js',root),'utf8')+'\n'+await readFile(new URL('assets/web/feature-workspaces.js',root),'utf8');
+const utilitiesJs=await readFile(new URL('assets/web/application-utilities.js',root),'utf8');
+web=web.replace(/\/\* BEGIN STUDIO CSS \*\/[\s\S]*?\/\* END STUDIO CSS \*\//,'');
+web=web.replace('</style>','/* BEGIN STUDIO CSS */\n'+studioCss+'\n/* END STUDIO CSS */</style>');
+web=web.replace(/\/\/ BEGIN STUDIO MODULE[\s\S]*?\/\/ END STUDIO MODULE\r?\n/,'');
+web=web.replace('<script>','<script>\n// BEGIN STUDIO MODULE\n'+commandJs+'\n'+componentJs+'\n'+layoutJs+'\n'+tableLayoutJs+'\n'+featuresJs+'\n'+utilitiesJs+'\n'+studioJs+'\n// END STUDIO MODULE');
 const consoleModule=await readFile(new URL('assets/web/browser-console.js',root),'utf8');
 const toastModule=await readFile(new URL('assets/web/toasts.js',root),'utf8');
 const toastStyles=await readFile(new URL('assets/web/toasts.css',root),'utf8');
@@ -70,5 +89,5 @@ web=web.replace(/\/\/ BEGIN RAYANLAMP REALTIME RETRY[\s\S]*?\/\/ END RAYANLAMP R
 web=web.replace('<script>','<script>\n// BEGIN RAYANLAMP REALTIME RETRY\n'+retryModule+'\n// END RAYANLAMP REALTIME RETRY');
 web=web.replace(/\/\* BEGIN RAYANLAMP TOAST CSS \*\/[\s\S]*?\/\* END RAYANLAMP TOAST CSS \*\//,'');
 web=web.replace('</style>','/* BEGIN RAYANLAMP TOAST CSS */\n'+toastStyles+'\n/* END RAYANLAMP TOAST CSS */</style>');
-await sync('firmware/esp8266/src/WebUi.h',web);
+await sync('web/index.html',web);
 console.log('Shared Vazirmatn assets verified:',font.length,'bytes; gzip',compressed.length);

@@ -5,13 +5,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct LcdObservation {
-    pub configured: bool, pub started: bool, pub detection_known: bool,
-    pub backpack_ack: bool, pub initialized: bool, pub available: bool,
-    pub columns: u8, pub rows: u8, pub address: Option<u8>,
-    pub lines: Option<Vec<String>>, pub pending: bool,
-    pub requested_revision: u32, pub presented_revision: u32,
+    pub configured: bool,
+    pub started: bool,
+    pub detection_known: bool,
+    pub backpack_ack: bool,
+    pub initialized: bool,
+    pub available: bool,
+    pub columns: u8,
+    pub rows: u8,
+    pub address: Option<u8>,
+    pub lines: Option<Vec<String>>,
+    pub pending: bool,
+    pub requested_revision: u32,
+    pub presented_revision: u32,
 }
-pub fn optional_lcd<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option<LcdObservation>, D::Error> {
+pub fn optional_lcd<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<LcdObservation>, D::Error> {
     // A malformed optional display must hide only that display, not create
     // a spurious disconnect for the otherwise valid current board.
     let raw = serde_json::Value::deserialize(deserializer)?;
@@ -20,11 +30,20 @@ pub fn optional_lcd<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result
 impl LcdObservation {
     pub fn confirmed_lines(&self) -> Option<&[String]> {
         let lines = self.lines.as_ref()?;
-        (self.configured && self.started && self.detection_known && self.backpack_ack
-            && self.initialized && self.available && self.columns == 16 && self.rows == 2
-            && matches!(self.address, Some(0x27 | 0x3f)) && lines.len() == 2
-            && lines.iter().all(|s| s.len() == 16 && s.bytes().all(|b| (0x20..=0x7e).contains(&b))))
-            .then_some(lines.as_slice())
+        (self.configured
+            && self.started
+            && self.detection_known
+            && self.backpack_ack
+            && self.initialized
+            && self.available
+            && self.columns == 16
+            && self.rows == 2
+            && matches!(self.address, Some(0x27 | 0x3f))
+            && lines.len() == 2
+            && lines
+                .iter()
+                .all(|s| s.len() == 16 && s.bytes().all(|b| (0x20..=0x7e).contains(&b))))
+        .then_some(lines.as_slice())
     }
 }
 #[cfg(test)]
@@ -37,20 +56,43 @@ mod lcd_tests {
             "address":39,"lines":["ledboard        ","Cell 1 white    "]});
         let observed: LcdObservation = serde_json::from_value(raw.clone()).unwrap();
         assert!(observed.confirmed_lines().is_some());
-        for key in ["configured","started","detection_known","backpack_ack","initialized","available"] {
-            let mut invalid=raw.clone();invalid[key]=false.into();
-            assert!(serde_json::from_value::<LcdObservation>(invalid).unwrap().confirmed_lines().is_none());
+        for key in [
+            "configured",
+            "started",
+            "detection_known",
+            "backpack_ack",
+            "initialized",
+            "available",
+        ] {
+            let mut invalid = raw.clone();
+            invalid[key] = false.into();
+            assert!(
+                serde_json::from_value::<LcdObservation>(invalid)
+                    .unwrap()
+                    .confirmed_lines()
+                    .is_none()
+            );
         }
-        let mut invalid=raw;invalid["lines"]=serde_json::json!(["stale"]);
-        assert!(serde_json::from_value::<LcdObservation>(invalid).unwrap().confirmed_lines().is_none());
+        let mut invalid = raw;
+        invalid["lines"] = serde_json::json!(["stale"]);
+        assert!(
+            serde_json::from_value::<LcdObservation>(invalid)
+                .unwrap()
+                .confirmed_lines()
+                .is_none()
+        );
         #[derive(Deserialize)]
         struct Envelope {
-            #[serde(default, deserialize_with="optional_lcd")]
+            #[serde(default, deserialize_with = "optional_lcd")]
             lcd: Option<LcdObservation>,
             hostname: String,
         }
-        let valid: Envelope = serde_json::from_value(serde_json::json!({"hostname":"ledboard","lcd":{"lines":false}})).unwrap();
-        assert_eq!(valid.hostname,"ledboard");assert!(valid.lcd.is_none());
+        let valid: Envelope = serde_json::from_value(
+            serde_json::json!({"hostname":"ledboard","lcd":{"lines":false}}),
+        )
+        .unwrap();
+        assert_eq!(valid.hostname, "ledboard");
+        assert!(valid.lcd.is_none());
     }
 }
 

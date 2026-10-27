@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 const root=fileURLToPath(new URL('../',import.meta.url));
-const path='firmware/esp8266/src/ShellService.h';
+const path='firmware/esp/src/ShellService.h';
 const current=readFileSync(resolve(root,path),'utf8');
 let source=current,baseline=false;
 const args=process.argv.slice(2);
@@ -26,7 +26,7 @@ let prior;try{prior=readFileSync(generated,'utf8')}catch(error){if(error.code!==
 if(prior!==fixture)writeFileSync(generated,fixture);
 for(const platform of ['ESP32','ESP8266']){
   const compile=spawnSync(process.env.CXX||'g++',['-std=c++17','-O2','-g0','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
-    '-DARDUINO_ARCH_'+platform,'-I',resolve(root,'firmware/esp8266/src'),generated,'-o',output],{cwd:root,stdio:'inherit',timeout:60000});
+    '-DARDUINO_ARCH_'+platform,'-I',resolve(root,'firmware/esp/src'),generated,'-o',output],{cwd:root,stdio:'inherit',timeout:60000});
   if(compile.error||compile.status!==0)throw Error('Actual shell service fixture compilation failed');
   const result=spawnSync(output,[],{cwd:root,encoding:'utf8',timeout:10000});
   if(result.error)throw result.error;

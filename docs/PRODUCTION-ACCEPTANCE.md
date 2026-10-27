@@ -8,16 +8,25 @@ exclusion needs a concrete donor path, reason and hardware/business scope;
 
 Master tracking issue: https://github.com/atomicdeploy/PakarController/issues/2
 
-Current source checkpoint: version `0.2.8` on main; exact delivered hashes and
-remaining gates are in ESP32-S3-COMMISSIONING.md. ASUS is reachable through the
-trusted localhost:8022 tunnel and resolves ledboard.local. ESP USB recovery and
-both native deliveries completed; the latest neutral-gain image has human
-acceptance for a steady, correct, entirely white table. Per-cell mapping,
-animation cadence, AVR recovery, phone installation and Wi-Fi-only handoff are
-still open. Historical observations below do not replace fresh acceptance.
+Current source identity is `0.2.8`, shared client build23. Read
+[architecture and the current gap register](ARCHITECTURE.md) for the source
+structure and latest reviewed CI/hardware boundaries. The last direct inventory
+in this chat reached David-ASUS on localhost:8022 and saw CH343/COM24, but
+ledboard.local did not resolve. The adapter does not identify its MCU.
+The separately requested GPIO-fallback OTA disconnected mid-upload and its
+running image was not verified; do not call that a successful deployment.
+Earlier neutral-white optical acceptance and successful USB/OTA deliveries
+remain historical receipts, not proof that the current480-pixel animation,
+per-cell mapping, AVR pairing or USB-disconnected handoff is healthy.
 No Wi-Fi password or other deployment secret belongs in GitHub.
 
-## Existing source/test checkpoints (not release acceptance)
+## Historical source/test checkpoints (not current release acceptance)
+
+The counts, defaults, builds and transport observations in this section belong
+to their original milestones. Current source uses one build-selected role,
+S3 buffered UART and the interleaved table geometry described in ARCHITECTURE.
+Current donor totals come from FILE-COMPARISON.md; old counts below are retained
+as provenance, not current coverage. No checkbox here closes a physical gate.
 
 - [x] Web's fixed 25 FPS timer replaced with explicit 60/default and 0/uncapped
   client pacing, bounded latest-frame buffering and peer/socket cancellation.
@@ -135,14 +144,16 @@ No Wi-Fi password or other deployment secret belongs in GitHub.
 
 ## Business and streaming
 
-- [ ] Validate 80 logical row-major cells, six LEDs per cell, half-cell stagger,
-  alternating backgrounds, number highlighting, rename and physical remap on all UIs.
+- [ ] Validate80 stable logical IDs and six LEDs per table cell,20×4 interleaved
+  display positions, half-cell column stagger, alternating cell backgrounds,
+  Find/selection, names and independent physical remap on all UIs.
 - [ ] Verify initial white table and per-cell red/off/effect changes via API,
   physical keypad/front panel, CLI/TUI, Web, desktop and mobile.
 - [ ] Verify nine-button first-wins logic, ties/reset/debounce and matching
   shift-register and strip outputs.
-- [ ] Complete snake example: input/control, reset, collision/game-over and
-  consistent table mapping on all requested surfaces.
+- [ ] Deferred presentation example: Snake is currently compiled out and must
+  not appear as another baked game. Any later reintroduction needs explicit
+  scope, input/control, collision/reset and consistent mapping acceptance.
 - [ ] Complete real screen sampler: monitor/region selection, geometry mapping,
   controls and measured Wi-Fi streaming; no mpv dependency.
 - [ ] Validate configurable/uncapped streaming with backpressure and measured

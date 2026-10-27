@@ -4,16 +4,16 @@ import {gunzipSync} from 'node:zlib';
 import vm from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const font=readFileSync(new URL('../assets/fonts/Vazirmatn-Regular.ttf',import.meta.url));
-const fontHeader=read('firmware/esp8266/src/FontAssets.h');
+const fontHeader=read('firmware/esp/src/FontAssets.h');
 const gzip=Buffer.from(fontHeader.split('PROGMEM = {')[1].split('};')[0].match(/\d+/g).map(Number));
 assert.deepEqual(gunzipSync(gzip),font,'ESP serves the real shared font, not an empty placeholder');
 assert.deepEqual(readFileSync(new URL('../mobile/assets/fonts/Vazirmatn-Regular.ttf',import.meta.url)),font);
-const web=read('firmware/esp8266/src/WebUi.h'),js=read('assets/web/localization.js');
+const web=read('firmware/esp/src/WebUi.h'),js=read('assets/web/localization.js');
 assert.equal(web.split('// BEGIN SHARED LOCALIZATION')[1].split('// END SHARED LOCALIZATION')[0].trim(),js.trim());
 assert(web.includes("src:url('/assets/fonts/Vazirmatn-Regular.ttf')"));
-assert(read('firmware/esp8266/src/WebAccess.h').includes('path == F("/assets/fonts/Vazirmatn-Regular.ttf")'));
-assert(read('firmware/esp8266/src/WebAccess.h').includes('path == F("/assets/fonts/Vazirmatn-OFL.txt")'));
-assert(read('firmware/esp8266/esp8266.ino').includes('"text/plain; charset=utf-8",kVazirmatnLicense'));
+assert(read('firmware/esp/src/WebAccess.h').includes('path == F("/assets/fonts/Vazirmatn-Regular.ttf")'));
+assert(read('firmware/esp/src/WebAccess.h').includes('path == F("/assets/fonts/Vazirmatn-OFL.txt")'));
+assert(read('firmware/esp/application.ino').includes('"text/plain; charset=utf-8",kVazirmatnLicense'));
 const memory=new Map();let writes=0;
 const elements={uiLanguage:{value:'fa'},uiDirection:{value:'auto'}};
 const owned={nodeValue:' Connect ',isConnected:true,parentElement:{closest:()=>false}};
@@ -77,7 +77,12 @@ vm.runInContext(web.slice(web.indexOf('function renderLocalizedStatus(){'),web.i
 run('renderLocalizedStatus()');assert.equal(ctx.station.textContent,'قطع‌شده');assert.equal(ctx.mqttState.textContent,'غیرفعال');
 elements.uiLanguage.value='en';run('saveLocalization();renderLocalizedStatus()');assert.equal(ctx.station.textContent,'Disconnected');
 elements.uiLanguage.value='fa';run('saveLocalization();renderLocalizedStatus()');assert.equal(ctx.station.textContent,'قطع‌شده');
-assert(read('desktop/src/ui/i18n.rs').includes('contextual_persian_in_labels_and_monospace_inputs'));
+const nativeI18n=read('desktop/src/ui/i18n.rs');
+assert(nativeI18n.includes('contextual_persian_in_labels_and_monospace_inputs'));
+const nativePersianArms=nativeI18n.slice(nativeI18n.indexOf('pub fn tr('),nativeI18n.indexOf('pub fn visual_text('));
+const nativeKeys=[...nativePersianArms.matchAll(/^\s*"((?:[^"\\]|\\.)*)"\s*=>/gm)].map(match=>match[1]);
+const duplicateNativeKeys=[...new Set(nativeKeys.filter((key,index)=>nativeKeys.indexOf(key)!==index))];
+assert.deepEqual(duplicateNativeKeys,[],'Native Persian translations must have one authoritative match arm per English key');
 // Adapt Pealayer tests/i18n_surface_audit_test.rs's actual ownership audit:
 // forbid raw application captions at known shell boundaries, not peer data.
 const shell=read('desktop/src/ui/shell.rs');

@@ -48,7 +48,9 @@ constexpr uint16_t requested =
     (PAKAR_PC_SENSORS ? static_cast<uint16_t>(Sensors) : 0U) | (PAKAR_PC_PWM ? static_cast<uint16_t>(Pwm) : 0U) |
     (PAKAR_PC_RF ? static_cast<uint16_t>(Rf) : 0U) | (PAKAR_PC_RELAYS ? static_cast<uint16_t>(Relays) : 0U) |
     (PAKAR_PC_STATUS_RGB ? static_cast<uint16_t>(StatusRgb) : 0U) | (PAKAR_PC_AVR_LED ? static_cast<uint16_t>(AvrLed) : 0U);
-constexpr uint16_t implemented = Menu | Macros | Automations;
+// RF advertises raw receive/transmit only. Learning opcodes remain explicitly
+// unavailable until their persistent mapping owner is implemented.
+constexpr uint16_t implemented = Menu | Macros | Automations | Rf;
 constexpr uint16_t enabled = requested & implemented;
 static_assert((PAKAR_PC_MENU == 0 || PAKAR_PC_MENU == 1) &&
               (PAKAR_PC_MACROS == 0 || PAKAR_PC_MACROS == 1) &&

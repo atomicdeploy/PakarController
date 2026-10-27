@@ -19,7 +19,12 @@ pub struct Intent {
     form: Vec<(String, String)>,
 }
 pub fn supported(status: &DeviceStatus, path: &str) -> bool {
-    status.command_clock_ms.is_some()
+    (path != "/api/game/reset"
+        || status
+            .capabilities
+            .as_ref()
+            .is_some_and(|c| c.has("reset-ack")))
+        && status.command_clock_ms.is_some()
         && status
             .capabilities
             .as_ref()
@@ -27,6 +32,11 @@ pub fn supported(status: &DeviceStatus, path: &str) -> bool {
         && matches!(
             path,
             "/api/cells"
+                | "/api/led/presentation"
+                | "/api/led/preview"
+                | "/api/game/reset"
+                | "/api/game/settings"
+                | "/api/game/press"
                 | "/api/cells/assignments"
                 | "/api/cells/lock"
                 | "/api/cell"
@@ -55,7 +65,9 @@ impl Intent {
     ) -> Result<Self, String> {
         // Live status was admitted before reaching here. Recheck an advertised
         // receiver policy if it changed before this command was constructed.
-        if status.compatibility.is_some() {crate::peer_identity::validate_board(status)?;}
+        if status.compatibility.is_some() {
+            crate::peer_identity::validate_board(status)?;
+        }
         if !supported(status, path)
             || status.programming_latch
             || !status
@@ -67,11 +79,69 @@ impl Intent {
         }
         let peer = peer_http::Pin::from_status(status)
             .ok_or("Realtime command requires a pinned board")?;
+        if path == "/api/led/output" && let Some((_, backend)) = form.iter().find(|(key, _)| key == "backend") {
+            if !crate::led_backend::allowed(status, backend) {
+                return Err("LED backend unavailable or switching; nothing sent".into());
+            }
+        }
         if scope.pin.as_ref() != Some(&peer) || !stamp.current() {
             return Err("Command owner retired".into());
         }
         let id = uuid::Uuid::new_v4().simple().to_string();
+        if path == "/api/game/press" && (form.len() != 1 || form[0].0 != "key"
+            || !form[0].1.parse::<u8>().is_ok_and(|key| (1..=9).contains(&key))) {
+            return Err("Invalid key press".into());
+        }
+        if path == "/api/game/settings" && form.is_empty() {
+            return Err("Empty game settings".into());
+        }
+        if path == "/api/game/settings"
+            && form
+                .iter()
+                .any(|(name, _)| matches!(name.as_str(), "winner_cue" | "reset_cue"))
+            && !status
+                .capabilities
+                .as_ref()
+                .is_some_and(|c| c.has("game-melodies"))
+        {
+            return Err("Game melodies unavailable".into());
+        }
+        if path == "/api/game/settings"
+            && !crate::usb_table::key_settings_network_verify(status, &form)
+        {
+            // Verify syntax here; actual values are checked again after ACK.
+            for (name, text) in &form {
+                let ok = match name.as_str() {
+                    "presentation" => crate::game_presentation::parse(text).is_ok(),
+                    "winner_cue" | "reset_cue" => crate::usb_table::game_cue_id(text).is_some(),
+                    "chase_neighbors" | "chase_invert" | "extended_effects" => {
+                        matches!(text.as_str(), "true" | "false")
+                    }
+                    "chase_period_ms" => text
+                        .parse::<u32>()
+                        .ok()
+                        .is_some_and(|v| (400..=3000).contains(&v)),
+                    "enabled_mask" => text
+                        .parse::<u32>()
+                        .ok()
+                        .is_some_and(|v| (1..=511).contains(&v)),
+                    "auto_reset_ms" => text.parse::<u32>().ok().is_some_and(|v| v <= 86400000),
+                    "idle_rgb" | "win_rgb" | "lose_rgb" => {
+                        text.parse::<u32>().ok().is_some_and(|v| v <= 0xffffff)
+                    }
+                    _ => false,
+                };
+                if !ok {
+                    return Err("Invalid game setting".into());
+                }
+            }
+        }
         let command = match path {
+            "/api/led/presentation" => "state-presentation",
+            "/api/led/preview" => "color-preview",
+            "/api/game/press" => "game-press",
+            "/api/game/reset" => "reset",
+            "/api/game/settings" => "game-settings",
             "/api/cells" => "cells",
             "/api/cells/assignments" => "cell-assignments",
             "/api/cells/lock" => "cell-lock",
@@ -85,13 +155,43 @@ impl Intent {
         let mut value = serde_json::json!({"type":"command","request_id":id,"board_id":status.board_id,
             "boot_id":status.boot_id,"expires_at_ms":status.command_clock_ms.unwrap().checked_add(8000).ok_or("Command clock overflow")?,"command":command});
         for (key, item) in &form {
-            value[key] = if key == "assignments" {
-                let assignments:Vec<crate::cell_assignments::Assignment>=serde_json::from_str(item).map_err(|_|"Invalid assignments")?;
-                serde_json::to_value(crate::cell_assignments::Document::new(assignments)?.assignments).map_err(|e|e.to_string())?
-            } else if key == "id" || path == "/api/brightness" && key == "value"
-                || path=="/api/led/diagnostic" && matches!(key.as_str(),"index"|"count"|"rgb") {
+            value[key] = if key == "settings" && path == "/api/led/presentation" {
+                crate::state_appearance::parse(item)?
+            } else if key == "presentation" {
+                crate::game_presentation::parse(item)?
+            } else if key == "key" && path == "/api/game/press" {
+                serde_json::json!(item.parse::<u8>().ok().filter(|key| (1..=9).contains(key)).ok_or("Invalid key")?)
+            } else if key == "assignments" {
+                let assignments: Vec<crate::cell_assignments::Assignment> =
+                    serde_json::from_str(item).map_err(|_| "Invalid assignments")?;
+                serde_json::to_value(
+                    crate::cell_assignments::Document::new(assignments)?.assignments,
+                )
+                .map_err(|e| e.to_string())?
+            } else if key == "id"
+                || path == "/api/led/preview" && matches!(key.as_str(), "rgb" | "duration_ms")
+                || path == "/api/brightness" && key == "value"
+                || path == "/api/game/settings"
+                    && matches!(
+                        key.as_str(),
+                        "enabled_mask"
+                            | "idle_rgb"
+                            | "win_rgb"
+                            | "lose_rgb"
+                            | "auto_reset_ms"
+                            | "chase_period_ms"
+                    )
+                || path == "/api/led/diagnostic"
+                    && matches!(key.as_str(), "index" | "count" | "rgb" | "group_layout_revision")
+            {
                 serde_json::json!(item.parse::<u32>().map_err(|_| "Invalid command number")?)
-            } else if key == "enabled" || key=="off" {
+            } else if key == "enabled"
+                || path == "/api/led/preview" && key == "cancel"
+                || key == "off"
+                || key == "extended_effects"
+                || key == "chase_neighbors"
+                || key == "chase_invert"
+            {
                 serde_json::json!(item == "true")
             } else {
                 serde_json::json!(item)
@@ -131,11 +231,15 @@ impl Intent {
             return Err("Foreign command receipt; nothing replayed".into());
         }
         if value["accepted"] != true {
-            return Err(crate::cell_assignments::rejection(value["error"].as_str().unwrap_or("unknown")));
+            return Err(crate::cell_assignments::rejection(
+                value["error"].as_str().unwrap_or("unknown"),
+            ));
         }
         let status: DeviceStatus = serde_json::from_value(value["status"].clone())
             .map_err(|_| "Command receipt has no status readback")?;
-        if status.compatibility.is_some(){crate::peer_identity::validate_board(&status)?;}
+        if status.compatibility.is_some() {
+            crate::peer_identity::validate_board(&status)?;
+        }
         if peer_http::Pin::from_status(&status).as_ref() != Some(&self.peer) {
             return Err("Command readback belongs to another boot".into());
         }
@@ -146,13 +250,27 @@ impl Intent {
                 .map(|(_, v)| v.as_str())
                 .unwrap_or_default()
         };
+        if self.path == "/api/led/output" && !get("backend").is_empty() {
+            return crate::led_backend::finish_network(&self.endpoint, status, get("backend"), || self.admit());
+        }
         let matches = match self.path {
-            "/api/cells/assignments" => {
-                let assignments:Vec<crate::cell_assignments::Assignment>=serde_json::from_str(get("assignments")).map_err(|_|"Invalid assignments")?;
-                let doc=crate::cell_assignments::Document::new(assignments)?;
-                value["count"].as_u64()==Some(doc.assignments.len() as u64) && doc.verify(&status)
+            "/api/led/presentation" => crate::state_appearance::matches(
+                &crate::state_appearance::parse(get("settings"))?, &status.state_presentation),
+            "/api/led/preview" => if get("cancel")=="true" {
+                status.color_preview["active"]==false
+            }else{status.color_preview["active"]==true && status.color_preview["rgb"].as_u64()==get("rgb").parse().ok()},
+            "/api/game/press" => value["avr_acknowledged"] == true,
+            "/api/game/reset" => value["avr_acknowledged"] == true,
+            "/api/game/settings" => {
+                crate::usb_table::key_settings_network_verify(&status, &self.form)
             }
-            "/api/cells/lock" => status.red_lock==Some(get("enabled")=="true"),
+            "/api/cells/assignments" => {
+                let assignments: Vec<crate::cell_assignments::Assignment> =
+                    serde_json::from_str(get("assignments")).map_err(|_| "Invalid assignments")?;
+                let doc = crate::cell_assignments::Document::new(assignments)?;
+                value["count"].as_u64() == Some(doc.assignments.len() as u64) && doc.verify(&status)
+            }
+            "/api/cells/lock" => status.red_lock == Some(get("enabled") == "true"),
             "/api/cells" => {
                 let request = cell_batch::Request::new(
                     &crate::ui::cell_search::parse(get("ids"))?,
@@ -169,17 +287,15 @@ impl Intent {
                     status
                         .cells
                         .get(id - 1)
-                        .is_some_and(|state| state == get("state"))
+                        .is_some_and(|state| crate::cell_assignments::same_state(state, get("state")))
                 }),
             "/api/effect" => status.effect == get("value"),
             "/api/mode" => status.mode == get("value"),
             "/api/brightness" => get("value").parse::<u8>().ok() == Some(status.brightness),
             "/api/led/diagnostic" => {
-                let index=get("index").parse::<u16>().map_err(|_|"Invalid diagnostic index")?;
-                let rgb=get("rgb").parse::<u32>().map_err(|_|"Invalid diagnostic RGB")?;
-                let probe=crate::pixel_diagnostic::Probe{index,group:get("count")=="6",rgb};
-                matches!(get("count"),"1"|"6") && probe.valid() && probe.first()==index
-                    && crate::pixel_diagnostic::ready(&status) && probe.matches(&status,get("off")=="true")
+                let (probe, off) = crate::pixel_diagnostic::Probe::from_form(&status, &self.form)
+                    .ok_or("Diagnostic layout changed or requested span is invalid")?;
+                probe.matches(&status, off)
             }
             _ => {
                 (get("enabled").is_empty()
@@ -224,9 +340,12 @@ impl Intent {
             let event = crate::for_endpoint(&self.endpoint, event);
             let _ = events.send(Event::ForConnection(self.stamp.clone(), Box::new(event)));
         };
-        if let Some(id)=self.pixel_request {
-            if let Ok(status)=&result {send(Event::Status(status.clone()));}
-            send(Event::PixelCommandFinished(id,result));return;
+        if let Some(id) = self.pixel_request {
+            if let Ok(status) = &result {
+                send(Event::Status(status.clone()));
+            }
+            send(Event::PixelCommandFinished(id, result));
+            return;
         }
         match result {
             Ok(status) => {
@@ -285,6 +404,70 @@ mod tests {
         serde_json::json!({"type":"command-result","request_id":request.id,"board_id":observed.board_id,
             "boot_id":observed.boot_id,"accepted":true,"count":2,"status":observed})
     }
+    #[test]
+    fn game_settings_use_typed_websocket_intent_and_selected_field_readback() {
+        let mut current = status();
+        current.pixels = 216;
+        current.mode = "first-wins".into();
+        current.capabilities.as_mut().unwrap().role = "first-wins".into();
+        current.capabilities.as_mut().unwrap().modes = vec![crate::capabilities::Mode {
+            id: "first-wins".into(),
+            code: 2,
+            label: "First wins".into(),
+            kind: "game".into(),
+        }];
+        current
+            .capabilities
+            .as_mut()
+            .unwrap()
+            .acknowledged_features
+            .extend(["inputs".into(), "outputs".into(), "key-settings".into()]);
+        current.key_game =
+            serde_json::json!({"enabled_mask":3,"win_rgb":65280,"extended_effects":false});
+        let gate = connection::Gate::default();
+        let epoch = gate.select(Some(crate::Transport::WiFi));
+        let (tx, _) = std::sync::mpsc::channel();
+        let mut queue = peer_http::Queue::new(tx);
+        queue.observe(&current);
+        let selected = vec![
+            ("win_rgb".into(), "255".into()),
+            ("extended_effects".into(), "true".into()),
+        ];
+        assert!(supported(&current, "/api/game/settings"));
+        let request = Intent::new(
+            endpoint(),
+            &current,
+            "/api/game/settings",
+            selected,
+            queue.capture(),
+            gate.stamp(crate::Transport::WiFi, epoch),
+            None,
+        )
+        .unwrap();
+        let packet: serde_json::Value = serde_json::from_str(&request.packet).unwrap();
+        assert_eq!(packet["command"], "game-settings");
+        assert_eq!(packet["win_rgb"], 255);
+        assert_eq!(packet["extended_effects"], true);
+        assert!(
+            packet.get("enabled_mask").is_none(),
+            "an unrelated mask must not overwrite a peer's change"
+        );
+        let mut observed = current.clone();
+        observed.key_game["enabled_mask"] = 15.into(); // Another client changed this concurrently.
+        observed.key_game["win_rgb"] = 255.into();
+        observed.key_game["extended_effects"] = true.into();
+        let receipt = |status: &DeviceStatus| {
+            serde_json::json!({"type":"command-result","request_id":request.id,
+            "board_id":status.board_id,"boot_id":status.boot_id,"accepted":true,"status":status})
+        };
+        assert!(request.verify(receipt(&observed)).is_ok());
+        observed.key_game["win_rgb"] = 65280.into();
+        assert!(request.verify(receipt(&observed)).is_err());
+        assert!(
+            crate::usb_table::key_settings_patch(&[("extended_effects".into(), "maybe".into())])
+                .is_err()
+        );
+    }
     fn endpoint() -> Endpoint {
         Endpoint {
             base: "http://127.0.0.1:1".into(),
@@ -294,20 +477,40 @@ mod tests {
     }
     #[test]
     fn realtime_pixel_diagnostic_requires_exact_complete_readback_and_typed_intent() {
-        let (mut request,_,_)=intent(endpoint());
-        let probe=crate::pixel_diagnostic::Probe{index:474,group:true,rgb:0x1234ab};
-        request.path="/api/led/diagnostic";request.form=probe.form(false);
-        let mut observed=status();observed.pixels=480;observed.mode="cell".into();observed.effect="none".into();
-        observed.capabilities.as_mut().unwrap().acknowledged_features.push("pixel-diagnostic".into());
-        observed.led_output=serde_json::json!({"enabled":true,"mode":"effects"});
+        let (mut request, _, _) = intent(endpoint());
+        let probe = crate::pixel_diagnostic::Probe {
+            index: 474,
+            group: true,
+            rgb: 0x1234ab,
+            ..Default::default()
+        };
+        request.path = "/api/led/diagnostic";
+        request.form = probe.form(false);
+        let mut observed = status();
+        observed.pixels = 480;
+        observed.mode = "cell".into();
+        observed.effect = "none".into();
+        observed
+            .capabilities
+            .as_mut()
+            .unwrap()
+            .acknowledged_features
+            .push("pixel-diagnostic".into());
+        observed.led_output = serde_json::json!({"enabled":true,"mode":"effects"});
         observed.pixel_frame=Some(serde_json::from_value(serde_json::json!({"revision":1,"pending":false,"brightness":255,"physical":(1..=80).collect::<Vec<_>>(),
             "rgb":probe.frame(false).unwrap().iter().map(|v|format!("{v:02x}")).collect::<String>()})).unwrap());
-        let good=serde_json::json!({"type":"command-result","request_id":request.id,"board_id":observed.board_id,
+        let good = serde_json::json!({"type":"command-result","request_id":request.id,"board_id":observed.board_id,
             "boot_id":observed.boot_id,"accepted":true,"status":observed});
         assert!(request.verify(good.clone()).is_ok());
-        let mut pending=good.clone();pending["status"]["pixel_frame"]["pending"]=true.into();assert!(request.verify(pending).is_err());
-        let mut bad=good.clone();bad["status"]["pixel_frame"]["rgb"]=serde_json::json!("00".repeat(1440));assert!(request.verify(bad).is_err());
-        let mut absent=good;absent["status"]["pixel_frame"]=serde_json::Value::Null;assert!(request.verify(absent).is_err());
+        let mut pending = good.clone();
+        pending["status"]["pixel_frame"]["pending"] = true.into();
+        assert!(request.verify(pending).is_err());
+        let mut bad = good.clone();
+        bad["status"]["pixel_frame"]["rgb"] = serde_json::json!("00".repeat(1440));
+        assert!(request.verify(bad).is_err());
+        let mut absent = good;
+        absent["status"]["pixel_frame"] = serde_json::Value::Null;
+        assert!(request.verify(absent).is_err());
     }
     #[test]
     fn realtime_ack_requires_id_boot_count_and_every_selected_value() {
@@ -419,7 +622,10 @@ mod tests {
                 assert!(Instant::now() < deadline, "Command did not arrive");
                 let actual = socket.read().unwrap();
                 let text = actual.to_text().unwrap();
-                if serde_json::from_str::<serde_json::Value>(text).ok().is_some_and(|v|v["type"]=="peer-introduction") {
+                if serde_json::from_str::<serde_json::Value>(text)
+                    .ok()
+                    .is_some_and(|v| v["type"] == "peer-introduction")
+                {
                     continue; // Admission identity is not an actuation or a status poll.
                 }
                 if text == r#"{"type":"status"}"# {

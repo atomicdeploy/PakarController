@@ -1,5 +1,5 @@
-#include "../firmware/esp8266/src/UpdateProgress.h"
-#include "../firmware/esp8266/src/SemanticPanel.h"
+#include "../firmware/esp/src/UpdateProgress.h"
+#include "../firmware/esp/src/SemanticPanel.h"
 #include <cassert>
 #include <cstring>
 #include <thread>

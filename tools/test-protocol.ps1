@@ -13,6 +13,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Protocol tests failed' }
 Write-Host 'Protocol round-trip, bounds, and corruption tests passed.'
 & (Join-Path $PSScriptRoot 'test-panel.ps1')
 & (Join-Path $PSScriptRoot 'test-led-pipeline.ps1')
+& (Join-Path $PSScriptRoot 'test-pixel-corrections.ps1')
+& (Join-Path $PSScriptRoot 'test-pixel-groups.ps1')
 & (Join-Path $PSScriptRoot 'test-led-worker.ps1')
 & (Join-Path $PSScriptRoot 'test-led-rmt-ring.ps1')
 $mndpBinary = Join-Path $outputDirectory 'mndp_test.exe'
@@ -21,7 +23,7 @@ if ($LASTEXITCODE -ne 0) { throw 'MNDP packet compilation failed' }
 & $mndpBinary
 if ($LASTEXITCODE -ne 0) { throw 'MNDP packet tests failed' }
 $pixelBinary = Join-Path $outputDirectory 'led_grid_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/pixel_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/led_grid_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/LedGrid.cpp') -o $pixelBinary
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/pixel_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp/src') (Join-Path $projectRoot 'tests/led_grid_test.cpp') (Join-Path $projectRoot 'firmware/esp/src/LedGrid.cpp') -o $pixelBinary
 if ($LASTEXITCODE -ne 0) { throw 'LED pixel snapshot compilation failed' }
 & $pixelBinary
 if ($LASTEXITCODE -ne 0) { throw 'LED pixel snapshot tests failed' }
@@ -31,7 +33,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Remote policy compilation failed' }
 & $remoteBinary
 if ($LASTEXITCODE -ne 0) { throw 'Remote policy tests failed' }
 $ispBinary = Join-Path $outputDirectory 'avr_isp_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/isp_stubs') (Join-Path $projectRoot 'tests/avr_isp_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/AvrIsp.cpp') -o $ispBinary
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/isp_stubs') (Join-Path $projectRoot 'tests/avr_isp_test.cpp') (Join-Path $projectRoot 'firmware/esp/src/AvrIsp.cpp') -o $ispBinary
 if ($LASTEXITCODE -ne 0) { throw 'ISP driver compilation failed' }
 & $ispBinary
 if ($LASTEXITCODE -ne 0) { throw 'ISP driver tests failed' }
@@ -47,7 +49,7 @@ foreach($taskClientPlatform in @('generic','esp8266')) {
     if ($LASTEXITCODE -ne 0) { throw "Client telemetry tests failed ($taskClientPlatform)" }
 }
 $remoteStateBinary = Join-Path $outputDirectory 'remote_firmware_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/remote_stubs') -I $jsonInclude -I (Join-Path $projectRoot 'libraries/BoardCore/src') (Join-Path $projectRoot 'tests/remote_firmware_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/RemoteFirmware.cpp') -lbcrypt -o $remoteStateBinary
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/remote_stubs') -I $jsonInclude -I (Join-Path $projectRoot 'libraries/BoardCore/src') (Join-Path $projectRoot 'tests/remote_firmware_test.cpp') (Join-Path $projectRoot 'firmware/esp/src/RemoteFirmware.cpp') -lbcrypt -o $remoteStateBinary
 if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine compilation failed' }
 & $remoteStateBinary
 if ($LASTEXITCODE -ne 0) { throw 'Remote firmware state-machine tests failed' }
@@ -73,7 +75,7 @@ if ($LASTEXITCODE -ne 0) { throw 'ESP-only maintenance integration tests failed'
 $shellBinary = Join-Path $outputDirectory 'telnet_shell_test.exe'
 & (Join-Path $PSScriptRoot 'test-shell.ps1')
 $busyBinary = Join-Path $outputDirectory 'busy_line_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/busy_stubs') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/busy_line_test.cpp') -o $busyBinary
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/busy_stubs') -I (Join-Path $projectRoot 'firmware/esp/src') (Join-Path $projectRoot 'tests/busy_line_test.cpp') -o $busyBinary
 if ($LASTEXITCODE -ne 0) { throw 'Busy line compilation failed' }
 & $busyBinary
 if ($LASTEXITCODE -ne 0) { throw 'Busy line tests failed' }
@@ -85,12 +87,12 @@ if ($LASTEXITCODE -ne 0) { throw 'Tone player tests failed' }
 $identityBinary = Join-Path $outputDirectory 'device_identity_test.exe'
 foreach ($identityFlags in @('-DPAKAR_TABLE_ENABLED=1','-DPAKAR_TABLE_ENABLED=0','-DPAKAR_IDENTITY_CUSTOM=1')) {
     $applicationBinary = Join-Path $outputDirectory 'application_identity_test.exe'
-    & g++ -std=c++17 -Wall -Wextra -Werror $identityFlags -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/application_identity_test.cpp') -o $applicationBinary
+    & g++ -std=c++17 -Wall -Wextra -Werror $identityFlags -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp/src') (Join-Path $projectRoot 'tests/application_identity_test.cpp') -o $applicationBinary
     if ($LASTEXITCODE -ne 0) { throw 'Application identity profile compilation failed' }
     & $applicationBinary
     if ($LASTEXITCODE -ne 0) { throw 'Application identity profile tests failed' }
 }
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/device_identity_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/DeviceIdentity.cpp') -o $identityBinary
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp/src') (Join-Path $projectRoot 'tests/device_identity_test.cpp') (Join-Path $projectRoot 'firmware/esp/src/DeviceIdentity.cpp') -o $identityBinary
 if ($LASTEXITCODE -ne 0) { throw 'Identity test compilation failed' }
 & $identityBinary
 if ($LASTEXITCODE -ne 0) { throw 'Identity tests failed' }
@@ -107,17 +109,17 @@ if ($LASTEXITCODE -ne 0) { throw 'Access test compilation failed' }
 & $accessBinary
 if ($LASTEXITCODE -ne 0) { throw 'Access tests failed' }
 $accessConfigBinary = Join-Path $outputDirectory 'access_config_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/access_config_test.cpp') (Join-Path $projectRoot 'firmware/esp8266/src/AccessConfig.cpp') -o $accessConfigBinary
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'libraries/BoardCore/src') -I (Join-Path $projectRoot 'firmware/esp/src') (Join-Path $projectRoot 'tests/access_config_test.cpp') (Join-Path $projectRoot 'firmware/esp/src/AccessConfig.cpp') -o $accessConfigBinary
 if ($LASTEXITCODE -ne 0) { throw 'Access persistence test compilation failed' }
 & $accessConfigBinary
 if ($LASTEXITCODE -ne 0) { throw 'Access persistence tests failed' }
 $asyncBinary = Join-Path $outputDirectory 'async_http_test.exe'
-& g++ -std=c++17 -pthread -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/async_http_test.cpp') -o $asyncBinary
+& g++ -std=c++17 -pthread -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'firmware/esp/src') (Join-Path $projectRoot 'tests/async_http_test.cpp') -o $asyncBinary
 if ($LASTEXITCODE -ne 0) { throw 'Async HTTP test compilation failed' }
 & $asyncBinary
 if ($LASTEXITCODE -ne 0) { throw 'Async HTTP tests failed' }
 $rangeBinary = Join-Path $outputDirectory 'firmware_range_test.exe'
-& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'firmware/esp8266/src') (Join-Path $projectRoot 'tests/firmware_range_test.cpp') -o $rangeBinary
+& g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $projectRoot 'tests/access_stubs') -I (Join-Path $projectRoot 'firmware/esp/src') (Join-Path $projectRoot 'tests/firmware_range_test.cpp') -o $rangeBinary
 if ($LASTEXITCODE -ne 0) { throw 'Firmware range test compilation failed' }
 & $rangeBinary
 if ($LASTEXITCODE -ne 0) { throw 'Firmware range tests failed' }
@@ -159,7 +161,7 @@ $espPanelBinary = Join-Path $outputDirectory 'esp_front_panel_test.exe'
     -I (Join-Path $projectRoot 'tests/pc_stubs') `
     -I (Join-Path $projectRoot 'libraries/BoardCore/src') `
     -I (Join-Path $projectRoot 'firmware/avr') `
-    -I (Join-Path $projectRoot 'firmware/esp8266/src') `
+    -I (Join-Path $projectRoot 'firmware/esp/src') `
     (Join-Path $projectRoot 'tests/esp_front_panel_test.cpp') `
     (Join-Path $projectRoot 'firmware/avr/PcControllerRuntime.cpp') `
     (Join-Path $projectRoot 'firmware/avr/BoardSettings.cpp') `
@@ -189,3 +191,4 @@ foreach ($rgbCase in @('s3_status_rgb_test', 's3_status_rgb_config_test', 's3_pa
 & (Join-Path $PSScriptRoot 'test-uart-flow.ps1')
 & (Join-Path $PSScriptRoot 'test-web-access.ps1')
 & (Join-Path $PSScriptRoot 'test-tasks.ps1')
+& (Join-Path $PSScriptRoot 'test-usb-api.ps1')

@@ -1,8 +1,16 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const esp = readFileSync(new URL('../firmware/esp8266/esp8266.ino', import.meta.url), 'utf8');
+const esp = readFileSync(new URL('../firmware/esp/application.ino', import.meta.url), 'utf8');
 const avr = readFileSync(new URL('../firmware/avr/avr.ino', import.meta.url), 'utf8');
+for(const [source,owner] of [[avr,'link'],[esp,'hostLink']]) {
+  const start=source.indexOf('case kSetMode:',source.indexOf(owner==='hostLink'?'void onHostFrame(':'void handleFrame('));
+  const mode=source.slice(start,source.indexOf('case kCellAction:',start));
+  assert.match(mode,new RegExp('if \\(mode == frame.payload\\[0\\]\\) \\{'+owner+'\\.ack\\(frame.sequence,frame.opcode\\);break;\\}'),
+    'Restating the active role must ACK without resetting the winner');
+}
+assert.match(esp,/if\(mode==parseMode\(value\)\)\{result=F\("mode unchanged"\);return true;\}/);
+assert.match(esp,/if\(mode==requested\)\{server.send\(200,[^\n]*changed[^\n]*return;\}/);
 assert(!esp.includes('startupCuePlayed'), 'First link must not schedule a false update-success cue');
 assert.match(esp, /const auto upload=uploadAttention.take\(\);[\s\S]*?if\(upload==Cue::Failure\)dispatch\(upload\)/,
   'Receiving complete cannot play success before verified reboot');
@@ -22,7 +30,7 @@ assert.match(lifecycle,/localOtaReceipt.takeNotice\(\)/);
 assert.match(lifecycle,/updateCueAvailable\(completionCue\)/);
 assert.match(lifecycle,/!urbootRawOwned && pendingUpgradeCloud.length\(\)/);
 assert.match(lifecycle,/if\(!urbootRawOwned\) \{/);
-const urboot=readFileSync(new URL('../firmware/esp8266/src/UrbootRoutes.h',import.meta.url),'utf8');
+const urboot=readFileSync(new URL('../firmware/esp/src/UrbootRoutes.h',import.meta.url),'utf8');
 const raw=urboot.slice(urboot.indexOf('bool runUrboot('),urboot.indexOf('void serviceUrbootJob()'));
 assert.doesNotMatch(raw,/avrLink.service\(|shutdownMs/,'Raw bootloader UART must never use framed parser or cosmetic delays');
 const job=urboot.slice(urboot.indexOf('void serviceUrbootJob()'),urboot.indexOf('void registerUrbootRoutes()'));
@@ -37,6 +45,12 @@ function checkWelcome(body) {
     'Welcome requires enabled cue, silent mode OFF, no Prog and reset-loop suppression');
 }
 checkWelcome(setup);
+const reset=avr.slice(avr.indexOf('void resetGame('),avr.indexOf('void chooseWinner('));
+assert.ok(reset.indexOf('const bool roundWasWon=winner!=0;')<reset.indexOf('winner = 0;'),
+  'Capture the real won state before clearing it');
+assert.match(reset,/if\(roundWasWon\)\s*\{\s*buzzer.stop\(\);\s*if\(gameResetCue<kCueCount\)playAudioCue/,
+  'Repeated ready-state reset must neither restart nor cancel the reset melody');
+assert.match(reset,/shiftRegisters.allOutputsOff\(\)/,'Idempotent reset still repairs relay outputs');
 for(const guard of ['!programmingLatch.active()','(flags & 2U)','!(flags & 1U)','resetTelemetry.allowWelcome()'])
   assert.throws(()=>checkWelcome(setup.replaceAll(guard,'true')),guard+' must remain required');
 console.log('Boot audio source routing passed: AVR welcome; ESP update success only for updates. Not an audible timing test.');

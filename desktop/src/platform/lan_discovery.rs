@@ -85,7 +85,7 @@ impl Advertiser {
         if settings.mdns {
             match ServiceDaemon::new() {
                 Ok(daemon) => {
-                    let peer_policy=crate::peer_identity::advertised_policy();
+                    let peer_policy = crate::peer_identity::advertised_policy();
                     let service = ServiceInfo::new(
                         "_pakarcontroller._tcp.local.",
                         &format!("PakarController on {}", settings.hostname),
@@ -106,7 +106,14 @@ impl Advertiser {
                             ("version", crate::peer_identity::VERSION),
                             ("minimum_app", peer_policy.minimum_app.as_str()),
                             ("minimum_board", peer_policy.minimum_board.as_str()),
-                            ("version_check", if crate::peer_identity::enforced(){"true"}else{"false"}),
+                            (
+                                "version_check",
+                                if crate::peer_identity::enforced() {
+                                    "true"
+                                } else {
+                                    "false"
+                                },
+                            ),
                         ]
                         .as_slice(),
                     );
@@ -514,31 +521,99 @@ fn udp_socket(port: u16, group: Ipv4Addr, addresses: &[Ipv4Addr]) -> std::io::Re
 }
 /// Read-only discovery uses the same source-bound parsers as the advertiser,
 /// without enabling a bridge listener or granting authority to advertisements.
-pub(super) fn scan_origins(timeout:Duration)->Vec<String> {
-    let addresses:Vec<Ipv4Addr>=NetworkInterface::show().unwrap_or_default().into_iter().flat_map(|n|n.addr)
-        .filter_map(|a|match a.ip(){IpAddr::V4(ip) if !ip.is_loopback()&&!ip.is_unspecified()&&!ip.is_multicast()=>Some(ip),_=>None}).collect();
-    let ssdp=UdpSocket::bind((Ipv4Addr::UNSPECIFIED,0)).ok();
-    let mndp=udp_socket(5678,Ipv4Addr::new(224,0,0,88),&addresses).ok();
-    if let Some(socket)=&ssdp {let _=socket.set_nonblocking(true);let _=socket.send_to(SEARCH,(SSDP_GROUP,1900));}
-    if let Some(socket)=&mndp {let _=socket.set_nonblocking(true);let _=socket.send_to(&[0,0,0,0],(Ipv4Addr::BROADCAST,5678));let _=socket.send_to(&[0,0,0,0],(Ipv4Addr::new(224,0,0,88),5678));}
-    let daemon=ServiceDaemon::new().ok();
-    let browsers:Vec<_>=daemon.as_ref().into_iter().flat_map(|d|["_pakarcontroller._tcp.local.","_http._tcp.local."].into_iter().filter_map(|kind|d.browse(kind).ok())).collect();
-    let deadline=Instant::now()+timeout;let mut origins=BTreeSet::new();let mut packet=[0;4097];let mut overflow=false;
-    while Instant::now()<deadline {
-        for (socket,is_mndp) in [(&ssdp,false),(&mndp,true)] {
-            if let Some(socket)=socket {for _ in 0..32 {match socket.recv_from(&mut packet){
-                Ok((count,source))=>{if let Some(candidate)=if is_mndp{parse_mndp(&packet[..count],source)}else{parse_ssdp(&packet[..count],source)} {if origins.len()<16||origins.contains(&candidate.origin){origins.insert(candidate.origin);}else{overflow=true;}}},
-                Err(_)=>break,
-            }}}
+pub(super) fn scan_origins(timeout: Duration) -> Vec<String> {
+    let addresses: Vec<Ipv4Addr> = NetworkInterface::show()
+        .unwrap_or_default()
+        .into_iter()
+        .flat_map(|n| n.addr)
+        .filter_map(|a| match a.ip() {
+            IpAddr::V4(ip) if !ip.is_loopback() && !ip.is_unspecified() && !ip.is_multicast() => {
+                Some(ip)
+            }
+            _ => None,
+        })
+        .collect();
+    let ssdp = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).ok();
+    let mndp = udp_socket(5678, Ipv4Addr::new(224, 0, 0, 88), &addresses).ok();
+    if let Some(socket) = &ssdp {
+        let _ = socket.set_nonblocking(true);
+        let _ = socket.send_to(SEARCH, (SSDP_GROUP, 1900));
+    }
+    if let Some(socket) = &mndp {
+        let _ = socket.set_nonblocking(true);
+        let _ = socket.send_to(&[0, 0, 0, 0], (Ipv4Addr::BROADCAST, 5678));
+        let _ = socket.send_to(&[0, 0, 0, 0], (Ipv4Addr::new(224, 0, 0, 88), 5678));
+    }
+    let daemon = ServiceDaemon::new().ok();
+    let browsers: Vec<_> = daemon
+        .as_ref()
+        .into_iter()
+        .flat_map(|d| {
+            ["_pakarcontroller._tcp.local.", "_http._tcp.local."]
+                .into_iter()
+                .filter_map(|kind| d.browse(kind).ok())
+        })
+        .collect();
+    let deadline = Instant::now() + timeout;
+    let mut origins = BTreeSet::new();
+    let mut packet = [0; 4097];
+    let mut overflow = false;
+    while Instant::now() < deadline {
+        for (socket, is_mndp) in [(&ssdp, false), (&mndp, true)] {
+            if let Some(socket) = socket {
+                for _ in 0..32 {
+                    match socket.recv_from(&mut packet) {
+                        Ok((count, source)) => {
+                            if let Some(candidate) = if is_mndp {
+                                parse_mndp(&packet[..count], source)
+                            } else {
+                                parse_ssdp(&packet[..count], source)
+                            } {
+                                if origins.len() < 16 || origins.contains(&candidate.origin) {
+                                    origins.insert(candidate.origin);
+                                } else {
+                                    overflow = true;
+                                }
+                            }
+                        }
+                        Err(_) => break,
+                    }
+                }
+            }
         }
-        for browser in &browsers {for _ in 0..32 {match browser.try_recv(){
-            Ok(ServiceEvent::ServiceResolved(service))=>{for ip in service.get_addresses_v4(){if !ip.is_unspecified()&&!ip.is_multicast(){let origin=format!("http://{ip}:{}",service.get_port());if origins.len()<16||origins.contains(&origin){origins.insert(origin);}else{overflow=true;}}}},
-            Ok(_)=>{},Err(_)=>break,
-        }}}
+        for browser in &browsers {
+            for _ in 0..32 {
+                match browser.try_recv() {
+                    Ok(ServiceEvent::ServiceResolved(service)) => {
+                        for ip in service.get_addresses_v4() {
+                            if !ip.is_unspecified() && !ip.is_multicast() {
+                                let origin = format!("http://{ip}:{}", service.get_port());
+                                if origins.len() < 16 || origins.contains(&origin) {
+                                    origins.insert(origin);
+                                } else {
+                                    overflow = true;
+                                }
+                            }
+                        }
+                    }
+                    Ok(_) => {}
+                    Err(_) => break,
+                }
+            }
+        }
         thread::sleep(Duration::from_millis(10));
     }
-    if let Some(daemon)=daemon {for kind in ["_pakarcontroller._tcp.local.","_http._tcp.local."]{let _=daemon.stop_browse(kind);}let _=daemon.shutdown();}
-    if overflow{Vec::new()}else{origins.into_iter().collect()}
+    if let Some(daemon) = daemon {
+        for kind in ["_pakarcontroller._tcp.local.", "_http._tcp.local."] {
+            let _ = daemon.stop_browse(kind);
+        }
+        let _ = daemon.shutdown();
+    }
+    if overflow {
+        Vec::new()
+    } else {
+        origins.into_iter().collect()
+    }
 }
 const SEARCH:&[u8]=concat!("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 1\r\nST: ssdp:all\r\nUSER-AGENT: PakarController/",env!("CARGO_PKG_VERSION")," native\r\n\r\n").as_bytes();
 fn search_request(packet: &[u8]) -> bool {
@@ -558,7 +633,10 @@ fn ssdp(s: &crate::bridge::Settings, ip: Ipv4Addr, nts: &str) -> String {
     };
     format!(
         "{first}CACHE-CONTROL: max-age=60\r\n{}ST: {TYPE}\r\nUSN: uuid:{}::{TYPE}\r\nLOCATION: http://{ip}:{}/description.xml\r\nX-Digitalogic-Product: pakarcontroller\r\nX-PCController-Name: {}\r\n\r\n",
-        crate::peer_identity::server_headers(),s.instance_id, s.port, s.hostname
+        crate::peer_identity::server_headers(),
+        s.instance_id,
+        s.port,
+        s.hostname
     )
 }
 // Donor big-endian vendor product/API-port TLVs, never an invented port80 app.

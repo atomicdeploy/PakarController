@@ -35,6 +35,8 @@ void main() {
       if (path == null) return;
       expect([
         'Table',
+        'TableTablet',
+        'TablePhone',
         'SettingsTablet',
         'SettingsPhone',
         'FirmwareTablet',
@@ -61,7 +63,8 @@ void main() {
       final mirror = PeripheralMirror(output: SilentOutput())
         ..observe(mirroredPeer(), 1);
       addTearDown(mirror.dispose);
-      final settings = view != 'Table', phone = view.endsWith('Phone');
+      final table = view == 'Table' || view.startsWith('Table');
+      final settings = !table, phone = view.endsWith('Phone');
       final api = SettingsApi();
       final firmwareApi = FirmwareApi();
       final automationModel = automationPageFixture(firmwareApi);
@@ -88,7 +91,11 @@ void main() {
           );
         await loader.load();
       }
-      tester.view.physicalSize = settings
+      tester.view.physicalSize = view == 'TablePhone'
+          ? const Size(390, 900)
+          : view == 'TableTablet'
+          ? const Size(1100, 850)
+          : settings
           ? (phone ? const Size(390, 1500) : const Size(1200, 1100))
           : const Size(1100, 1500);
       tester.view.devicePixelRatio = 1;
@@ -148,7 +155,14 @@ void main() {
                       adoptConnection: (_, _, _) async {},
                     )
                   : TablePage(
-                      status: peerFixture(),
+                      status: peerFixture(
+                        features: const [
+                          'table',
+                          'cell-batch',
+                          'leds',
+                          'state-presentation',
+                        ],
+                      ),
                       mapping: CellMap.defaults(),
                       command: (path, [values = const {}]) async {},
                       verifiedCommand: (path, values) async => false,

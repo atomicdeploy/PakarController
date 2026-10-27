@@ -16,6 +16,8 @@ const context=vm.createContext({root,doc,setTimer:(fn,ms)=>{const id=++timerSeri
 vm.runInContext(module+'\nvar locale="en";var controller=createToastController({root,document:doc,setTimer,clearTimer,translate:(key,values)=>(locale==="fa"?"بستن {title}":key).replace("{title}",values.title)});',context);
 const run=code=>vm.runInContext(code,context),snapshot=()=>JSON.parse(run('JSON.stringify(controller.snapshot())'));
 const id=run('controller.showToast("info","First","older message")');
+assert.equal(run('controller.showToast("info","First","older message")'),id);
+assert.equal(callbacks.size,1,'duplicates do not create or extend timers');
 assert.equal(callbacks.get(1).ms,4500);
 const oldCallback=callbacks.get(1).fn;
 run('controller.showToast("success","Second","newer message")');
@@ -37,6 +39,11 @@ root.children[0].listeners.focusin();root.children[0].listeners.focusout({relate
 assert.equal(callbacks.size,0,'blur does not cancel an independent hover hold');
 root.children[0].listeners.pointerleave();assert.equal(callbacks.size,1);
 root.children[0].children[2].listeners.click();assert.equal(snapshot().length,0);
+run('controller.showToast("error","Third","<script>alert(1)</script>")');
+assert.equal(snapshot().length,0,'dismissed repeated error stays quiet during cooldown');
+run('controller.showToast("error","Different","Different cause")');
+assert.equal(snapshot().length,1,'distinct errors remain visible during cooldown');
+root.children[0].children[2].listeners.click();
 for(let index=0;index<10;index++)run(`controller.showToast('info','${index}','text')`);
 assert.deepEqual(snapshot().map(x=>x.title),['6','7','8','9']);assert.equal(callbacks.size,4,'evicted timers must be cancelled');
 run('locale="fa";controller.refresh()');assert.equal(callbacks.size,4,'locale repaint must not reset lifetimes');
@@ -48,9 +55,10 @@ const stale=[...callbacks.values()][0].fn;run('controller.destroy();controller.d
 assert.equal(root.children.length,0);assert.equal(callbacks.size,0);assert.equal(run('controller.showToast("info","No","No")'),null);
 assert(!/innerHTML|localStorage|fetch\(/.test(module),'no injected markup, persistent messages or device mutation');
 assert.match(css,/prefers-reduced-motion/);assert.match(css,/forced-colors/);assert.match(css,/safe-area-inset-bottom/);assert.match(css,/\[dir=rtl\]/);
-const web=read('firmware/esp8266/src/WebUi.h');
+const web=read('firmware/esp/src/WebUi.h');
 assert.equal(web.split('// BEGIN RAYANLAMP TOASTS').length,2);assert(web.includes(module));assert(web.includes(css));
-assert(!web.includes('notice.textContent='),'all shipped notifications must go through one queue');
+// Editor-local field notices are not the global toast region.
+assert(!web.includes('function report(e,tone){notice.textContent='),'Global report must not replace the shared queue');
 assert.match(web,/function report\(e,tone\)[^\n]*createToastController/);
 assert.match(web,/globalThis\.addEventListener\?\.\('pagehide'/);
 assert(read('assets/web/localization.js').includes('webToasts?.refresh()'));

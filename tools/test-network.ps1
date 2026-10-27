@@ -8,7 +8,7 @@ $taskOutput=Join-Path $taskRoot 'build/native/network_config_test.exe'
 $taskArguments=@('-std=c++17','-Wall','-Wextra','-Werror',
   '-I',(Join-Path $taskRoot 'tests/network_stubs'),
   (Join-Path $taskRoot 'tests/network_config_test.cpp'),
-  (Join-Path $taskRoot 'firmware/esp8266/src/NetworkConfig.cpp'),'-o',$taskOutput)
+  (Join-Path $taskRoot 'firmware/esp/src/NetworkConfig.cpp'),'-o',$taskOutput)
 if($Plan){[pscustomobject]@{Executable='g++';Arguments=$taskArguments;Scope='Shared network persistence/validation fixture, not ESP32 SDK or Wi-Fi acceptance'};return}
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
 foreach($taskPlatform in @(@('-DESP8266'),@('-DESP32'),@('-DESP32','-DPAKAR_S3_ETHERNET_ENABLED=1'))) {

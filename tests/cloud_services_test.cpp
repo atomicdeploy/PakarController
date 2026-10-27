@@ -47,8 +47,8 @@ static void fragmentStackBoundary(){
     std::ifstream input(root/path);assert(input.good());
     return std::string(std::istreambuf_iterator<char>(input),std::istreambuf_iterator<char>());
   };
-  const auto source=read("firmware/esp8266/src/CloudServices.cpp");
-  const auto header=read("firmware/esp8266/src/CloudServices.h");
+  const auto source=read("firmware/esp/src/CloudServices.cpp");
+  const auto header=read("firmware/esp/src/CloudServices.h");
   const auto caller=source.find("void CloudServices::publishTelemetry(");
   const auto helper=source.find("void __attribute__((noinline)) CloudServices::publishTelemetryFragments(");
   const auto serviceAt=source.find("void CloudServices::service(",helper);

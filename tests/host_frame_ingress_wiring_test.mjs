@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-const main=read('firmware/esp8266/esp8266.ino'),routes=read('firmware/esp8266/src/UrbootRoutes.h');
+const main=read('firmware/esp/application.ino'),routes=read('firmware/esp/src/UrbootRoutes.h');
 function wiring(source,routes) {
   assert.match(source,/hostFrameIngress\.begin\(onHostFrame,rejectHostFrame,revokeHostAdmission\)/);
   assert.match(source,/void revokeHostAdmission\(void\*\) \{hostCallerAdmitted=false;hostDemand\.clear\(\);usbTableCapture\.clear\(\);\}/);

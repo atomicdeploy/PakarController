@@ -38,6 +38,12 @@ inline uint16_t features(bool helloFresh, uint16_t avrCaps, bool displayAck,
   }
   return result;
 }
+inline bool pixelEvents(uint16_t available) {
+  // The ESP publishes its own LED frames for either baked game role; an AVR
+  // connection is not required. Network-disabled or driverless builds cannot
+  // provide this service, even though their role identity remains available.
+  return (available & (Network | Leds)) == (Network | Leds);
+}
 inline bool displayObservationFresh(bool helloFresh,uint16_t caps,bool observed,
                                     uint32_t at,uint32_t now) {
   return helloFresh&&(caps&Protocol::kCapTm1637)&&observed&&

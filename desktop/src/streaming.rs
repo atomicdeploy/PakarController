@@ -54,6 +54,38 @@ pub fn sample_positions(
         .collect())
 }
 
+/// A screen sample belongs to the current board's physical topology, not a
+/// fixed six-pixel stride or a logical cell's position in the map array.
+pub fn sampling_layout(status: &crate::DeviceStatus) -> Option<crate::pixel_groups::Layout> {
+    crate::pixel_groups::for_status(status)
+        .filter(|layout| layout.capacity == 480 && layout.group_count == 80)
+}
+
+pub fn sample_pixels(
+    width: u32,
+    height: u32,
+    mapping: &[crate::CellMapping],
+    layout: &crate::pixel_groups::Layout,
+    sample: impl Fn(u32, u32) -> [u8; 3],
+) -> Result<Vec<u8>, String> {
+    layout.validate()?;
+    if layout.capacity != 480 || layout.group_count != 80 {
+        return Err("Screen sampling requires the table board's physical group layout".into());
+    }
+    let mut pixels = vec![0; usize::from(layout.capacity) * 3];
+    for (physical_index, x, y) in sample_positions(width, height, mapping)? {
+        let (start, count) = layout.span((physical_index + 1) as u8)
+            .ok_or("Physical group missing from sampled layout")?;
+        let color = sample(x, y);
+        for pixel in usize::from(start)..usize::from(start) + usize::from(count) {
+            pixels[pixel * 3..pixel * 3 + 3].copy_from_slice(&color);
+        }
+    }
+    // The preallocated unused capacity remains black, including a shortened
+    // final group. Neither screen capture nor a previous frame can fill it.
+    Ok(pixels)
+}
+
 pub fn interval(fps: u16) -> Duration {
     if fps == 0 {
         Duration::ZERO
@@ -117,6 +149,29 @@ mod tests {
         cells[0].logical_id = 2;
         assert!(!valid_mapping(&cells));
         assert!(sample_positions(0, 170, &mapping()).is_err());
+    }
+    #[test]
+    fn pixel_groups_sampler_uses_physical_spans_and_blacks_unused_tail() {
+        let mut cells = mapping();
+        cells[0].physical_cell = 80;
+        cells[79].physical_cell = 1;
+        let mut layout = crate::pixel_groups::Layout::uniform(480, 6).unwrap();
+        layout.revision = 7;
+        layout.set_override(1, 5);
+        layout.counts[0] = 5;
+        for start in &mut layout.starts[1..] { *start -= 1; }
+        layout.used_pixels = 479;
+        let pixels = sample_pixels(200, 170, &cells, &layout, |x, y| [x as u8, y as u8, 42]).unwrap();
+        assert!(pixels[..15].chunks_exact(3).all(|rgb| rgb == [190, 150, 42]), "Logical80 follows physical1's five-pixel override");
+        assert!(pixels[473 * 3..479 * 3].chunks_exact(3).all(|rgb| rgb == [10, 20, 42]), "Logical1 follows physical80's actual start");
+        assert_eq!(&pixels[479 * 3..], &[0, 0, 0]);
+        layout.starts[1] = 6;
+        assert!(sample_pixels(200, 170, &cells, &layout, |_, _| [255; 3]).is_err());
+        let mut status: crate::DeviceStatus = serde_json::from_value(serde_json::json!({"pixels":480,
+            "capabilities":{"board_kind":"table","role":"table-selection","acknowledged_features":[crate::pixel_groups::FEATURE]}})).unwrap();
+        assert!(sampling_layout(&status).is_none(), "Advertised missing layout must not fall back to six");
+        status.pixel_groups = serde_json::to_value(layout).unwrap();
+        assert!(sampling_layout(&status).is_none(), "Malformed advertised topology must not be guessed");
     }
     #[test]
     fn both_sources_use_configurable_deadlines_not_fixed_caps() {

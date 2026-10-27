@@ -1,5 +1,5 @@
-#include "../firmware/esp8266/src/SemanticPanel.h"
-#include "../firmware/esp8266/src/LedRenderAdmission.h"
+#include "../firmware/esp/src/SemanticPanel.h"
+#include "../firmware/esp/src/LedRenderAdmission.h"
 #include <cassert>
 #include <cstring>
 #include <iostream>

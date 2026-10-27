@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/RemotePolicy.h"
+#include "../firmware/esp/src/RemotePolicy.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>

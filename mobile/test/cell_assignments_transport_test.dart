@@ -187,7 +187,12 @@ void main() {
       final actual = await api.fastCommand('/api/cells/assignments', {
         'assignments': full.commandValue,
       }, authorize: () => true);
-      expect(actual!.cells.where((state) => state == 'red').length, 40);
+      expect(
+        CellAssignments.fromObservedCells(actual!.cells).values.values
+            .where((state) => state == 'lost')
+            .length,
+        40,
+      );
       expect(server.packets.length, 2);
       expect(server.packets.map((p) => p['request_id']).toSet().length, 1);
       expect(server.applications, 1);

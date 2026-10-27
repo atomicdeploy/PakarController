@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const main=readFileSync(new URL('../firmware/esp8266/esp8266.ino',import.meta.url),'utf8');
+const main=readFileSync(new URL('../firmware/esp/application.ino',import.meta.url),'utf8');
 function loopStack(source) {
  const loop=source.slice(source.indexOf('void loop() {'));
  assert.match(source,/__attribute__\(\(noinline\)\) void serviceStream\(\)/);

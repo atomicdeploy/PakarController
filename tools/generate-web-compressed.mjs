@@ -21,8 +21,8 @@ export function compressedWebHeader(source){
     'static const uint8_t kWebUiGzip[] PROGMEM = {\n'+lines.join('\n')+'\n};\n'};
 }
 export async function generateWebCompressed({check=false}={}){
-  const root=new URL('../',import.meta.url),output=new URL('firmware/esp8266/src/WebUiCompressed.h',root);
-  const value=compressedWebHeader(await readFile(new URL('firmware/esp8266/src/WebUi.h',root),'utf8'));
+  const root=new URL('../',import.meta.url),output=new URL('firmware/esp/src/WebUiCompressed.h',root);
+  const value=compressedWebHeader(await readFile(new URL('firmware/esp/src/WebUi.h',root),'utf8'));
   let previous;try{previous=await readFile(output,'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
   if(previous!==value.header){assert(!check,'Compressed Web UI stale; run node tools/generate-web-compressed.mjs');await writeFile(output,value.header);}
   return {raw:value.raw.length,gzip:value.gzip.length};

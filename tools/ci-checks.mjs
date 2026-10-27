@@ -5,6 +5,10 @@ import {fileURLToPath} from 'node:url';
 import {createLogger} from './script-console.mjs';
 export const phases={
   "quality": [
+    ["node", "tests/native_dependency_graph_test.mjs"],
+    // Static source certificates must fail before expensive SDK/native builds.
+    ["node", "tests/pc_contract_mapping_test.mjs"],
+    ["pwsh", "-File", "tools/test-radio.ps1"],
     ["pwsh", "-File", "tools/test-peer-identity.ps1"],
     ["pwsh", "-File", "tests/tool_peer_identity_test.ps1"],
     ["node", "tests/web_peer_version_test.mjs"],
@@ -17,6 +21,7 @@ export const phases={
     ["node", "tests/download_firmware_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "pu-backup-update", "-Gate"],
     ["node", "tests/update_backup_test.mjs"],
+    ["node", "tests/verify_running_firmware_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "pu-client-manifest", "-Gate"],
     ["node", "tests/firmware_manifest_test.mjs"],
     ["node", "tests/script_tooling_test.mjs"],
@@ -27,10 +32,12 @@ export const phases={
     ["node", "tests/lcd_web_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "ethernet", "-Gate"],
     ["node", "tests/ethernet_live_tool_test.mjs"],
+    ["node", "tests/pixel_workbench_live_tool_test.mjs"],
     ["node", "tests/board_silent_test.mjs"],
     ["node", "tests/avr_boot_image_test.mjs"],
     ["node", "tests/windows_tray_test.mjs"],
     ["node", "tests/web_compressed_test.mjs"],
+    ["node", "tools/build-web.mjs", "--profile=onboard", "--check"],
     ["pwsh", "-NoProfile", "-File", "tools/test-shell-properties.ps1"],
     ["node", "tests/shell_metadata_test.mjs"],
     ["pwsh", "-NoProfile", "-File", "tests/windows_startup_test.ps1"],
@@ -42,6 +49,10 @@ export const phases={
     ["node", "tests/esp32_ws2811_reuse_test.mjs"],
     ["pwsh", "-File", "tools/test-led-rmt-ring.ps1"],
     ["node", "tests/web_workspace_test.mjs"],
+    ["node", "tests/web_workspace_routes_test.mjs"],
+    ["node", "tests/web_dialog_test.mjs"],
+    ["node", "tests/web_feature_workspaces_test.mjs"],
+    ["node", "tests/web_correction_preview_test.mjs"],
     ["node", "tests/web_cell_assignments_test.mjs"],
     ["pwsh", "-NoProfile", "-File", "tools/test-game-role.ps1"],
     ["node", "tests/esp_front_panel_wiring_test.mjs"],
@@ -242,10 +253,6 @@ export const phases={
     [
       "node",
       "tests/remote_cli_test.mjs"
-    ],
-    [
-      "node",
-      "tests/pc_contract_mapping_test.mjs"
     ]
   ]
 };

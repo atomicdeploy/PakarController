@@ -1,6 +1,7 @@
 #include "LedGrid.h"
 #include "LedPreferences.h"
 #include "CloudAnimationProgress.h"
+#include <StateMotion.h>
 #include <cassert>
 #include <cstdio>
 unsigned panelNotifications=0;uint8_t panelKind=0;uint16_t panelValue=0;
@@ -64,7 +65,98 @@ void cloudAnimationProgress(){
  assert(!PakarLed::serviceDuringCloud(grid,++pixelTestNow,false,false,true));
  assert(FastLED.shows==disabled);pixelTestNow=savedNow;
 }
+void sharedStateMotion(){
+ using BoardCore::StateMotion;
+ // Same integer waveform as the existing keycontroller, for both group sizes.
+ for(uint32_t period : {100U,701U,900U,1800U}){
+   for(uint32_t t=0;t<period*2;++t){
+     const auto phase=t%period,half=period/2;
+     const auto distance=phase<half?phase:period-phase;
+     assert(StateMotion::pulse(t,period)==uint8_t(255-105*distance/half));
+     for(uint16_t sectors : {6,12}){
+       for(uint16_t i=0;i<sectors;++i){
+         const auto around=(phase+period-uint32_t(i)*period/sectors)%period;
+         const auto d=around<period-around?around:period-around;
+         for(bool neighbors : {false,true})for(bool invert : {false,true}){
+           const auto reach=(period/sectors)*(neighbors?2U:1U);
+           const auto halo=d<reach?uint8_t(255*d/reach):255;
+           const auto expected=invert?uint8_t(255-75*halo/255):uint8_t(130+125*halo/255);
+           assert(StateMotion::ring(t,period,i,sectors,neighbors,invert)==expected);
+         }
+         const auto head=phase*sectors/period;
+         const auto trail=(head+sectors-i)%sectors;
+         assert(StateMotion::chase(t,period,i,sectors)==(trail<4?uint8_t(255-trail*45):60));
+       }
+     }
+   }
+ }
+ assert(StateMotion::pulse(100,0)==255 && StateMotion::pulse(100,1)==255);
+ assert(StateMotion::ring(100,0,0,6,true,false)==255);
+ assert(StateMotion::ring(100,900,0,0,true,false)==255);
+ assert(StateMotion::chase(100,0,0,6)==255);
+ assert(StateMotion::chase(100,900,6,6)==255);
+}
+void semanticAppearance(){
+ using namespace BoardCore::Protocol;
+ LedGrid grid;grid.begin();
+ BoardCore::StateAppearance palette;
+ palette.states[kCellLost].rgb=0x123456;
+ palette.states[kCellIdle].rgb=0xabcdef;
+ assert(grid.configureAppearance(palette));
+ assert(grid.setCell(1,kCellLost,kEffectImmediate));
+ assert(grid.setCell(2,kCellWon,kEffectImmediate));
+ grid.service(++pixelTestNow);
+ const auto rgb=[](const LedGrid &g){const auto f=g.pixelFrameJson();return f.substr(f.find("\"rgb\":\"")+7,LedGrid::kPixels*6);};
+ assert(rgb(grid).substr(0,6)=="123456");
+ assert(rgb(grid).substr(36,6)=="00ff00");
+ grid.setRedLock(true);
+ assert(!grid.setCell(1,kCellIdle,kEffectImmediate)); // State, not red RGB.
+ BoardCore::CellBatch selected;selected.add(1);
+ const auto original=rgb(grid);
+ assert(grid.preview(selected,0x102030,100));
+ grid.service(++pixelTestNow);
+ assert(rgb(grid).substr(0,6)=="102030" && grid.state(1)==kCellLost);
+ assert(grid.redLock() && !grid.setCell(1,kCellIdle,kEffectImmediate));
+ pixelTestNow+=100;assert(grid.needsRender(pixelTestNow));grid.service(pixelTestNow);
+ assert(rgb(grid)==original && !grid.previewActive(pixelTestNow));
+ assert(!grid.preview(selected,0x1000000,100));
+ assert(!grid.preview(selected,0,0));assert(!grid.preview(selected,0,10001));
+ const auto saved=grid.appearance().states[kCellLost].rgb;
+ palette.states[kCellOff].rgb=1;
+ assert(!grid.configureAppearance(palette));assert(grid.appearance().states[kCellLost].rgb==saved);
+}
+void repeatedFadeKeepsDeadline(){
+ using namespace BoardCore::Protocol;
+ const auto savedNow=pixelTestNow;
+ const auto rgb=[](const LedGrid &g){const auto f=g.pixelFrameJson();return f.substr(f.find("\"rgb\":\"")+7,LedGrid::kPixels*6);};
+ for(const uint32_t start:{1000U,UINT32_MAX-180U}){
+  LedGrid grid;pixelTestNow=start;grid.begin();grid.setStaticMode(false);
+  assert(grid.setCell(1,kCellRed,kEffectFade));
+  pixelTestNow=start+100U;grid.service(pixelTestNow);assert(rgb(grid).substr(0,6)=="ffaaaa");
+  assert(grid.setCell(1,kCellRed,kEffectFade));
+  pixelTestNow=start+200U;grid.service(pixelTestNow);assert(rgb(grid).substr(0,6)=="ff5555");
+  assert(grid.setCell(1,kCellRed,kEffectFade));
+  pixelTestNow=start+300U;grid.service(pixelTestNow);assert(rgb(grid).substr(0,6)=="ff0000");
+  // A different target starts from the last published color, not white or black.
+  assert(grid.setCell(1,kCellWhite,kEffectFade));
+  pixelTestNow+=150U;grid.service(pixelTestNow);assert(rgb(grid).substr(0,6)=="ff8080");
+  assert(grid.setCell(1,kCellWhite,kEffectImmediate));
+  grid.service(++pixelTestNow);assert(rgb(grid).substr(0,6)=="ffffff");
+  // Pulse is intentional replay and must retain that behavior.
+  assert(grid.setCell(1,kCellWhite,kEffectPulse));
+  pixelTestNow+=100U;grid.service(pixelTestNow);assert(rgb(grid).substr(0,6)=="555555");
+  // A different effect is a new intent even when its state/target is identical.
+  assert(grid.setCell(1,kCellWhite,kEffectFade));
+  pixelTestNow+=150U;grid.service(pixelTestNow);assert(rgb(grid).substr(0,6)=="aaaaaa");
+  assert(grid.setCell(1,kCellWhite,kEffectFade));
+  pixelTestNow+=150U;grid.service(pixelTestNow);assert(rgb(grid).substr(0,6)=="ffffff");
+ }
+ pixelTestNow=savedNow;
+}
 int main(){
+ repeatedFadeKeepsDeadline();
+ semanticAppearance();
+ sharedStateMotion();
  using namespace BoardCore::Protocol;
  rainbowClockCadence();
  cloudAnimationProgress();
@@ -263,9 +355,9 @@ int main(){
    const uint16_t index=count==1?479:474;
    const auto shows=FastLED.shows;
    assert(diagnostic.diagnostic(index,count,0x1234ab,off));
-   assert(FastLED.shows==shows+1 && !diagnostic.staticMode() && diagnostic.outputEnabled());
+   assert(FastLED.shows==shows+1 && diagnostic.staticMode() && diagnostic.outputEnabled());
    ++diagnosticRevision;
-   assert(diagnostic.outputJson().find("\"diagnostic\":{\"revision\":"+std::to_string(diagnosticRevision)+",\"active\":true")!=String::npos);
+   assert(diagnostic.outputJson().find("\"diagnostic\":{\"revision\":"+std::to_string(diagnosticRevision)+",\"group_layout_revision\":0,\"active\":true")!=String::npos);
    assert(diagnostic.outputJson().find("\"index\":"+std::to_string(index)+",\"count\":"+std::to_string(count)+",\"rgb\":1193131,\"off\":"+(off?"true":"false"))!=String::npos);
    const auto f=diagnostic.pixelFrameJson();const auto start=f.find("\"rgb\":\"")+7;
    for(unsigned p=0;p<480;++p)
@@ -287,6 +379,46 @@ int main(){
  assert(diagnostic.diagnostic(0,1,0xff0000,false)&&diagnostic.outputEnabled());
  diagnostic.showWinner(1);
  assert(diagnostic.outputJson().find("\"active\":false")!=String::npos);
+ {
+   // Advanced diagnostics are one transient post-render layer, not a scene.
+   LedGrid layer;layer.begin();layer.setCell(1,kCellRed,kEffectImmediate);layer.service(++pixelTestNow);
+   const auto compact=layer.pixelFrameJson(true);
+   assert(compact.size()<LedGrid::kCells*10U+200U&&compact.find("\"rgb\"")==String::npos&&compact.find("\"physical\"")==String::npos);
+   assert(compact.find("\"group_layout_revision\":0")!=String::npos&&compact.find("\"group_counts\":[6,6,")!=String::npos&&compact.find("\"group_starts\":[0,6,")!=String::npos);
+   assert(compact.find("\"revision\":"+std::to_string(layer.frameRevision()))!=String::npos);
+   assert(compact.find("\"pending\":false")!=String::npos);
+   const auto raw=[](const String &frame){return frame.substr(frame.find("\"rgb\":\"")+7,480*6);};
+   const auto base=raw(layer.pixelFrameJson());
+   BoardCore::PixelDiagnostic options;options.composite=BoardCore::PixelDiagnostic::Overlay;
+   assert(layer.diagnostic(479,1,0x00ff00,false,options));
+   auto rgb=raw(layer.pixelFrameJson());assert(rgb.substr(0,479*6)==base.substr(0,479*6));
+   assert(rgb.substr(479*6)=="00ff00"&&layer.state(1)==kCellRed&&layer.staticMode());
+   options.effect=BoardCore::PixelDiagnostic::Blink;options.periodMs=1000;options.dutyPercent=25;
+   const auto began=pixelTestNow;assert(layer.diagnostic(474,6,0xff0000,false,options));
+   pixelTestNow=began+250;assert(layer.needsRender(pixelTestNow));layer.service(pixelTestNow);
+   rgb=raw(layer.pixelFrameJson());assert(rgb.substr(474*6)==String(36,'0'));
+   assert(rgb.substr(0,474*6)==base.substr(0,474*6));
+   options.effect=BoardCore::PixelDiagnostic::Breathe;options.periodMs=1001;
+   assert(options.gain(0)==0&&options.gain(500)==255&&options.gain(1001)==0);
+   assert(layer.diagnostic(474,6,0xff0000,false,options));
+   pixelTestNow+=500;layer.service(pixelTestNow);assert(raw(layer.pixelFrameJson()).substr(474*6)==String("ff0000ff0000ff0000ff0000ff0000ff0000"));
+   options.effect=BoardCore::PixelDiagnostic::Rainbow;
+   assert(layer.diagnostic(474,6,0xff0000,false,options));const auto first=raw(layer.pixelFrameJson());
+   pixelTestNow+=300;layer.service(pixelTestNow);rgb=raw(layer.pixelFrameJson());assert(rgb!=first);
+   for(unsigned i=475;i<480;++i)assert(rgb.substr(i*6,6)==rgb.substr(474*6,6));
+   options.enabled=false;assert(layer.diagnostic(474,6,0xff0000,false,options));
+   assert(!layer.diagnosticActive()&&raw(layer.pixelFrameJson())==base);
+   layer.setPattern(LedGrid::kPatternRainbow);options.enabled=true;
+   assert(layer.diagnostic(0,1,0xff0000,false,options));pixelTestNow+=100;layer.service(pixelTestNow);
+   assert(layer.pattern()==LedGrid::kPatternRainbow&&layer.state(1)==kCellRed);
+   options.enabled=false;assert(layer.diagnostic(0,1,0xff0000,false,options));assert(layer.pattern()==LedGrid::kPatternRainbow);
+   layer.setOutputEnabled(false);options.enabled=true;
+   assert(layer.diagnostic(0,1,0xff0000,false,options)&&layer.outputEnabled()&&!layer.sceneOutputEnabled());
+   options.enabled=false;assert(layer.diagnostic(0,1,0xff0000,false,options)&&!layer.outputEnabled());
+   assert(raw(layer.pixelFrameJson())==String(480*6,'0')&&layer.pixelFrameJson().find("\"pending\":false")!=String::npos);
+   options.enabled=true;options.periodMs=99;const auto untouched=layer.pixelFrameJson();
+   assert(!layer.diagnostic(0,1,0xff0000,false,options)&&layer.pixelFrameJson()==untouched);
+ }
  assert(diagnostic.diagnostic(474,6,0x1234ab,false));
  diagnostic.setPattern(LedGrid::kPatternRainbow);
  assert(diagnostic.outputJson().find("\"active\":false")!=String::npos);
@@ -336,7 +468,7 @@ int main(){
   const uint8_t ids[]={1,2},newStates[]={kCellRed,kCellWhite};
   assert(!grid.setAssignments(ids,newStates,2));assert(grid.state(1)==kCellOff);
   const uint8_t duplicate[]={1,1};assert(!grid.setAssignments(duplicate,newStates,2));
-  const uint8_t invalidStates[]={kCellRed,3};assert(!grid.setAssignments(ids,invalidStates,2));
+  const uint8_t invalidStates[]={kCellRed,4};assert(!grid.setAssignments(ids,invalidStates,2));
   assert(grid.setCell(2,kCellOff,kEffectImmediate)); // Lock forbids red->white, not Off.
   grid.setRedLock(false);const auto assignmentNotices=panelNotifications;assert(grid.setAssignments(ids,newStates,2));
   assert(panelNotifications==assignmentNotices+1); // One transaction, not one AVR notice per row.

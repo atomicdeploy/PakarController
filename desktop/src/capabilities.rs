@@ -21,20 +21,30 @@ pub struct LedOutput {
     pub backend: String,
     pub rmt: bool,
     pub dma: bool,
+    #[serde(default)]
+    pub available_backends: Vec<String>,
+    #[serde(default)]
+    pub runtime_switch: bool,
 }
 impl LedOutput {
     fn valid(&self) -> bool {
         matches!(
             (self.backend.as_str(), self.rmt, self.dma),
-            ("gpio-static" | "fastled", false, false) | ("rmt-dma", true, true)
+            ("gpio-static" | "fastled" | "none", false, false) | ("rmt-dma", true, true)
         )
     }
     pub fn label(&self) -> &'static str {
         match self.backend.as_str() {
             "rmt-dma" => "RMT + DMA",
             "gpio-static" => "GPIO · no RMT/DMA",
+            "none" => "No LED driver",
             _ => "FastLED · no RMT/DMA",
         }
+    }
+    pub fn supports_backend(&self, backend: &str) -> bool {
+        self.runtime_switch
+            && matches!(backend, "gpio-static" | "rmt-dma")
+            && self.available_backends.iter().any(|value| value == backend)
     }
 }
 fn read_led_output<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<LedOutput>, D::Error> {
@@ -74,14 +84,19 @@ pub struct Presentation {
     panel_heights: std::collections::HashMap<String, PanelExtent>,
 }
 #[derive(Debug, Clone, Copy)]
-struct PanelExtent { width: f32, height: f32 }
+struct PanelExtent {
+    width: f32,
+    height: f32,
+}
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct PresentationChange {
     pub peer_changed: bool,
     pub boot_changed: bool,
 }
 impl Presentation {
-    pub fn context(&self) -> Option<&Manifest> { self.manifest.as_ref() }
+    pub fn context(&self) -> Option<&Manifest> {
+        self.manifest.as_ref()
+    }
     pub fn workspace_key(&self) -> Option<String> {
         self.manifest.as_ref()?;
         self.board.as_ref().map(|board| format!("board:{board}"))
@@ -90,29 +105,57 @@ impl Presentation {
     /// loss, keep the scroll content tall enough that Unknown rows cannot clamp
     /// away the user's offset. A resize discards the old wrapping measurement.
     pub fn panel_min_height(&mut self, panel: &str, width: f32, measured: f32, live: bool) -> f32 {
-        if self.board.is_none() || panel.len() > 64 || !width.is_finite() || width <= 0.0
-            || !measured.is_finite() || measured < 0.0 { return 0.0; }
-        if !self.panel_heights.contains_key(panel) && self.panel_heights.len() >= 8 { return 0.0; }
-        let extent = self.panel_heights.entry(panel.to_owned())
+        if self.board.is_none()
+            || panel.len() > 64
+            || !width.is_finite()
+            || width <= 0.0
+            || !measured.is_finite()
+            || measured < 0.0
+        {
+            return 0.0;
+        }
+        if !self.panel_heights.contains_key(panel) && self.panel_heights.len() >= 8 {
+            return 0.0;
+        }
+        let extent = self
+            .panel_heights
+            .entry(panel.to_owned())
             .or_insert(PanelExtent { width, height: 0.0 });
-        if (extent.width - width).abs() >= 0.5 { *extent = PanelExtent { width, height: 0.0 }; }
+        if (extent.width - width).abs() >= 0.5 {
+            *extent = PanelExtent { width, height: 0.0 };
+        }
         if live {
             extent.height = measured.min(4096.0);
             0.0 // Live content owns its actual size, including deliberate collapse.
-        } else { extent.height }
+        } else {
+            extent.height
+        }
     }
-    pub fn update(&mut self, route: Option<&str>, status: Option<&crate::DeviceStatus>) -> PresentationChange {
+    pub fn update(
+        &mut self,
+        route: Option<&str>,
+        status: Option<&crate::DeviceStatus>,
+    ) -> PresentationChange {
         let mut change = PresentationChange::default();
         if route != self.route.as_deref() {
             change.peer_changed = self.board.is_some();
-            *self = Self { route: route.map(str::to_owned), ..Default::default() };
+            *self = Self {
+                route: route.map(str::to_owned),
+                ..Default::default()
+            };
         }
-        if route.is_none() { return change; }
-        let Some(status) = status else { return change; };
+        if route.is_none() {
+            return change;
+        }
+        let Some(status) = status else {
+            return change;
+        };
         // A received but invalid identity must not inherit a prior board's UI.
         if crate::peer_http::Pin::from_status(status).is_none() {
             change.peer_changed |= self.board.is_some();
-            self.board = None; self.boot = None; self.manifest = None;
+            self.board = None;
+            self.boot = None;
+            self.manifest = None;
             self.panel_heights.clear();
             return change;
         }
@@ -120,13 +163,21 @@ impl Presentation {
         let same_boot = same_board && self.boot.as_deref() == Some(status.boot_id.as_str());
         change.peer_changed |= !same_board;
         change.boot_changed = same_board && !same_boot;
-        if !same_boot { self.manifest = None; }
-        if !same_board { self.panel_heights.clear(); }
+        if !same_boot {
+            self.manifest = None;
+        }
+        if !same_board {
+            self.panel_heights.clear();
+        }
         self.board = Some(status.board_id.clone());
         self.boot = Some(status.boot_id.clone());
         if let Some(current) = status.capabilities.as_ref().filter(|m| m.known()) {
             let mut shown = current.clone();
-            if let Some(previous) = self.manifest.as_ref().filter(|m| m.board_kind == current.board_kind && m.role == current.role) {
+            if let Some(previous) = self
+                .manifest
+                .as_ref()
+                .filter(|m| m.board_kind == current.board_kind && m.role == current.role)
+            {
                 // Only capabilities actually ACKed on this selected route/boot
                 // may retain a slot. They do not grant a fresh command lease.
                 for feature in &previous.acknowledged_features {
@@ -135,9 +186,13 @@ impl Presentation {
                     }
                 }
                 for mode in &previous.modes {
-                    if !shown.modes.iter().any(|m| m.id == mode.id) { shown.modes.push(mode.clone()); }
+                    if !shown.modes.iter().any(|m| m.id == mode.id) {
+                        shown.modes.push(mode.clone());
+                    }
                 }
-                if shown.table.is_none() { shown.table = previous.table.clone(); }
+                if shown.table.is_none() {
+                    shown.table = previous.table.clone();
+                }
             }
             self.manifest = Some(shown);
         }
@@ -146,7 +201,9 @@ impl Presentation {
 }
 impl Manifest {
     pub fn table_selection(&self) -> bool {
-        self.table() && (self.role == "table-selection" || self.role.is_empty() && self.modes().any(|m|m.id=="cell"))
+        self.table()
+            && (self.role == "table-selection"
+                || self.role.is_empty() && self.modes().any(|m| m.id == "cell"))
     }
     pub fn led_output(&self) -> Option<&LedOutput> {
         self.led_output
@@ -179,7 +236,11 @@ impl Manifest {
     pub fn modes(&self) -> impl Iterator<Item = &Mode> {
         self.modes.iter().filter(|m| {
             (self.table() || self.role == "first-wins" && self.has("leds"))
-                && (self.role.is_empty() || matches!((self.role.as_str(),m.id.as_str()),("table-selection","cell")|("first-wins","first-wins")))
+                && (self.role.is_empty()
+                    || matches!(
+                        (self.role.as_str(), m.id.as_str()),
+                        ("table-selection", "cell") | ("first-wins", "first-wins")
+                    ))
                 && match (m.id.as_str(), m.code, m.kind.as_str()) {
                     ("cell", 1, "presentation") => true,
                     ("first-wins", 2, "game") => self.has("inputs") && self.has("outputs"),
@@ -207,17 +268,29 @@ impl Manifest {
         }
     }
     pub fn allows(&self, path: &str, form: &[(String, String)]) -> bool {
+        if path == crate::pixel_groups::PATH { return self.has(crate::pixel_groups::FEATURE); }
+        if path == crate::pixel_corrections::PATH { return self.has("pixel-corrections"); }
         let feature = match path {
-            "/api/cells/assignments" => return self.table_selection() && self.has("cell-assignments"),
+            "/api/led/presentation" | "/api/led/preview" => return self.has("leds") && self.has("state-presentation"),
+            "/api/cells/assignments" => {
+                return self.table_selection() && self.has("cell-assignments");
+            }
             "/api/cells/lock" => return self.table_selection() && self.has("cell-lock"),
             "/api/cells" => return self.table_selection() && self.has("cell-batch"),
             "/api/cell" => return self.table_selection(),
-            "/api/game/reset" => return self.modes().any(|m|m.id=="first-wins"),
-            "/api/game/settings" => return self.role=="first-wins" && self.has("key-settings"),
-            "/api/snake/direction" => return false,
-            "/api/cells/mapping" => {
-                "table"
+            "/api/game/reset" => return self.modes().any(|m| m.id == "first-wins"),
+            "/api/game/settings" => {
+                return self.role == "first-wins"
+                    && self.has("key-settings")
+                    && (!form.iter().any(|(name, _)| name == "presentation") || self.has("game-presentation"))
+                    && (!form
+                        .iter()
+                        .any(|(name, _)| matches!(name.as_str(), "winner_cue" | "reset_cue"))
+                        || self.has("game-melodies"));
             }
+            "/api/snake/direction" => return false,
+            "/api/game/press" => return self.role == "first-wins" && self.has("game-press"),
+            "/api/cells/mapping" => "table",
             "/api/mode" => {
                 return self
                     .modes()
@@ -232,11 +305,19 @@ impl Manifest {
             }
             "/api/audio" | "/api/buzzer" => "buzzer",
             "/api/outputs" => "outputs",
+            "/api/led/output" if form.iter().any(|(name, _)| name == "backend") => {
+                return self.has("leds") && form.len() == 1
+                    && self.led_output().is_some_and(|driver| driver.supports_backend(&form[0].1));
+            }
             "/api/brightness" | "/api/effect" | "/api/led/output" => "leds",
             "/api/led/diagnostic" => return self.has("leds") && self.has("pixel-diagnostic"),
             "/api/device/name" => "identity",
             "/api/status-rgb" => "status-rgb",
-            "/api/network" | "/api/network/ethernet" | "/api/cloud" | "/api/cloud/reconnect" | "/api/auth" => "network",
+            "/api/network"
+            | "/api/network/ethernet"
+            | "/api/cloud"
+            | "/api/cloud/reconnect"
+            | "/api/auth" => "network",
             "/api/clients/report" => "telemetry",
             _ if path.starts_with("/api/avr/") => "isp",
             _ if path.starts_with("/api/firmware/") => "ota",
@@ -253,6 +334,12 @@ impl Manifest {
             return None;
         }
         let mask = u16::from_le_bytes([payload[30], payload[31]]);
+        // One game role is baked into each board. Older first-wins firmware
+        // incorrectly set the legacy table-kind byte, so the authoritative
+        // single mode bit wins and prevents the 80-cell workspace leaking
+        // into a key controller connected over USB.
+        let table_selection = payload[32] & (1 << 1) != 0 && payload[32] & (1 << 2) == 0;
+        let first_wins = payload[32] & (1 << 2) != 0 && payload[32] & (1 << 1) == 0;
         let names = [
             "network",
             "telemetry",
@@ -272,13 +359,28 @@ impl Manifest {
             "lcd",
         ];
         let mut value = Self {
-            board_kind: if payload[33] == 1 {
+            board_kind: if first_wins {
+                "keys"
+            } else if payload[33] == 1 {
                 "table"
             } else {
                 "controller"
             }
             .into(),
-            name: "USB controller".into(),
+            name: if first_wins {
+                "USB key controller"
+            } else {
+                "USB controller"
+            }
+            .into(),
+            role: if first_wins {
+                "first-wins"
+            } else if table_selection {
+                "table-selection"
+            } else {
+                ""
+            }
+            .into(),
             acknowledged_features: names
                 .iter()
                 .enumerate()
@@ -287,7 +389,7 @@ impl Manifest {
                 .collect(),
             ..Default::default()
         };
-        if payload[33] == 1 {
+        if payload[33] == 1 && !first_wins {
             value.table = Some(Table {
                 columns: payload[34],
                 rows: payload[35],
@@ -316,11 +418,23 @@ impl Manifest {
 mod tests {
     use super::*;
     fn presentation_status(board: &str, boot: &str, features: &[&str]) -> crate::DeviceStatus {
-        crate::DeviceStatus { board_id: board.into(), boot_id: boot.repeat(32), http_peer_fencing: true,
-            capabilities: Some(Manifest { board_kind: "table".into(), name: "First name".into(),
+        crate::DeviceStatus {
+            board_id: board.into(),
+            boot_id: boot.repeat(32),
+            http_peer_fencing: true,
+            capabilities: Some(Manifest {
+                board_kind: "table".into(),
+                name: "First name".into(),
                 acknowledged_features: features.iter().map(|v| (*v).into()).collect(),
-                table: Some(Table { columns: 10, rows: 8, pixels_per_cell: 6 }), ..Default::default() }),
-            ..Default::default() }
+                table: Some(Table {
+                    columns: 10,
+                    rows: 8,
+                    pixels_per_cell: 6,
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }
     }
     #[test]
     fn presentation_retains_only_prior_acks_without_reviving_live_authority() {
@@ -331,10 +445,18 @@ mod tests {
         let key = display.workspace_key();
         assert!(display.context().unwrap().table());
         assert!(!display.context().unwrap().has("buzzer"));
-        assert_eq!(display.update(Some("USB:COM22"), None), PresentationChange::default());
+        assert_eq!(
+            display.update(Some("USB:COM22"), None),
+            PresentationChange::default()
+        );
         assert_eq!(display.workspace_key(), key);
         status.capabilities.as_mut().unwrap().name = "Renamed board".into();
-        status.capabilities.as_mut().unwrap().acknowledged_features.clear();
+        status
+            .capabilities
+            .as_mut()
+            .unwrap()
+            .acknowledged_features
+            .clear();
         display.update(Some("USB:COM22"), Some(&status));
         assert_eq!(display.workspace_key(), key);
         assert!(display.context().unwrap().has("display"));
@@ -347,7 +469,11 @@ mod tests {
         display.update(Some("USB:COM22"), Some(&status));
         let key = display.workspace_key();
         let reboot = presentation_status("board-a", "b", &["table"]);
-        assert!(display.update(Some("USB:COM22"), Some(&reboot)).boot_changed);
+        assert!(
+            display
+                .update(Some("USB:COM22"), Some(&reboot))
+                .boot_changed
+        );
         assert_eq!(display.workspace_key(), key); // Same board, same user workspace.
         assert!(!display.context().unwrap().has("display"));
         display.update(Some("Wi-Fi:http://ledboard.local"), None);
@@ -378,8 +504,14 @@ mod tests {
         let status = presentation_status("board-a", "a", &["table"]);
         display.update(Some("USB:COM22"), Some(&status));
         assert_eq!(display.panel_min_height("Table", 480.0, 1100.0, true), 0.0);
-        assert_eq!(display.panel_min_height("Table", 480.0, 20.0, false), 1100.0);
-        assert_eq!(display.panel_min_height("Hardware", 480.0, 20.0, false), 0.0);
+        assert_eq!(
+            display.panel_min_height("Table", 480.0, 20.0, false),
+            1100.0
+        );
+        assert_eq!(
+            display.panel_min_height("Hardware", 480.0, 20.0, false),
+            0.0
+        );
         assert_eq!(display.panel_min_height("Table", 481.0, 20.0, false), 0.0);
         display.panel_min_height("Table", 481.0, 700.0, true);
         display.panel_min_height("Table", 481.0, 80.0, true); // Deliberate live collapse.
@@ -397,12 +529,20 @@ mod tests {
         let status = presentation_status("board-a", "a", &["table"]);
         display.update(Some("USB:COM22"), Some(&status));
         display.panel_min_height("Table", 480.0, 9000.0, true);
-        assert_eq!(display.panel_min_height("Table", 480.0, 20.0, false), 4096.0);
+        assert_eq!(
+            display.panel_min_height("Table", 480.0, 20.0, false),
+            4096.0
+        );
         for width in [f32::NAN, f32::INFINITY, 0.0, -1.0] {
             assert_eq!(display.panel_min_height("Table", width, 20.0, false), 0.0);
         }
-        assert_eq!(display.panel_min_height("Table", 480.0, f32::NAN, true), 0.0);
-        for index in 0..32 { display.panel_min_height(&format!("panel-{index}"), 480.0, 800.0, true); }
+        assert_eq!(
+            display.panel_min_height("Table", 480.0, f32::NAN, true),
+            0.0
+        );
+        for index in 0..32 {
+            display.panel_min_height(&format!("panel-{index}"), 480.0, 800.0, true);
+        }
         assert_eq!(display.panel_heights.len(), 8);
     }
     #[test]
@@ -411,6 +551,7 @@ mod tests {
             ("gpio-static", false, false),
             ("rmt-dma", true, true),
             ("fastled", false, false),
+            ("none", false, false),
         ] {
             let json = serde_json::json!({"board_kind":"table","acknowledged_features":["leds"],
                 "led_output":{"backend":backend,"rmt":rmt,"dma":dma,"future_optional":123}});
@@ -441,6 +582,22 @@ mod tests {
         )
         .unwrap();
         assert!(old.led_output().is_none());
+    }
+    #[test]
+    fn runtime_backend_requires_explicit_compiled_choice_and_separate_renderer_intent() {
+        let mut manifest: Manifest = serde_json::from_value(serde_json::json!({
+            "board_kind":"table", "acknowledged_features":["leds"],
+            "led_output":{"backend":"gpio-static","rmt":false,"dma":false,
+                "available_backends":["gpio-static","rmt-dma","future"],"runtime_switch":true}
+        })).unwrap();
+        let form = vec![("backend".into(), "rmt-dma".into())];
+        assert!(manifest.allows("/api/led/output", &form));
+        assert!(!manifest.allows("/api/led/output", &[("backend".into(), "future".into())]));
+        assert!(!manifest.allows("/api/led/output", &[("backend".into(), "rmt-dma".into()), ("mode".into(), "effects".into())]));
+        manifest.led_output.as_mut().unwrap().available_backends = vec!["gpio-static".into()];
+        assert!(!manifest.allows("/api/led/output", &form));
+        manifest.led_output.as_mut().unwrap().runtime_switch = false;
+        assert!(!manifest.allows("/api/led/output", &[("backend".into(), "gpio-static".into())]));
     }
     #[test]
     fn no_profile_or_individual_ack_means_no_controls() {
@@ -476,10 +633,12 @@ mod tests {
         assert!(!m.has("display") && !m.table());
         assert!(m.allows("/api/buzzer", &[]));
         assert!(!m.allows("/api/not-advertised", &[]));
-        assert!(serde_json::from_value::<Manifest>(serde_json::json!({
-            "board_kind":"controller","acknowledged_features":false
-        }))
-        .is_err());
+        assert!(
+            serde_json::from_value::<Manifest>(serde_json::json!({
+                "board_kind":"controller","acknowledged_features":false
+            }))
+            .is_err()
+        );
     }
     #[test]
     fn serial_manifest_is_individual_and_table_modes_are_profile_scoped() {
@@ -498,13 +657,35 @@ mod tests {
         assert!(m.table());
         assert!(!m.allows("/api/cells", &[]));
         payload[31] |= 1 << 6; // CellBatch bit14, individually acknowledged.
-        assert!(Manifest::from_usb(&payload)
-            .unwrap()
-            .allows("/api/cells", &[]));
+        assert!(
+            Manifest::from_usb(&payload)
+                .unwrap()
+                .allows("/api/cells", &[])
+        );
         assert_eq!(m.modes().count(), 1); // Snake is hidden; no input/output ACK: no First wins.
         payload[31] = 3;
         assert_eq!(Manifest::from_usb(&payload).unwrap().modes().count(), 2);
         payload[29] = 2;
         assert!(Manifest::from_usb(&payload).is_none());
+    }
+    #[test]
+    fn legacy_first_wins_usb_kind_is_normalized_to_keys() {
+        let mut payload = [0; 38];
+        payload[30] = 1 << 2; // LEDs.
+        payload[31] = 3; // Inputs and outputs.
+        payload[32] = 1 << 2; // Exactly one baked first-wins mode.
+        payload[33] = 1; // Legacy firmware incorrectly claimed Table here.
+        payload[34..37].copy_from_slice(&[9, 2, 12]);
+        let manifest = Manifest::from_usb(&payload).unwrap();
+        assert_eq!(manifest.board_kind, "keys");
+        assert_eq!(manifest.role, "first-wins");
+        assert!(!manifest.table());
+        assert_eq!(
+            manifest
+                .modes()
+                .map(|mode| mode.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["first-wins"]
+        );
     }
 }

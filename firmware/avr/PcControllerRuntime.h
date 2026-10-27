@@ -54,6 +54,11 @@ class PcControllerRuntime : public ControllerEventSink {
   bool menuActive() const { return menuActive_; }
   uint8_t menuPage() const { return page_; }
   uint16_t lostEvents() const { return lostEvents_; }
+#if PAKAR_PC_RF
+  void radioReceived(uint32_t code, uint8_t bits, uint8_t protocol, uint16_t pulse) {
+    eventCodec_.rfReceived(code, bits, protocol, pulse, 0xFF);
+  }
+#endif
   // Feed actual ESP offers/results only, never an invented host-menu ACK.
   bool observeEspPanel(const BoardCore::Protocol::Frame &frame, uint32_t now);
   bool espMenuActive() const { return espMenuActive_; }

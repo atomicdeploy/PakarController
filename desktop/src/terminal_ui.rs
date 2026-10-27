@@ -1,7 +1,7 @@
 //! Actual RayanLamp internal/tui/run.go, text.go and terminal/policy.go
 //! adapted to Rust/crossterm; PCController tui/table.go owns viewport math.
 //! Shared Pakar capabilities/selection/diagnostics remain the authorities.
-use crate::{blocking_status, diagnostics, ui, DeviceStatus, Endpoint};
+use crate::{DeviceStatus, Endpoint, blocking_status, diagnostics, ui};
 use crossterm::{
     cursor,
     event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
@@ -12,8 +12,9 @@ use crossterm::{
 use std::{
     io::{self, IsTerminal, Write},
     sync::{
+        Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc, Arc,
+        mpsc,
     },
     thread,
     time::{Duration, Instant},
@@ -240,7 +241,7 @@ impl Model {
         let mut peer_changed = false;
         match reply.status {
             Ok(status) => {
-                self.incompatible=false;
+                self.incompatible = false;
                 if self
                     .status
                     .as_ref()
@@ -262,7 +263,7 @@ impl Model {
             }
             Err(error) => {
                 self.live = false;
-                self.incompatible=crate::peer_identity::unsupported(&error);
+                self.incompatible = crate::peer_identity::unsupported(&error);
                 self.log.failure("TUI GET /api/status", &error);
             }
         }
@@ -421,9 +422,15 @@ impl Model {
                             .into();
                     return (false, None);
                 }
-                if !self.status.as_ref().is_some_and(crate::cell_batch::Request::supported){
-                    self.notice="Atomic cell-batch support is not acknowledged; no per-cell fallback".into();
-                    return (false,None);
+                if !self
+                    .status
+                    .as_ref()
+                    .is_some_and(crate::cell_batch::Request::supported)
+                {
+                    self.notice =
+                        "Atomic cell-batch support is not acknowledged; no per-cell fallback"
+                            .into();
+                    return (false, None);
                 }
                 if self.selection.ids.is_empty() {
                     self.notice = "Select cells first; selection never changes output".into();
@@ -528,9 +535,14 @@ impl Model {
                     );
                 } else if let Some(s) = &self.status {
                     lines.push(format!("Host: {}  Firmware: {}", s.hostname, s.version));
-                    if let Some(progress)=crate::firmware_progress::observed(s) {
+                    if let Some(progress) = crate::firmware_progress::observed(s) {
                         lines.push(progress.label());
-                        if let Some(total)=progress.bytes_total {lines.push(format!("{} / {} bytes · this update stage",progress.bytes_done,total));}
+                        if let Some(total) = progress.bytes_total {
+                            lines.push(format!(
+                                "{} / {} bytes · this update stage",
+                                progress.bytes_done, total
+                            ));
+                        }
                     }
                     if let Some(m) = &s.capabilities {
                         lines.push(format!("Board: {}  Name: {}", m.board_kind, m.name));
@@ -545,10 +557,18 @@ impl Model {
                             ));
                         }
                         if m.has("leds") {
-                            lines.push(format!("LED output: {}", match s.led_output.get("enabled").and_then(|v| v.as_bool()) {
-                                Some(true) => "On", Some(false) => "Off", None => "Unknown",
-                            }));
-                            lines.push(format!("Output mode: {}", crate::led_output_mode(s).unwrap_or("Unknown")));
+                            lines.push(format!(
+                                "LED output: {}",
+                                match s.led_output.get("enabled").and_then(|v| v.as_bool()) {
+                                    Some(true) => "On",
+                                    Some(false) => "Off",
+                                    None => "Unknown",
+                                }
+                            ));
+                            lines.push(format!(
+                                "Output mode: {}",
+                                crate::led_output_mode(s).unwrap_or("Unknown")
+                            ));
                         }
                         if m.has("display") && s.tm1637_ack {
                             lines.push(format!(
@@ -670,6 +690,7 @@ impl Model {
                     "w / r / o: selected cells white / red / off",
                     ": command palette uses the real shared CLI parser",
                     ":led-output on|off|static|effects: output service and mode",
+                    ":led-output gpio-static|rmt-dma: advertised runtime wire driver",
                     "Selection does not write; actions send once, no replay",
                     "q / Ctrl+C: exit, stop unsent work",
                     "Rich device-settings forms remain pending",
@@ -718,11 +739,13 @@ fn cell_request(
     peer: &str,
     stop: &AtomicBool,
 ) -> Result<String, String> {
-    let current=blocking_status(client,endpoint)?;
-    if peer_key(&current)!=peer{return Err("Selection belongs to a retired peer; nothing sent".into());}
-    let pin=crate::peer_http::Pin::from_status(&current).ok_or("Verified peer required")?;
-    let request=crate::cell_batch::Request::new(ids,state,"fade")?;
-    crate::cell_batch::send(client,endpoint,&request,Some(&pin),Some(stop),None)
+    let current = blocking_status(client, endpoint)?;
+    if peer_key(&current) != peer {
+        return Err("Selection belongs to a retired peer; nothing sent".into());
+    }
+    let pin = crate::peer_http::Pin::from_status(&current).ok_or("Verified peer required")?;
+    let request = crate::cell_batch::Request::new(ids, state, "fade")?;
+    crate::cell_batch::send(client, endpoint, &request, Some(&pin), Some(stop), None)
 }
 fn command_allowed(s: &DeviceStatus, words: &[&str]) -> bool {
     if !read_only_command(words) && !fenced(s) {
@@ -750,10 +773,20 @@ fn command_allowed(s: &DeviceStatus, words: &[&str]) -> bool {
                 && m.modes().any(|v| v.id == "snake");
         }
         ["brightness" | "effect", ..] => "leds",
-        ["led-output", "on" | "off"] => return !s.programming_latch
-            && m.has("leds") && s.led_output.get("enabled").and_then(|v| v.as_bool()).is_some(),
-        ["led-output", "static" | "effects"] => return !s.programming_latch
-            && m.has("leds") && crate::led_output_mode(s).is_some(),
+        ["led-output", "on" | "off"] => {
+            return !s.programming_latch
+                && m.has("leds")
+                && s.led_output
+                    .get("enabled")
+                    .and_then(|v| v.as_bool())
+                    .is_some();
+        }
+        ["led-output", "static" | "effects"] => {
+            return !s.programming_latch && m.has("leds") && crate::led_output_mode(s).is_some();
+        }
+        ["led-output", backend @ ("gpio-static" | "rmt-dma")] => {
+            return crate::led_backend::allowed(s, backend);
+        }
         ["display", "segments", ..] => "text",
         ["display", ..] => "display",
         ["audio", cue] => {
@@ -786,11 +819,16 @@ fn command_request(
     if stop.load(Ordering::Acquire) {
         return Err("Stopped after read-only preflight; command not dispatched".into());
     }
-    if let ["cells",ids,state,rest @ ..]=words.as_slice(){
-        let effect=match rest{[]=>"immediate",[effect]=>effect,_=>return Err("cells IDS STATE [EFFECT]".into())};
-        let request=crate::cell_batch::Request::new(&ui::cell_search::parse(ids)?,state,effect)?;
-        let pin=crate::peer_http::Pin::from_status(&current).ok_or("Verified peer required")?;
-        return crate::cell_batch::send(client,endpoint,&request,Some(&pin),Some(stop),None);
+    if let ["cells", ids, state, rest @ ..] = words.as_slice() {
+        let effect = match rest {
+            [] => "immediate",
+            [effect] => effect,
+            _ => return Err("cells IDS STATE [EFFECT]".into()),
+        };
+        let request =
+            crate::cell_batch::Request::new(&ui::cell_search::parse(ids)?, state, effect)?;
+        let pin = crate::peer_http::Pin::from_status(&current).ok_or("Verified peer required")?;
+        return crate::cell_batch::send(client, endpoint, &request, Some(&pin), Some(stop), None);
     }
     if read_only_command(&words) {
         crate::text_command_output(client, endpoint, &words, &mut output)?;
@@ -823,7 +861,7 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
                 return;
             }
         };
-        let mut peer_reporter=crate::client_telemetry::Reporter::new();
+        let mut peer_reporter = crate::client_telemetry::Reporter::new();
         while let Ok(work) = requests.recv() {
             if stopped.load(Ordering::Acquire) {
                 break;
@@ -860,9 +898,16 @@ pub fn run(endpoint: Endpoint) -> Result<(), String> {
             } else {
                 blocking_status(&client, &endpoint)
             };
-            if !stopped.load(Ordering::Acquire) && peer_reporter.due() && let Ok(status)=&status
-                && status.capabilities.as_ref().is_some_and(|c|c.has("telemetry")) && let Ok(pinned)=crate::peer_http::pinned_client(status) {
-                peer_reporter.report(&pinned,&endpoint);
+            if !stopped.load(Ordering::Acquire)
+                && peer_reporter.due()
+                && let Ok(status) = &status
+                && status
+                    .capabilities
+                    .as_ref()
+                    .is_some_and(|c| c.has("telemetry"))
+                && let Ok(pinned) = crate::peer_http::pinned_client(status)
+            {
+                peer_reporter.report(&pinned, &endpoint);
             }
             if results.send(Reply { status, operation }).is_err() {
                 break;
@@ -992,7 +1037,11 @@ mod tests {
     #[test]
     fn output_service_command_requires_fresh_advertised_known_state() {
         let mut s = table();
-        s.capabilities.as_mut().unwrap().acknowledged_features.push("leds".into());
+        s.capabilities
+            .as_mut()
+            .unwrap()
+            .acknowledged_features
+            .push("leds".into());
         assert!(!command_allowed(&s, &["led-output", "on"]));
         for enabled in [true, false] {
             s.led_output = serde_json::json!({"enabled":enabled});
@@ -1042,9 +1091,19 @@ mod tests {
         let mut repeat = press(KeyCode::Char('w'));
         repeat.kind = KeyEventKind::Repeat;
         assert!(m.key(repeat).1.is_none());
-        m.status.as_mut().unwrap().capabilities.as_mut().unwrap().acknowledged_features.retain(|feature|feature!="cell-batch");
+        m.status
+            .as_mut()
+            .unwrap()
+            .capabilities
+            .as_mut()
+            .unwrap()
+            .acknowledged_features
+            .retain(|feature| feature != "cell-batch");
         assert!(m.key(press(KeyCode::Char('r'))).1.is_none());
-        assert!(!command_allowed(m.status.as_ref().unwrap(),&["cells","1-3","red"]));
+        assert!(!command_allowed(
+            m.status.as_ref().unwrap(),
+            &["cells", "1-3", "red"]
+        ));
     }
     #[test]
     fn loss_and_peer_change_revoke_controls_without_false_recovery() {
@@ -1158,9 +1217,11 @@ mod tests {
         for (width, height) in [(34, 9), (60, 16), (80, 24), (140, 50)] {
             let lines = m.lines(width, height);
             assert!(lines.len() <= height);
-            assert!(lines
-                .iter()
-                .all(|s| s.chars().map(|c| c.width().unwrap_or(0)).sum::<usize>() < width));
+            assert!(
+                lines
+                    .iter()
+                    .all(|s| s.chars().map(|c| c.width().unwrap_or(0)).sum::<usize>() < width)
+            );
         }
     }
     #[test]
@@ -1202,8 +1263,12 @@ mod tests {
         // timeout alone does not restore blocking reads, so delayed request
         // bytes otherwise make the fixture panic with WSAEWOULDBLOCK.
         stream.set_nonblocking(false).unwrap();
-        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
-        stream.set_write_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
+        stream
+            .set_write_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
     }
     #[test]
     fn fixture_reads_delayed_input_after_nonblocking_accept() {
@@ -1328,16 +1393,18 @@ mod tests {
             serde_json::to_value(&s).unwrap(),
             serde_json::json!({"accepted":false}),
         ]);
-        assert!(cell_request(
-            &client,
-            &endpoint,
-            &[1, 2],
-            "red",
-            &peer_key(&s),
-            &AtomicBool::new(false)
-        )
-        .unwrap_err()
-        .contains("not acknowledged"));
+        assert!(
+            cell_request(
+                &client,
+                &endpoint,
+                &[1, 2],
+                "red",
+                &peer_key(&s),
+                &AtomicBool::new(false)
+            )
+            .unwrap_err()
+            .contains("not acknowledged")
+        );
         worker.join().unwrap();
         assert_eq!(requests.iter().count(), 3);
     }
@@ -1399,15 +1466,17 @@ mod tests {
         assert!(result.contains("ledboard"));
         assert!(requests.iter().all(|r| r.starts_with("GET ")));
         let (endpoint, requests, worker) = fixture(vec![serde_json::to_value(&s).unwrap()]);
-        assert!(command_request(
-            &client,
-            &endpoint,
-            &["device".into(), "name".into()],
-            &peer_key(&s),
-            &AtomicBool::new(true)
-        )
-        .unwrap_err()
-        .contains("not dispatched"));
+        assert!(
+            command_request(
+                &client,
+                &endpoint,
+                &["device".into(), "name".into()],
+                &peer_key(&s),
+                &AtomicBool::new(true)
+            )
+            .unwrap_err()
+            .contains("not dispatched")
+        );
         worker.join().unwrap();
         assert_eq!(requests.iter().count(), 1);
     }

@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/HostFrameIngress.h"
+#include "../firmware/esp/src/HostFrameIngress.h"
 #include <assert.h>
 #include <stdio.h>
 #include <vector>

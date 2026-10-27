@@ -1,5 +1,5 @@
 #include <SerialLink.h>
-#include "../firmware/esp8266/src/HostDemand.h"
+#include "../firmware/esp/src/HostDemand.h"
 #include <cassert>
 #include <cstdio>
 using namespace BoardCore::Protocol;

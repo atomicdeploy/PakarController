@@ -190,7 +190,7 @@ fn field(ui: &mut egui::Ui, icon: &str, label: &str, value: &mut String, passwor
     dialog::setting_row(ui, icon, label, None, |ui| {
         ui.add_sized(
             [ui.available_width().min(340.0), 28.0],
-            dialog::singleline_text_edit(value).password(password),
+            dialog::singleline_text_edit(ui, value).password(password),
         );
     });
 }
@@ -334,37 +334,39 @@ mod tests {
     #[test]
     fn dialog_details_are_selected_method_only_and_do_not_probe_closed_ports() {
         for method in [Transport::WiFi, Transport::Serial] {
-          for authentication in [None, Some(false), Some(true)] {
-            let ctx = egui::Context::default();
-            let mut draft = Draft {
-                endpoint: "http://ledboard.local".into(),
-                user: "operator".into(),
-                password: "".into(),
-                port: "COM7".into(),
-            };
-            let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
-                details(ui, method, true, authentication, &mut draft, || {
-                    panic!("closed port popup must not enumerate")
+            for authentication in [None, Some(false), Some(true)] {
+                let ctx = egui::Context::default();
+                let mut draft = Draft {
+                    endpoint: "http://ledboard.local".into(),
+                    user: "operator".into(),
+                    password: "".into(),
+                    port: "COM7".into(),
+                };
+                let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
+                    details(ui, method, true, authentication, &mut draft, || {
+                        panic!("closed port popup must not enumerate")
+                    });
                 });
-            });
-            out.textures_delta.clear();
-            let texts = text(&out);
-            assert_eq!(
-                texts.iter().any(|s| s == "Endpoint"),
-                method == Transport::WiFi
-            );
-            assert_eq!(
-                texts.iter().any(|s| s == "Username"),
-                method == Transport::WiFi && authentication == Some(true)
-            );
-            assert_eq!(texts.iter().any(|s|s == "Password"),
-                method == Transport::WiFi && authentication == Some(true));
-            assert_eq!(
-                texts.iter().any(|s| s == "Port or hardware path"),
-                method == Transport::Serial
-            );
-            assert_eq!(draft.port, "COM7");
-          }
+                out.textures_delta.clear();
+                let texts = text(&out);
+                assert_eq!(
+                    texts.iter().any(|s| s == "Endpoint"),
+                    method == Transport::WiFi
+                );
+                assert_eq!(
+                    texts.iter().any(|s| s == "Username"),
+                    method == Transport::WiFi && authentication == Some(true)
+                );
+                assert_eq!(
+                    texts.iter().any(|s| s == "Password"),
+                    method == Transport::WiFi && authentication == Some(true)
+                );
+                assert_eq!(
+                    texts.iter().any(|s| s == "Port or hardware path"),
+                    method == Transport::Serial
+                );
+                assert_eq!(draft.port, "COM7");
+            }
         }
     }
     #[test]

@@ -8,8 +8,9 @@ import {createHash, randomBytes} from 'node:crypto';
 import {isIP} from 'node:net';
 import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
-import {deviceOrigin,deviceRequest} from './check-ethernet-live.mjs';
+import {deviceOrigin,deviceRequest,assertWebUi} from './check-ethernet-live.mjs';
 import {manifest as validateImage} from './create-remote-manifest.mjs';
+import {verificationRangeBytes} from './download-firmware.mjs';
 import {toolHeaders,boardPeer} from './peer-identity.mjs';
 export {boardPeer} from './peer-identity.mjs';
 
@@ -253,7 +254,7 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
     try{value=JSON.parse(r.body)}catch{throw Error('Malformed device JSON')};return {value,remote:r.remote};};
   const first=await json('/api/status');peer=boardPeer(first.value,first.remote,null,{maintenanceBoard:recoveryBoard});
   const auth=(await json('/api/auth')).value;if(auth.enabled!==false)throw Error('Device authentication is enabled/unknown; disable through the existing owner settings or physical recovery first');
-  const page=await read('/');if(!/<html|<!doctype html/i.test(page.body.toString('utf8')))throw Error('Device Web UI not served');
+  assertWebUi(await read('/'));
   const info=(await json('/update/info')).value;
   // The installed S3's existing `free` field is ESP.getFreeSketchSpace(): the
   // next OTA partition size. The explicit field is additive, not a generation.
@@ -347,10 +348,11 @@ export async function updateFirmware({origin='http://ledboard.local',image,mode=
     e.ota?.running_state_code!==2)throw Error('Running image identity/integrity/selected slot not verified');
   // Full running-image SHA, not just a POST reply or a repeated version string.
   const hash=createHash('sha256');
-  for(let start=0;start<identity.size;start+=65536){const end=Math.min(start+65535,identity.size-1);
+  for(let start=0;start<identity.size;start+=verificationRangeBytes){const end=Math.min(start+verificationRangeBytes-1,identity.size-1);
     const chunk=await read('/firmware/download',{headers:{Range:`bytes=${start}-${end}`}});
     if(chunk.status!==206||chunk.headers['content-range']!==`bytes ${start}-${end}/${identity.size}`||chunk.body.length!==end-start+1)throw Error('Running-image export incomplete; no flash retry');
     hash.update(chunk.body);
+    log({stage:'readback',verified_bytes:end+1,expected_bytes:identity.size});
   }
   if(hash.digest('hex')!==identity.sha256)throw Error('Running-image SHA256 mismatch');
   await websocket(url,peer);

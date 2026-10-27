@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/RemoteFirmware.h"
+#include "../firmware/esp/src/RemoteFirmware.h"
 #include <Updater.h>
 #include <cassert>
 #include <stdexcept>

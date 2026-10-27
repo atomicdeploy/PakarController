@@ -5,11 +5,15 @@ $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
 $binary=Join-Path $root 'build/native/game_role_test.exe'
 foreach($mode in @(1,2)) {
+  & g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-DPAKAR_GAME_MODE=$mode" -I "$root/tests/pc_stubs" -I "$root/libraries/BoardCore/src" "$root/tests/key_input_order_test.cpp" -o $binary
+  if($LASTEXITCODE){throw "Game role $mode input mapping compilation failed"}
+  & $binary
+  if($LASTEXITCODE){throw "Game role $mode input mapping failed"}
   & g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-DPAKAR_GAME_MODE=$mode" -I "$root/libraries/BoardCore/src" "$root/tests/device_context_test.cpp" -o $binary
   if($LASTEXITCODE){throw "Game role $mode compilation failed"}
   & $binary
   if($LASTEXITCODE){throw "Game role $mode contract failed"}
-  & g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-DPAKAR_GAME_MODE=$mode" -I "$root/tests/pixel_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp8266/src" "$root/tests/game_role_renderer_test.cpp" "$root/firmware/esp8266/src/LedGrid.cpp" -o $binary
+  & g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror "-DPAKAR_GAME_MODE=$mode" -I "$root/tests/pixel_stubs" -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" "$root/tests/game_role_renderer_test.cpp" "$root/firmware/esp/src/LedGrid.cpp" -o $binary
   if($LASTEXITCODE){throw "Game role $mode renderer compilation failed"}
   & $binary
   if($LASTEXITCODE){throw "Game role $mode saved-scene migration failed"}

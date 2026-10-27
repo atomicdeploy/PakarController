@@ -1,5 +1,37 @@
 # Conversation-aware integration
 
+## Handoff consolidation (supersedes all historical branch/status snapshots)
+
+PR24 preserves the accumulated source on handoff-consolidation. PR21/22/23
+are incorporated through normal merges retaining their original commits.
+Workflow updates, mdns-sd0.21.6 and archive4/MQTT/XML7 are retained; eframe0.37
+is explicitly deferred until the dock/icon/theme family supports its egui types.
+Post-dependency Rust461 tests and Flutter722 tests pass, with3 environment/live
+skips and clean analysis. Full local quality and exact-head GitHub package/build
+checks are tracked separately from these focused results.
+
+Every paginated conversation/review/thread on all four PRs was read. The seven
+new CodeQL threads are resolved after source fixes or narrowly documented
+test/intentional-transfer dispositions; the fresh80cd685 CodeQL check passes.
+No completed Copilot review is claimed: GitHub rejected both reviewer requests.
+The master production issue remains OPEN. The merge/branch-cleanup receipt will
+be published on issue2 only after verifying main ancestry and a clean checkout.
+Private outputs, secrets, rollback images and installed settings remain local
+and untouched; source synchronization is not a board/client deployment.
+
+## Current checkpoint (supersedes historical empty-PR statements below)
+
+The fresh Pakar enumeration contains 23 complete records. Dependency PRs 21,
+22 and 23 are open; required CI is not green, so they are not merged or certified
+deployable. Their fetched conversations contain no comments, reviews or review
+threads; fetching release notes is not a completed dependency/source review.
+The refreshed conversation projection contains no stale-review decisions.
+The file comparison check also passes after rereviewing the 18 changed target
+files and PCController's current devices_page.dart. All 375 existing comparisons
+are hash-current; 4,322 pending comparisons and 275 known parity gaps remain
+explicitly unfinished. Neither zero stale records nor deployed packages closes
+the production acceptance issue.
+
 Adapted from the fully read Pealayer `docs/REVIEW-COMMENT-AUDIT.md`, original
 SHA-256 `7a91d9fa8778383ee37e33d861ceebc5ab210e46bedab6af8be82d56c27523cc`.
 The procedure is now executable in `tools/audit-github-conversations.mjs`.

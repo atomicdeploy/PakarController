@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
-const source = await readFile(new URL('../firmware/esp8266/src/WebUi.h', import.meta.url), 'utf8');
+const source = await readFile(new URL('../firmware/esp/src/WebUi.h', import.meta.url), 'utf8');
 const code = source.split('// BEGIN BOARD SILENT')[1].split('let boardSoundEpoch=')[0];
 const {parseBoardSound, boardSoundTransaction} = vm.runInNewContext(code + '\n({parseBoardSound,boardSoundTransaction})', {URLSearchParams,setTimeout});
 function payload(flags=2,persisted=1){return Buffer.from([0x50,flags,5,0,0,0,2,0,63,0x10,0x32,0x54,0,...Array(8).fill(0),persisted]).toString('hex')}

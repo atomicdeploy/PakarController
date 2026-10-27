@@ -1,5 +1,21 @@
 #pragma once
 #include <stdint.h>
+#if defined(ARDUINO_ARCH_ESP32) && __has_include(<build/config/esp32s3/LedBackend.h>)
+#include <build/config/esp32s3/LedBackend.h>
+#endif
+#include <GameRole.h>
+
+// Normally-open game reset button to GND; not EN or AVR ISP RESET.
+// Disabled on table builds. -1 disables it on a custom keycontroller build.
+#ifndef PAKAR_S3_GAME_RESET_PIN
+#if PAKAR_FIRST_WINS_ENABLED
+#define PAKAR_S3_GAME_RESET_PIN 21
+#else
+#define PAKAR_S3_GAME_RESET_PIN -1
+#endif
+#endif
+static_assert(PAKAR_S3_GAME_RESET_PIN == -1 || PAKAR_S3_GAME_RESET_PIN == 21,
+              "Game reset pin requires a collision-free reviewed pin mapping");
 
 // PROVISIONAL common DevKitC-1 plan, not confirmation of the user's module.
 // GPIO numbers, never NodeMCU Dx names. Confirm board schematic before wiring.
@@ -67,7 +83,11 @@ constexpr bool safePins() {
   for (unsigned i = 0; i < sizeof(kPins); ++i) {
     // Deliberately conservative: avoid boot straps, USB, module memory,
     // bridge UART, built-in RGB and model-dependent high-numbered pins.
-    if (kPins[i] < 4 || kPins[i] > 18) return false;
+    // DevKitC-1 J3-17 GPIO47 is an explicit alternate LED output only.
+    // It is separate from GPIO48 RGB, USB19/20 and OPI memory35..37.
+    // GPIO48 diagnostic replaces the onboard status owner, never shares it.
+    const bool alternateLed = i == 2 && (kPins[i] == 47 || kPins[i] == 48);
+    if (!alternateLed && (kPins[i] < 4 || kPins[i] > 18)) return false;
     for (unsigned j = 0; j < i; ++j) if (kPins[i] == kPins[j]) return false;
   }
   return true;

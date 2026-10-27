@@ -1,0 +1,7 @@
+{
+  "id":"/", "name":"PakarController", "short_name":"PakarController",
+  "description":"PakarController control workspace",
+  "start_url":"/", "scope":"/", "display":"standalone",
+  "background_color":"#11161e", "theme_color":"#11161e",
+  "icons":[{"src":"/app-icon.png","sizes":"256x256","type":"image/png","purpose":"any"}]
+}

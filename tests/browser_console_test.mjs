@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 const root=new URL('../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root),'utf8').replaceAll('\r\n','\n');
-const module=read('assets/web/browser-console.js'),web=read('firmware/esp8266/src/WebUi.h');
+const module=read('assets/web/browser-console.js'),web=read('firmware/esp/src/WebUi.h');
 const calls=[],sink=Object.fromEntries(['debug','info','log','warn','error','groupCollapsed','groupEnd'].map(method=>[method,(...args)=>calls.push({method,args})]));
 let clock=100;
 const context=vm.createContext({console:sink,clock:()=>clock,
@@ -124,7 +124,7 @@ Object.assign(context,{location:{protocol:'http:',host:'ledboard.local'},wsState
   clearTimeout(){},setTimeout:callback=>{timers.push(callback);return timers.length},
   WebSocket:class {constructor(url){this.url=url;this.sent=[];sockets.push(this)}send(x){this.sent.push(x)}close(){this.closed=true}}});
 context.refreshAuthenticated=async()=>{};
-vm.runInContext('let authenticated=true,webSocketPaused=false,socket=null;\n'+read('assets/web/realtime-retry.js')+'\n'+web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post(')),context);
+vm.runInContext('let authenticated=true,webSocketPaused=false,socket=null;\n'+read('assets/web/realtime-retry.js')+'\n'+read('assets/web/command-transport.js')+'\n'+web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post(')),context);
 clear();run('connectWs()');const first=sockets[0];first.onopen();
 assert.equal(context.wsState.textContent,'WebSocket live');
 run("uiLanguagePreference='fa';applyLocalization()");

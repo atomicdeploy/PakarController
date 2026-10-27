@@ -2,7 +2,7 @@
 // Adapted controller ownership, pre-paint reconciliation and browser metadata.
 // Pealayer's actual helpers and shared palettes remain the sole color engine.
 // This module has no device requests, peer identity writes or dialog references.
-const appearanceDefaults={theme:'dark',color_palette:'studio',accent_color:'system',custom_accent_color:null};
+const appearanceDefaults={theme:'dark',color_palette:'studio',accent_color:'pealayer_green',custom_accent_color:null};
 function normalizeBrowserAppearance(value){
   const v=value&&typeof value==='object'?value:{};
   return {
@@ -26,6 +26,7 @@ function applyBrowserAppearance(){
   root.dataset.themePreference=browserAppearance.theme;
   root.dataset.resolvedTheme=scheme;
   root.dataset.palette=name;
+  root.dataset.accentPreference=browserAppearance.accent_color;
   root.style.colorScheme=scheme;
   for(const[role,value]of Object.entries(colors))root.style.setProperty('--'+role,value);
   root.style.setProperty('--accent',accent);

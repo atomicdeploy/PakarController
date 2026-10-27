@@ -12,6 +12,7 @@ import 'package:pakarcontroller/command_readback.dart';
 import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
 import 'package:pakarcontroller/cell_search.dart';
+import 'package:pakarcontroller/cell_controls.dart';
 
 import 'peer_fixture.dart';
 
@@ -262,22 +263,32 @@ void main() {
         '1-3',
       );
       await tester.pump();
-      await tester.ensureVisible(find.text('Set red'));
-      await tester.tap(find.text('Set red'));
+      await tester.ensureVisible(find.text('Red'));
+      await tester.tap(find.text('Red'));
       await tester.pumpAndSettle();
       expect(api.writes, 1);
-      expect(find.textContaining('Readback unavailable'), findsOneWidget);
+      final statusError = find.descendant(
+        of: find.byKey(const Key('connection-status-area')),
+        matching: find.textContaining('Readback unavailable'),
+      );
+      expect(statusError, findsOneWidget);
       // Ordinary successful status pushes cannot acknowledge a failed command.
       api.failAfterWrite = false;
       for (var tick = 0; tick < 3; tick++) {
         api.updates.add(peerFixture());
         await tester.pump();
       }
-      expect(find.textContaining('Readback unavailable'), findsOneWidget);
+      expect(statusError, findsOneWidget);
       await tester.tap(find.byKey(const Key('command-status-details')));
       await tester.pumpAndSettle();
       expect(find.text('Command not completed'), findsOneWidget);
-      expect(find.textContaining('Readback unavailable'), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.textContaining('Readback unavailable'),
+        ),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
       api.failReads = true;
@@ -295,7 +306,9 @@ void main() {
       expect(find.byKey(const ValueKey('table-cell-canvas')), findsOneWidget);
       expect(
         tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Set red'))
+            .widget<CellColorAction>(
+              find.widgetWithText(CellColorAction, 'Red'),
+            )
             .onPressed,
         isNull,
       );

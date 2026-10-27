@@ -65,6 +65,14 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   set search(String value) => workspace.search = value;
   String info = '';
   bool identityConflict = false, assigningIdentity = false;
+  bool accessEnabled = false, accessConflict = false;
+  bool get accessDirty =>
+      access != null &&
+      (accessEnabled != access!['enabled'] ||
+          login.text != access!['username'] ||
+          current.text.isNotEmpty ||
+          replacement.text.isNotEmpty ||
+          confirmation.text.isNotEmpty);
   bool working = false;
   bool rgbLocked = false;
   bool maintenanceActive = false;
@@ -119,6 +127,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     if (widget.api.connectionRevision != session.owner) {
       session.invalidate();
       access = null;
+      accessEnabled = accessConflict = false;
       current.clear();
       replacement.clear();
       confirmation.clear();
@@ -246,12 +255,21 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       });
   Future<void> loadAccess() => readOwned('network', '/api/auth/info', (value) {
     if (value['ready'] is! bool ||
+        value['enabled'] is! bool ||
         value['default_credentials'] is! bool ||
         value['username'] is! String) {
       throw const FormatException('Device access information unavailable');
     }
-    if (access == null || login.text == access!['username']) {
+    if (accessDirty &&
+        (value['enabled'] != access!['enabled'] ||
+            value['username'] != access!['username'])) {
+      accessConflict = true;
+      info = 'Device access changed. Draft retained; discard and reload before saving.';
+      return;
+    }
+    if (!accessDirty) {
       login.text = value['username'];
+      accessEnabled = value['enabled'] as bool;
     }
     access = value;
   });
@@ -329,10 +347,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         identity != null &&
         (host.text != identity!['hostname'] ||
             name.text != identity!['display_name']);
-    if ((session.dirty ||
-            identityDirty ||
-            current.text.isNotEmpty ||
-            replacement.text.isNotEmpty) &&
+    if ((session.dirty || identityDirty || accessDirty) &&
         !await confirm(
           'Discard and reload?',
           'Discard unsaved device and secret edits, then read the selected board again?',
@@ -347,6 +362,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     session.invalidate();
     identity = access = null;
     identityConflict = false;
+    accessEnabled = accessConflict = false;
     current.clear();
     replacement.clear();
     confirmation.clear();
@@ -465,28 +481,70 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   }
 
   Future<void> saveAccess() async {
-    final username = login.text, password = replacement.text;
-    if (!RegExp(r'^[A-Za-z0-9_.-]{1,32}$').hasMatch(username) ||
-        !RegExp(r'^[\x20-\x7e]{8,64}$').hasMatch(password) ||
-        password != confirmation.text ||
-        current.text.isEmpty) {
+    final baseline = access;
+    if (baseline?['ready'] != true || accessConflict) {
+      setState(() => info = 'Read current device access before saving.');
+      return;
+    }
+    final enabled = accessEnabled, wasEnabled = baseline!['enabled'] == true;
+    final replaceCredentials =
+        enabled &&
+        (!wasEnabled ||
+            login.text != baseline['username'] ||
+            replacement.text.isNotEmpty ||
+            confirmation.text.isNotEmpty);
+    if (enabled == wasEnabled && !replaceCredentials) {
+      setState(() => info = 'Device access is already configured this way.');
+      return;
+    }
+    final username = replaceCredentials
+        ? login.text
+        : baseline['username'] as String;
+    final password = replaceCredentials ? replacement.text : '';
+    final currentPassword = wasEnabled
+        ? (current.text.isNotEmpty ? current.text : widget.api.password)
+        : '';
+    if (wasEnabled && currentPassword.isEmpty) {
       setState(
-        () => info = 'Enter current password, valid username, matching new password (8–64 printable ASCII characters)',
+        () => info =
+            'Enter the current password to change protected device access.',
+      );
+      return;
+    }
+    if (replaceCredentials &&
+        (!RegExp(r'^[A-Za-z0-9_.-]{1,32}$').hasMatch(username) ||
+            !RegExp(r'^[\x20-\x7e]{8,64}$').hasMatch(password) ||
+            password != confirmation.text)) {
+      setState(
+        () => info = 'Enter a valid username and matching new password (8–64 printable ASCII characters)',
       );
       return;
     }
     if (!await confirm(
-      'Change device credentials?',
-      'Existing sessions will be revoked. This client will reconnect using the new login; secrets stay in platform encrypted storage.',
+      enabled ? 'Save device access?' : 'Disable authentication?',
+      enabled
+          ? 'Existing sessions will be revoked. This client will reconnect using the new login; secrets stay in platform encrypted storage.'
+          : 'Clients will no longer need a login. This client will reconnect without saved credentials.',
     )) {
       return;
     }
     await runWrite('network', () async {
+      final prior = await widget.api.getJson('/api/auth/info');
+      check('network');
+      if (prior['ready'] != true ||
+          prior['enabled'] != baseline['enabled'] ||
+          prior['username'] != baseline['username']) {
+        accessConflict = true;
+        throw const FormatException(
+          'Device access changed; discard and reload before saving',
+        );
+      }
       final ack = await widget.api.postJson(
         '/api/auth',
         {
-          'current_password': current.text,
-          'username': username,
+          'enabled': '$enabled',
+          'current_password': currentPassword,
+          'username': replaceCredentials ? username : '',
           'password': password,
         },
         authorize: () =>
@@ -497,15 +555,34 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       if (widget.api.connectionRevision != session.owner) {
         throw const StaleConnection();
       }
-      if (ack['updated'] != true || ack['reauthenticate'] != true) {
+      if (ack['updated'] != true ||
+          ack['enabled'] != enabled ||
+          ack['reauthenticate'] != enabled) {
         throw const FormatException('Device did not confirm credential update');
+      }
+      // Public readback still works with the retired credentials. Follow only
+      // this owner's exact ACK; a disposed old view may still finish handoff.
+      final actual = await widget.api.getJson('/api/auth/info');
+      if (widget.api.connectionRevision != session.owner) {
+        throw const StaleConnection();
+      }
+      if (actual['ready'] != true ||
+          actual['enabled'] != enabled ||
+          actual['username'] != username) {
+        throw const FormatException(
+          'Access save acknowledged but readback differs; no write replayed',
+        );
       }
       if (mounted) {
         current.clear();
         replacement.clear();
         confirmation.clear();
       }
-      await widget.adoptConnection(widget.api.baseUrl, username, password);
+      await widget.adoptConnection(
+        widget.api.baseUrl,
+        enabled ? username : '',
+        enabled ? password : '',
+      );
     });
   }
 
@@ -889,42 +966,79 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
         Text(
           access!['ready'] != true
               ? 'Storage is not ready; physical USB recovery is required.'
+              : access!['enabled'] != true
+              ? 'Authentication is disabled.'
               : access!['default_credentials'] == true
               ? 'Default credentials active. Change them here.'
               : 'Configured device credentials active.',
         ),
-      const SizedBox(height: 12),
-      TextField(
-        controller: login,
-        enabled: !working,
-        decoration: const InputDecoration(labelText: 'Username'),
+      SwitchListTile.adaptive(
+        key: const ValueKey('device-access-enabled'),
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Require authentication'),
+        value: accessEnabled,
+        onChanged:
+            access?['ready'] != true ||
+                working ||
+                session.pending ||
+                accessConflict
+            ? null
+            : (enabled) => setState(() => accessEnabled = enabled),
       ),
-      const SizedBox(height: 12),
-      for (final entry in [
-        (current, 'Current password'),
-        (replacement, 'New password'),
-        (confirmation, 'Confirm new password'),
-      ]) ...[
+      if (accessConflict)
+        Text(
+          'Device access changed. Discard and reload before saving.',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      if (access?['enabled'] == true) ...[
         TextField(
-          controller: entry.$1,
-          enabled: !working,
+          controller: current,
+          enabled: !working && !session.pending && !accessConflict,
           obscureText: true,
           enableSuggestions: false,
           autocorrect: false,
-          decoration: InputDecoration(labelText: entry.$2),
+          decoration: InputDecoration(
+            labelText: 'Current password',
+            helperText: widget.api.password.isNotEmpty
+                ? 'Leave blank to use the current connection credentials'
+                : null,
+          ),
         ),
         const SizedBox(height: 12),
       ],
-      const Text(
-        'Plain HTTP LAN access is not encrypted in transit. Use a trusted network. No secret value is exported or stored in ordinary preferences.',
-      ),
+      if (accessEnabled) ...[
+        TextField(
+          controller: login,
+          enabled: !working && !session.pending && !accessConflict,
+          decoration: const InputDecoration(labelText: 'Username'),
+        ),
+        const SizedBox(height: 12),
+        for (final entry in [
+          (replacement, 'New password'),
+          (confirmation, 'Confirm new password'),
+        ]) ...[
+          TextField(
+            controller: entry.$1,
+            enabled: !working && !session.pending && !accessConflict,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            decoration: InputDecoration(labelText: entry.$2),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ],
       const SizedBox(height: 16),
       FilledButton.icon(
-        onPressed: access?['ready'] != true || working || session.pending
+        onPressed:
+            access?['ready'] != true ||
+                working ||
+                session.pending ||
+                accessConflict
             ? null
             : saveAccess,
         icon: const Icon(PakarIcons.lock),
-        label: const Text('Change and reconnect'),
+        label: const Text('Save device access'),
       ),
     ]),
     'leds' || 'front-panel' || 'avr' => card('Actual board controls', [
@@ -935,7 +1049,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       FilledButton.icon(
         onPressed: () => widget.navigate(
           page == 'leds'
-              ? 'table'
+              ? widget.status.peer.tableSelection
+                    ? 'table'
+                    : 'output'
               : page == 'avr'
               ? 'hardware'
               : 'front-panel',

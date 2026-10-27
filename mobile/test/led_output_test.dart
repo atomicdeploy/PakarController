@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pakarcontroller/main.dart';
+import 'package:pakarcontroller/output_panel.dart';
 import 'package:pakarcontroller/models.dart';
 
 import 'peer_fixture.dart';
@@ -77,14 +77,15 @@ void main() {
   );
 
   testWidgets(
-    'Output control requires observed state and disappears on peer loss',
+    'Output control requires observed state and retains disabled geometry on peer loss',
     (tester) async {
       Future<void> render(DeviceStatus? status) => tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TablePage(
+            body: OutputPanel(
+              connected: true,
+              openDiagnostics: () {},
               status: status,
-              mapping: CellMap.defaults(),
               command: (path, [values = const {}]) async {},
             ),
           ),
@@ -102,7 +103,11 @@ void main() {
       expect(find.text('LED output service'), findsOneWidget);
       expect(find.text('Idle'), findsNothing);
       await render(null);
-      expect(find.text('LED output service'), findsNothing);
+      expect(find.text('LED output service'), findsOneWidget);
+      expect(
+        tester.widget<SwitchListTile>(find.byType(SwitchListTile)).onChanged,
+        isNull,
+      );
     },
   );
 
@@ -114,9 +119,10 @@ void main() {
     Future<void> render(bool enabled) => tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: TablePage(
+          body: OutputPanel(
+            connected: true,
+            openDiagnostics: () {},
             status: observedOutput({'enabled': enabled}),
-            mapping: CellMap.defaults(),
             command: (path, [values = const {}]) async {
               writes.add((path, Map.of(values)));
               await ack.future;
@@ -156,20 +162,22 @@ void main() {
   ) async {
     final ack = Completer<void>();
     final writes = <(String, Map<String, String>)>[];
-    Future<void> render(String mode) => tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TablePage(
-            status: observedOutput({'enabled': false, 'mode': mode}),
-            mapping: CellMap.defaults(),
-            command: (path, [values = const {}]) async {
-              writes.add((path, Map.of(values)));
-              await ack.future;
-            },
+    Future<void> render(String mode, {bool enabled = false}) =>
+        tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: OutputPanel(
+                connected: true,
+                openDiagnostics: () {},
+                status: observedOutput({'enabled': enabled, 'mode': mode}),
+                command: (path, [values = const {}]) async {
+                  writes.add((path, Map.of(values)));
+                  await ack.future;
+                },
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        );
     ChoiceChip chip(String label) =>
         tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
     await render('static');
@@ -189,8 +197,17 @@ void main() {
     await render('effects');
     expect(chip('Effects').selected, true);
     await render('static');
-    final rainbow = find.widgetWithText(OutlinedButton, 'Rainbow test');
+    final rainbow = find.text('Rainbow test');
     await tester.ensureVisible(rainbow);
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Rainbow test'),
+          )
+          .onPressed,
+      isNull,
+    );
+    await render('static', enabled: true);
     await tester.tap(rainbow);
     await tester.pump();
     expect(writes.length, 2);
@@ -206,7 +223,7 @@ void main() {
     );
     expect(
       tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
-      false,
+      true,
     );
     expect(tester.takeException(), isNull);
   });

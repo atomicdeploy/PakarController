@@ -7,6 +7,10 @@
 int main(){
   using T=PakarShell::ShellTui;
   T model;T::Action action;T::Snapshot snapshot;
+  uint8_t counts[80];uint16_t starts[80];
+  for(unsigned i=0;i<80;++i){counts[i]=6;starts[i]=i*6;}
+  snapshot.groupCount=80;snapshot.groupCounts=counts;snapshot.groupStarts=starts;
+  snapshot.usedPixels=480;snapshot.groupLayoutRevision=17;
   T::Row rows[]={{"Hostname","hostname","ledboard",true,false},{"Firmware","version","0.2.7",false,false},{"Password","station_password","never-render-this",true,true}};
   snapshot.rows=rows;snapshot.rowCount=3;
   std::string output;
@@ -44,7 +48,7 @@ int main(){
   snapshot.canLeds=false;assert(!feed("w"));
   snapshot.canLeds=true;assert(!feed("\t"));assert(model.page()==T::Pixel&&model.selectedPixel()==0);
   assert(!feed("g"));assert(model.group());
-  assert(feed("\x1b[C"));assert(action.type==T::Action::Pixel&&action.index==6&&action.group);
+  assert(feed("\x1b[C"));assert(action.type==T::Action::Pixel&&action.index==6&&action.group&&action.count==6&&action.groupLayoutRevision==17);
   for(unsigned i=0;i<78;++i)assert(feed("+"));
   assert(model.selectedPixel()==474);assert(!feed("+"));assert(model.selectedPixel()==474);
   assert(!feed("g"));for(unsigned i=0;i<5;++i)assert(feed("+"));
@@ -62,6 +66,53 @@ int main(){
   rows[0].editable=false;assert(!feed("\r"));assert(!model.editing()&&action.type==T::Action::None);
   model.begin(false);output.clear();assert(model.render(snapshot,write));assert(output.find('\x1b')==std::string::npos);
   assert(sizeof(model)<2048); // No heap, IO object, unbounded transcript or SDK dependency.
+
+  // Physical groups follow current prefix spans, not a six-pixel assumption or
+  // the logical table permutation. Every explicit action carries its revision.
+  T variable;T::Snapshot geometry;
+  uint8_t customCounts[]={5,7,3};uint16_t customStarts[]={0,5,12};
+  geometry.canPixels=true;geometry.pixelCount=480;geometry.usedPixels=15;
+  geometry.groupCount=3;geometry.groupCounts=customCounts;geometry.groupStarts=customStarts;
+  geometry.groupLayoutRevision=21;
+  auto input=[&](const std::string& bytes){bool emitted=false;for(unsigned char byte:bytes)emitted=variable.feed(byte,geometry,action)||emitted;return emitted;};
+  variable.begin();assert(!input("\t\t"));assert(variable.page()==T::Pixel);
+  assert(!input("g"));assert(input("\r"));assert(action.index==0&&action.count==5&&action.groupLayoutRevision==21);
+  assert(input("+"));assert(action.index==5&&action.count==7);
+  assert(input("\x1b[C"));assert(action.index==12&&action.count==3);
+  assert(!input("+"));assert(action.type==T::Action::None);
+  assert(input("-"));assert(action.index==5&&action.count==7);
+  assert(!input("g"));assert(input("+"));assert(action.index==6&&action.count==1);
+  assert(!input("g"));assert(variable.selectedPixel()==5);
+  output.clear();assert(variable.render(geometry,write));
+  assert(output.find("Physical pixel 6..12 / 15 (480 capacity)")!=std::string::npos);
+  assert(output.find("six-pixel")==std::string::npos);
+  geometry.groupLayoutRevision=22;output.clear();assert(variable.render(geometry,write));
+  assert(input("\r"));assert(action.groupLayoutRevision==22);
+  // A changed/shrunken valid layout only reconciles the selection; rendering
+  // itself does not send anything, and the next action uses the fresh span.
+  customCounts[0]=1;customCounts[1]=2;customCounts[2]=1;customStarts[1]=1;customStarts[2]=3;
+  geometry.usedPixels=4;geometry.groupLayoutRevision=23;
+  action=T::Action{};output.clear();assert(variable.render(geometry,write));
+  assert(variable.selectedPixel()==3&&action.type==T::Action::None);
+  assert(input("\r"));assert(action.index==3&&action.count==1&&action.groupLayoutRevision==23);
+  assert(!input("+"));
+  // Invalid or missing authoritative geometry never falls back to old strides.
+  geometry.groupCounts=nullptr;assert(!input("\r"));assert(action.type==T::Action::None);
+  geometry.groupCounts=customCounts;customStarts[1]=0;assert(!input("-"));
+  customStarts[1]=1;customCounts[1]=0;assert(!input("\r"));
+  customCounts[1]=2;geometry.usedPixels=5;assert(!input("\r"));
+  geometry.usedPixels=4;geometry.groupCount=81;assert(!input("\r"));
+  // Keycontroller uses the same authority with eighteen default12 groups.
+  for(unsigned i=0;i<18;++i){counts[i]=12;starts[i]=i*12;}
+  geometry.groupCounts=counts;geometry.groupStarts=starts;geometry.groupCount=18;
+  geometry.pixelCount=geometry.usedPixels=216;geometry.groupLayoutRevision=24;
+  variable.begin();assert(!input("\t\tg"));assert(input("+"));
+  assert(action.index==12&&action.count==12&&action.groupLayoutRevision==24);
+  for(unsigned i=0;i<16;++i)assert(input("+"));
+  assert(action.index==204&&action.count==12);assert(!input("+"));
+  assert(!input("g"));for(unsigned i=0;i<11;++i)assert(input("+"));
+  assert(action.index==215&&action.count==1);assert(!input("+"));
+  output.clear();assert(variable.render(geometry,write));assert(output.find("/ 216 (216 capacity)")!=std::string::npos);
 
   alignas(T) unsigned char modelStorage[sizeof(T)]{};
   auto *dying=new(modelStorage) T;dying->begin();

@@ -1,75 +1,107 @@
-# ESP32-S3 migration adapters — not a production firmware yet
+# ESP32-S3 integrated firmware
 
-Canonical UART wiring: GPIO17/TX -> AVR D0/RXD; AVR D1/TXD -> GPIO18/RX.
-This supersedes the earlier provisional reversed pair. ISP remains MOSI11,
-MISO13, SCK12, RESET-control10 through a voltage-safe driver; see the migration
-document for electrical protection and the exact module confirmation gate.
+S3 is the primary PakarController target. Its entrypoint includes the shared
+application at `../esp/application.ino`; S3 `Shared*.cpp` units compile common
+modules with S3 hardware adapters. It is not an ESP8266 binary or a separate
+programmer-only image. Source support/builds do not certify a production board.
 
-Optional W5500 uses a separate SPI3/HSPI bus: SCK5, MISO6, MOSI7, CS8,
-RSTn9, INTn14. It must not share the AVR ISP bus/object. `-S3Ethernet` enables
-the native ETH/lwIP adapter; without that build flag no W5500 bus is allocated.
-New profiles leave Ethernet disabled until explicit commissioning; existing old
-active Ethernet profiles migrate without being disabled or rewritten at boot.
-Confirm module supply input before powering it. Actual wiring/link and Ethernet
-acceptance remain open in issue#19; compiling the driver is not a cable test.
+Read [architecture and gaps](../../docs/ARCHITECTURE.md),
+[migration/wiring](../../docs/ESP32-S3-MIGRATION.md) and
+[historical commissioning receipts](../../docs/ESP32-S3-COMMISSIONING.md).
 
-The saved Ethernet profile has independent enable/DHCP/static/DNS settings at
-`GET/POST /api/network/ethernet`, contextual Native/Web/Flutter editors, observed
-link/IP/speed/duplex and bounded LLDP diagnostics. `POST /api/network` can disable
-both station and AP only when Ethernet actually has an IPv4 link. Disabling
-Ethernet requires a connected Wi-Fi station or an actually started recovery AP.
-USB recovery remains independent. No uncertain command is replayed onto a
-different route. Serving, WebSocket, OTA, TLS, MQTT and remote firmware use the
-same native IP stack and existing owners, not a separate WIZnet socket stack.
+## Independent hardware paths
 
-LLDP advertises link identity every30s (TTL120s). Receiving neighbors is an
-explicit `lldp_receive` opt-in: the pinned W5500 driver filters non-IP multicast
-in normal MAC-filter mode, so reception requires promiscuous Ethernet. At most
-four sanitized neighbors are retained; no raw-frame capture API or layer2 bridge
-is exposed. TX/filter changes run on the TCPIP thread, and the application-only
-input hook preserves the SDK's original buffer/length/private-info ownership.
-Actual peer/switch visibility and simultaneous Wi-Fi/Ethernet tests remain open.
+| Purpose | Common DevKit source mapping |
+|---|---|
+| AVR UART1 | S3 GPIO17 TX → AVR D0/RXD; AVR D1/TXD → S3 GPIO18 RX;38400baud |
+| Matrix / box LEDs | GPIO4 → DIN, common GND; strip supply/logic margin must be appropriate |
+| First-wins game reset | Normally-open momentary button GPIO21 → GND; internal pull-up, 20ms debounce, one reset per press |
+| AVR ISP | MOSI11, MISO13, SCK12, reset-control10 through a voltage-safe ownership arrangement |
+| Optional W5500 | Separate SPI3/HSPI: SCK5, MISO6, MOSI7, CS8, reset9, interrupt14 |
+| Optional S3 I2C LCD | SDA15, SCL16; not the AVR's TM1637 connector |
+| Host USB | Build-selected UART0 bridge, native HWCDC/JTAG or OTG CDC; native USB usesGPIO19/20 |
+| Onboard RGB | Independent configurable status output; module-dependent GPIO38/48, not the matrix DIN |
 
-S3 NBNS answers local UDP137 name and node-status queries on exact ready netifs
-with bounded nonblocking service, rather than the SDK's global AsyncUDP task.
-Hostnames longer than15 characters are not silently truncated; readiness and
-bind state are reported in status. This is not SMB/WINS/LLMNR support. Existing
-mDNS/DNS-SD, SSDP description/lifecycle and MNDP use the same stable hostname.
-`tools/check-router-upnp.ps1` performs bounded read-only IGD discovery/status;
-router port-forwarding acceptance is separate from board SSDP discovery and is
-not inferred from WAN reachability or a successful host fixture.
+`src/BoardPins.h` owns overridable defaults and collision checks. Do not connect
+5V signals directly to S3 pins. AVR keeps hardware serial and its TM1637 mapping
+A4/DIO + A5/CLK. Native USB VBUS/external-power isolation needs physical checking.
 
-The shared production application currently lives in `../esp8266` and the AVR
-application in `../avr`. These S3-specific adapters start the hardware boundary;
-they do not replace the integrated application with an ISP-only image, advertise
-unfinished features, or certify an S3 build/physical deployment.
+The first-wins reset button clears the winner and restores enabled boxes to the
+configured idle color (white by default), after the AVR acknowledges reset.
+It does not reboot either MCU. It is ignored during programming/update or when
+the AVR is not ready; held buttons do not repeat and presses are not replayed
+after recovery. `PAKAR_S3_GAME_RESET_PIN=-1` disables it; table builds disable it
+by default. EN/RST only reboots, GPIO10 belongs to AVR ISP, and BOOT is unchanged.
 
-`src/BoardPins.h` is a conservative, overridable **provisional** DevKitC-1 GPIO
-plan. `src/AvrUart.h` owns UART1 with explicit pins/buffers, reuses the actual
-BoardCore `SerialLink`/COBS/CRC codec and counts hardware errors separately.
-`src/MenuAudio.h` uses existing AVR cue IDs, per-feature HELLO acknowledgement,
-bounded cadence and correlated ACK; transmission success is not playback proof.
-The integrated menu must call this adapter after a navigation action, not from
-idle repaints. Shared native/Web/Flutter menu feedback integration is pending.
+## Build profiles
 
-Keep USB host serial and AVR UART physically/logically separate; framing does not
-make a multi-drop UART bus. No raw diagnostic text may corrupt either binary path.
-The current AVR no-busy build still disables unsolicited events: a paired explicit
-buffered-UART build flag and overflow/reconnect testing are required before removing
-polling. Do not simply disconnect the wire on the existing busy-wire AVR image.
+Use the canonical `tools/build-firmware.ps1` wrapper from the repository root:
 
-LED plan: reuse the current `LedGrid` effects/mapping/stream ownership and FastLED
-3.10.6 RMT5 backend with Arduino-ESP32 3.3.12 (both installed here). Its actual
-`channel_driver_rmt.cpp.hpp::createChannel` attempts S3 DMA for the first nonempty
-TX channel and may fall back to non-DMA. That is not unconditional DMA proof.
-No second effects engine or 20 FPS software cap. Runtime DMA status, shared GPIO
-selection, UART stress under Wi-Fi, and channel timing/color-order acceptance
-remain required before a release claim.
+- `-Target esp32s3` selects buffered hardware UART; no busy wire.
+- `-GameMode table-selection|first-wins` bakes one program, respectively480
+  table pixels or216 Keys pixels. Paired AVR must use the same role.
+- `-S3LedGpio -S3LedRmtDma` includes both wire drivers, selectable at runtime.
+  Either flag can be used alone; neither means no LED driver and no LED-pin
+  ownership. The corresponding macros are `PAKAR_S3_LED_GPIO_ENABLED` and
+  `PAKAR_S3_LED_RMT_ENABLED`, each defaulting to zero.
+- `-S3LedDefault auto|gpio-static|rmt-dma` chooses the initial preference only
+  when no valid board-saved choice exists. Auto prefers GPIO if included.
+  This is independent of runtime `static|effects` rendering; GPIO can animate.
+- `-S3HostTransport uart0|hwcdc|otg` selects the actual framed host connector.
+  Default isUART0. OTG/HWCDC have explicit output variants but share the
+  canonical compile cache; see [USB/OTG](../../docs/USB-OTG.md).
+- `-S3Bluetooth disabled` excludes BLE initialization. Runtime-capable builds
+  preserve opt-in configuration; missing/corrupt BLE configuration defaults Off.
+- `-S3Ethernet` compiles optional W5500 support; new profiles leave it disabled
+  until commissioned. Do not disable a previously active profile by assumption.
+- `-S3FlashMB`, `-S3Psram` must describe the actual module. The historical
+  ledboard profile uses16MB/OPI; generic defaults are not that board's identity.
+- `-S3IspElectricalVerified` is an instance-specific acknowledgement, not proof
+  about any newly connected DevKit.
 
-The original migration checklist (not a claim these are still unported):
-network/mDNS/SSDP/NetBIOS;
-ESP8266 flash-image validation and partition-aware OTA/rollback; ESP flash read
-and integrity APIs; BearSSL TLS to S3 trust validation; LittleFS partition sizing;
-shared ISR/task ownership for AsyncTCP; telemetry hardware fields; USB CDC framing;
-ISP explicit SPI pins and durable AVR/EEPROM recovery. Unsupported paths fail
-closed rather than borrowing ESP8266 success. See the migration delivery document.
+## Execution and services
+
+The common `LedGrid` owns mapping/effects/streaming. FastLED supplies color
+helpers; the S3 wire is the custom `src/LedOutput.cpp` worker, not automatic
+FastLED fallback. It consumes immutable complete frames on core1 through a
+capacity-one latest-frame mailbox. RMT explicitly requires GDMA; the same worker
+finishes the current frame, quiesces and releases the old driver, initializes
+the requested one, and republishes the current complete frame. Failed RMT setup
+falls back to GPIO only after safe resource release. Uncertain DMA ownership
+fails closed, retaining its buffers until explicit recovery. Flash-pause, bounded refill and digital-capture
+guards are implemented, but do not establish optical or electrical success.
+
+Runtime selection uses `POST /api/led/output` with `backend=gpio-static` or
+`backend=rmt-dma`, WebSocket `led-output`, or USB opcode `0x5c` payload `[3,1]`
+or `[3,2]`. Request the backend separately from renderer/output settings.
+The board saves the preference with stage/readback/rename before acknowledging
+intent. `led_output.driver` reports compiled choices, actual/requested backend,
+switch pending/error and revision; `led_output.backend_saved` and
+`backend_settings_error` report persistence separately. An ACK is not completion.
+
+Async HTTP, inbound WebSocket, USB host framing, MQTT/outbound WebSocket,
+LittleFS, semantic front-panel events and ISP/Urboot maintenance coexist in one
+application. Binary shell framing remains separate from raw serial text.
+`src/MenuAudio.h` adapts AVR cue IDs with ACK/deadline/cadence guards;
+physical playback and menu parity remain acceptance gates.
+
+W5500 uses native ETH/lwIP so existing HTTP/WS/OTA/TLS/cloud APIs can use Ethernet
+without a second WIZnet socket implementation. Independent enable/DHCP/static/DNS
+settings live at `/api/network/ethernet`. Disabling Wi-Fi or Ethernet requires an
+actual surviving recovery path, not merely a saved profile. Cable/link,
+Ethernet-only/dual-interface serving and Internet fetching remain unaccepted.
+
+S3 discovery includes mDNS/DNS-SD, SSDP, MNDP and bounded NBNS. NBNS is not SMB,
+WINS or LLMNR. LLDP TX is scheduled on the TCPIP owner; receiving is an explicit
+promiscuous-mode opt-in because of W5500 filtering, retaining at most four
+sanitized neighbors. No raw L2 bridge is implemented. Router IGD/port mapping is
+separate from SSDP advertisements and is not proven by a compile or WAN address.
+
+## Open gates
+
+Partial/glitchy matrix output, periodic stalls, interrupted OTA and current
+AVR recovery must be resolved with fresh runtime and physical evidence.
+Cold-boot NTP, BLE/TLS/OTA memory coexistence, independent external-power
+operation, W5500/LLDP, optional LCD/TFT and full client parity remain separate
+requirements. Preserve saved scenes, images and journals; do not replay an
+uncertain update or infer current firmware from these build options.

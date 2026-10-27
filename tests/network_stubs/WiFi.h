@@ -49,6 +49,10 @@ struct NetworkFixtureWiFi {
   void setAutoReconnect(bool value){autoReconnect=value;}
   void setAutoConnect(bool){}
   int status()const{return connection;}
+  int scanResult=-2;String scannedSsid;
+  int scanComplete()const{return scanResult;}
+  int scanNetworks(bool,bool){scanResult=-1;return -1;}
+  String SSID(int)const{return scannedSsid;}
   IPAddress localIP()const{return address;}
   IPAddress softAPIP()const{return IPAddress(192,168,4,1);}
 };

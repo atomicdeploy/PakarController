@@ -67,8 +67,16 @@ mod tests {
     use super::*;
     #[test]
     fn controller_shell_actions_have_unique_native_resource_ids() {
-        let ids: std::collections::BTreeSet<_> = WINDOWS_QUICK_ACTIONS.iter().map(|a| a.icon_resource_id).collect();
+        let ids: std::collections::BTreeSet<_> = WINDOWS_QUICK_ACTIONS
+            .iter()
+            .map(|a| a.icon_resource_id)
+            .collect();
         assert_eq!(ids.len(), WINDOWS_QUICK_ACTIONS.len());
-        for action in WINDOWS_QUICK_ACTIONS { assert_eq!(action.icon_location_index(), -(action.icon_resource_id as i32)); }
+        for action in WINDOWS_QUICK_ACTIONS {
+            assert_eq!(
+                action.icon_location_index(),
+                -(action.icon_resource_id as i32)
+            );
+        }
     }
 }

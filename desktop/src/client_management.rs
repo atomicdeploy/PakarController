@@ -413,7 +413,14 @@ fn download(settings: &Settings, epoch: u64) -> Result<(), String> {
         file.flush()
             .and_then(|_| file.sync_all())
             .map_err(|_| "Cannot persist app package")?;
-        if done != release.bytes || hasher.finalize().iter().map(|b|format!("{b:02x}")).collect::<String>() != release.sha256 {
+        if done != release.bytes
+            || hasher
+                .finalize()
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+                != release.sha256
+        {
             return Err("App package size/SHA-256 verification failed".into());
         }
         Ok(())
@@ -506,7 +513,10 @@ fn secret_key(settings: &Settings) -> Result<String, String> {
                 .as_str()
                 .trim_end_matches('/')
                 .as_bytes()
-        ).iter().map(|b|format!("{b:02x}")).collect::<String>()
+        )
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<String>()
     ))
 }
 fn enrollment(settings: &Settings) -> Result<Option<Enrollment>, String> {

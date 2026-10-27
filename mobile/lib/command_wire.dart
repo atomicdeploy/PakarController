@@ -5,8 +5,15 @@ import 'models.dart';
 import 'cell_search.dart';
 import 'command_failure.dart';
 import 'cell_assignments.dart';
+import 'game_settings_command.dart';
+import 'command_readback.dart';
 
 const commandNames = {
+  '/api/led/presentation': 'state-presentation',
+  '/api/led/preview': 'color-preview',
+  '/api/game/press': 'game-press',
+  '/api/game/reset': 'reset',
+  '/api/game/settings': 'game-settings',
   '/api/cells': 'cells',
   '/api/cell': 'cell',
   '/api/cells/assignments': 'cell-assignments',
@@ -35,6 +42,9 @@ String commandPacket(
       !status.peer.allows(path, values)) {
     throw const FormatException('Fresh command admission unavailable');
   }
+  final gameSettings = path == '/api/game/settings'
+      ? gameSettingsPatch(values)
+      : null;
   return jsonEncode({
     'type': 'command',
     'request_id': id,
@@ -42,17 +52,36 @@ String commandPacket(
     'boot_id': status.json['boot_id'],
     'expires_at_ms': clock + 8000,
     'command': commandNames[path],
-    for (final item in values.entries)
-      item.key: path == '/api/cells/assignments' && item.key == 'assignments'
-          ? CellAssignments.fromRows(jsonDecode(item.value)).assignments
-          : item.key == 'id' ||
-                (path == '/api/led/diagnostic' &&
-                    ['index', 'count', 'rgb'].contains(item.key)) ||
-                path == '/api/brightness' && item.key == 'value'
-          ? int.parse(item.value)
-          : item.key == 'enabled' || item.key == 'off'
-          ? item.value == 'true'
-          : item.value,
+    ...?gameSettings,
+    if (gameSettings == null)
+      for (final item in values.entries)
+        item.key: path == '/api/led/presentation' && item.key == 'settings'
+            ? jsonDecode(item.value)
+            : path == '/api/led/preview' &&
+                  ['rgb', 'duration_ms'].contains(item.key)
+            ? int.parse(item.value)
+            : path == '/api/led/preview' && item.key == 'cancel'
+            ? item.value == 'true'
+            : path == '/api/cells/assignments' && item.key == 'assignments'
+            ? CellAssignments.fromRows(jsonDecode(item.value)).wireAssignments
+            : item.key == 'id' ||
+                  (path == '/api/game/press' && item.key == 'key') ||
+                  (path == '/api/led/diagnostic' &&
+                      [
+                        'index',
+                        'count',
+                        'rgb',
+                        'period_ms',
+                        'duty_percent',
+                        'min_brightness',
+                        'max_brightness',
+                        'group_layout_revision',
+                      ].contains(item.key)) ||
+                  path == '/api/brightness' && item.key == 'value'
+            ? int.parse(item.value)
+            : item.key == 'enabled' || item.key == 'off'
+            ? item.value == 'true'
+            : item.value,
   });
 }
 
@@ -60,8 +89,9 @@ DeviceStatus verifyCommandReply(
   Map<String, dynamic> reply,
   String packet,
   String path,
-  Map<String, String> values,
-) {
+  Map<String, String> values, {
+  bool requireGameReadback = true,
+}) {
   final request = jsonDecode(packet) as Map<String, dynamic>;
   if (reply['type'] != 'command-result' ||
       reply['request_id'] != request['request_id'] ||
@@ -73,6 +103,12 @@ DeviceStatus verifyCommandReply(
   }
   if (reply['accepted'] != true) {
     throw DeviceCommandRejected(error: reply['error']);
+  }
+  if ((path == '/api/game/reset' || path == '/api/game/press') &&
+      reply['avr_acknowledged'] != true) {
+    throw const FormatException(
+      'AVR reset acknowledgment missing; reset was not retried',
+    );
   }
   if (path == '/api/cells' &&
       reply['count'] != parseCellSearch(values['ids'] ?? '').length) {
@@ -91,5 +127,13 @@ DeviceStatus verifyCommandReply(
       json['boot_id'] != request['boot_id']) {
     throw const FormatException('Same-board command readback unavailable');
   }
-  return DeviceStatus(json);
+  final actual = DeviceStatus(json);
+  if (requireGameReadback &&
+      path == '/api/game/settings' &&
+      !commandReadbackMatches(actual, path, values)) {
+    throw const FormatException(
+      'Game settings receipt differs from device readback; not retried',
+    );
+  }
+  return actual;
 }

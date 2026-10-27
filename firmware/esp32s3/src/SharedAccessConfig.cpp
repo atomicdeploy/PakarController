@@ -1,2 +1,2 @@
 // Compile the canonical shared implementation, never a second effects/API engine.
-#include <firmware/esp8266/src/AccessConfig.cpp>
+#include <firmware/esp/src/AccessConfig.cpp>

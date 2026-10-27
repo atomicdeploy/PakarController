@@ -30,6 +30,11 @@ public:
   uint16_t activeDurationMs() const { return activeDurationMs_; }
   uint32_t activeStartedMicros() const { return activeStartedMs_ * 1000UL; }
   bool muted() const { return muted_; }
+  // Stream commands: begin=0, append=1, start=2, finish=3, query=4, cancel=5.
+  // Header [action,idLE16,offsetLE16]; append carries packed [HzLE16,msLE16].
+  // Returns 0 accepted, 3 invalid, 5 full/busy, 6 muted or stale stream.
+  uint8_t stream(const uint8_t *data, uint8_t length);
+  void streamStatus(uint8_t *out) const;
 
 private:
   // ToneStep is one queued tone or silent pause and its duration.
@@ -55,6 +60,9 @@ private:
   uint16_t activeFrequencyHz_;
   uint16_t activeDurationMs_;
   uint32_t activeStartedMs_ = 0;
+  uint16_t streamId_=0, streamOffset_=0;
+  uint8_t streamState_=0; // idle, prefill, playing, complete, underrun, cancelled
+  bool streamFinal_=false;
 };
 
 // buzzer is the single board-wide feedback player.

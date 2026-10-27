@@ -3,6 +3,8 @@
 
 namespace BoardCore {
 namespace AudioCues {
+constexpr uint8_t kSilent = 255;
+inline bool validGameCue(uint8_t cue) { return cue == kSilent || cue < Protocol::kCueCount; }
 inline const char *name(uint8_t cue) {
   switch (cue) {
     case Protocol::kCueWelcome: return "welcome";
@@ -29,6 +31,11 @@ inline bool parse(const char *value, uint8_t &cue) {
     if (strcmp(value, name(i)) == 0) { cue = i; return true; }
   }
   return false;
+}
+inline const char *gameName(uint8_t cue) { return cue == kSilent ? "silent" : name(cue); }
+inline bool parseGame(const char *value, uint8_t &cue) {
+  if(value && strcmp(value,"silent")==0){cue=kSilent;return true;}
+  return parse(value,cue);
 }
 // Stable cue IDs, enabled only by this peer's explicit HELLO advertisement.
 // Build versions are descriptive and never substitute for feature ACKs.

@@ -1,4 +1,4 @@
-#include "../firmware/esp8266/src/FirmwareReadResponse.h"
+#include "../firmware/esp/src/FirmwareReadResponse.h"
 #include <cassert>
 #include <cstdio>
 #include <vector>

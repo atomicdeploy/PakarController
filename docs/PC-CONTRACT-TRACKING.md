@@ -1,5 +1,12 @@
 # PCController current-hardware contracts and future enablement
 
+The checked milestones below describe the original source/test checkpoint,
+not current deployment or complete donor parity. Current source release is
+0.2.8; current comparison and future AVR convergence gates are in
+[PCController gaps and shared-core readiness](PC-CONTROLLER-MERGE-READINESS.md).
+In particular, current tone mirroring has timestamp fields and S3 uses buffered
+hardware UART; the older five-byte/ESP8266-only wording is historical.
+
 Focused issue: https://github.com/atomicdeploy/PakarController/issues/6.
 Parent production scope: #2. Source parity: #3. Device settings GUI: #4. Native Windows: #5.
 

@@ -36,7 +36,7 @@ test('live host theme events leave System preference unchanged and respect expli
   }
 });
 
-const web=readFileSync(new URL('../firmware/esp8266/src/WebUi.h',import.meta.url),'utf8');
+const web=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8');
 const shipped=web.match(/<script>([\s\S]*?)<\/script>/i)[1];
 const prepaint=web.match(/<script data-pakar-presentation>([\s\S]*?)<\/script>/i)[1];
 const code=prepaint+'\n'+shipped.slice(shipped.indexOf('// BEGIN BROWSER APPEARANCE'),shipped.indexOf('// END BROWSER APPEARANCE'));

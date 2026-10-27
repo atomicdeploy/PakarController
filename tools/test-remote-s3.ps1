@@ -11,7 +11,7 @@ New-Item -ItemType Directory -Force -Path (Split-Path -Parent $output) | Out-Nul
 & g++ -std=c++17 -Wall -Wextra -Werror -DARDUINO_ARCH_ESP32 -DESP32 `
   -I (Join-Path $root 'tests/s3_ota_stubs') -I (Join-Path $root 'tests/remote_stubs') `
   -I $json -I (Join-Path $root 'libraries/BoardCore/src') `
-  (Join-Path $root 'tests/remote_s3_test.cpp') (Join-Path $root 'firmware/esp8266/src/RemoteFirmware.cpp') -lbcrypt -o $output
+  (Join-Path $root 'tests/remote_s3_test.cpp') (Join-Path $root 'firmware/esp/src/RemoteFirmware.cpp') -lbcrypt -o $output
 if($LASTEXITCODE){throw 'S3 remote updater fixture compilation failed'}
 & $output
 if($LASTEXITCODE){throw 'S3 remote updater fixture assertions failed'}

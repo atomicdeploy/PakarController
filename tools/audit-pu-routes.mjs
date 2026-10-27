@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('..',import.meta.url));
 const donor=process.argv[2];if(!donor)throw Error('Provide the reviewed pu850-esp checkout path');
 const hash=text=>createHash('sha256').update(text).digest('hex');
-const main='firmware/esp8266/esp8266.ino',routes='firmware/esp8266/src/MaintenanceRoutes.h';
+const main='firmware/esp/application.ino',routes='firmware/esp/src/MaintenanceRoutes.h';
 // Manual dispositions. Generating hashes/line references is not a substitute
 // for reading donor implementations; the declared reviewed ranges are bounded.
 const rows=[];
@@ -55,16 +55,16 @@ for(const [line,path,method,reason]of [
  [1380,'/lang','GET','Persisted locale preference; translated=false explicitly, no claim of translated application parity.'],
  [1384,'/lang','POST','Bounded validated locale persisted atomically; PU language RPC not sent.']
 ])add(line,path,method,'adapted',routes,path==='/lang'?'server.on("/lang"':path.startsWith('/datetime/')?'for(const char *path:{"/datetime/':path==='/ntp/get'?'"/ntp/get"':path.startsWith('/config/')||path==='/wifi/status'?'"/config/':path==='/auth_dump'||path==='/sessions_dump'||path==='/username'?'"/auth_dump"':path.startsWith('/debug/')&&path!='/debug/clear'||path==='/eProcessState'||path==='/eResponseStatus'?'"/debug/info"':path==='/file/cancel'?'"/file/cancel"':'server.on("'+path+'"',reason);
-add(764,'/file/download','GET|HEAD','adapted','firmware/esp8266/src/ArtifactDownload.h','"/file/download"','Allowlisted actual ESP/staged/AVR flash and EEPROM, imported Range parser, HEAD and storage read leases. Arbitrary PU filenames/full filesystem dumps removed.');
-add(1307,'/login','POST','commented-replaced','firmware/esp8266/src/WebAccess.h','server.on("/login"','Commented donor stub replaced by existing authenticated expiring cookie/session login with same-origin validation.');
+add(764,'/file/download','GET|HEAD','adapted','firmware/esp/src/ArtifactDownload.h','"/file/download"','Allowlisted actual ESP/staged/AVR flash and EEPROM, imported Range parser, HEAD and storage read leases. Arbitrary PU filenames/full filesystem dumps removed.');
+add(1307,'/login','POST','commented-replaced','firmware/esp/src/WebAccess.h','server.on("/login"','Commented donor stub replaced by existing authenticated expiring cookie/session login with same-origin validation.');
 add(1493,'/update/info','GET','adapted',main,'server.native().on("/update/info"','Version/profile and both-board remote maintenance URLs; no misleading build-host/time identity.');
 add(1513,'/info','GET','adapted',main,'server.on("/info"','Authenticated full structured ESP/AVR/client/network/clock/cloud telemetry; optional format=text.');
-add(1543,'/','GET','adapted','firmware/esp8266/src/WebUi.h','Verified remote update','Real control workspace rather than donor static placeholder; access gate and actual peer state retained. Optional DHCP/static editor preserves stored station credentials and RGB preview requires fresh actual output, not a synthetic animation.');
+add(1543,'/','GET','adapted','firmware/esp/src/WebUi.h','Verified remote update','Real control workspace rather than donor static placeholder; access gate and actual peer state retained. Optional DHCP/static editor preserves stored station credentials and RGB preview requires fresh actual output, not a synthetic animation.');
 add(22,'/auth','GET','adapted',routes,'"/auth"','Local owner auth status, no credential disclosure.','LocalLib/Authentication.cpp');
 add(57,'/pass','POST','adapted',routes,'server.on("/pass"','Requires current password, persistent change and revocation of Web/Telnet sessions.','LocalLib/Authentication.cpp');
-add(12,'/update','GET','commented-replaced','firmware/esp8266/src/WebUi.h','Verified remote update','Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine.','LocalLib/AsyncOTA.cpp');
+add(12,'/update','GET','commented-replaced','firmware/esp/src/WebUi.h','Verified remote update','Commented donor HTML placeholder replaced by real firmware settings; no second OTA engine.','LocalLib/AsyncOTA.cpp');
 add(19,'/update','POST','adapted',main,'server.native().on("/update"','Integrated guarded authenticated upload, owner/disconnect fencing and platform OTA capacity/abort retained beside pinned remote download. Quiet S3 passive capture rejects new upload ownership. U_FS replacement is disabled to preserve credentials/recovery; S3 compressed-image support is not certified.','LocalLib/AsyncOTA.cpp');
-add(213,'/firmware/download','GET|HEAD','imported','firmware/esp8266/src/FirmwareTransfer.cpp','void RegisterFirmwareTransferRoutes','Actual donor range/HEAD/ETag/MD5/export code imported. S3 reads offsets relative to its running application partition with mbedTLS Base64; ESP8266 aligned flash reads remain. Full flash export is disabled to protect secrets.','LocalLib/FirmwareTransfer.cpp');
+add(213,'/firmware/download','GET|HEAD','imported','firmware/esp/src/FirmwareTransfer.cpp','void RegisterFirmwareTransferRoutes','Actual donor range/HEAD/ETag/MD5/export code imported. S3 reads offsets relative to its running application partition with mbedTLS Base64; ESP8266 aligned flash reads remain. Full flash export is disabled to protect secrets.','LocalLib/FirmwareTransfer.cpp');
 add(113,'/description.xml','GET','adapted',main,'server.on("/description.xml"','Actual product/hostname root-device XML; S3 delegates escaped description generation to the adapted donor SSDP device, ESP8266 keeps its existing description. Neither advertises nonexistent SOAP/GENA services. S3 NBNS readiness is independently observed from exact interface-bound UDP137 sockets, not inferred from SSDP.','LocalLib/SSDP.cpp');
 add(22,'/ws','WebSocket','adapted',main,'if(parsed["type"]=="telemetry")','Authenticated multiple-client WebSocket retains board state and adds read-only full telemetry and pinned remote-job commands. Incoming messages are explicitly rejected during quiet S3 passive capture, before binary streaming or command dispatch.','LocalLib/AsyncWebServer.h');
 rows.sort((a,b)=>a.source.localeCompare(b.source)||a.line-b.line);

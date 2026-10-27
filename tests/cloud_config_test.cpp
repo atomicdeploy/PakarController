@@ -1,8 +1,8 @@
 #include <cassert>
 #include <cstddef>
 #include <iostream>
-#include "../firmware/esp8266/src/CloudConfig.h"
-#include "../firmware/esp8266/src/ConfigurationChanges.h"
+#include "../firmware/esp/src/CloudConfig.h"
+#include "../firmware/esp/src/ConfigurationChanges.h"
 
 namespace {
 struct Stored {

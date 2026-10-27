@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
 import vm from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const web=read('firmware/esp8266/src/WebUi.h');
+const web=read('firmware/esp/src/WebUi.h');
 const bootstrap=web.match(/<script data-pakar-presentation>([\s\S]*?)<\/script>/)[1];
 const controller=read('assets/themes/browser-appearance.js');
 assert.equal(bootstrap.split('// BEGIN BROWSER CONTROLLER')[1].split('// END BROWSER CONTROLLER')[0].trim(),controller.trim());

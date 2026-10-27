@@ -9,12 +9,16 @@ const prefs=read('desktop/src/ui/preferences.rs');
 const shell=read('desktop/src/ui/shell.rs');
 const settings=read('desktop/src/ui/device_settings.rs');
 const controls=read('desktop/src/ui/connection_controls.rs');
-for(const name of ['menu_ui','clear_menu','register_search','register_choice','choice']) {
+const compact=source=>source.replace(/\s+/g,'');
+for(const name of ['menu_ui','clear_menu','register_search','register_choice','choice','choice_with_close']) {
   assert(dropdown.includes(`pub fn ${name}`), name);
 }
 for(const name of ['dropdown_arrows_seed_focus_skip_disabled_commit_enter_and_cancel_escape',
   'dropdown_search_keeps_text_focus_until_arrow_enters_choices',
+  'dropdown_unregistered_editor_retains_arrow_keys',
   'dropdown_color_rows_are_full_width_equal_height_and_hover_stable']) assert(dropdown.includes(`fn ${name}`));
+assert(dropdown.includes('if owns_focus && navigating && !entries.is_empty()'));
+assert(dropdown.includes('if response.clicked() && close_on_click'));
 assert(dropdown.includes('output.textures_delta.clear();\n                    for row in &rows'));
 assert(dropdown.includes('egui::StrokeKind::Inside'));
 assert(dropdown.includes('entries.iter().filter')||dropdown.includes('.filter(|entry| entry.enabled)'));
@@ -40,7 +44,7 @@ assert.throws(()=>connectionConsumers(`${controls}\ndropdown::menu_ui(ui, owner`
 assert.throws(()=>connectionConsumers(controls.replace('dropdown::clear_menu(ui.ctx(), owner', 'removed_cleanup(ui.ctx(), owner')), /one matching/);
 assert(prefs.includes('outcome.connection_settings && !draft.is_dirty()'));
 assert(prefs.includes('app.show_connection = true;'));
-assert(prefs.includes('draft.sync_connection_owner(app.transport, app.connection_enabled, &app.base, &app.user, &app.serial_port);'));
+assert(compact(prefs).includes('draft.sync_connection_owner(app.transport,app.connection_enabled,&app.base,&app.user,&app.serial_port,);'));
 assert(!prefs.includes('dialog::singleline_text_edit(&mut draft.config.endpoint)'));
 assert(!prefs.includes('dialog::singleline_text_edit(&mut draft.config.serial_port)'));
 assert(!prefs.includes('app.base = app.config.endpoint.clone();'));

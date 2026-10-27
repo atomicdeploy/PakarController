@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {once} from 'node:events';
 import {readFileSync} from 'node:fs';
 import {boardPeer,imageIdentity,selectPath,updateFirmware,uploadImage,checkWebSocket,boundedReadRequest} from '../tools/update-firmware.mjs';
+import {verificationRangeBytes} from '../tools/download-firmware.mjs';
 const image=Buffer.alloc(96);image[0]=0xe9;image[1]=1;image.writeUInt16LE(9,12);image[23]=1;
 const identity=imageIdentity(image),manifestSha='1'.repeat(64),address='192.168.50.20';
 const base={version:'0.2.8',board_id:'esp32s3-fixture',boot_id:'a'.repeat(32),http_peer_fencing:true,hostname:'ledboard',programming_latch:false,
@@ -107,6 +108,49 @@ for(const scenario of ['local','remote','auth','unknown-auth','bad-product','bus
   if(resume&&scenario!=='resume'){assert.equal(writes,0);assert.equal(fetches,0);assert.equal(applies,0);}
   if(ack&&!['ack','ack-local','ack-remote','ack-new-image'].includes(scenario)){assert.equal(writes,0);assert.equal(fetches,0);assert.equal(applies,0);assert(!events.some(e=>e.stage==='ack-failed-job'));}
   assert(!calls.some(c=>c.path==='/api/firmware/cancel'),'Failed receipt acknowledgement never clears or cancels a board job');
+}
+
+// Exercise the actual post-reboot loop past the observed ~1 MiB failure point.
+// A smaller successful fixture alone cannot catch a regression to 64 KiB reads.
+assert.equal(verificationRangeBytes,16384);
+for(const scenario of ['complete','late-reset','late-reset-twice','late-range-mismatch']) {
+  const large=Buffer.alloc(1024*1024+verificationRangeBytes+17,0x5a);image.copy(large);
+  const expected=imageIdentity(large),afterBoot='b'.repeat(32),ranges=[],events=[];
+  let clock=0,rebooted=false,writes=0,faultAttempts=0;
+  const request=async(_origin,path,options={})=>{
+    const json=value=>({status:200,remote:address,headers:{},body:Buffer.from(JSON.stringify(value))});
+    if(path==='/api/status')return json({...base,boot_id:rebooted?afterBoot:base.boot_id});
+    if(path==='/api/auth')return json({enabled:false});
+    if(path==='/')return {status:200,remote:address,headers:{},body:Buffer.from('<!doctype html><html>fixture</html>')};
+    if(path==='/update/info')return json({product:'PakarController',framework:'ESPAsyncWebServer',model:'esp32s3',ota_capacity_bytes:0x330000,upload:'/update'});
+    if(path==='/api/firmware/remote')return json({busy:false,phase:'idle'});
+    if(path==='/api/telemetry')return json({board_id:base.board_id,boot_id:afterBoot,esp:{sketch_bytes:large.length,sketch_md5:expected.md5,
+      boot_integrity_verified:true,ota:{running_offset:65536,boot_offset:65536,running_state_code:2}}});
+    assert.equal(path,'/firmware/download');assert(rebooted);
+    assert.equal(options.expectedAddress,address);
+    assert.equal(options.headers['X-Pakar-Board'],base.board_id);assert.equal(options.headers['X-Pakar-Boot'],afterBoot);
+    const match=/^bytes=(\d+)-(\d+)$/.exec(options.headers.Range);assert(match);
+    const [start,end]=match.slice(1).map(Number);ranges.push([start,end]);
+    assert(end-start+1<=16384,'Post-reboot requests must stay at the proven 16 KiB bound');
+    if(start===1024*1024&&scenario.startsWith('late-reset')) {
+      faultAttempts++;
+      if(faultAttempts===1||scenario==='late-reset-twice')throw Object.assign(Error('read timed out'),{code:'ETIMEDOUT'});
+    }
+    return {status:206,remote:address,headers:{'content-range':`bytes ${scenario==='late-range-mismatch'&&start===1024*1024?start+1:start}-${end}/${large.length}`},body:large.subarray(start,end+1)};
+  };
+  const operation=updateFirmware({image:large,run:true,mode:'local',request,timeoutSeconds:10,
+    upload:async()=>{writes++;rebooted=true;},websocket:async()=>{},wait:async ms=>{clock+=ms;},now:()=>clock,log:event=>events.push(event)});
+  if(scenario==='complete'||scenario==='late-reset') {
+    const result=await operation;assert.equal(result.image.sha256,expected.sha256);
+    const progress=events.filter(event=>event.stage==='readback');
+    assert.equal(progress.length,Math.ceil(large.length/verificationRangeBytes));
+    assert.equal(progress.at(-1).verified_bytes,large.length);
+    assert(progress.every((event,i)=>event.verified_bytes===Math.min((i+1)*verificationRangeBytes,large.length)));
+    assert.deepEqual(ranges.at(-1),[large.length-17,large.length-1],'Final short range must not overrun');
+  } else await assert.rejects(operation);
+  assert.equal(writes,1,'Readback failure must never replay the firmware upload');
+  assert.equal(faultAttempts,scenario.startsWith('late-reset')?2:0,'Only one extra pinned read attempt is allowed');
+  assert.equal(ranges.filter(([start])=>start===1024*1024).length,scenario.startsWith('late-reset')?2:1);
 }
 
 // Only one additional read attempt; exact address and headers stay pinned.
@@ -215,12 +259,12 @@ try{
   assert(pongs>=1,'Interleaved ping receives a masked pong');
 }finally{for(const socket of sockets)socket.destroy();server.close();await once(server,'close');}
 
-const sketch=readFileSync(new URL('../firmware/esp8266/esp8266.ino',import.meta.url),'utf8');
+const sketch=readFileSync(new URL('../firmware/esp/application.ino',import.meta.url),'utf8');
 const info=sketch.slice(sketch.indexOf('void registerAsyncOta() {'),sketch.indexOf('void registerApi() {'));
 assert.doesNotMatch(info,/FirmwarePlatform::sketch(?:Size|Md5)\(/,'Progress info cannot hash the whole image on each poll');
 for(const token of ['X-Pakar-Firmware-Size','X-Pakar-Firmware-MD5','otaUploadedBytes!=otaExpectedBytes','Update.end(true)','otaProgress.advance'])assert.ok(info.includes(token));
-const panelService=readFileSync(new URL('../firmware/esp8266/src/SemanticPanelService.h',import.meta.url),'utf8');
-const panel=readFileSync(new URL('../firmware/esp8266/src/SemanticPanel.h',import.meta.url),'utf8');
+const panelService=readFileSync(new URL('../firmware/esp/src/SemanticPanelService.h',import.meta.url),'utf8');
+const panel=readFileSync(new URL('../firmware/esp/src/SemanticPanel.h',import.meta.url),'utf8');
 const loop=sketch.slice(sketch.indexOf('void loop()'));
 const background=sketch.slice(sketch.indexOf('void upgradeBackground() {'),sketch.indexOf('bool upgradeRebootReady() {'));
 assert.match(loop,/serviceSemanticPanel\(millis\(\)\)/,'Main loop owns presentation');

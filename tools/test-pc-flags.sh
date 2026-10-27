@@ -11,7 +11,7 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   "$root/libraries/BoardCore/src/pccontroller/AutomationStore.cpp" \
   -o "$root/build/pc-flags-test"
 "$root/build/pc-flags-test"
-for feature in I2C SENSORS PWM RF RELAYS STATUS_RGB AVR_LED; do
+for feature in I2C SENSORS PWM RELAYS STATUS_RGB AVR_LED; do
   if error="$(c++ -std=c++17 -x c++ -c -DPAKAR_PC_"$feature"=1 \
       "$root/libraries/BoardCore/src/BoardFeatures.h" -o "$root/build/pc-future.o" 2>&1)"; then
     echo "Unsafe future hardware feature compiled without its adapter: $feature" >&2
@@ -22,4 +22,18 @@ for feature in I2C SENSORS PWM RF RELAYS STATUS_RGB AVR_LED; do
     *) echo "$error" >&2; exit 1 ;;
   esac
 done
-echo "All seven future hardware flags fail closed with the specific adapter/pin-profile diagnostic."
+# Raw RF is implemented, not a future no-adapter feature. Exercise the SAME
+# actual adapter fixture as Windows, including TX validation and RX restoration.
+pwsh -NoProfile -File "$root/tools/test-radio.ps1"
+for value in -1 2; do
+  if error="$(c++ -std=c++17 -x c++ -c -DPAKAR_PC_RF="$value" \
+      "$root/libraries/BoardCore/src/BoardFeatures.h" -o "$root/build/pc-future.o" 2>&1)"; then
+    echo "Non-boolean RF feature flag compiled: $value" >&2
+    exit 1
+  fi
+  case "$error" in
+    *"PAKAR_PC feature flags must be 0 or 1"*) ;;
+    *) echo "$error" >&2; exit 1 ;;
+  esac
+done
+echo "All six future hardware flags fail closed; implemented raw RF and boolean-only admission pass."

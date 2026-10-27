@@ -1,19 +1,23 @@
 pub mod cell_pixels;
 pub mod cell_search;
-pub mod digits;
 pub mod cell_table;
 pub mod color_picker;
 pub mod connection_controls;
+pub mod control_density;
 pub mod dialog;
+pub mod digits;
 pub mod dropdown;
+pub mod effect_controls;
 pub(crate) mod elegance_theme;
 pub mod i18n;
 pub mod icons;
+pub mod key_boxes;
 pub mod palette;
+pub mod panel_details;
 pub mod screenshot;
-pub mod window_geometry;
 pub mod seven_segment;
 pub mod status_bar;
+pub mod window_geometry;
 pub use elegance_theme::sync_elegance_theme;
 pub mod device_settings;
 pub mod layout;
@@ -21,3 +25,6 @@ pub mod menu;
 pub mod preferences;
 pub mod shell;
 pub mod toasts;
+
+#[cfg(test)]
+mod button_geometry_tests;

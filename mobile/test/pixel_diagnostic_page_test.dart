@@ -598,6 +598,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(api.sent.length, beforeColour + 1);
         await tester.ensureVisible(find.byKey(const Key('pixel-show')));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('pixel-show')));
         await tester.pumpAndSettle();
         expect(api.sent.last.$1.rgb, 0xff0000);

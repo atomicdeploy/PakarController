@@ -78,7 +78,7 @@
       "sha256": "0f5d3eae0e1f0e112fce194d233816934702f08508d7a6eece2c4c5161e12442"
     },
     {
-      "path": "firmware/esp8266/src/WebUi.h",
+      "path": "firmware/esp/src/WebUi.h",
       "sha256": "f3ed777ea8538c7e8387784ead075f45370dbc2b36b96bfed962c1d172f9029a"
     },
     {

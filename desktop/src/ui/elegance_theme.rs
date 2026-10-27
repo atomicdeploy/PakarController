@@ -146,3 +146,177 @@ fn from_style(style: &Style, source: ColorPalette) -> elegance::Theme {
         typography,
     }
 }
+
+// Imported with the Pealayer adapter rather than replacing its behavior with
+// Pakar-specific snapshots. These keep theme/accent changes, accessible filled
+// actions, and compact section cards bound to the actual shared widget layer.
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::AppConfig;
+    use eframe::egui::{RawInput, Theme, ThemePreference};
+
+    #[test]
+    fn elegance_tracks_live_theme_and_accent_without_changing_either_host_style() {
+        for palette in [ColorPalette::Native, ColorPalette::Studio] {
+            for accent in ["#38D27A", "#FFFFFF", "#0078D4"] {
+                let ctx = Context::default();
+                crate::config::apply(
+                    &ctx,
+                    &AppConfig {
+                        color_palette: palette,
+                        accent: accent.into(),
+                        ..Default::default()
+                    },
+                );
+                for theme in [Theme::Light, Theme::Dark, Theme::Light] {
+                    ctx.run_ui(
+                        RawInput {
+                            system_theme: Some(theme),
+                            ..Default::default()
+                        },
+                        |ui| {
+                            let ctx = ui.ctx();
+                            let light_before = ctx.style_of(Theme::Light);
+                            let dark_before = ctx.style_of(Theme::Dark);
+                            sync_elegance_theme(ctx);
+                            let adapted = elegance::Theme::current(ctx);
+                            let host = ctx.global_style();
+                            assert_eq!(adapted.palette.focus, host.visuals.selection.bg_fill);
+                            assert_eq!(adapted.palette.card, opaque(host.visuals.window_fill));
+                            assert_eq!(
+                                adapted.palette.input_bg,
+                                opaque(host.visuals.text_edit_bg_color.unwrap())
+                            );
+                            assert_eq!(
+                                adapted.palette.text_faint,
+                                super::super::palette::color(
+                                    palette,
+                                    theme == Theme::Dark,
+                                    "subtle"
+                                )
+                            );
+                            assert_eq!(
+                                adapted.palette.success,
+                                super::super::palette::color(
+                                    palette,
+                                    theme == Theme::Dark,
+                                    "green"
+                                )
+                            );
+                            assert_eq!(
+                                adapted.typography.body,
+                                TextStyle::Body.resolve(&host).size
+                            );
+                            assert_eq!(adapted.palette.is_dark, theme == Theme::Dark);
+                            assert_eq!(ctx.style_of(Theme::Light), light_before);
+                            assert_eq!(ctx.style_of(Theme::Dark), dark_before);
+                            assert_eq!(
+                                ctx.options(|options| options.theme_preference),
+                                ThemePreference::System
+                            );
+                            sync_elegance_theme(ctx);
+                            assert_eq!(elegance::Theme::current(ctx), adapted);
+                            assert_eq!(ctx.global_style(), host);
+                            assert!(Arc::ptr_eq(&ctx.global_style(), &host));
+                        },
+                    )
+                    .drop_without_applying_deltas();
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn elegance_filled_actions_have_readable_white_ink_without_recoloring_focus() {
+        for source in [ColorPalette::Native, ColorPalette::Studio] {
+            for dark in [false, true] {
+                for color in [
+                    Color32::WHITE,
+                    Color32::from_rgb(56, 210, 122),
+                    Color32::from_rgb(243, 185, 84),
+                ] {
+                    let mut style = Style::default();
+                    style.visuals = if dark {
+                        eframe::egui::Visuals::dark()
+                    } else {
+                        eframe::egui::Visuals::light()
+                    };
+                    super::super::palette::apply(&mut style.visuals, source);
+                    style.visuals.selection.bg_fill = color;
+                    let theme = from_style(&style, source);
+                    assert_eq!(theme.palette.focus, color);
+                    for fill in [
+                        theme.palette.blue,
+                        theme.palette.blue_hover,
+                        theme.palette.green,
+                        theme.palette.green_hover,
+                        theme.palette.red,
+                        theme.palette.red_hover,
+                        theme.palette.amber,
+                        theme.palette.amber_hover,
+                        theme.palette.purple,
+                    ] {
+                        assert!(1.05 / (luminance(fill) + 0.05) >= 4.5);
+                    }
+                    assert_eq!(theme.palette.card.a(), 255);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn elegance_section_cards_are_opaque_compact_and_width_bounded() {
+        use eframe::egui::{Pos2, Rect, RichText, UiBuilder, vec2};
+        for source in [ColorPalette::Native, ColorPalette::Studio] {
+            for dark in [false, true] {
+                for width in [180.0, 280.0, 520.0] {
+                    let ctx = Context::default();
+                    crate::config::apply(
+                        &ctx,
+                        &AppConfig {
+                            color_palette: source,
+                            theme: if dark {
+                                crate::config::AppTheme::Dark
+                            } else {
+                                crate::config::AppTheme::Light
+                            },
+                            ..Default::default()
+                        },
+                    );
+                    ctx.run_ui(
+                        RawInput {
+                            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(width, 480.0))),
+                            ..Default::default()
+                        },
+                        |ui| {
+                            let before = ctx.global_style();
+                            let mut widths = Vec::new();
+                            for _ in 0..2 {
+                                let result = ui.scope_builder(UiBuilder::new(), |ui| {
+                                    super::super::dialog::section(
+                                        ui,
+                                        super::super::icons::SPEAKER_HIGH,
+                                        "Output",
+                                        |ui| {
+                                            ui.label(RichText::new("System default").weak());
+                                        },
+                                    );
+                                });
+                                widths.push(result.response.rect.width());
+                            }
+                            assert_eq!(widths[0], widths[1]);
+                            assert!(
+                                widths[0] <= width,
+                                "section overflow at {width}: {widths:?}"
+                            );
+                            assert_eq!(elegance::Theme::current(&ctx).palette.card.a(), 255);
+                            assert_eq!(ctx.global_style(), before);
+                        },
+                    )
+                    .drop_without_applying_deltas();
+                }
+            }
+        }
+    }
+}
