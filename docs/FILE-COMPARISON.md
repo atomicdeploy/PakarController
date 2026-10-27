@@ -2820,7 +2820,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 - Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=292fb97a0e4fd93681ead4016b0b5a45f674f7d6fed1039966ee5fe101f8cf62; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:47 [UTF8-LF sha256=8ebd02ebcd5556bd70f97216faed6ea3c03ec8e92950514118e1b9901132e037; anchor=--test-threads=1]`.
-- Target: `tools/ci-checks.mjs:260 [UTF8-LF sha256=3c1b4ba798d1669e9b06c85f5add8d6754dacdf43b2fd2362607ce4b659b9822; anchor=export function runChecks]`.
+- Target: `tools/ci-checks.mjs:261 [UTF8-LF sha256=53fa3111d77d96de6af249b55f0bf92f2aba06f5f299394c9a900edae019493b; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:16 [UTF8-LF sha256=c5dcb698c397b30ca0ed076437a695838366aa0a82ed3c580df3cf6380d03306; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.
 - Retained: Release content is gated on all builds, created as an immutable draft prerelease, with two correctly matched board pairs and raw HTTPS update manifests. Untrusted PRs do not execute publishing code with a write token.
@@ -5590,7 +5590,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `5e6becf3291f81ae0307f6b78c57659cfab5abc13d9afc7bf0a3ff3f6248d608`.
 
-- Target: `desktop/Cargo.lock:5318 [UTF8-LF sha256=00759a113b9caede5660b972ef07709a361a2126bcdee4be4a486f14192dfe3a; anchor=name = "tungstenite"]`.
+- Target: `desktop/Cargo.lock:5318 [UTF8-LF sha256=1628906a2dfa32184b70a12be6104efa8da733e31c45a5db2a4ad27c27ba9f8a; anchor=name = "tungstenite"]`.
 - Retained: Read all 836 lockfile lines through EOF, including both npm v2 package and duplicated dependency trees. Reproducible transport dependency pinning is retained by the current native lockfile.
 - Omitted/replaced code: `obsolete npm v2 Socket.IO/chokidar dependency graph`. Disposition: **replaced**. Reason: No production Node update daemon remains. Retaining its 2023 graph would add an unused install/cache and duplicated attack surface without preserving functionality.
 - Omitted/replaced code: `Darwin-only fsevents and duplicated ws 8.11/8.14 records`. Disposition: **not-applicable**. Reason: The Windows/embedded deployment does not use this file watcher stack; Rust/firmware lock their own actually linked transports.
@@ -5600,7 +5600,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `03d35d925349974134ff5a047503ac6772459893c6ef89219b825ef60cd0d5ed`.
 
-- Target: `desktop/Cargo.toml:21 [UTF8-LF sha256=14ca2e396436d9f2514706883eb6bbc7a2079d71fe0a4ba04f7c32ab4fb32147; anchor=tungstenite =]`.
+- Target: `desktop/Cargo.toml:23 [UTF8-LF sha256=5410c74841a5fa678f6a5b7ce1f9f372f0c4a39077f36bf7484c1de2203f9157; anchor=tungstenite =]`.
 - Retained: Read the complete dependency manifest. WebSocket client/server, HTTP/TLS, hashing and structured serialization needs are owned by the native Rust client and firmware platform rather than a second Node update daemon.
 - Omitted/replaced code: `chalk, chokidar, Socket.IO and ws runtime stack`. Disposition: **replaced**. Reason: The production native app already uses pinned rustls HTTP/WebSocket crates and the board uses its bounded embedded services. A parallel Node daemon would duplicate connection/update authority.
 - Omitted/replaced code: `http 0.0.1-security placeholder and missing tmp dependency used by Client.js`. Disposition: **replaced**. Reason: The placeholder adds no HTTP implementation and the manifest cannot reproduce its own client. Current builds use declared, locked dependencies or Node standard modules only.

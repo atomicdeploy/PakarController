@@ -8890,7 +8890,7 @@
       "targets": [
         {
           "path": "desktop/Cargo.toml",
-          "sha256": "14ca2e396436d9f2514706883eb6bbc7a2079d71fe0a4ba04f7c32ab4fb32147",
+          "sha256": "5410c74841a5fa678f6a5b7ce1f9f372f0c4a39077f36bf7484c1de2203f9157",
           "anchor": "tungstenite ="
         }
       ],
@@ -8925,7 +8925,7 @@
       "targets": [
         {
           "path": "desktop/Cargo.lock",
-          "sha256": "00759a113b9caede5660b972ef07709a361a2126bcdee4be4a486f14192dfe3a",
+          "sha256": "1628906a2dfa32184b70a12be6104efa8da733e31c45a5db2a4ad27c27ba9f8a",
           "anchor": "name = \"tungstenite\""
         }
       ],
@@ -16692,7 +16692,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-        "sha256": "3c1b4ba798d1669e9b06c85f5add8d6754dacdf43b2fd2362607ce4b659b9822",
+        "sha256": "53fa3111d77d96de6af249b55f0bf92f2aba06f5f299394c9a900edae019493b",
           "anchor": "export function runChecks"
         },
         {

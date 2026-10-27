@@ -26,9 +26,14 @@ class CellAssignments {
   // semantic names; neither representation depends on a state's current RGB.
   List<Map<String, Object>> get wireAssignments => [
     for (final entry in values.entries)
-      {'cell': entry.key, 'state': switch (entry.value) {
-        'idle' => 'white', 'lost' => 'red', _ => entry.value,
-      }},
+      {
+        'cell': entry.key,
+        'state': switch (entry.value) {
+          'idle' => 'white',
+          'lost' => 'red',
+          _ => entry.value,
+        },
+      },
   ];
   String get commandValue => jsonEncode(wireAssignments);
 
@@ -39,7 +44,9 @@ class CellAssignments {
       'lost' || 'red' || '#ff0000' => 'lost',
       'won' => 'won',
       'off' || '#000000' => 'off',
-      _ => throw const FormatException('Cell states must be idle, won, lost or off'),
+      _ => throw const FormatException(
+        'Cell states must be idle, won, lost or off',
+      ),
     };
   }
 
@@ -235,7 +242,7 @@ class CellAssignments {
     }
     sheet.write('</sheetData><autoFilter ref="A1:B${row - 1}"/></worksheet>');
     part('xl/worksheets/sheet1.xml', sheet.toString());
-    return Uint8List.fromList(ZipEncoder().encode(archive)!);
+    return Uint8List.fromList(ZipEncoder().encode(archive));
   }
 
   static CellAssignments _readXlsx(Uint8List bytes) {
@@ -338,10 +345,10 @@ class CellAssignments {
       if (file == null || !file.isFile || file.isSymbolicLink) {
         throw FormatException('Missing XLSX part: $path');
       }
-      final raw = file.rawContent?.toUint8List();
+      final raw = file.rawContent?.getStream(decompress: false).toUint8List();
       if (raw == null) throw const FormatException('Unreadable XLSX entry');
       final sink = _BoundedBytes(file.size);
-      if (file.compressionType == ArchiveFile.DEFLATE) {
+      if (file.compression == CompressionType.deflate) {
         final decoder = io.ZLibDecoder(raw: true).startChunkedConversion(sink);
         try {
           decoder.add(raw);
@@ -375,7 +382,7 @@ class CellAssignments {
 
     final contentTypes = xml('[Content_Types].xml');
     if (!contentTypes
-        .findAllElements('Override', namespace: '*')
+        .findAllElements('Override', namespaceUri: '*')
         .any(
           (entry) =>
               entry.getAttribute('PartName') == '/xl/workbook.xml' &&
@@ -389,7 +396,7 @@ class CellAssignments {
     final targets = <String, String>{};
     for (final relation in relationships.findAllElements(
       'Relationship',
-      namespace: '*',
+      namespaceUri: '*',
     )) {
       if (relation.getAttribute('TargetMode') == 'External') {
         throw const FormatException(
@@ -408,7 +415,7 @@ class CellAssignments {
       }
     }
     final sheets = xml('xl/workbook.xml')
-        .findAllElements('sheet', namespace: '*')
+        .findAllElements('sheet', namespaceUri: '*')
         .toList();
     if (sheets.isEmpty || sheets.length > 16) {
       throw const FormatException('Workbook has no supported sheet');
@@ -419,7 +426,7 @@ class CellAssignments {
             .firstOrNull ??
         sheets.first;
     final sheetPath =
-        targets[chosen.getAttribute('id', namespace: _officeRelNs)];
+        targets[chosen.getAttribute('id', namespaceUri: _officeRelNs)];
     if (sheetPath == null) {
       throw const FormatException('Worksheet relationship is missing');
     }
@@ -427,9 +434,9 @@ class CellAssignments {
     if (parts.containsKey('xl/sharedStrings.xml')) {
       for (final entry in xml(
         'xl/sharedStrings.xml',
-      ).findAllElements('si', namespace: '*')) {
+      ).findAllElements('si', namespaceUri: '*')) {
         final text = entry
-            .findAllElements('t', namespace: '*')
+            .findAllElements('t', namespaceUri: '*')
             .map((node) => node.innerText)
             .join();
         if (shared.length >= 512 || text.length > 64) {
@@ -440,10 +447,10 @@ class CellAssignments {
     }
     final rows = <int, Map<int, String>>{};
     final sheet = xml(sheetPath);
-    if (sheet.findAllElements('f', namespace: '*').isNotEmpty) {
+    if (sheet.findAllElements('f', namespaceUri: '*').isNotEmpty) {
       throw const FormatException('Cell formulas are not allowed');
     }
-    for (final cell in sheet.findAllElements('c', namespace: '*')) {
+    for (final cell in sheet.findAllElements('c', namespaceUri: '*')) {
       final reference = RegExp(r'^([AB])([1-9][0-9]?)$')
           .firstMatch(cell.getAttribute('r') ?? '');
       if (reference == null) {
@@ -458,11 +465,11 @@ class CellAssignments {
           column = reference[1] == 'A' ? 0 : 1;
       if (row > 81) throw const FormatException('Too many cell rows');
       final type = cell.getAttribute('t');
-      final raw = cell.getElement('v', namespace: '*')?.innerText ?? '';
+      final raw = cell.getElement('v', namespaceUri: '*')?.innerText ?? '';
       final text = switch (type) {
         'inlineStr' =>
           cell
-              .findAllElements('t', namespace: '*')
+              .findAllElements('t', namespaceUri: '*')
               .map((e) => e.innerText)
               .join(),
         's' =>

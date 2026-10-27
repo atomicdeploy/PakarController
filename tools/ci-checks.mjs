@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {createLogger} from './script-console.mjs';
 export const phases={
   "quality": [
+    ["node", "tests/native_dependency_graph_test.mjs"],
     ["pwsh", "-File", "tools/test-radio.ps1"],
     ["pwsh", "-File", "tools/test-peer-identity.ps1"],
     ["pwsh", "-File", "tests/tool_peer_identity_test.ps1"],

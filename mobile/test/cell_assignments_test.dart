@@ -19,7 +19,7 @@ CellAssignments sample() => CellAssignments.fromRows([
 Uint8List changePart(Uint8List source, String path, String replacement) {
   final archive = ZipDecoder().decodeBytes(source);
   archive.addFile(ArchiveFile.string(path, replacement));
-  return Uint8List.fromList(ZipEncoder().encode(archive)!);
+  return Uint8List.fromList(ZipEncoder().encode(archive));
 }
 
 DeviceStatus rolePeer(String role) {

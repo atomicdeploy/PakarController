@@ -2,6 +2,23 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Dependency integration preserves the original PR21/22/23 commits through normal
+merges, not squash/cherry-pick deletion of their history. PR23 archive4 requires
+its real rawContent.getStream(decompress:false) and CompressionType.deflate APIs;
+bounded manual inflation/CRC checks remain, and XML7 namespaceUri replaces the
+deprecated argument. Locked pub restoration succeeded through authorized10808.
+PR22's mdns-sd0.21.6 fix is retained. Its eframe0.37 bump is deliberately NOT
+retained: dock/Phosphor/elegance still require egui0.36, so the new graph contains
+incompatible Context/Ui types. Restored the proven coherent graph while keeping
+the exact PR mdns version/checksum, and added a negative-tested lockfile type-family
+guard to CI. The coordinated egui0.37 migration is deferred, not hidden as done.
+Offline Cargo resolution lacked a compatible cached transitive graph; an online
+metadata attempt stalled and only the two exact owned cargo-update processes
+were stopped. The existing proven lock graph was reconciled explicitly rather
+than cleaning/rebuilding SDKs or waiting on unbounded network retries. No cache,
+runtime or user settings were removed. Post-dependency native/mobile tests and
+fresh GitHub CI remain required before main merge.
+
 Final pre-dependency mobile pass:722 tests passed,3 environment/authorized-live
 skips, analysis clean. Fixed a real Hardware ExpansionTile storage collision:
 its boolean expansion state now has a distinct peer-scoped PageStorageKey and
