@@ -92,8 +92,17 @@ assert(main.includes('#include <firmware/esp32s3/src/BleService.h>'));
 assert(main.includes('#include "src/BleRoutes.h"'));
 assert(main.includes('bleService.begin(LittleFS,filesystemMounted,hostname,bleRequest)'));
 assert(main.includes('body+=bleStatusJson()'));
-assert(main.includes('void loop() {\n#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED\n  serviceBle();'),
-  'The instant offline game fallback excludes every network/BLE service from its loop');
+// Local maintenance and correction-expiry work may precede this network guard.
+// Check actual service ownership, not their former adjacency to loop().
+function networkServicesGuarded(source){
+  const loop=source.slice(source.indexOf('void loop() {'));
+  const block=/#if defined\(ARDUINO_ARCH_ESP32\) && PAKAR_NETWORK_ENABLED\r?\n([\s\S]*?)#endif/.exec(loop)?.[1]??'';
+  return ['serviceBle();','servicePeerRelay();'].every(call=>block.includes(call)&&loop.split(call).length===2);
+}
+assert(networkServicesGuarded(main),'Offline builds exclude BLE and peer-relay service calls');
+const loopOnly=main.slice(main.indexOf('void loop() {'));
+assert(!networkServicesGuarded(loopOnly.replace('  serviceBle();','')),'Missing service remains a failure');
+assert(!networkServicesGuarded(loopOnly.replace('  serviceBle();','')+'\nserviceBle();'),'A service outside the guard remains a failure');
 assert(urboot.includes('serviceBleReadOnly();'));
 assert(wire.includes('packetLimit(mtu)-kHeader'));
 assert(wire.includes('static_cast<uint32_t>(now-started_)>=60000U'));

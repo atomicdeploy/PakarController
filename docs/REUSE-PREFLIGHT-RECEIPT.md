@@ -1,5 +1,38 @@
 # Donor-first preflight receipt
 
+## GitHub handoff consolidation and CI repair
+
+User explicitly requested preserving and publishing all mixed source and merging
+ready PRs for pull-based handoff. Inventoried index/worktree/branches/stashes
+before mutation: one branch, no stashes/worktrees beyond this checkout. Preserved
+all source in a623944 on handoff-consolidation / PR24; private outputs, firmware
+backups and Wi-Fi profiles remain untouched locally and are now ignored.
+The localhost8118 route failed; authorized SOCKS10808 restored actual GitHub
+read/fetch/push. Full paginated Pakar conversations were refreshed; dependency
+PR21/22/23 had no comments, reviews or threads. Their diffs and release notes
+are reviewed separately; failed checks are not bypassed. Copilot reviewer
+requests were rejected (not a repository collaborator), not completed reviews.
+
+Canonical Rust Test passed461 tests and Flutter Analyze found no issues. The
+quality pass exposed stale fixtures: formatted Rust no longer matched literal
+whitespace assertions, actual command-transport dependencies were missing from
+Web VM slices, and the full auth fixture lacked current layout/parent/ID and
+numeric-validity DOM behavior. Those fixtures now execute the current shared
+code; negative peer-fence injections still fail. Field-local notices are not
+global toasts; success haptics now follow readback rather than precede it. BLE
+and peer-relay loop services remain checked inside the explicit network guard,
+allowing unrelated maintenance/expiry before it, with missing/escaped negative
+fixtures. Governance expectations match both explicitly included LED drivers
+and the canonical normal/quiet build commands. No production behavior changed.
+
+The old legacy ledger had complete hash-bound comparison entries missing from
+its CSV projection and invalid reviewed-equivalent/reviewed-improved labels.
+Reconciled only exact complete source-hash matches, normalized labels to the
+existing vocabulary and retained reviewed-open where earlier acceptance was
+open. No unread source became reviewed. Rebound only changed fixture/.gitignore
+hashes; route bindings for the already-reviewed canonical Web header refreshed
+without changing routes. Whole feature/physical acceptance remains open.
+
 ## Preview contract checked before Web integration
 
 Consulted pixel-workbench and the exact donor-audit pwm_control mapping; read

@@ -4657,7 +4657,7 @@
       "targets": [
         {
           "path": ".gitignore",
-          "sha256": "9bb316be389a528f2ed74afc2ab6c63e4cb33a30364b21a00c074af12df9262f",
+          "sha256": "2d5301c89aab48d6108d9c12c7c7a1ac32514aa3628944d07bc70463e080059c",
           "anchor": "~secrets.h"
         },
         {
@@ -12617,7 +12617,7 @@
         },
         {
           "path": "tests/web_access_test.mjs",
-          "sha256": "c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b",
+          "sha256": "82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385",
           "anchor": "authEnabled=false;signedIn=false;"
         },
         {
@@ -12694,7 +12694,7 @@
         },
         {
           "path": "tests/web_access_test.mjs",
-          "sha256": "c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b",
+          "sha256": "82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385",
           "anchor": "authEnabled=false;signedIn=false;"
         },
         {
@@ -14118,7 +14118,7 @@
         },
         {
           "path": "tests/web_access_test.mjs",
-          "sha256": "c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b",
+          "sha256": "82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385",
           "anchor": "Reboot revokes the actual running browser stream"
         }
       ],
@@ -14159,7 +14159,7 @@
         },
         {
           "path": "tests/web_access_test.mjs",
-          "sha256": "c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b",
+          "sha256": "82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385",
           "anchor": "Reboot revokes the actual running browser stream"
         }
       ],
@@ -14210,7 +14210,7 @@
         },
         {
           "path": "tests/web_access_test.mjs",
-          "sha256": "c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b",
+          "sha256": "82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385",
           "anchor": "Execute the actual embedded Web application"
         }
       ],
@@ -14421,7 +14421,7 @@
         },
         {
           "path": "tests/peer_fence_test.mjs",
-          "sha256": "bc22f26d1e59c25f6889119e327a29e22f1d894aacc3b225b9c45eca13d81bce",
+          "sha256": "7f50838e49170c25a05ff35bd05eb730e070c4550cd9faae17850865f54c8767",
           "anchor": "Upload callbacks precede middleware"
         },
         {
@@ -14552,7 +14552,7 @@
         {
           "path": "tests/ble_firmware_test.mjs",
           "anchor": "BLE firmware integration source guards",
-          "sha256": "1386b91f0937ddde0d3e57faf624b53bc456ea5d9c375f6a3f99682689109d58"
+          "sha256": "4ac033c437cc296bab12e6921e5ec237768c477941e34e73d8c7ca362314291f"
         },
         {
           "path": "tests/ble_storage_test.cpp",
@@ -14635,7 +14635,7 @@
         },
         {
           "path": "tests/peer_fence_test.mjs",
-          "sha256": "bc22f26d1e59c25f6889119e327a29e22f1d894aacc3b225b9c45eca13d81bce",
+          "sha256": "7f50838e49170c25a05ff35bd05eb730e070c4550cd9faae17850865f54c8767",
           "anchor": "Upload callbacks precede middleware"
         },
         {
@@ -15560,7 +15560,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "eb0389b88af13aefa313cf62082cedbdc2c6bde193154f2ee5ffcedc675c41b6",
+          "sha256": "6024740ca46d6e6e6b2f54124f10cd083c278e3eabc6865c6c4e35d4cb6412f8",
           "anchor": "Donor prepareReconnect is completed before any replacement socket"
         }
       ],
@@ -15612,7 +15612,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "eb0389b88af13aefa313cf62082cedbdc2c6bde193154f2ee5ffcedc675c41b6",
+          "sha256": "6024740ca46d6e6e6b2f54124f10cd083c278e3eabc6865c6c4e35d4cb6412f8",
           "anchor": "Execute actual Web connectWs + refreshAuthenticated + api"
         }
       ],
@@ -15694,7 +15694,7 @@
       "proof": [
         {
           "path": "tests/realtime_retry_test.mjs",
-          "sha256": "eb0389b88af13aefa313cf62082cedbdc2c6bde193154f2ee5ffcedc675c41b6",
+          "sha256": "6024740ca46d6e6e6b2f54124f10cd083c278e3eabc6865c6c4e35d4cb6412f8",
           "anchor": "Actual api.ts AbortController deadline/finally cleanup"
         },
         {
@@ -15745,7 +15745,7 @@
       "proof": [
         {
           "path": "tests/toasts_test.mjs",
-          "sha256": "8bd4f9c06559a783056563f4408b4c4e5168292447b1de837de3be1cccac3235",
+          "sha256": "1be80e48e5a8a6e8bab185f6036cfee4daede77e1535bc63c5746688fc14faa7",
           "anchor": "older expiry must not erase newer notification"
         }
       ],
@@ -15763,7 +15763,7 @@
       "targets": [
         {
           "path": "tests/toasts_test.mjs",
-          "sha256": "8bd4f9c06559a783056563f4408b4c4e5168292447b1de837de3be1cccac3235",
+          "sha256": "1be80e48e5a8a6e8bab185f6036cfee4daede77e1535bc63c5746688fc14faa7",
           "anchor": "function declarationsFor"
         },
         {
@@ -15830,7 +15830,7 @@
       "proof": [
         {
           "path": "tests/toasts_test.mjs",
-          "sha256": "8bd4f9c06559a783056563f4408b4c4e5168292447b1de837de3be1cccac3235",
+          "sha256": "1be80e48e5a8a6e8bab185f6036cfee4daede77e1535bc63c5746688fc14faa7",
           "anchor": "evicted timers must be cancelled"
         }
       ],
@@ -15876,7 +15876,7 @@
       "proof": [
         {
           "path": "tests/toasts_test.mjs",
-          "sha256": "8bd4f9c06559a783056563f4408b4c4e5168292447b1de837de3be1cccac3235",
+          "sha256": "1be80e48e5a8a6e8bab185f6036cfee4daede77e1535bc63c5746688fc14faa7",
           "anchor": "aria-hidden"
         }
       ],
@@ -15932,12 +15932,12 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "ec0d14a25e4b2a70dbadc6931f1624f0c5550cdf30cf681aa5adaf0e3a59d990",
+          "sha256": "43efd6ea821be5deb23bf59e111f6aeb073626e0ab10dc5329e39eabcce27900",
           "anchor": "Actual allowlist + recursive redaction"
         },
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "ec0d14a25e4b2a70dbadc6931f1624f0c5550cdf30cf681aa5adaf0e3a59d990",
+          "sha256": "43efd6ea821be5deb23bf59e111f6aeb073626e0ab10dc5329e39eabcce27900",
           "anchor": "Actual WebSocket ownership"
         }
       ],
@@ -15955,7 +15955,7 @@
       "targets": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "ec0d14a25e4b2a70dbadc6931f1624f0c5550cdf30cf681aa5adaf0e3a59d990",
+          "sha256": "43efd6ea821be5deb23bf59e111f6aeb073626e0ab10dc5329e39eabcce27900",
           "anchor": "Actual RayanLamp browser-console.test.ts scenarios"
         }
       ],
@@ -15977,7 +15977,7 @@
       "proof": [
         {
           "path": "tests/browser_console_test.mjs",
-          "sha256": "ec0d14a25e4b2a70dbadc6931f1624f0c5550cdf30cf681aa5adaf0e3a59d990",
+          "sha256": "43efd6ea821be5deb23bf59e111f6aeb073626e0ab10dc5329e39eabcce27900",
           "anchor": "Real HTTP adapter"
         }
       ],
@@ -16671,7 +16671,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33",
+          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16743,7 +16743,7 @@
         },
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33",
+          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16776,7 +16776,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33",
+          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16809,7 +16809,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33",
+          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16842,7 +16842,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33",
+          "sha256": "fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -20835,7 +20835,7 @@
       "proof": [
         {
           "path": "tests/rayanlamp_reuse_test.mjs",
-          "sha256": "ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b",
+          "sha256": "a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af",
           "anchor": "latinDigits('۰۱۲۳۴۵۶۷۸۹"
         },
         {
@@ -20890,7 +20890,7 @@
       "proof": [
         {
           "path": "tests/rayanlamp_reuse_test.mjs",
-          "sha256": "ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b",
+          "sha256": "a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af",
           "anchor": "h.trigger('arbitrary raw frame')"
         }
       ],
@@ -20908,7 +20908,7 @@
       "targets": [
         {
           "path": "tests/rayanlamp_reuse_test.mjs",
-          "sha256": "ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b",
+          "sha256": "a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af",
           "anchor": "Adapted from RayanLamp haptics.test.ts"
         }
       ],
@@ -20925,7 +20925,7 @@
       "proof": [
         {
           "path": "tests/rayanlamp_reuse_test.mjs",
-          "sha256": "ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b",
+          "sha256": "a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af",
           "anchor": "fixedHapticPatterns"
         }
       ],
@@ -20970,7 +20970,7 @@
       "proof": [
         {
           "path": "tests/rayanlamp_reuse_test.mjs",
-          "sha256": "ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b",
+          "sha256": "a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af",
           "anchor": "Receiver never echoes"
         }
       ],
@@ -20988,7 +20988,7 @@
       "targets": [
         {
           "path": "tests/rayanlamp_reuse_test.mjs",
-          "sha256": "ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b",
+          "sha256": "a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af",
           "anchor": "Actual donor local-event + cross-tab delivery"
         }
       ],
@@ -21010,7 +21010,7 @@
       "proof": [
         {
           "path": "tests/rayanlamp_reuse_test.mjs",
-          "sha256": "ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b",
+          "sha256": "a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af",
           "anchor": "No identical persistence writes"
         }
       ],
@@ -21039,7 +21039,7 @@
       "proof": [
         {
           "path": "tests/rayanlamp_reuse_test.mjs",
-          "sha256": "ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b",
+          "sha256": "a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af",
           "anchor": "Adapted from RayanLamp haptics.test.ts"
         }
       ],

@@ -2368,7 +2368,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `priority requestAdmission, sequence/opcode-matched ACK/Error/events, reserved macro sequence, boot HELLO retry and recoverable decoder overflow tests`. Disposition: **pending**. Reason: HTTP fencing is not downstream AVR ACK/decoder ownership. These production behaviors and exact tests remain pending with USB/UART host integration.
 - Omitted/replaced code: `compact HELLO schemas/build stamp and DTR reset/inactive control-line tests`. Disposition: **pending**. Reason: Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect.
 - Test-code evidence: `desktop/src/terminal_ui.rs:1484 [UTF8-LF sha256=762c7ee8137a21fdbd83a40bb776238a6f75b943da35d01073bbff6b2dd64379; anchor=fn shared_cli_mutation_inherits_pinned_epoch_headers()]`.
-- Test-code evidence: `tests/peer_fence_test.mjs:23 [UTF8-LF sha256=bc22f26d1e59c25f6889119e327a29e22f1d894aacc3b225b9c45eca13d81bce; anchor=Upload callbacks precede middleware]`.
+- Test-code evidence: `tests/peer_fence_test.mjs:23 [UTF8-LF sha256=7f50838e49170c25a05ff35bd05eb730e070c4550cd9faae17850865f54c8767; anchor=Upload callbacks precede middleware]`.
 - Test-code evidence: `desktop/src/peer_http.rs:1590 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:1623 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_readback_from_new_boot_is_not_applied()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:1682 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()]`.
@@ -2440,7 +2440,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `desktop/src/terminal_ui.rs:1136 [UTF8-LF sha256=762c7ee8137a21fdbd83a40bb776238a6f75b943da35d01073bbff6b2dd64379; anchor=fn same_hostname_reboot_revokes_drafts_and_old_receipts()]`.
 - Test-code evidence: `desktop/src/peer_identity.rs:504 [UTF8-LF sha256=18eb925ae24b4f69e08205c33f12a798d73020313fcf4311d51a9118042f0979; anchor=fn usb_introduction_error_preserves_actual_board_reason_without_suggesting_policy_bypass()]`.
 - Test-code evidence: `mobile/test/bridge_discovery_test.dart:37 [UTF8-LF sha256=1e650a1f6897c67ce9e87de864ff28ed98e0a818ca95ba6b413897b5cd99a905; anchor=Same-host board/boot replacement retires firmware owners synchronously]`.
-- Test-code evidence: `tests/peer_fence_test.mjs:23 [UTF8-LF sha256=bc22f26d1e59c25f6889119e327a29e22f1d894aacc3b225b9c45eca13d81bce; anchor=Upload callbacks precede middleware]`.
+- Test-code evidence: `tests/peer_fence_test.mjs:23 [UTF8-LF sha256=7f50838e49170c25a05ff35bd05eb730e070c4550cd9faae17850865f54c8767; anchor=Upload callbacks precede middleware]`.
 - Test-code evidence: `tests/web_peer_http_test.mjs:24 [UTF8-LF sha256=db715ef84572ee0279db89cdb3bc5700bbd6e7ebe206a8fdedf335b60d60d048; anchor=Same-host reboot between draft creation and preflight]`.
 - Test-code evidence: `desktop/src/peer_http.rs:1640 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_revocation_during_preflight_stops_before_write()]`.
 - Test-code evidence: `desktop/src/peer_http.rs:1660 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_revocation_after_dispatch_reports_uncertainty_not_success()]`.
@@ -2466,7 +2466,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `desktop/src/usb_table.rs:735 [UTF8-LF sha256=13c191e37a4a881d96fb668c0ccb99fa2f168955e6abb78bb37940a629434042; anchor=fn compact_usb_readback_validates_all_values_without_renewing_full_observations()]`.
 - Test-code evidence: `desktop/src/usb_table.rs:1411 [UTF8-LF sha256=13c191e37a4a881d96fb668c0ccb99fa2f168955e6abb78bb37940a629434042; anchor=fn actual_usb_worker_windows_read_latency_does_not_expire_large_capture]`.
 - Test-code evidence: `tests/ble_wire_test.cpp:15 [UTF8-LF sha256=bf5675db9debf06160e8ef72d59e7c764bc3f88cde508cfcbb32a989f004c34e; anchor=int main()]`.
-- Test-code evidence: `tests/ble_firmware_test.mjs:100 [UTF8-LF sha256=1386b91f0937ddde0d3e57faf624b53bc456ea5d9c375f6a3f99682689109d58; anchor=BLE firmware integration source guards]`.
+- Test-code evidence: `tests/ble_firmware_test.mjs:109 [UTF8-LF sha256=4ac033c437cc296bab12e6921e5ec237768c477941e34e73d8c7ca362314291f; anchor=BLE firmware integration source guards]`.
 - Test-code evidence: `tests/ble_storage_test.cpp:51 [UTF8-LF sha256=22f4c0e4fc0846492ddaa6c04a01e113ace607d86e9edeac1d2c69b8ee46a349; anchor=Do not retain an internal bulk-buffer fallback]`.
 - Test-code evidence: `tests/ble_storage_stubs/esp_heap_caps.h:18 [UTF8-LF sha256=f6ff5f7843125cd7e780df39fd9d31006af9ef23070641ec580288235750365c; anchor=assert(capabilities==(MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT))]`.
 - Test-code evidence: `services/remote-panel/gateway.test.mjs:87 [UTF8-LF sha256=2fdbab7b76e05249f07d126b9f655a4ff909a59291ec924d8eb2b6ec4f8455f6; anchor=Real HTTP mutation receives one board ACK/readback]`.
@@ -2740,7 +2740,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Retained: Generation replacement and idempotent disposal scenarios strengthened to assert stale callback cannot disarm the newer handle; new pacing, buffering, peer loss, partial-send and final-page/back-cache cases exercise real source.
 - Omitted/replaced code: `100 status updates, 72-sample history, ordered batch/error-then-success and metric snapshot assertions`. Disposition: **pending**. Reason: These test a still-useful telemetry reducer not implemented in the latest-only LED scheduler. No whole-suite parity is claimed; add them alongside generic status/history imports.
 - Test-code evidence: `tests/web_streaming_test.mjs:10 [UTF8-LF sha256=5a42c4330218e553ec3dc366a0685c9047b11ac016eb04465b5169b99dbe3b5e; anchor=class FakeFrameClock]`.
-- Test-code evidence: `tests/web_access_test.mjs:91 [UTF8-LF sha256=c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b; anchor=Reboot revokes the actual running browser stream]`.
+- Test-code evidence: `tests/web_access_test.mjs:95 [UTF8-LF sha256=82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385; anchor=Reboot revokes the actual running browser stream]`.
 - Scoped advantage: Real two-chunk packet and embedded module byte equality plus partial-send no-replay coverage; not hardware acceptance.
 - Remaining: Adapt donor status/history/error scenarios when those contracts are implemented; actual board throughput/reboot/buffering stress remains a separate physical gate.
 
@@ -2756,7 +2756,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `sampleFrom, metricSamplesAfterSnapshot, controllerSnapshotIdentity and peripheralAvailability imports`. Disposition: **pending**. Reason: Metric history and authoritative snapshot resets remain useful and need typed peer contracts. I2C supply/current sensor consumers must stay gated on boards without those sensors; stronger boot fencing alone is not complete metric parity.
 - Omitted/replaced code: `TypeScript/React clock module ownership`. Disposition: **replaced**. Reason: Standalone embedded Web consumes one generated JavaScript source and timer clock; requestAnimationFrame would add a display refresh cap to LED streaming. No second React toolchain is necessary for this firmware page.
 - Test-code evidence: `tests/web_streaming_test.mjs:10 [UTF8-LF sha256=5a42c4330218e553ec3dc366a0685c9047b11ac016eb04465b5169b99dbe3b5e; anchor=class FakeFrameClock]`.
-- Test-code evidence: `tests/web_access_test.mjs:91 [UTF8-LF sha256=c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b; anchor=Reboot revokes the actual running browser stream]`.
+- Test-code evidence: `tests/web_access_test.mjs:95 [UTF8-LF sha256=82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385; anchor=Reboot revokes the actual running browser stream]`.
 - Scoped advantage: Explicit 60/default, 0/uncapped policy, bounded complete-frame buffering, no catch-up bursts, partial-send uncertainty and generation-before-handle checks; browser evidence only.
 - Remaining: Port generic telemetry history/status reducer and sensor availability contracts with their own authoritative peer state; validate physical throughput, queued WebSocket epoch fencing, multi-client arbitration and all-client streaming parity.
 
@@ -2811,7 +2811,7 @@ Verdict: **scoped-improvement**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cd
 - Target: `.github/dependabot.yml:1 [UTF8-LF sha256=136887ba77b56544d0bcd367a31d2daaa7637ecdb8b997d63df6cb552d6f08e8; anchor=version: 2]`.
 - Retained: Actual donor weekly grouped github-actions and Cargo updates, with Cargo path adapted to the existing desktop workspace.
 - Omitted/replaced code: `npm updates at /web_ui`. Disposition: **not-applicable**. Reason: Pakar has no /web_ui/package.json or Vite runtime. Embedded Web/tests use Node built-ins; Flutter's actual /mobile Pub dependency contract is covered instead.
-- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97; anchor=console.log('Repository governance]`.
 - Scoped advantage: Adds grouped Pub updates for the actual Android client and label routing while retaining weekly grouped Actions/Cargo updates.
 
 ### Pealayer: `.github/workflows/ci-cd.yml`
@@ -2830,7 +2830,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 - Omitted/replaced code: `UPX checksum-locked packing and packed native package smoke/resource checks`. Disposition: **pending**. Reason: Existing Windows wrappers preserve donor resource/donor/cache gates and CLI runtime tests, but Pakar has no accepted compressed native package probe. Do not call a source or CLI test full packed GUI runtime acceptance.
 - Omitted/replaced code: `branch-tag and archive suffix creation, softprops update-existing release`. Disposition: **replaced**. Reason: User requests stable names without random/time suffixes. Version releases keep stable package names; release enumeration must succeed and an existing release is not overwritten.
 - Test-code evidence: `tests/build_storage_test.ps1:17 [UTF8-LF sha256=91e7b1338ac1f0e4d4c9c25dd0ced1c68131ed7c5008a34515ec7560fc4a067a; anchor=Actual donor serial test contract]`.
-- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97; anchor=console.log('Repository governance]`.
 - Remaining: The historical 8849ab8 menu failure was subsequently fixed; 5d02b07 Build 38141677102 and CodeQL 38141677110 pass. This is not production/deployment proof. Validate the unexecuted draft publisher, useful additional native targets, donor macOS diagnostics and optional compressed package/runtime verification.
 
 ### Pealayer: `.github/workflows/codeql.yml`
@@ -2840,7 +2840,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 - Target: `.github/workflows/codeql.yml:2 [UTF8-LF sha256=71540360da38622faaa237eec4f1276d5b3f67853754d8a221149e8c0f2726ab; anchor=name: "🛡️ Security · CodeQL"]`.
 - Retained: Actual donor Actions and JavaScript matrix, no-build security-extended queries, pinned checkout/CodeQL actions, no persisted checkout credentials, PR/main/schedule/dispatch/merge-group triggers, cancellation, timeouts and fail-closed aggregate summary.
 - Omitted/replaced code: `Pealayer React/Vite names, packages:read permission and branded prose`. Disposition: **replaced**. Reason: Pakar analyzes embedded Web/scripts and Actions, not Pealayer React. Package read permission is unnecessary for these none-build scans; Rust/C++ coverage is explicitly not invented.
-- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97; anchor=console.log('Repository governance]`.
 
 ### Pealayer: `assets/themes/palettes.json`
 
@@ -2872,7 +2872,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 - Target: `docs/releases/next.md:1 [UTF8-LF sha256=cecaadeb61a7daaec709130503f49a0bb98cde4408af69bc6abe5837b7756fcd; anchor=# PakarController development packages]`.
 - Retained: Actual donor curated preview notes explicitly distinguish a development milestone from stable-release, physical and platform acceptance.
 - Omitted/replaced code: `Pealayer media/audio/timeline milestone inventory and archived media screenshot evolution links`. Disposition: **replaced**. Reason: These are donor-specific release facts, not transferable Pakar features. Record actual controller/interface packages and link Pakar issue #2 instead.
-- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97; anchor=console.log('Repository governance]`.
 
 ### Pealayer: `docs/REVIEW-COMMENT-AUDIT.md`
 
@@ -2940,7 +2940,7 @@ Verdict: **scoped-improvement**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cd
 - Retained: Pealayer's actual centered logo/title/tagline, badge row, visual preview, section navigation, architecture, build, docs, contribution and license structure adapted to Pakar.
 - Omitted/replaced code: `Media engine, NLE cue/timeline walkthroughs, playback APIs/shortcuts and libmpv installation sections`. Disposition: **not-applicable**. Reason: These describe Pealayer media business/runtime rather than Pakar board control. README links actual controller APIs, wiring and release/acceptance instead; no mpv is linked.
 - Omitted/replaced code: `Donor platform and latest-release badges, cinema-grade completion language and media screenshots`. Disposition: **replaced**. Reason: Unsupported OS/release claims and unrelated images would misrepresent this repo. Use the shared application logo and real embedded Web screenshot labeled simulated, explicit PR/source and physical acceptance boundaries.
-- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=c28cb1484b89e72a30d6d1971dcf2c1be42d29ccf1d57108ce72ad3b3ed4db33; anchor=console.log('Repository governance]`.
+- Test-code evidence: `tests/repository_governance_test.mjs:77 [UTF8-LF sha256=fe3f03405b54cafaf08e3584427b382363786246e906e779a7befeb170023c97; anchor=console.log('Repository governance]`.
 - Scoped advantage: Canonical cross-interface icon bytes and explicit proof/acceptance boundaries prevent a polished landing page from claiming an unaccepted release.
 
 ### Pealayer: `scripts/capture-visible-window-windows.ps1`
@@ -3988,7 +3988,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **equivalent-behavior**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `4e8df980915336db111442a9099dfefd1e01287b7925073f804e1726012e2059`.
 
-- Target: `.gitignore:10 [UTF8-LF sha256=9bb316be389a528f2ed74afc2ab6c63e4cb33a30364b21a00c074af12df9262f; anchor=~secrets.h]`.
+- Target: `.gitignore:10 [UTF8-LF sha256=2d5301c89aab48d6108d9c12c7c7a1ac32514aa3628944d07bc70463e080059c; anchor=~secrets.h]`.
 - Target: `docs/PU850-PARITY.md:307 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: foundation slice, 2026-10-19]`.
 - Retained: Every section/function read through EOF: logs/prerequisites/objects/link/PCH/library/executable/debug/kernel/IDE/build/SDK/private-header/Node/uploader/workflow rules
 - Retained: Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.
@@ -4286,7 +4286,7 @@ Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098
 - Omitted/replaced code: `Duplicated run implementation, placeholder AuthenticationHandler/getAuthToken/session access-level skeleton and role=staff sample`. Disposition: **replaced**. Reason: The donor skeleton has unresolved identifiers and no complete role-based authorization contract. Imported the applicable route/session behavior into compiling middleware rather than enabling an incomplete authorization example. No implemented Pakar role support is claimed.
 - Test-code evidence: `tests/access_config_test.cpp:9 [UTF8-LF sha256=335735974ecba358ec482cd949e8132fd2cca17f91ad43baa599cf0d36b08042; anchor=assert(!config.enabled())]`.
 - Test-code evidence: `tests/web_access_fence_test.cpp:249 [UTF8-LF sha256=4bf15126c6e9ba945863583757fc8dbe521bddc850487cad08db6b80e7561743; anchor=// Auth-off does not mean loss]`.
-- Test-code evidence: `tests/web_access_test.mjs:95 [UTF8-LF sha256=c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b; anchor=authEnabled=false;signedIn=false;]`.
+- Test-code evidence: `tests/web_access_test.mjs:99 [UTF8-LF sha256=82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385; anchor=authEnabled=false;signedIn=false;]`.
 - Test-code evidence: `desktop/src/ui/connection_controls.rs:337 [UTF8-LF sha256=2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917; anchor=for authentication in [None, Some(false), Some(true)]]`.
 - Scoped advantage: Executable auth-off/opt-in persistence and conditional Web/native credential UI, without weakening corruption recovery, origin or peer fencing.
 
@@ -4303,7 +4303,7 @@ Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098
 - Omitted/replaced code: `Duplicated run implementation, placeholder AuthenticationHandler/getAuthToken/session access-level skeleton and role=staff sample`. Disposition: **replaced**. Reason: The donor skeleton has unresolved identifiers and no complete role-based authorization contract. Imported the applicable route/session behavior into compiling middleware rather than enabling an incomplete authorization example. No implemented Pakar role support is claimed.
 - Test-code evidence: `tests/access_config_test.cpp:9 [UTF8-LF sha256=335735974ecba358ec482cd949e8132fd2cca17f91ad43baa599cf0d36b08042; anchor=assert(!config.enabled())]`.
 - Test-code evidence: `tests/web_access_fence_test.cpp:249 [UTF8-LF sha256=4bf15126c6e9ba945863583757fc8dbe521bddc850487cad08db6b80e7561743; anchor=// Auth-off does not mean loss]`.
-- Test-code evidence: `tests/web_access_test.mjs:95 [UTF8-LF sha256=c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b; anchor=authEnabled=false;signedIn=false;]`.
+- Test-code evidence: `tests/web_access_test.mjs:99 [UTF8-LF sha256=82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385; anchor=authEnabled=false;signedIn=false;]`.
 - Test-code evidence: `desktop/src/ui/connection_controls.rs:337 [UTF8-LF sha256=2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917; anchor=for authentication in [None, Some(false), Some(true)]]`.
 - Scoped advantage: Executable auth-off/opt-in persistence and conditional Web/native credential UI, without weakening corruption recovery, origin or peer fencing.
 
@@ -5830,7 +5830,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Target: `mobile/lib/device_settings_page.dart:670 [UTF8-LF sha256=1d618c036930215ab12bc3a827625eef5819a3969a7663615115a65ba8519c27; anchor=int.tryParse(latinDigits(value))]`.
 - Retained: Actual Persian/Arabic-Indic-to-ASCII maps adapted into Rust, JavaScript and Dart and invoked by native/Web/mobile cell search and actual mobile port/telemetry fields. Canonical IDs/ranges stay ASCII; peer names, secrets and protocol identifiers are not globally transformed.
 - Omitted/replaced code: `ShapePersianDigits visual decimal shaping`. Disposition: **pending**. Reason: Search needs ASCII normalization now. Apply visual shaping only to audited application-owned numeric labels, not arbitrary peer text or wire IDs. Display consumers remain pending.
-- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:28 [UTF8-LF sha256=ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b; anchor=latinDigits('۰۱۲۳۴۵۶۷۸۹]`.
+- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:28 [UTF8-LF sha256=a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af; anchor=latinDigits('۰۱۲۳۴۵۶۷۸۹]`.
 - Test-code evidence: `mobile/test/cell_search_test.dart:16 [UTF8-LF sha256=03c8c78d66d202cdc9f21da7ea7f7f365fe066ebfd2f4f899de7c49f028d9278; anchor=RayanLamp numeric normalization]`.
 - Test-code evidence: `mobile/test/cell_search_input_test.dart:31 [UTF8-LF sha256=a01a3e364c23720cbc55aa4926036eee9b99144ed021a12e4ad0fa5fac204577; anchor=Find uses number keypad, punctuation helpers and canonicalizes without commands]`.
 - Test-code evidence: `mobile/test/device_settings_page_test.dart:369 [UTF8-LF sha256=41f54cfc79f980609f2c5b117534f0f054c3633627dcbefa170ef31493569ea2; anchor=expect(api.cloud['mqtt_port'], 8883)]`.
@@ -5956,7 +5956,7 @@ Verdict: **equivalent-file**. Revision: `filesystem-snapshot-no-git`. Original-b
 - Target: `desktop/licenses/RayanLamp-MIT.txt:3 [UTF8-LF sha256=a7931f292caa44328db79c5b19515c6629a5b31042a4cf375f28c341d84fd28d; anchor=Copyright (c) 2026 YektaYar]`.
 - Retained: Complete YektaYar MIT copyright and notice retained for actual donor code.
 - No production-code omission claimed for this reviewed file.
-- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:1 [UTF8-LF sha256=ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b; anchor=Adapted from RayanLamp haptics.test.ts]`.
+- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:1 [UTF8-LF sha256=a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af; anchor=Adapted from RayanLamp haptics.test.ts]`.
 - Remaining: Include notice with eventual binary distributions, not just source.
 
 ### RayanLamp: `webui/public/theme-init.js`
@@ -5983,7 +5983,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Omitted/replaced code: `lamp toggle/on/off living routes`. Disposition: **not-applicable**. Reason: Lamp commands are donor business; table/controller capability modes are retained instead.
 - Omitted/replaced code: `diagnostics, UI bootstrap/config, audio content-addressed import/playback, hotkey capture lease and integration registration assertions`. Disposition: **pending**. Reason: All are useful generic host contracts beyond this bounded device HTTP safety slice; need actual typed host implementations and contract fixtures, not fake ESP endpoints.
 - Test-code evidence: `tests/web_peer_http_test.mjs:70 [UTF8-LF sha256=db715ef84572ee0279db89cdb3bc5700bbd6e7ebe206a8fdedf335b60d60d048; anchor=exact pin headers]`.
-- Test-code evidence: `tests/web_access_test.mjs:7 [UTF8-LF sha256=c3654a76c5b55e22d5f93fa76643da9ced43d6993c325bbd74734b849a30597b; anchor=Execute the actual embedded Web application]`.
+- Test-code evidence: `tests/web_access_test.mjs:7 [UTF8-LF sha256=82a435e423c7730157bbe004c23aaf7454b4155cee3e196d8debf688d32e2385; anchor=Execute the actual embedded Web application]`.
 - Remaining: Port authenticated coordinator/bootstrap/config/audio/hotkey/registration tests as their corresponding host contracts are imported. Do not claim the complete donor test suite from this request-header/error slice.
 
 ### RayanLamp: `webui/src/api.ts`
@@ -6003,7 +6003,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Omitted/replaced code: `RayanLampClient interface, APIError/isEnvelope/unwrapResponse/readJSON and realtime event decoding`. Disposition: **pending**. Reason: APIError and advertised JSON parse validation are adapted. Full RayanLampClient typed interface, isEnvelope/unwrapResponse result schema and realtime decoding still require contracts.ts/direct-api/client-factory imports; Pakar keeps real flat JSON and plain-text receipts, not invented Go envelopes.
 - Omitted/replaced code: `hotkey capture begin/renew/release/probe, integration registration and window/show/hide`. Disposition: **pending**. Reason: Generic host/desktop operations need verified native capability, lease ownership and full surfaces. No nonexistent ESP endpoints are exposed.
 - Omitted/replaced code: `notify/playAudio/importAudio/validateAudioRequest/safeAudioFilenameHeader`. Disposition: **pending**. Reason: Generic host/browser audio/notification/import support remains useful; AVR melody/buzzer control is not equivalent WAV playback or content-addressed host import. Adapt discovered host/device ownership and port exact tests.
-- Test-code evidence: `tests/realtime_retry_test.mjs:55 [UTF8-LF sha256=eb0389b88af13aefa313cf62082cedbdc2c6bde193154f2ee5ffcedc675c41b6; anchor=Actual api.ts AbortController deadline/finally cleanup]`.
+- Test-code evidence: `tests/realtime_retry_test.mjs:55 [UTF8-LF sha256=6024740ca46d6e6e6b2f54124f10cd083c278e3eabc6865c6c4e35d4cb6412f8; anchor=Actual api.ts AbortController deadline/finally cleanup]`.
 - Test-code evidence: `tests/web_peer_http_test.mjs:51 [UTF8-LF sha256=db715ef84572ee0279db89cdb3bc5700bbd6e7ebe206a8fdedf335b60d60d048; anchor=Deadline, timer release and external cancellation port api.ts]`.
 - Test-code evidence: `tests/basic_cells_test.mjs:55 [UTF8-LF sha256=953273b10f6c4967158d8bf668c3817a06450d7ca909be41ab433436912d8439; anchor=No optimistic paint after POST/ACK]`.
 - Remaining: api.test.ts was fully read; all its authenticated host/config/audio/hotkey/registration scenarios remain pending matching implementations, not a completed import certificate.
@@ -6013,11 +6013,11 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `024ed161c6c71655ef67cdbed8cf743fd33864118604737a5f44f533bf9f48f5`.
 
-- Target: `tests/browser_console_test.mjs:1 [UTF8-LF sha256=ec0d14a25e4b2a70dbadc6931f1624f0c5550cdf30cf681aa5adaf0e3a59d990; anchor=Actual RayanLamp browser-console.test.ts scenarios]`.
+- Target: `tests/browser_console_test.mjs:1 [UTF8-LF sha256=43efd6ea821be5deb23bf59e111f6aeb073626e0ab10dc5329e39eabcce27900; anchor=Actual RayanLamp browser-console.test.ts scenarios]`.
 - Retained: All actual donor startup, five-level dispatch, allowlist/redaction, keyed dedupe, Error-code-only and control/Bidi scenarios ported against shipped code. Added bounds/cycles/prototype, invalid sink/date, current palette, real HTTP secret/no-replay/quiet-poll, stale WebSocket ownership and canonical embedding checks.
 - Omitted/replaced code: `Vitest describe/it.each/vi sink mocks`. Disposition: **replaced**. Reason: Built-in Node assertions/VM sink and controlled time run the same scenarios plus real production adapter code without adding dependencies or build caches.
 - Omitted/replaced code: `Lamp state names and fixed brand color expectations`. Disposition: **replaced**. Reason: Tests assert adapted device vocabulary and actual shared Pealayer colors rather than claiming the lamp identity/colors apply to Pakar.
-- Test-code evidence: `tests/browser_console_test.mjs:79 [UTF8-LF sha256=ec0d14a25e4b2a70dbadc6931f1624f0c5550cdf30cf681aa5adaf0e3a59d990; anchor=Real HTTP adapter]`.
+- Test-code evidence: `tests/browser_console_test.mjs:79 [UTF8-LF sha256=43efd6ea821be5deb23bf59e111f6aeb073626e0ab10dc5329e39eabcce27900; anchor=Real HTTP adapter]`.
 - Remaining: VM execution is not pixels, deployment, LAN or physical board acceptance.
 
 ### RayanLamp: `webui/src/browser-console.ts`
@@ -6032,8 +6032,8 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Origina
 - Omitted/replaced code: `Hardcoded lamp palettes/gradient and monospace badge typography`. Disposition: **replaced**. Reason: Current shared Pealayer palette and controller typography are resolved on each emission; no second fixed color engine or unwanted tint.
 - Omitted/replaced code: `Unbounded recent Map, boundary-only sensitiveKey, caller-controlled percent format, raw DOM id/function name and throwing host sink`. Disposition: **replaced**. Reason: 256-key/60-second bounds, camelCase redaction, percent escaping, minimal DOM/function summaries and fail-closed sink protect long-lived firmware clients and secret-bearing host data.
 - Omitted/replaced code: `Vitest/TypeScript runtime packaging`. Disposition: **replaced**. Reason: ESP's existing classic-script embedding and Node VM tests require no React/Vitest dependency, donor build or duplicate firmware copy.
-- Test-code evidence: `tests/browser_console_test.mjs:35 [UTF8-LF sha256=ec0d14a25e4b2a70dbadc6931f1624f0c5550cdf30cf681aa5adaf0e3a59d990; anchor=Actual allowlist + recursive redaction]`.
-- Test-code evidence: `tests/browser_console_test.mjs:121 [UTF8-LF sha256=ec0d14a25e4b2a70dbadc6931f1624f0c5550cdf30cf681aa5adaf0e3a59d990; anchor=Actual WebSocket ownership]`.
+- Test-code evidence: `tests/browser_console_test.mjs:35 [UTF8-LF sha256=43efd6ea821be5deb23bf59e111f6aeb073626e0ab10dc5329e39eabcce27900; anchor=Actual allowlist + recursive redaction]`.
+- Test-code evidence: `tests/browser_console_test.mjs:121 [UTF8-LF sha256=43efd6ea821be5deb23bf59e111f6aeb073626e0ab10dc5329e39eabcce27900; anchor=Actual WebSocket ownership]`.
 - Scoped advantage: Adds bounded dedupe lifetime, camelCase/prototype/format protection, newest-socket ownership and diagnostic failure containment. Source-specific continuing incidents coalesce interleaved GET/WS failures until recovery while different error codes and every explicit write outcome remain visible; recovery reports occurrence counts. Executable production-module/API/socket fixtures cover these adaptations.
 - Remaining: Actual LAN/physical firmware runtime remains separate. Other donor app-level settings/audio/diagnostics consumers are independently inventoried and pending, not certified by this utility import.
 
@@ -6047,7 +6047,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Omitted/replaced code: `lamp lightbulb artwork`. Disposition: **not-applicable**. Reason: Lamp-specific artwork does not identify this controller or its peer-advertised board applications; keep the existing shared application identity.
 - Omitted/replaced code: `settings/diagnostics/about/power/refresh/reconnect/window/moon/sun/system/menu/chevron/bell/sound/upload/keyboard/terminal/network SVG consumers`. Disposition: **pending**. Reason: Reusable generic symbols need actual source-consumer mapping with the existing Phosphor system. Do not certify them from four notification paths or silently substitute application branding.
 - Omitted/replaced code: `IconName reusable API, class and labeled role=img/aria-label variant`. Disposition: **pending**. Reason: Current four icons are decorative within independently labeled status rows/buttons. A full searchable/labeled generic Web icon API and actual accessibility consumers remain useful pending work; TSX framework is not imported as a second renderer.
-- Test-code evidence: `tests/toasts_test.mjs:28 [UTF8-LF sha256=8bd4f9c06559a783056563f4408b4c4e5168292447b1de837de3be1cccac3235; anchor=aria-hidden]`.
+- Test-code evidence: `tests/toasts_test.mjs:28 [UTF8-LF sha256=1be80e48e5a8a6e8bab185f6036cfee4daede77e1535bc63c5746688fc14faa7; anchor=aria-hidden]`.
 - Remaining: Map remaining generic symbols/labeled API to real native/Web/mobile consumers, preserve Phosphor/shared-brand identity and verify accessible visual parity.
 
 ### RayanLamp: `webui/src/components/toasts.tsx`
@@ -6059,7 +6059,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Origina
 - Retained: Actual ToastRegion polite/nonatomic live region, per-ID status rows, tone icon selection, title/message and localized dismiss button adapted to shipped DOM queue. All real Web reports and saved-identity notices use this queue outside authenticated workspace.
 - Retained: Status SVG geometry and keyed store lifetimes imported from actual dependencies; bounded timers, hover/focus holds, safe text nodes, keyboard dismissal and teardown added without storage or network writes.
 - Omitted/replaced code: `Preact signal-driven JSX/ToastRegion and Icon framework dependency`. Disposition: **replaced**. Reason: ESP embeds classic scripts and existing DOM controls. Actual row, live-region, keyed queue and SVG semantics are adapted without a second UI framework; store/Icon get separate full-read comparisons with remaining generic contracts.
-- Test-code evidence: `tests/toasts_test.mjs:24 [UTF8-LF sha256=8bd4f9c06559a783056563f4408b4c4e5168292447b1de837de3be1cccac3235; anchor=older expiry must not erase newer notification]`.
+- Test-code evidence: `tests/toasts_test.mjs:24 [UTF8-LF sha256=1be80e48e5a8a6e8bab185f6036cfee4daede77e1535bc63c5746688fc14faa7; anchor=older expiry must not erase newer notification]`.
 - Scoped advantage: Four owned/cancelled timers, bounded duration/text, independent hover/focus holds, focus-preserving keyboard dismissal and idempotent teardown prevent newer-message expiry and lifetime leaks; executable shipped-module DOM tests cover these contracts. This is a scoped queue improvement, not screenshot or whole-app superiority.
 - Remaining: Validate actual browser responsive/open-modal placement and screenshots; complete shared native/Web/mobile delivery and Windows OS notification surfaces. DOM tests are not pixels, deployment or all-feature parity.
 
@@ -6067,11 +6067,11 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Origina
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `26c99032222edf27a1b59476d107abc7aadbaf497b7e47887e4aa52460e0c331`.
 
-- Target: `tests/rayanlamp_reuse_test.mjs:34 [UTF8-LF sha256=ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b; anchor=Actual donor local-event + cross-tab delivery]`.
+- Target: `tests/rayanlamp_reuse_test.mjs:34 [UTF8-LF sha256=a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af; anchor=Actual donor local-event + cross-tab delivery]`.
 - Retained: Actual immediate preference delivery, persistence and malformed-value rejection adapted to locale channel; adds blocked API, no echo/write and listener teardown cases.
 - Omitted/replaced code: `Static-direct/embedded-relay defaults and unsafe stored lamp URL fixtures`. Disposition: **pending**. Reason: Their actual transport is not imported; running those fixtures against a nonexistent Pakar relay adapter would manufacture coverage.
 - Omitted/replaced code: `Vitest environment/mocks`. Disposition: **replaced**. Reason: Built-in Node VM and deterministic host doubles replace the donor test dependency.
-- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:61 [UTF8-LF sha256=ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b; anchor=No identical persistence writes]`.
+- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:61 [UTF8-LF sha256=a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af; anchor=No identical persistence writes]`.
 - Remaining: Restore URL/default fixtures when actual connection adapter is implemented.
 
 ### RayanLamp: `webui/src/connection-preferences.ts`
@@ -6083,17 +6083,17 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Retained: Actual validated local-event/BroadcastChannel announcement, subscription and teardown adapted to client language/direction. Adds storage fallback, blocked-channel containment, no identical writes and no receiver rebroadcast. Board drafts/secrets remain separate.
 - Omitted/replaced code: `ConnectionMode auto/relay/direct, static export defaults, normalizeLampBaseURL and lampURL preference`. Disposition: **pending**. Reason: Lamp transport/endpoints differ from Pakar authenticated board/USB contracts. The event mechanism is imported; real endpoint/relay selection requires full direct-protocol/security review, not a cosmetic mode switch.
 - Omitted/replaced code: `Unconditional save/broadcast persistence`. Disposition: **replaced**. Reason: Pakar low-write policy skips identical values and receivers never rebroadcast.
-- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:59 [UTF8-LF sha256=ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b; anchor=Receiver never echoes]`.
+- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:59 [UTF8-LF sha256=a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af; anchor=Receiver never echoes]`.
 - Remaining: Port applicable endpoint security/connection selection with full transport review; verify real tabs and untouched device drafts.
 
 ### RayanLamp: `webui/src/haptics.test.ts`
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `5aa8461039519fb310b6cb8d22eb9c26ae9ea63bfd41a6fe586434ea0b8e6525`.
 
-- Target: `tests/rayanlamp_reuse_test.mjs:1 [UTF8-LF sha256=ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b; anchor=Adapted from RayanLamp haptics.test.ts]`.
+- Target: `tests/rayanlamp_reuse_test.mjs:1 [UTF8-LF sha256=a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af; anchor=Adapted from RayanLamp haptics.test.ts]`.
 - Retained: Actual fixed patterns, message/audio normalization, absent API, hidden/reduced-motion, host exceptions and throwing condition tests adapted to Node assertions; adds mutable-host and unknown-cue protections.
 - Omitted/replaced code: `Vitest describe/it/vi mocks`. Disposition: **replaced**. Reason: Existing Node assertions and VM doubles execute donor scenarios without new dependencies or a donor Web build cache.
-- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:26 [UTF8-LF sha256=ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b; anchor=fixedHapticPatterns]`.
+- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:26 [UTF8-LF sha256=a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af; anchor=fixedHapticPatterns]`.
 - Remaining: Android vibration remains separate platform acceptance.
 
 ### RayanLamp: `webui/src/haptics.ts`
@@ -6104,7 +6104,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot-no-git`. Origina
 - Target: `firmware/esp/src/WebUi.h:412 [UTF8-LF sha256=612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a; anchor=id="uiHaptics"]`.
 - Retained: Actual pulse constants, bounded audio cues, optional vibration API, fail-closed visibility/reduced-motion conditions, copied pattern arrays and host-error containment adapted into embedded JavaScript. Opt-in Touch feedback defaults off, disabled when unsupported; only explicit command HTTP results trigger it, never polling/telemetry/frames.
 - Omitted/replaced code: `TypeScript interfaces/private/type annotations`. Disposition: **replaced**. Reason: ESP serves dependency-free JavaScript. Actual runtime bodies are retained; explicit own-property cue validation replaces a compile-time-only guarantee.
-- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:24 [UTF8-LF sha256=ad52c17e23dfdef5a94f6c7af987f3a62ec2660eb8a48102a3c591baa9959f5b; anchor=h.trigger('arbitrary raw frame')]`.
+- Test-code evidence: `tests/rayanlamp_reuse_test.mjs:24 [UTF8-LF sha256=a0cf1105ee49c04fe068a63b03fa0725bf0b137c6807e0b166d15b5ca7d384af; anchor=h.trigger('arbitrary raw frame')]`.
 - Scoped advantage: Unknown JavaScript cues now fail closed at runtime.
 - Remaining: Verify supported Android vibration and actual command lifecycle. HTTP acceptance is not actuator readback.
 
@@ -6146,7 +6146,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Omitted/replaced code: `signal/computed/batch framework ownership`. Disposition: **replaced**. Reason: Actual notification queue/filter is adapted to the current DOM engine without introducing Preact to ESP. Full generic signal/configuration ownership is not claimed.
 - Omitted/replaced code: `applyBootstrap/applySnapshot/beginControllerConnection/markControllerAvailable/markControllerUnavailable/derivePhase, config/revision and client ownership`. Disposition: **pending**. Reason: Need actual contracts.ts/api.ts transport comparison and mapped real Pakar capabilities, diagnostic state and epochs. Only the notification subcontract is integrated, not the entire store.
 - Omitted/replaced code: `mergeRecord/updateConfig/configureSettingsPersistence/flushConfigPatch/acceptRemoteConfig/pendingSettingsPatch and theme/locale/motion persistence`. Disposition: **pending**. Reason: Useful generic draft/conflict/ownership behavior requires full applicable device/client lifecycle integration. Donor optimistic failed-patch retention/retry must not automatically replay uncertain Pakar writes; current explicit ACK/readback/no-replay contracts remain authoritative.
-- Test-code evidence: `tests/toasts_test.mjs:48 [UTF8-LF sha256=8bd4f9c06559a783056563f4408b4c4e5168292447b1de837de3be1cccac3235; anchor=evicted timers must be cancelled]`.
+- Test-code evidence: `tests/toasts_test.mjs:48 [UTF8-LF sha256=1be80e48e5a8a6e8bab185f6036cfee4daede77e1535bc63c5746688fc14faa7; anchor=evicted timers must be cancelled]`.
 - Remaining: Compare actual API/contracts dependencies and adapt applicable bootstrap/revision/draft/client lifecycle with positive ACK/readback, secret handling and no uncertain replay. Finish real runtime/synchronized-client acceptance.
 
 ### RayanLamp: `webui/src/sync.test.ts`
@@ -6160,7 +6160,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Omitted/replaced code: `per-target sync names, event-disabled config synchronization, lease owner, initial-sync/HTTP/follower audio policies`. Disposition: **pending**. Reason: Useful generic multi-tab/config/audio tests await their full implementation and validated dependencies. Existing independent clients and semantic haptics are not evidence of leadership parity.
 - Omitted/replaced code: `marks coordinator unavailable/graceful close and renews browser session using Go API`. Disposition: **pending**. Reason: Pakar 401 status GET fails closed to login, without creating a Go session or automatically replaying mutation. Readback-before-open recovery is adapted; generic coordinator shutdown/typed availability tests remain pending.
 - Omitted/replaced code: `Vitest/Preact store fixtures and TestBroadcastChannel/TestRealtimeSocket classes`. Disposition: **replaced**. Reason: Built-in Node VM and purpose-built HTTP/socket/timer fixtures execute shipped Pakar code, without adding a second framework or donor build. Channel fixtures remain pending leadership implementation.
-- Test-code evidence: `tests/realtime_retry_test.mjs:73 [UTF8-LF sha256=eb0389b88af13aefa313cf62082cedbdc2c6bde193154f2ee5ffcedc675c41b6; anchor=Execute actual Web connectWs + refreshAuthenticated + api]`.
+- Test-code evidence: `tests/realtime_retry_test.mjs:73 [UTF8-LF sha256=6024740ca46d6e6e6b2f54124f10cd083c278e3eabc6865c6c4e35d4cb6412f8; anchor=Execute actual Web connectWs + refreshAuthenticated + api]`.
 - Remaining: Port every useful remaining donor sequence/lease/config/audio/shutdown assertion with its actual consumer; no whole-test-file parity claim.
 - Remaining: Real LAN, multi-client and native/mobile lifecycle verification remains required.
 
@@ -6176,7 +6176,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Omitted/replaced code: `handleServerEvent/onChannelMessage/acceptSnapshot and serverSequenceDecision`. Disposition: **pending**. Reason: Generic typed snapshot/config/diagnostic projection, revisions and epoch resets remain pending actual Pakar advertised contracts. Existing source-bound contextual readiness/no-replay ownership is retained; do not invent server event sequences or treat arbitrary channel objects as authoritative.
 - Omitted/replaced code: `handleDirectStateCue initial on/off transition`. Disposition: **not-applicable**. Reason: Lamp state transitions are not table/first-wins business. Adapt only future discovered board events, not hardcode lamp state.
 - Omitted/replaced code: `audioCueCount/playDirectCue, generic message/haptic/diagnostic fanout and setConnectionState/relayDisconnectReason`. Disposition: **pending**. Reason: Existing semantic haptics/toast/trace helpers do not implement full leader-only audible notification or graceful coordinator state. Generic audio/count/shutdown semantics remain useful pending exact firmware/host event and capability mapping.
-- Test-code evidence: `tests/realtime_retry_test.mjs:22 [UTF8-LF sha256=eb0389b88af13aefa313cf62082cedbdc2c6bde193154f2ee5ffcedc675c41b6; anchor=Donor prepareReconnect is completed before any replacement socket]`.
+- Test-code evidence: `tests/realtime_retry_test.mjs:22 [UTF8-LF sha256=6024740ca46d6e6e6b2f54124f10cd083c278e3eabc6865c6c4e35d4cb6412f8; anchor=Donor prepareReconnect is completed before any replacement socket]`.
 - Remaining: Read/adapt contracts.ts, direct-api/client-factory and complete store consumers; restore generic typed multi-tab/revision/diagnostic/audio contracts with factual capabilities.
 - Remaining: Verify real reconnect/session loss across LAN and native/mobile interfaces; shipped-module VM tests are not physical/network acceptance.
 
@@ -6207,7 +6207,7 @@ Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Origin
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `34e3226492ade7bb892a13f8e5e9f97d02c3f79aa4b30df80755c5e2e583e6b6`.
 
-- Target: `tests/toasts_test.mjs:8 [UTF8-LF sha256=8bd4f9c06559a783056563f4408b4c4e5168292447b1de837de3be1cccac3235; anchor=function declarationsFor]`.
+- Target: `tests/toasts_test.mjs:8 [UTF8-LF sha256=1be80e48e5a8a6e8bab185f6036cfee4daede77e1535bc63c5746688fc14faa7; anchor=function declarationsFor]`.
 - Target: `assets/web/toasts.css:5 [UTF8-LF sha256=f117a82f068e3051caa053f9360617b37014f863adcf26c24bbd88358185d9b2; anchor=.app-toast{display:flex;align-items:center;]`.
 - Retained: Actual declarationsFor CSS extraction and both status/copy center-axis assertions ported against shipped canonical toast CSS. Added executable ID queue/focus/hover/safe DOM and one-pass embedding regressions.
 - Omitted/replaced code: `Vitest source file access against entire src/styles/app.css`. Disposition: **replaced**. Reason: Built-in Node assertions read actual assets/web/toasts.css. Relevant donor style/viewport/accessibility slices were adapted; entire app.css remains pending and is not certified by this test import.

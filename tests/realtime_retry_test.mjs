@@ -82,7 +82,7 @@ const live=vm.createContext({Headers,AbortController,URL,crypto:webcrypto,Math:O
   WebSocket:class {constructor(url){if(constructorFails)throw Error('socket unavailable');this.url=url;this.sent=[];sockets.push(this);activity.push('socket')}close(){}send(value){this.sent.push(value)}}
 });
 vm.runInContext(read('assets/web/rayanlamp.js')+'\n'+read('assets/web/localization.js')+'\n'+
-  read('assets/web/peer-http.js')+'\nconst peerHttp=createPeerHttp();\n'+read('assets/web/browser-console.js')+'\nlet authenticated=true,webSocketPaused=false,socket=null;\n'+module+'\n'+
+  read('assets/web/peer-http.js')+'\nconst peerHttp=createPeerHttp();\n'+read('assets/web/browser-console.js')+'\n'+read('assets/web/command-transport.js')+'\nlet authenticated=true,webSocketPaused=false,socket=null;\n'+module+'\n'+
   web.slice(web.indexOf('async function api('),web.indexOf('function showLogin()'))+'\n'+
   web.split('\n').find(line=>line.startsWith('async function refreshAuthenticated('))+'\n'+
   web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post('))+

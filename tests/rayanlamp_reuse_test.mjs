@@ -75,7 +75,10 @@ vm.runInContext(source,blocked);
 assert.equal(vm.runInContext("announceLocalePreferences({language:'fa',direction:'rtl'})",blocked),true);
 // Real controls invoke feedback only for explicit commands, not status polling.
 assert(web.includes('id="uiHaptics"'));
-assert(web.includes("commandHaptic('command.success');await refresh()"));
+const post=web.split('\n').find(line=>line.startsWith('async function post('));
+assert(post.includes('await controlRequest(path,data)'));
+assert(post.includes('await refresh()'));
+assert(post.indexOf("commandHaptic('command.success')")>post.indexOf('await refresh()'),'Success feedback follows acknowledged command and authoritative refresh');
 assert(!web.split('\n').find(line=>line.startsWith('async function refresh()')).includes('commandHaptic'));
 assert(read('desktop/src/ui/cell_search.rs').includes('super::digits::latin(query)'));
 console.log('RayanLamp haptics, digit input and preference-channel adaptation tests passed.');

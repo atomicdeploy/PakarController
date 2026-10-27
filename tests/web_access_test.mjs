@@ -6,14 +6,18 @@ const source=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url)
 const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];
 // Execute the actual embedded Web application with a DOM/HTTP test double.
 // These fixtures are not hardware observations or live firmware proof.
-function element(){return {showModal(){this.open=true},close(){this.open=false},value:'',checked:false,hidden:false,textContent:'',className:'',children:[],get options(){return this.children},replaceChildren(...e){this.children=[...e]},dataset:{},style:{},listeners:{},classList:{toggle(){}},appendChild(e){this.children.push(e)},append(...e){this.children.push(...e)},setAttribute(){},addEventListener(type,handler){const previous=this.listeners[type];this.listeners[type]=(...args)=>{previous?.(...args);return handler(...args)}},querySelector(){return null},querySelectorAll(){return []}}}
+function element(){const node={insertBefore(child){child.parentElement=this;this.children.push(child)},closest(selector){for(let n=this;n;n=n.parentElement){if(selector[0]==='.'&&n.className.split(' ').includes(selector.slice(1)))return n}return null},checkValidity(){const n=Number(this.value);return this.type!=='number'||this.value!==''&&Number.isFinite(n)&&(this.min===undefined||n>=Number(this.min))&&(this.max===undefined||n<=Number(this.max))},showModal(){this.open=true},close(){this.open=false},value:'',checked:false,hidden:false,textContent:'',className:'',children:[],get options(){return this.children},replaceChildren(...e){this.children=[...e]},dataset:{},style:{},listeners:{},classList:{toggle(){},add(){},remove(){}},appendChild(e){e.parentElement=this;this.children.push(e)},append(...e){for(const child of e){child.parentElement=this;this.children.push(child)}},prepend(...e){this.children.unshift(...e)},setAttribute(){},addEventListener(type,handler){const previous=this.listeners[type];this.listeners[type]=(...args)=>{previous?.(...args);return handler(...args)}},querySelector(){return null},querySelectorAll(){return []}};Object.defineProperty(node,'id',{get(){return this._id},set(value){this._id=value;nodes[value]=this}});return node;}
 const nodes=Object.fromEntries([...source.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],element()]));
+nodes['workspace .layout']=element();
+for(const node of Object.values(nodes))if(node!==nodes['workspace .layout'])node.parentElement=nodes['workspace .layout'];
+const tableCard=element();tableCard.className='card';nodes['workspace .layout'].append(tableCard);tableCard.append(nodes.grid);
 for(const node of Object.values(nodes))node.insertAdjacentElement=(_position,child)=>{nodes[child.id]=child;};
 nodes.workspace.hidden=true;
 let authEnabled=true,failStatus=false;
 let signedIn=false,user='admin',password='pakarcontroller',socketCount=0,statusRequests=0,hostname='test-fixture',displayName='Fixture table';
 const calls=[];
 const context=vm.createContext({...nodes,Headers,AbortController,URL,URLSearchParams,FormData,Uint8Array,TextEncoder,DataView,atob,console,
+  addEventListener(){},removeEventListener(){},
   performance,crypto:webcrypto,navigator:{platform:'fixture',hardwareConcurrency:4},screen:{width:1280,height:720},
   document:{getElementById:id=>nodes[id]||null,addEventListener(){},documentElement:{dataset:{},style:{setProperty(){}}},querySelector:s=>nodes[s.slice(1)],querySelectorAll:()=>[],createElement:element,createTextNode:text=>({textContent:text}),createElementNS:()=>({...element(),namespaceURI:'svg'})},
   location:{protocol:'http:',host:'pakarcontroller'},setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},

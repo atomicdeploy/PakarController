@@ -124,7 +124,7 @@ Object.assign(context,{location:{protocol:'http:',host:'ledboard.local'},wsState
   clearTimeout(){},setTimeout:callback=>{timers.push(callback);return timers.length},
   WebSocket:class {constructor(url){this.url=url;this.sent=[];sockets.push(this)}send(x){this.sent.push(x)}close(){this.closed=true}}});
 context.refreshAuthenticated=async()=>{};
-vm.runInContext('let authenticated=true,webSocketPaused=false,socket=null;\n'+read('assets/web/realtime-retry.js')+'\n'+web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post(')),context);
+vm.runInContext('let authenticated=true,webSocketPaused=false,socket=null;\n'+read('assets/web/realtime-retry.js')+'\n'+read('assets/web/command-transport.js')+'\n'+web.slice(web.indexOf('function connectWs()'),web.indexOf('async function post(')),context);
 clear();run('connectWs()');const first=sockets[0];first.onopen();
 assert.equal(context.wsState.textContent,'WebSocket live');
 run("uiLanguagePreference='fa';applyLocalization()");

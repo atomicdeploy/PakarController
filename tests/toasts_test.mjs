@@ -57,7 +57,8 @@ assert(!/innerHTML|localStorage|fetch\(/.test(module),'no injected markup, persi
 assert.match(css,/prefers-reduced-motion/);assert.match(css,/forced-colors/);assert.match(css,/safe-area-inset-bottom/);assert.match(css,/\[dir=rtl\]/);
 const web=read('firmware/esp/src/WebUi.h');
 assert.equal(web.split('// BEGIN RAYANLAMP TOASTS').length,2);assert(web.includes(module));assert(web.includes(css));
-assert(!web.includes('notice.textContent='),'all shipped notifications must go through one queue');
+// Editor-local field notices are not the global toast region.
+assert(!web.includes('function report(e,tone){notice.textContent='),'Global report must not replace the shared queue');
 assert.match(web,/function report\(e,tone\)[^\n]*createToastController/);
 assert.match(web,/globalThis\.addEventListener\?\.\('pagehide'/);
 assert(read('assets/web/localization.js').includes('webToasts?.refresh()'));
