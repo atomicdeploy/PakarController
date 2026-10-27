@@ -1500,59 +1500,59 @@
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn find_field(",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn table_helper(",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn cell_context_menu(",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn draw_table(",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6"
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b"
         }
       ],
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn find_row_fills_responsive_panel_without_a_fixed_width_cap()",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn table_canvas_contains_every_staggered_cell_and_focus_padding()",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn visual_context_selection_matches_rows_columns_and_reordered_ids()",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn table_actions_are_gated_by_route_capabilities_selection_pending_and_lock()",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn find_icon_is_centered_inside_stable_editor_slot()",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
           "anchor": "fn table_helpers_reserve_height_and_warn_only_for_actual_cautions()",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a"
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19"
         },
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn table_scene_fits_small_dock_and_zooms_at_pointer()",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6"
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b"
         }
       ],
       "omissions": [
@@ -1683,7 +1683,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "egui::Scene::new()",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6"
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b"
         }
       ],
       "proof": [
@@ -2449,12 +2449,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -2488,12 +2488,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -2573,7 +2573,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -2648,19 +2648,19 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "78d374b149b483bc8203a0e879c3cf10905d1e9b8ab2a3dfc6becc2d15104746",
+          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -2694,19 +2694,19 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "78d374b149b483bc8203a0e879c3cf10905d1e9b8ab2a3dfc6becc2d15104746",
+          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -2745,7 +2745,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "config.flags.with_dma=true"
         },
         {
@@ -2757,7 +2757,7 @@
       "proof": [
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "Compile the ACTUAL S3 output worker"
         }
       ],
@@ -6505,7 +6505,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "Fixture::rxCorruptBit=23*6*24"
         }
       ],
@@ -6540,7 +6540,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "void LedOutput::work(){"
         },
         {
@@ -6565,14 +6565,14 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "bool LedOutput::requestBackend("
         }
       ],
       "proof": [
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void pinSetupFailure(unsigned step)"
         },
         {
@@ -6582,12 +6582,12 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void runtimeSwitch(){"
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void runtimeResources(){"
         },
         {
@@ -6623,7 +6623,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "void LedOutput::work(){"
         },
         {
@@ -6650,7 +6650,7 @@
       "proof": [
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void pinSetupFailure(unsigned step)"
         },
         {
@@ -6685,7 +6685,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "void LedOutput::work(){"
         },
         {
@@ -6712,7 +6712,7 @@
       "proof": [
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void pinSetupFailure(unsigned step)"
         },
         {
@@ -6747,7 +6747,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "void LedOutput::work(){"
         },
         {
@@ -6774,7 +6774,7 @@
       "proof": [
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void pinSetupFailure(unsigned step)"
         },
         {
@@ -6809,7 +6809,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "void LedOutput::work(){"
         },
         {
@@ -6836,7 +6836,7 @@
       "proof": [
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void pinSetupFailure(unsigned step)"
         },
         {
@@ -6871,7 +6871,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "void LedOutput::work(){"
         },
         {
@@ -6898,7 +6898,7 @@
       "proof": [
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void pinSetupFailure(unsigned step)"
         },
         {
@@ -8295,12 +8295,12 @@
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a",
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19",
           "anchor": "pub(super) fn current_pixel_frame("
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "value[\"pixel_preview\"]"
         },
         {
@@ -9388,7 +9388,7 @@
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "void TonePlayer::update(uint32_t now)"
         }
       ],
@@ -9542,7 +9542,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "kCueWelcome40Led"
         },
         {
@@ -9609,7 +9609,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void resetGame(bool playWelcome = true)"
         },
         {
@@ -10348,7 +10348,7 @@
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "void TonePlayer::update(uint32_t now)"
         }
       ],
@@ -10365,7 +10365,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -10425,7 +10425,7 @@
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "void TonePlayer::update(uint32_t now)"
         }
       ],
@@ -10442,7 +10442,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -10497,7 +10497,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void chooseWinner(uint8_t button)"
         },
         {
@@ -10577,7 +10577,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const uint16_t durations[kCueCount]",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -10616,7 +10616,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const uint16_t durations[kCueCount]",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -12649,7 +12649,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18"
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -13151,7 +13151,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18"
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -13209,7 +13209,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18"
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
         }
       ],
       "omissions": [
@@ -13270,7 +13270,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18",
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13286,7 +13286,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18"
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -13433,7 +13433,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -13549,7 +13549,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -14648,7 +14648,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18",
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -15078,7 +15078,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18",
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15403,7 +15403,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18",
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
           "anchor": "bool authenticate()"
         },
         {
@@ -15612,7 +15612,7 @@
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a",
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19",
           "anchor": "Even identical values require the exact operation ID"
         },
         {
@@ -16086,7 +16086,7 @@
           "path": "desktop/src/ui/dropdown.rs"
         },
         {
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a",
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19",
           "anchor": "fn cell_order_controls(",
           "path": "desktop/src/ui/cell_table.rs"
         },
@@ -16106,7 +16106,7 @@
           "path": "desktop/src/ui/device_settings.rs"
         },
         {
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "super::dropdown::ComboBox",
           "path": "desktop/src/ui/shell.rs"
         },
@@ -16292,12 +16292,12 @@
         },
         {
           "path": "desktop/src/ui/button_geometry_tests.rs",
-          "sha256": "2930a5e706fa835f704f097c44e664903aeed7f11b63557408ae2a8411d66219",
+          "sha256": "4985dc82110f0948c5153b5e9b7b472054b0f62d10a8e2dbb6a38a664848a6a1",
           "anchor": "fn button_hit_slots_and_caption_ink_survive_every_interaction_state()"
         },
         {
           "path": "desktop/src/ui/button_geometry_tests.rs",
-          "sha256": "2930a5e706fa835f704f097c44e664903aeed7f11b63557408ae2a8411d66219",
+          "sha256": "4985dc82110f0948c5153b5e9b7b472054b0f62d10a8e2dbb6a38a664848a6a1",
           "anchor": "fn semantic_actions_preserve_inherited_zero_stroke_menu_geometry()"
         }
       ],
@@ -17604,7 +17604,7 @@
         },
         {
           "path": "desktop/src/ui/dialog.rs",
-          "sha256": "b001d9fac54ee9d364479f3cb2d7ed5f5eb01b4c8ed72169a20641e8701610b2",
+          "sha256": "854b8e1ca332650ad9964cb3e36f6a6304607502e953fa1bdf660bafb00f117f",
           "anchor": "pub fn singleline_text_edit"
         },
         {
@@ -18099,12 +18099,12 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "fn save_status_bar_preferences("
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "let firmware_progress = self.firmware_observation().filter(|p| p.active);"
         },
         {
@@ -18300,7 +18300,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18",
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
@@ -18459,7 +18459,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "fn synchronize_context("
         },
         {
@@ -18554,7 +18554,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -18893,7 +18893,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -19401,7 +19401,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "crate::application_shortcuts::take_action"
         }
       ],
@@ -19495,12 +19495,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "78d374b149b483bc8203a0e879c3cf10905d1e9b8ab2a3dfc6becc2d15104746",
+          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "startsAt = stepEndsAt_"
         },
         {
@@ -19553,18 +19553,18 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.setMuted(false)"
         },
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -19589,7 +19589,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "fifteen finite cues",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         }
       ],
       "improvement": "Tested late-loop and wraparound timing without cumulative melody-length drift; initialized default construction; validation at enqueue; mute changes publish immediately; unmute no longer restarts an interrupted note."
@@ -19606,12 +19606,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "78d374b149b483bc8203a0e879c3cf10905d1e9b8ab2a3dfc6becc2d15104746",
+          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -19638,12 +19638,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -19660,17 +19660,18 @@
         "PCController already uses Timer1 hardware toggling; that is reuse, not a Pakar invention.",
         "Reread complete donor source through EOF. Adapt MCU-owned persistent Silent bit independent of host/Windows notification audio, capability-acknowledged controls, explicit unknown/pending/verified states and full-record preservation. Native Preferences Board page uses existing PCController GET/SET/GET with real AVR ACK and persistent readback over the selected fenced HTTP or USB owner only; Web and Flutter Preferences use the same living contract. No unsupported buzzer is invented, no automatic uncertain mutation replay, and unchanged persisted flags skip EEPROM writes.",
         "Silent changes increment tone revision immediately (including no active note); unmute follows donor behavior and does not restart an interrupted note. Timeline metadata remains available for independently configured host mirroring; all fourteen cues stay electrically silent while muted.",
-        "The existing Timer1/nonblocking player now also owns a finite 240ms attention cue, additive ID14; cue count is ACK-gated across all clients. Silent/Prog behavior and original melodies remain unchanged."
+        "The existing Timer1/nonblocking player now also owns a finite 240ms attention cue, additive ID14; cue count is ACK-gated across all clients. Silent/Prog behavior and original melodies remain unchanged.",
+        "2026-10-28 scoped audio review: reread actual TonePlayer.cpp/.h through EOF. Retain hardware Timer1 and the existing ring. One validated flash schedule now runs on local deadlines, duplicate IDs cannot restart it, and private timeline state reports existing Playing/Complete values. Queue storage is reused without increasing static SRAM. Actual AVR ACK and update readback are separate from pending audible acceptance."
       ],
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "78d374b149b483bc8203a0e879c3cf10905d1e9b8ab2a3dfc6becc2d15104746",
+          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "startsAt = stepEndsAt_"
         },
         {
@@ -19712,6 +19713,11 @@
           "path": "tools/test-audio.ps1",
           "anchor": "Audio ·",
           "sha256": "41500a0595fe030dd36f70175b56ee6f16ff62fe3bd1b2d9bf9bb29e94f90b30"
+        },
+        {
+          "path": "libraries/BoardCore/src/FlashToneSequence.h",
+          "sha256": "5ab34774102a79ba4591b5f79a66fadf4e2cc5aecf672c02929595cb89908220",
+          "anchor": "namespace BoardCore { namespace FlashToneSequence"
         }
       ],
       "omissions": [
@@ -19733,18 +19739,18 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.setMuted(false)"
         },
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -19769,7 +19775,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "fifteen finite cues",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -19791,12 +19797,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "78d374b149b483bc8203a0e879c3cf10905d1e9b8ab2a3dfc6becc2d15104746",
+          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "5ed8cc8ff5e68c01d86da2df01257715ec33299c90cc25fe8b09bd88e317631b",
+          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -19823,12 +19829,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513",
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -19907,7 +19913,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6"
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -19988,7 +19994,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "icons::searchable_workspace_icon_picker"
         },
         {
@@ -19998,7 +20004,7 @@
         },
         {
           "path": "desktop/src/ui/key_boxes.rs",
-          "sha256": "9b63490027a61b6e46fc9d73f643c75c774f60102dc81e175da7d3447ae9840a",
+          "sha256": "eb5a980c1b2cf7498e43bf79510603dec52cd5e922f29cf0bcbb81d5d56b89b8",
           "anchor": "fn context_menu("
         }
       ],
@@ -20031,7 +20037,7 @@
         },
         {
           "path": "desktop/src/ui/key_boxes.rs",
-          "sha256": "9b63490027a61b6e46fc9d73f643c75c774f60102dc81e175da7d3447ae9840a",
+          "sha256": "eb5a980c1b2cf7498e43bf79510603dec52cd5e922f29cf0bcbb81d5d56b89b8",
           "anchor": "fn box_clicks_reuse_selection_and_secondary_menu_never_actuates()"
         },
         {
@@ -20082,12 +20088,12 @@
         },
         {
           "path": "desktop/src/ui/button_geometry_tests.rs",
-          "sha256": "2930a5e706fa835f704f097c44e664903aeed7f11b63557408ae2a8411d66219",
+          "sha256": "4985dc82110f0948c5153b5e9b7b472054b0f62d10a8e2dbb6a38a664848a6a1",
           "anchor": "fn button_hit_slots_and_caption_ink_survive_every_interaction_state()"
         },
         {
           "path": "desktop/src/ui/button_geometry_tests.rs",
-          "sha256": "2930a5e706fa835f704f097c44e664903aeed7f11b63557408ae2a8411d66219",
+          "sha256": "4985dc82110f0948c5153b5e9b7b472054b0f62d10a8e2dbb6a38a664848a6a1",
           "anchor": "fn semantic_actions_preserve_inherited_zero_stroke_menu_geometry()"
         }
       ],
@@ -20143,7 +20149,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -20194,7 +20200,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -20247,12 +20253,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -20292,12 +20298,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -20383,7 +20389,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -20439,7 +20445,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -20495,7 +20501,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -20618,7 +20624,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "config.flags.with_dma=true"
         },
         {
@@ -20655,7 +20661,7 @@
       "proof": [
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "Compile the ACTUAL S3 output worker"
         },
         {
@@ -21800,7 +21806,7 @@
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a",
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19",
           "anchor": "fn manager_selector("
         },
         {
@@ -21858,12 +21864,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a",
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19",
           "anchor": "fn hover_strengthens_existing_cell_edge_without_replacing_selection_identity()"
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a",
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19",
           "anchor": "fn opted_in_semantic_shapes_use_exact_fill_without_moving_the_hit_slot()"
         },
         {
@@ -21873,7 +21879,7 @@
         },
         {
           "path": "desktop/src/ui/cell_table.rs",
-          "sha256": "d010ece42e30b3295dda9e07e4a3ba4509edf7d40dfe4d800801bf347b7d813a",
+          "sha256": "a895f275243c9079783aa7f0165bac1d21f692e84b30f8aaeed4fbcc52cf8a19",
           "anchor": "fn manager_hit_slots_text_and_wrap_never_follow_hover_or_stroke_width()"
         },
         {
@@ -22427,7 +22433,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22483,7 +22489,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22539,7 +22545,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22595,7 +22601,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "e858d0260382efbe29007af778e562c43f6ebef17f7fc74b514ac6b1f9961fde",
+          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22711,7 +22717,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "value[\"tray_shell\"]"
         },
         {
@@ -22870,7 +22876,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6"
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b"
         }
       ],
       "omissions": [
@@ -22962,7 +22968,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18",
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -23084,7 +23090,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "986f729611a759fe602f8eaee0bf1312d598a7bbd7209209c1b5df2c0346f513"
+          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -23817,7 +23823,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "bool pending=false;"
         },
         {
@@ -23832,7 +23838,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18",
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -23887,12 +23893,12 @@
         },
         {
           "path": "desktop/src/native_workspace.rs",
-          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f",
+          "sha256": "15688543f8999613f064f17e60d453f50d59a05c564e927379fb86d50bc4f0d8",
           "anchor": "pub pixel_probe:"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "fn send_pixel_probe("
         },
         {
@@ -23913,7 +23919,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18"
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -23956,7 +23962,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void functional()"
         },
         {
@@ -24124,7 +24130,7 @@
         },
         {
           "path": "firmware/esp32s3/src/LedOutput.cpp",
-          "sha256": "3d6ce05b234191bb6d18eccff7764f7b87a28400af9fb6cf9619b19084114053",
+          "sha256": "45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0",
           "anchor": "bool pending=false;"
         },
         {
@@ -24139,7 +24145,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18",
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24189,12 +24195,12 @@
         },
         {
           "path": "desktop/src/native_workspace.rs",
-          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f",
+          "sha256": "15688543f8999613f064f17e60d453f50d59a05c564e927379fb86d50bc4f0d8",
           "anchor": "pub pixel_probe:"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6",
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b",
           "anchor": "fn send_pixel_probe("
         },
         {
@@ -24215,7 +24221,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "016d1cc2fd9142a166ee6a13664eda1a819966b16f24a6881753625f2ca4ba18"
+          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
         }
       ],
       "omissions": [
@@ -24252,7 +24258,7 @@
         },
         {
           "path": "tests/led_worker_test.cpp",
-          "sha256": "974f5220db05c905d74771294cff1486ef0a35fd13926678bbf12bb3c744c6c0",
+          "sha256": "b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d",
           "anchor": "void functional()"
         },
         {
@@ -24404,17 +24410,17 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "43ee0032dd72b220f2ce6114fc6f0beee46eb5dc286c9eb7cfc27eef180074e6"
+          "sha256": "26fdffecec4401d4c652146c464782e15d8740ca134e4063e3fc11810ede996b"
         },
         {
           "path": "desktop/src/ui/layout.rs",
           "anchor": "presentation_context()",
-          "sha256": "8f46efe56d3579c0aeb1fe177ef76c0f548041a0af04a30f98f0ddbfc23202cc"
+          "sha256": "b5cf537aa8ff41c7302ed081a9c5d0821af271c3042b447cceb3fec8a9d70300"
         },
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "pub struct Store",
-          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f"
+          "sha256": "15688543f8999613f064f17e60d453f50d59a05c564e927379fb86d50bc4f0d8"
         },
         {
           "path": "desktop/src/config.rs",
@@ -24461,7 +24467,7 @@
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "fn workspace_roundtrip_preserves_unified_selection_drafts_and_scroll_without_authority",
-          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f"
+          "sha256": "15688543f8999613f064f17e60d453f50d59a05c564e927379fb86d50bc4f0d8"
         },
         {
           "path": "mobile/test/workspace_lifecycle_test.dart",
@@ -24530,14 +24536,14 @@
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "pub struct Snapshot",
-          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f"
+          "sha256": "15688543f8999613f064f17e60d453f50d59a05c564e927379fb86d50bc4f0d8"
         }
       ],
       "proof": [
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "fn same_peer_reboot_restores_only_its_workspace_and_other_peers_cannot_inherit_it",
-          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f"
+          "sha256": "15688543f8999613f064f17e60d453f50d59a05c564e927379fb86d50bc4f0d8"
         }
       ],
       "omissions": [

@@ -68,7 +68,7 @@ impl Selection {
             self.ids = ids;
         }
     }
-    fn marquee(&mut self, rect: Rect, cells: &[(u8, Rect)], base: &BTreeSet<u8>) {
+    pub(super) fn marquee(&mut self, rect: Rect, cells: &[(u8, Rect)], base: &BTreeSet<u8>) {
         let previous = self.ids.clone();
         self.ids = base.clone();
         self.ids.extend(

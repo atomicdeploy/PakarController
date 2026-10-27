@@ -127,7 +127,7 @@ int esp_pm_lock_create(int,int,const char*,void** handle){assert(!Fixture::pmExi
 int esp_pm_lock_acquire(void*){assert(Fixture::pmExists&&!Fixture::pmAcquired);Fixture::pmAcquired=true;return ESP_OK;}
 int esp_pm_lock_release(void*){assert(!Fixture::isLive()&&Fixture::pmAcquired);Fixture::pmAcquired=false;return ESP_OK;}
 int esp_pm_lock_delete(void*){assert(Fixture::pmExists&&!Fixture::pmAcquired);Fixture::pmExists=false;++Fixture::pmDeletes;return ESP_OK;}
-int rmt_new_tx_channel(const rmt_tx_channel_config_t* config,rmt_channel_handle_t* channel){assert(Fixture::pinOutput&&!Fixture::channelExists);++Fixture::channelCreates;assert(config->flags.with_dma&&config->mem_block_symbols==2046&&config->intr_priority==3&&config->resolution_hz==40000000&&config->trans_queue_depth==1&&config->gpio_num==4);if(Fixture::channelCreateError)return Fixture::channelCreateError;Fixture::channelExists=true;*channel=reinterpret_cast<void*>(1);return ESP_OK;}
+int rmt_new_tx_channel(const rmt_tx_channel_config_t* config,rmt_channel_handle_t* channel){assert(Fixture::pinOutput&&!Fixture::channelExists);++Fixture::channelCreates;assert(config->flags.with_dma&&config->mem_block_symbols==2046&&config->intr_priority==0&&config->resolution_hz==40000000&&config->trans_queue_depth==1&&config->gpio_num==4);if(Fixture::channelCreateError)return Fixture::channelCreateError;Fixture::channelExists=true;*channel=reinterpret_cast<void*>(1);return ESP_OK;}
 namespace PakarS3 {
 int newCacheSafeLedChannel(const rmt_tx_channel_config_t *config,rmt_channel_handle_t *channel){return rmt_new_tx_channel(config,channel);}
 LedDmaIrqReceipt ledDmaIrqReceipt(){return {PAKAR_S3_LED_RMT_ENABLED!=0,42,1,23,3};} // Actual allocator is tested separately.

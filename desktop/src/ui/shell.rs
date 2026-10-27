@@ -1009,6 +1009,8 @@ impl PakarControllerApp {
             Panel::PixelDiagnostics => &["pixel-diagnostic"],
             Panel::PixelCorrections => &["pixel-corrections"],
             Panel::Keys => &["inputs", "outputs"],
+            Panel::Game | Panel::GameSettings => &["inputs", "outputs"],
+            Panel::Melodies => &["buzzer"],
             Panel::EffectControls => &["table", "leds", "inputs", "outputs"],
             Panel::FrontPanel => &["display", "text", "buzzer", "lcd"],
             Panel::Hardware => &["telemetry", "inputs", "outputs"],
@@ -1958,7 +1960,7 @@ impl PakarControllerApp {
                 crate::usb_demand::PIXELS
             }
             Panel::Keys | Panel::PixelDiagnostics => crate::usb_demand::PIXELS,
-            Panel::FrontPanel => crate::usb_demand::PANEL | crate::usb_demand::PERIPHERAL,
+            Panel::FrontPanel | Panel::Melodies => crate::usb_demand::PANEL | crate::usb_demand::PERIPHERAL,
             Panel::Events => crate::usb_demand::PANEL,
             _ => 0,
         };
@@ -1997,6 +1999,9 @@ impl PakarControllerApp {
                         });
                     }
                     Panel::Keys => self.draw_hardware(ui, true),
+                    Panel::Game => self.draw_game(ui),
+                    Panel::GameSettings => self.draw_game_settings(ui),
+                    Panel::Melodies => self.draw_melodies(ui),
                     Panel::EffectControls => self.draw_effects(ui),
                     Panel::FrontPanel => self.draw_front_panel(ui),
                     Panel::Hardware => self.draw_hardware(ui, false),
@@ -3236,7 +3241,11 @@ impl PakarControllerApp {
                     );
                 });
             }
-            ui.add_space(10.0);
+        });
+    }
+    pub(super) fn draw_melodies(&mut self, ui: &mut egui::Ui) {
+        let snapshot = self.live_status().cloned();
+        ui.add_enabled_ui(self.panel_live(Panel::Melodies), |ui| {
             if self.presentation_has_feature("buzzer") {
                 dialog::section(ui, icons::MUSIC_NOTE, "Melodies", |ui| {
                     ui.add_enabled_ui(
@@ -3244,7 +3253,11 @@ impl PakarControllerApp {
                             .as_ref()
                             .is_some_and(|s| s.avr_online && !s.audio_cues.is_empty()),
                         |ui| {
-                            ui.horizontal_wrapped(|ui| {
+                            // Scoped choice buttons cannot wrap after they report their
+                            // minimum width. A measured row keeps every cue reachable.
+                            let cues: Vec<_> = audio::CUES.into_iter().filter(|(cue, _)| snapshot.as_ref().is_some_and(|s| s.audio_cues.iter().any(|v| v == cue))).collect();
+                            let labels: Vec<_> = cues.iter().map(|(_, name)| (icons::PLAY, *name)).collect();
+                            super::panel_details::action_row(ui, &labels, |ui| {
                                 for (cue, name) in audio::CUES {
                                     if !snapshot
                                         .as_ref()
@@ -3311,158 +3324,14 @@ impl PakarControllerApp {
             }
         });
     }
-    fn send_minigame(&mut self, request: crate::minigame::Request) -> Result<(),String> {
-        match self.command_route() {
-            Some(Transport::WiFi)=>self.queue_realtime(request.path,request.form,None),
-            Some(Transport::Serial)=> {
-                let status=self.live_status().ok_or("Fresh USB game status unavailable")?;
-                let stamp=self.serial_admission().ok_or("USB game owner unavailable")?.stamp;
-                let (request,packet)=crate::minigame::UsbRequest::prepare(status,request,stamp)?;
-                self.begin_pixel_api(pixel_groups::Purpose::Minigame(request),"POST","/api/command",packet)
-            },
-            None=>Err("No selected live game transport".into()),
+    pub(super) fn draw_game_settings(&mut self, ui: &mut egui::Ui) {
+        let Some(s) = self.live_status().cloned() else { return; };
+        let mask = s.key_game["enabled_mask"].as_u64().unwrap_or(511) as u16;
+        let minigame = crate::minigame::snapshot(&s).is_some();
+        let minigame_writable = self.minigame_writable(&s);
+        for request in crate::minigame::settings_controls(ui, &s, minigame_writable) {
+            if let Err(error) = self.send_minigame(request) { self.message = error; }
         }
-    }
-    pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui, game_only: bool) {
-        let Some(s) = self.live_status().cloned() else {
-            ui.label(crate::ui::i18n::text("Hardware state unavailable"));
-            return;
-        };
-        let avr_acknowledged = ["display", "text", "buzzer", "inputs", "outputs", "settings"]
-            .iter()
-            .any(|feature| self.has_feature(feature));
-        if game_only
-            && s.capabilities
-                .as_ref()
-                .is_some_and(|c| c.role == "first-wins")
-        {
-            let mask = s.key_game["enabled_mask"].as_u64().unwrap_or(511) as u16;
-            let minigame = crate::minigame::snapshot(&s).is_some();
-            let minigame_writable = crate::realtime::supported(&s,crate::minigame::CONTROL)
-                && match self.command_route() {
-                    Some(Transport::WiFi)=>self.http_writable(),
-                    Some(Transport::Serial)=>self.pixel_api_reply.is_none() && self.has_feature("usb-api"),
-                    None=>false,
-                };
-            if minigame {
-                for request in crate::minigame::controls(ui,&s,minigame_writable) {
-                    if let Err(error)=self.send_minigame(request) {self.message=error;}
-                }
-                ui.add_space(8.0);
-            }
-            dialog::section(ui, icons::HAND_TAP, "Keys", |ui| {
-              if !minigame {
-                ui.horizontal_wrapped(|ui| {
-                    ui.strong(if s.winner == 0 {
-                        "Ready for first press".to_owned()
-                    } else {
-                        format!("Winner · Box {}", s.winner)
-                    });
-                    ui.add_enabled_ui(s.avr_online && !s.programming_latch, |ui| {
-                        if dialog::primary_action_button(
-                            ui,
-                            icons::ARROW_COUNTER_CLOCKWISE,
-                            "Reset to white",
-                        )
-                        .clicked()
-                        {
-                            // A round control, not a destructive settings operation: send
-                            // immediately through the selected ACK-tracked WS/USB owner.
-                            self.action("/api/game/reset", vec![], OP_RESET, vec![]);
-                        }
-                    });
-                });
-              }
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.key_trigger_on_click, "Trigger on click")
-                        .on_hover_text("Off: clicks only select. Ctrl-click toggles; Shift-click selects a range. Right-click for explicit actions.");
-                    ui.weak(format!("{} selected", self.key_selection.ids.len()));
-                    if ui
-                        .selectable_label(
-                            self.key_layout_edit,
-                            format!("{}  Arrange boxes", icons::DOTS_SIX_VERTICAL),
-                        )
-                        .clicked()
-                    {
-                        self.key_layout_edit = !self.key_layout_edit;
-                    }
-                    if self.key_layout_edit
-                        && ui
-                            .button(format!(
-                                "{}  Reset positions",
-                                icons::ARROW_COUNTER_CLOCKWISE
-                            ))
-                            .clicked()
-                    {
-                        self.key_positions = crate::native_workspace::default_key_positions();
-                        self.save_workspace();
-                    }
-                });
-                let boxes = std::array::from_fn(|index| {
-                    let key = (index + 1) as u8;
-                    let winner = if minigame {s.minigame["winner"].as_u64().unwrap_or(0) as u8} else {s.winner};
-                    let (color_name, fallback) = if winner == key {
-                        ("win_rgb", 0x00ff00)
-                    } else if winner != 0 {
-                        ("lose_rgb", 0xff0000)
-                    } else {
-                        ("idle_rgb", 0xffffff)
-                    };
-                    let rgb = s.key_game[color_name].as_u64().unwrap_or(fallback) as u32;
-                    super::key_boxes::BoxView {
-                        enabled: mask & (1 << index) != 0,
-                        pressed: if minigame {
-                            s.minigame["held_mask"].as_u64().unwrap_or(0) & (1 << index) != 0
-                        } else if key == 9 {
-                            s.input_9
-                        } else {
-                            s.active_inputs & (1 << index) != 0
-                        },
-                        winner: winner == key,
-                        round_active: winner != 0,
-                        color: egui::Color32::from_rgb(
-                            (rgb >> 16) as u8,
-                            (rgb >> 8) as u8,
-                            rgb as u8,
-                        ),
-                        groups: std::array::from_fn(|group| {
-                            self.table
-                                .pixel_sample
-                                .as_ref()
-                                .filter(|sample| sample.fresh())
-                                .filter(|sample| !pixel_groups::advertised(&s) || pixel_groups::for_status(&s)
-                                    .is_some_and(|layout|sample.frame.group_layout_revision==Some(layout.revision)))
-                                .and_then(|sample| sample.frame.key_group(key, group as u8))
-                        }),
-                    }
-                });
-                let can_trigger = if minigame {minigame_writable && crate::minigame::ready(&s)}
-                    else {super::effect_controls::game_press_available(&s)};
-                let result = super::key_boxes::show(
-                    ui,
-                    &s.board_id,
-                    &mut self.key_positions,
-                    &boxes,
-                    &mut self.key_selection,
-                    self.key_layout_edit,
-                    can_trigger,
-                    self.key_trigger_on_click,
-                    self.config.animate_cells,
-                );
-                if let Some(editing) = result.editing { self.key_layout_edit = editing; }
-                if let Some(panel) = result.panel {
-                    if panel.available(self.presentation_context()) { self.reveal_panels.push(panel); }
-                }
-                if result.layout_changed || result.selection_changed {
-                    self.save_workspace();
-                }
-                if let Some(key) = result.trigger {
-                    if minigame {
-                        let request=crate::minigame::input(key,&crate::minigame::input_action(ui,&s));
-                        if let Err(error)=self.send_minigame(request) {self.message=error;}
-                    } else {self.post("/api/game/press", vec![("key".into(), key.to_string())]);}
-                }
                 if self.has_feature("key-settings") {
                   ui.add_enabled_ui(!minigame || minigame_writable, |ui| {
                     if self.has_feature("game-presentation")
@@ -3479,7 +3348,7 @@ impl PakarControllerApp {
                             );
                         }
                     }
-                    ui.collapsing("Game settings", |ui| {
+                    dialog::section(ui, icons::GEAR, "Boxes & presentation", |ui| {
                         if self.has_feature("game-melodies") {
                             for (field, label) in [("winner_cue", "Winner melody"), ("reset_cue", "Reset melody")] {
                                 if let Some(current) = s.key_game[field].as_str() {
@@ -3595,6 +3464,185 @@ impl PakarControllerApp {
                         }
                     });
                   });
+                }
+
+    }
+    fn minigame_writable(&self, s: &DeviceStatus) -> bool {
+        crate::realtime::supported(s, crate::minigame::CONTROL) && match self.command_route() {
+            Some(Transport::WiFi) => self.http_writable(),
+            Some(Transport::Serial) => self.pixel_api_reply.is_none() && self.has_feature("usb-api"),
+            None => false,
+        }
+    }
+    pub(super) fn draw_game(&mut self, ui: &mut egui::Ui) {
+        let Some(s) = self.live_status().cloned() else { return; };
+        for request in crate::minigame::controls(ui, &s, self.minigame_writable(&s)) {
+            if let Err(error) = self.send_minigame(request) { self.message = error; }
+        }
+        ui.horizontal_wrapped(|ui| {
+            if dialog::action_button(ui, icons::GEAR, "Game settings").clicked() { self.reveal_panels.push(Panel::GameSettings); }
+            if dialog::action_button(ui, icons::HAND_TAP, "Keys").clicked() { self.reveal_panels.push(Panel::Keys); }
+        });
+    }
+    fn send_minigame(&mut self, request: crate::minigame::Request) -> Result<(),String> {
+        match self.command_route() {
+            Some(Transport::WiFi)=>self.queue_realtime(request.path,request.form,None),
+            Some(Transport::Serial)=> {
+                let status=self.live_status().ok_or("Fresh USB game status unavailable")?;
+                let stamp=self.serial_admission().ok_or("USB game owner unavailable")?.stamp;
+                let (request,packet)=crate::minigame::UsbRequest::prepare(status,request,stamp)?;
+                self.begin_pixel_api(pixel_groups::Purpose::Minigame(request),"POST","/api/command",packet)
+            },
+            None=>Err("No selected live game transport".into()),
+        }
+    }
+    pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui, game_only: bool) {
+        let Some(s) = self.live_status().cloned() else {
+            ui.label(crate::ui::i18n::text("Hardware state unavailable"));
+            return;
+        };
+        let avr_acknowledged = ["display", "text", "buzzer", "inputs", "outputs", "settings"]
+            .iter()
+            .any(|feature| self.has_feature(feature));
+        if game_only
+            && s.capabilities
+                .as_ref()
+                .is_some_and(|c| c.role == "first-wins")
+        {
+            let mask = s.key_game["enabled_mask"].as_u64().unwrap_or(511) as u16;
+            let minigame = crate::minigame::snapshot(&s).is_some();
+            let minigame_writable = crate::realtime::supported(&s,crate::minigame::CONTROL)
+                && match self.command_route() {
+                    Some(Transport::WiFi)=>self.http_writable(),
+                    Some(Transport::Serial)=>self.pixel_api_reply.is_none() && self.has_feature("usb-api"),
+                    None=>false,
+                };
+            dialog::section(ui, icons::HAND_TAP, "Keys", |ui| {
+              if !minigame {
+                ui.horizontal_wrapped(|ui| {
+                    ui.strong(if s.winner == 0 {
+                        "Ready for first press".to_owned()
+                    } else {
+                        format!("Winner · Box {}", s.winner)
+                    });
+                    ui.add_enabled_ui(s.avr_online && !s.programming_latch, |ui| {
+                        if dialog::primary_action_button(
+                            ui,
+                            icons::ARROW_COUNTER_CLOCKWISE,
+                            "Reset to white",
+                        )
+                        .clicked()
+                        {
+                            // A round control, not a destructive settings operation: send
+                            // immediately through the selected ACK-tracked WS/USB owner.
+                            self.action("/api/game/reset", vec![], OP_RESET, vec![]);
+                        }
+                    });
+                });
+              }
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    if ui.checkbox(&mut self.key_trigger_on_click, "Trigger on click")
+                        .on_hover_text("Off: clicks only select. Ctrl-click toggles; Shift-click selects a range. Right-click for explicit actions.").changed() {
+                        self.save_workspace();
+                    }
+                    ui.weak(format!("{} selected", self.key_selection.ids.len()));
+                    if dialog::action_button(ui, icons::PLAY, "Game").clicked() { self.reveal_panels.push(Panel::Game); }
+                    if dialog::action_button(ui, icons::GEAR, "Settings").clicked() { self.reveal_panels.push(Panel::GameSettings); }
+                    if super::key_boxes::arrange_control(ui, self.key_layout_edit).clicked()
+                    {
+                        self.key_layout_edit = !self.key_layout_edit;
+                    }
+                    if self.key_layout_edit
+                        && ui
+                            .button(format!(
+                                "{}  Reset positions",
+                                icons::ARROW_COUNTER_CLOCKWISE
+                            ))
+                            .clicked()
+                    {
+                        self.key_positions = crate::native_workspace::default_key_positions();
+                        self.save_workspace();
+                    }
+                });
+                if minigame && self.key_trigger_on_click {
+                    crate::minigame::input_controls(ui, &s);
+                }
+                let boxes = std::array::from_fn(|index| {
+                    let key = (index + 1) as u8;
+                    let winner = if minigame {s.minigame["winner"].as_u64().unwrap_or(0) as u8} else {s.winner};
+                    let (color_name, fallback) = if winner == key {
+                        ("win_rgb", 0x00ff00)
+                    } else if winner != 0 {
+                        ("lose_rgb", 0xff0000)
+                    } else {
+                        ("idle_rgb", 0xffffff)
+                    };
+                    let rgb = s.key_game[color_name].as_u64().unwrap_or(fallback) as u32;
+                    super::key_boxes::BoxView {
+                        enabled: mask & (1 << index) != 0,
+                        pressed: if minigame {
+                            s.minigame["held_mask"].as_u64().unwrap_or(0) & (1 << index) != 0
+                        } else if key == 9 {
+                            s.input_9
+                        } else {
+                            s.active_inputs & (1 << index) != 0
+                        },
+                        winner: winner == key,
+                        round_active: winner != 0,
+                        color: egui::Color32::from_rgb(
+                            (rgb >> 16) as u8,
+                            (rgb >> 8) as u8,
+                            rgb as u8,
+                        ),
+                        groups: std::array::from_fn(|group| {
+                            self.table
+                                .pixel_sample
+                                .as_ref()
+                                .filter(|sample| sample.fresh())
+                                .filter(|sample| !pixel_groups::advertised(&s) || pixel_groups::for_status(&s)
+                                    .is_some_and(|layout|sample.frame.group_layout_revision==Some(layout.revision)))
+                                .and_then(|sample| sample.frame.key_group(key, group as u8))
+                        }),
+                    }
+                });
+                let can_trigger = if minigame {minigame_writable && crate::minigame::ready(&s)}
+                    else {super::effect_controls::game_press_available(&s)};
+                let result = super::key_boxes::show(
+                    ui,
+                    &s.board_id,
+                    &mut self.key_positions,
+                    &boxes,
+                    &mut self.key_selection,
+                    self.key_layout_edit,
+                    can_trigger,
+                    self.key_trigger_on_click,
+                    self.config.animate_cells,
+                );
+                if let Some(editing) = result.editing { self.key_layout_edit = editing; }
+                if let Some(panel) = result.panel {
+                    if panel.available(self.presentation_context()) { self.reveal_panels.push(panel); }
+                }
+                if result.layout_changed || result.selection_changed {
+                    self.save_workspace();
+                }
+                if let Some(key) = result.trigger {
+                    if minigame {
+                        let request=crate::minigame::input(key,&crate::minigame::input_action(ui,&s));
+                        if let Err(error)=self.send_minigame(request) {self.message=error;}
+                    } else {
+                        // Use the same immediate, ACK-tracked USB/WS owner as
+                        // other hardware actions, including serial timing/readback.
+                        self.action("/api/game/press", vec![("key".into(), key.to_string())], 0x68, vec![key]);
+                    }
+                }
+                if let Some(key) = result.blocked_trigger {
+                    let reason = if !s.avr_online { "AVR is offline" }
+                        else if s.programming_latch { "AVR programming is active" }
+                        else if s.key_mask_applied != Some(true) { "Enabled boxes have not been acknowledged by the AVR" }
+                        else if minigame { "The game is not ready for input" }
+                        else { "This board has not enabled remote button presses" };
+                    self.notify("Box not triggered", &format!("Box {key}: {reason}."), messaging::Severity::Warning);
                 }
             });
             ui.add_space(10.0);

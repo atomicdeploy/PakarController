@@ -289,6 +289,9 @@ uint16_t keyMaskSentValue=0;
 bool avrGameMelodies=false,keyAudioApplied=false;
 bool avrRemotePress=false;
 bool avrAudioStream=false,audioStreamWaiting=false,audioStreamReceived=false;
+bool avrFlashAudio=false,gameAudioPending=false,gameAudioAck=false;
+uint8_t gameAudioSequence=0,gameAudioError=0;
+uint32_t gameAudioSentAt=0;
 uint8_t audioStreamSequence=0,audioStreamReply[8]={};
 uint8_t keyWinnerCueSent=kCueWinner,keyResetCueSent=kCueWelcome;
 uint8_t gameAudioPulse=255;
@@ -2201,6 +2204,10 @@ String buildStatusJson(bool compact) {
   if(avrMiniGames){body+=F(",\"minigame\":");body+=miniJson();}
   body += F(",\"key_mask_applied\":");body+=(avrOnline&&keyMaskApplied)?F("true"):F("false");
   body += F(",\"game_audio_applied\":");body+=(avrOnline&&avrGameMelodies&&keyAudioApplied)?F("true"):F("false");
+  body += F(",\"game_audio\":{\"timeline_supported\":");body+=(avrOnline&&avrFlashAudio)?F("true"):F("false");
+  body += F(",\"pending\":");body+=gameAudioPending?F("true"):F("false");
+  body += F(",\"acknowledged\":");body+=gameAudioAck?F("true"):F("false");
+  body += F(",\"error_code\":");body+=gameAudioError;body+='}';
   body += F(",\"auto_reset_state\":\"");body+=gameAutoResetState;body+='"';
   body += F(",\"game_reset\":{\"avr_revision\":");body+=lastResetRevision;
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_GAME_RESET_PIN >= 0
@@ -2415,6 +2422,7 @@ String buildStatusJson(bool compact) {
   if(avrOnline&&avrRemotePress)body += F(",\"game-press\"");
 #endif
   if(avrOnline&&avrAudioStream)body += F(",\"audio-stream\"");
+  if(avrOnline&&avrFlashAudio)body += F(",\"audio-flash-timeline\"");
   if(avrOnline)body += F(",\"avr-command-ack\"");
 #if PAKAR_TABLE_SELECTION
   body += F(",\"cell-assignments\",\"cell-lock\"");
@@ -3481,6 +3489,9 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
   if(frame.opcode==kAudioStreamResponse&&audioStreamWaiting&&frame.sequence==audioStreamSequence){
     memcpy(audioStreamReply,frame.payload,8);audioStreamReceived=true;
   }
+  if(frame.opcode==kAudioStreamResponse&&gameAudioPending&&frame.sequence==gameAudioSequence){
+    gameAudioPending=false;gameAudioError=frame.payload[0];gameAudioAck=gameAudioError==0;
+  }
   avrRecoveryHelloPending=false;
   if (frame.opcode == kEspPanel && avrOnline && (avrCapabilities & kCapEspPanel)) {
     espFrontPanel.handle(frame, millis(), espPanelSettings, link); return;
@@ -3586,6 +3597,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     avrGameMelodies=frame.payloadLength>=17 && frame.payload[16]==1;
     avrRemotePress=frame.payloadLength>=18 && frame.payload[17]==1;
     avrAudioStream=frame.payloadLength>=19 && frame.payload[18]==1;
+    avrFlashAudio=frame.payloadLength>=21 && frame.payload[20]==1;
     avrTelemetryKnown = false;
     avrResetTelemetryKnown = false;
     avrVersionKnown = frame.payloadLength >= 9 &&
@@ -5397,28 +5409,20 @@ void serviceGameLink(uint32_t now) {
      keySettings.winnerCue!=BoardCore::AudioCues::kSilent){
     const auto &p=keySettings.presentation;
     const uint32_t elapsed=now-gameWinnerAt;
-    if(keySettings.winnerCue==kCueWinner){
-      const uint8_t pulse=p.flashIndex(elapsed);
-      const uint16_t phase=p.flashPhase(elapsed);
-      // A light C-major flourish, not a sustained tone for the entire flash.
-      // Scale down with short flashes; late loop service skips expired notes.
-      const uint16_t on=p.onMs(elapsed);
-      const uint16_t step=on<300U?on/3U:100U;
-      const uint8_t note=step?phase/step:3;
-      const uint16_t notePhase=step?phase%step:0;
-      const uint16_t gate=step*3U/4U;
-      const uint8_t token=pulse*3U+note;
-      if(elapsed<p.flashDuration()&&note<3&&notePhase<gate&&gameAudioPulse!=token){
-        const uint16_t notes[]={1047,1319,1568};
-        const uint16_t hz=notes[note];
-        const uint16_t duration=gate-notePhase;
-        const uint8_t tone[]={uint8_t(hz),uint8_t(hz>>8),uint8_t(duration),uint8_t(duration>>8)};
-        if(sendToAvr(kBuzzer,sequence++,tone,sizeof(tone)))gameAudioPulse=token;
-      }
-    }else if(!gameAudioStarted){
-      gameAudioStarted=true;
-      if(elapsed<100U)sendToAvr(kAudioCue,sequence++,&keySettings.winnerCue,1);
+    if(!gameAudioStarted){
+      gameAudioStarted=true; // One finite intent; never replay a late/uncertain cue.
+      if(keySettings.winnerCue==kCueWinner && avrFlashAudio && p.flashes){
+        uint16_t id=uint16_t(now);if(!id)id=1;
+        const uint8_t payload[]={6,uint8_t(id),uint8_t(id>>8),0,0,
+          uint8_t(p.flashOnMs),uint8_t(p.flashOnMs>>8),uint8_t(p.flashOffMs),uint8_t(p.flashOffMs>>8),
+          p.flashes,uint8_t(p.finalOnMs()),uint8_t(p.finalOnMs()>>8)};
+        gameAudioSequence=sequence++;gameAudioAck=false;gameAudioError=0;
+        gameAudioPending=sendToAvr(kAudioStream,gameAudioSequence,payload,sizeof(payload));
+        gameAudioSentAt=now;
+        if(!gameAudioPending)gameAudioError=kBusy;
+      }else if(elapsed<100U)sendToAvr(kAudioCue,sequence++,&keySettings.winnerCue,1);
     }
+    if(gameAudioPending&&uint32_t(now-gameAudioSentAt)>=150U){gameAudioPending=false;gameAudioError=255;}
   }
 #endif
   if(avrOnline && uint32_t(now-lastAvrFrameAt)>3000U) {
@@ -5496,6 +5500,9 @@ void loop() {
   #if PAKAR_FIRST_WINS_ENABLED
   serviceMiniGame(now);
   #endif
+  // Submit the autonomous AVR cue before HTTP/DNS/cloud work or LED rendering.
+  // Both the flash scene and sound now start from this input-processing pass.
+  if(PAKAR_NETWORK_ENABLED)serviceGameLink(now);
   if (PAKAR_NETWORK_ENABLED && NetworkPath::service()) {
     cloudServices.suspend();
     ntpConfigured = false;
@@ -5683,7 +5690,6 @@ void loop() {
       static_cast<uint32_t>(now-lastTelemetryRequestAt)>=5000U) {
     lastTelemetryRequestAt=now;sendToAvr(kGetTelemetry,sequence++);
   }
-  serviceGameLink(millis());
   // AVR owns its welcome melody. A first HELLO is not a completed update:
   // sending the success cue here could replace the still-playing welcome.
 #if !defined(PAKAR_UART_BUFFERED) || !PAKAR_UART_BUFFERED

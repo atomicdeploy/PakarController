@@ -60,6 +60,7 @@ pub struct Snapshot {
     pub buzzer_duration: u16,
     pub key_positions: [[f32; 2]; 9],
     pub key_selection: Vec<u8>,
+    pub key_trigger_on_click: bool,
     pub settings_page: usize,
     pub settings_search: String,
     pub pixel_probe: crate::pixel_diagnostic::Probe,
@@ -81,6 +82,7 @@ impl Default for Snapshot {
             buzzer_duration: 100,
             key_positions: default_key_positions(),
             key_selection: Vec::new(),
+            key_trigger_on_click: false,
             settings_page: 0,
             settings_search: String::new(),
             pixel_probe: Default::default(),
@@ -236,6 +238,7 @@ impl PakarControllerApp {
             buzzer_duration: self.buzzer_duration,
             key_positions: self.key_positions,
             key_selection: self.key_selection.cells(),
+            key_trigger_on_click: self.key_trigger_on_click,
             settings_page: self.device_settings.page,
             settings_search: self.device_settings.search.clone(),
             pixel_probe: self.pixel_diagnostic.probe(),
@@ -323,7 +326,7 @@ impl PakarControllerApp {
         self.buzzer_duration = snapshot.buzzer_duration;
         self.key_positions = snapshot.key_positions;
         self.key_selection.group(snapshot.key_selection, false);
-        self.key_trigger_on_click = false;
+        self.key_trigger_on_click = snapshot.key_trigger_on_click;
         self.device_settings.page = snapshot.settings_page;
         self.device_settings.search = snapshot.settings_search;
         self.pixel_diagnostic.set_probe(snapshot.pixel_probe);
@@ -433,6 +436,7 @@ mod tests {
         let snapshot = Snapshot {
             selection: vec![3, 2, 1, 3],
             key_selection: vec![9, 2, 2, 0, 80],
+            key_trigger_on_click: true,
             selected_cell: 2,
             find: "1,2,3".into(),
             pixel_probe: crate::pixel_diagnostic::Probe {
@@ -458,6 +462,8 @@ mod tests {
         let value = restored.get(&identity).unwrap();
         assert_eq!(value.selection, vec![1, 2, 3]);
         assert_eq!(value.key_selection, vec![2, 9]);
+        assert!(value.key_trigger_on_click);
+        assert!(!serde_json::from_str::<Snapshot>("{}").unwrap().key_trigger_on_click);
         assert_eq!(value.find, "1–3");
         assert_eq!(value.selected_cell, 2);
         assert_eq!(value.display_text, "Unsaved text");

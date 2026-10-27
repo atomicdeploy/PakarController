@@ -1,4 +1,5 @@
 #include "TonePlayer.h"
+#include "FlashToneSequence.h"
 
 #include <avr/interrupt.h>
 
@@ -25,7 +26,7 @@ void TonePlayer::begin() {
 }
 
 bool TonePlayer::enqueue(uint16_t frequencyHz, uint16_t durationMs) {
-  if (durationMs == 0 || count_ >= MAX_TONES ||
+  if (streamState_==6 || durationMs == 0 || count_ >= MAX_TONES ||
       (frequencyHz != 0 && (frequencyHz < 20 || frequencyHz > 20000))) {
     return false;
   }
@@ -59,6 +60,22 @@ void TonePlayer::error() {
 }
 
 void TonePlayer::update(uint32_t now) {
+  if(streamState_==6){
+    uint16_t hz=0,remaining=0;uint32_t began=0;
+    const uint32_t elapsed=now-stepEndsAt_;
+    if(BoardCore::FlashToneSequence::sample(queue_[0].frequencyHz,queue_[0].durationMs,
+        queue_[1].frequencyHz,uint8_t(queue_[1].durationMs),elapsed,hz,remaining,began)){
+      const uint32_t started=stepEndsAt_+began;
+      if(activeStartedMs_!=started || activeFrequencyHz_!=hz || !activeDurationMs_){
+        stopHardwareTone();activeStartedMs_=started;activeFrequencyHz_=hz;
+        activeDurationMs_=remaining+uint16_t(now-started);++revision_;
+        if(!muted_&&hz)startHardwareTone(hz);
+      }
+      return;
+    }
+    streamState_=3;stopHardwareTone();activeFrequencyHz_=activeDurationMs_=0;
+    activeStartedMs_=now;++revision_;return;
+  }
   if(streamState_==1)return; // Prefill is silent until an explicit start.
   uint32_t startsAt = now;
   if (stepActive_) {
@@ -96,7 +113,7 @@ void TonePlayer::update(uint32_t now) {
 }
 
 void TonePlayer::stop() {
-  if(streamState_==1||streamState_==2)streamState_=5;
+  if(streamState_==1||streamState_==2||streamState_==6)streamState_=5;
   stopHardwareTone();
   head_ = 0;
   tail_ = 0;
@@ -122,19 +139,29 @@ void TonePlayer::setMuted(bool muted) {
   // nonblocking timeline continues for host mirroring; only future steps sound.
 }
 
-bool TonePlayer::isBusy() const { return stepActive_ || count_ != 0; }
+bool TonePlayer::isBusy() const { return streamState_==6 || stepActive_ || count_ != 0; }
 
 void TonePlayer::streamStatus(uint8_t *out) const {
   out[0]=streamId_;out[1]=streamId_>>8;
   out[2]=streamOffset_;out[3]=streamOffset_>>8;
-  out[4]=MAX_TONES-count_;out[5]=streamState_;out[6]=muted_;
+  out[4]=streamState_==6?0:MAX_TONES-count_;
+  out[5]=streamState_==6?2:streamState_;out[6]=muted_;
 }
 
 uint8_t TonePlayer::stream(const uint8_t *p,uint8_t n) {
   if(n<5)return 3;
   const uint8_t action=p[0];
   const uint16_t id=p[1]|uint16_t(p[2])<<8,offset=p[3]|uint16_t(p[4])<<8;
-  if(action>5||!id||(action!=1&&n!=5))return 3;
+  if(action>6||!id||(action!=1&&action!=6&&n!=5))return 3;
+  if(action==6){
+    if(n!=12||offset)return 3;
+    const uint16_t on=p[5]|uint16_t(p[6])<<8,off=p[7]|uint16_t(p[8])<<8,last=p[10]|uint16_t(p[11])<<8;
+    if(!BoardCore::FlashToneSequence::valid(on,off,last,p[9]))return 3;
+    if(muted_||id==streamId_)return 6; // Duplicate cannot restart/extend a cue.
+    stop();streamId_=id;streamOffset_=0;streamFinal_=true;
+    // Reuse the idle queue's storage, not scarce additional AVR SRAM.
+    queue_[0]={on,off};queue_[1]={last,p[9]};stepEndsAt_=millis();streamState_=6;return 0;
+  }
   if(action==0){
     if(offset||muted_||isBusy()||id==streamId_)return 6;
     stop();streamId_=id;streamOffset_=0;streamFinal_=false;streamState_=1;return 0;

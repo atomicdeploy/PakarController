@@ -269,26 +269,65 @@ pub fn input(key: u8, action: &str) -> Request {
     }
 }
 pub fn input_action(ui: &egui::Ui, status: &DeviceStatus) -> String {
+    if !hold_controls(status) { return "tap".into(); }
     ui.data(|data| {
         data.get_temp::<String>(egui::Id::new((
             "minigame-input",
             &status.board_id,
             &status.boot_id,
+            status.minigame["mode"].as_str().unwrap_or(""),
         )))
     })
     .unwrap_or_else(|| "tap".into())
 }
 pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec<Request> {
+    panel(ui, status, writable, false)
+}
+pub fn settings_controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec<Request> {
+    panel(ui, status, writable, true)
+}
+pub fn shows_elapsed(mode: &str) -> bool {
+    !matches!(mode, "press-to-win" | "toggle")
+}
+fn setting_visible(mode: &str, field: &str, timed: bool) -> bool {
+    match field {
+        "limit_ms" | "warning_ms" | "urgent_ms" => timed,
+        "penalty_ms" => timed && mode == "color-order",
+        "window_ms" | "fixed_target" => matches!(mode, "illuminated" | "reaction-chase"),
+        "show_ms" | "gap_ms" | "sequence_length" => mode == "simon",
+        "rounds" => matches!(mode, "illuminated" | "reaction-chase" | "simon"),
+        "palette_size" => matches!(mode, "color-match" | "memory-pairs" | "color-order"),
+        "feedback_ms" => !matches!(mode, "press-to-win" | "toggle"),
+        _ => true,
+    }
+}
+pub fn input_controls(ui: &mut egui::Ui, status: &DeviceStatus) {
+    if !hold_controls(status) { return; }
+    let id = egui::Id::new(("minigame-input", &status.board_id, &status.boot_id, status.minigame["mode"].as_str().unwrap_or("")));
+    let mut action = input_action(ui, status);
+    ui.horizontal_wrapped(|ui| {
+        ui.weak("On click");
+        for (value, label) in [("tap", "Tap"), ("down", "Hold"), ("up", "Release")] {
+            if crate::ui::effect_controls::choice(ui, icons::HAND_TAP, label, action == value, true).clicked() { action = value.into(); }
+        }
+    });
+    ui.data_mut(|data| data.insert_temp(id, action));
+}
+fn hold_controls(status: &DeviceStatus) -> bool {
+    status.minigame["mode"] == "color-match"
+        || (status.minigame["mode"] == "toggle" && status.minigame["settings"]["toggle_kind"] == "press")
+}
+fn panel(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool, settings_only: bool) -> Vec<Request> {
     let Some(game) = snapshot(status) else {
         return Vec::new();
     };
     let mut requests = Vec::new();
     let enabled = writable && ready(status);
-    dialog::section(ui, icons::PLAY, "Game", |ui| {
+    dialog::section(ui, if settings_only { icons::GEAR } else { icons::PLAY }, if settings_only { "Rules & timing" } else { "Game" }, |ui| {
         let phase = game["phase"].as_str().unwrap_or("Unknown");
         let mode = game["mode"].as_str().unwrap_or("");
         let catalog = modes(game);
-        ui.horizontal_wrapped(|ui| {
+        if !settings_only { ui.horizontal_wrapped(|ui| {
             ui.strong(
                 catalog
                     .iter()
@@ -296,7 +335,9 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
                     .map(|(_, label)| *label)
                     .unwrap_or(mode),
             );
-            ui.label(phase);
+            let color = match phase { "success" => ui.visuals().selection.bg_fill, "failure" | "timeout" => ui.visuals().error_fg_color, _ => ui.visuals().text_color() };
+            ui.colored_label(color, format!("{}  {}", icons::DOT_OUTLINE, phase));
+            if game["timed"] != true { ui.weak("Untimed"); }
             if let Some(winner) = game["winner"].as_u64().filter(|v| *v > 0) {
                 ui.strong(format!("Winner · Box {winner}"));
             }
@@ -332,11 +373,11 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
                 ("progress", "Progress"),
                 ("mistakes", "Mistakes"),
             ] {
-                if let Some(n) = game[field].as_u64() {
+                if shows_elapsed(mode) && let Some(n) = game[field].as_u64() {
                     ui.weak(format!("{label} {n}"));
                 }
             }
-            if let Some(ms) = game["elapsed_ms"].as_u64() {
+            if shows_elapsed(mode) && let Some(ms) = game["elapsed_ms"].as_u64() {
                 ui.weak(format!("Elapsed {}:{:02}", ms / 60000, ms / 1000 % 60));
             }
             for (field, label) in [("last_reaction_ms", "Last"), ("best_reaction_ms", "Best")] {
@@ -382,19 +423,20 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
             crate::ui::panel_details::action_row(
                 ui,
                 &[
-                    (icons::PLAY, primary_label),
-                    (icons::PLAY, "Reset"),
-                    (icons::PLAY, "Stop"),
+                    (if running { icons::PAUSE } else { icons::PLAY }, primary_label),
+                    (icons::ARROW_COUNTER_CLOCKWISE, "Reset to white"),
+                    (icons::STOP, "Stop"),
                 ],
                 |ui| {
-                    for (action, label, allowed) in [
-                        (primary_action, primary_label, true),
-                        ("reset", "Reset", true),
-                        ("stop", "Stop", phase != "stopped"),
+                    for (action, label, icon, allowed) in [
+                        (primary_action, primary_label, if running { icons::PAUSE } else { icons::PLAY }, true),
+                        ("reset", "Reset to white", icons::ARROW_COUNTER_CLOCKWISE, true),
+                        ("stop", "Stop", icons::STOP, phase != "stopped"),
                     ] {
                         if ui
                             .add_enabled_ui(allowed, |ui| {
-                                dialog::action_button(ui, icons::PLAY, label)
+                                if action == "reset" { dialog::primary_action_button(ui, icon, label) }
+                                else { dialog::action_button(ui, icon, label) }
                             })
                             .inner
                             .clicked()
@@ -407,22 +449,8 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
                     }
                 },
             );
-            let input_id = egui::Id::new(("minigame-input", &status.board_id, &status.boot_id));
-            let mut action = input_action(ui, status);
-            ui.horizontal_wrapped(|ui| {
-                ui.label("Box action");
-                for (value, label) in [("tap", "Tap"), ("down", "Press"), ("up", "Release")] {
-                    ui.selectable_value(&mut action, value.into(), label);
-                }
-            });
-            ui.add(
-                egui::Label::new(
-                    egui::RichText::new("Use Trigger on click or a box's explicit action.").weak(),
-                )
-                .wrap(),
-            );
-            ui.data_mut(|data| data.insert_temp(input_id, action));
-            ui.collapsing("Game settings", |ui| {
+        }); }
+        if settings_only { ui.add_enabled_ui(enabled, |ui| {
                 let id = egui::Id::new(("minigame-settings", &status.board_id, &status.boot_id));
                 let current = &game["settings"];
                 if !current.is_object() {
@@ -462,7 +490,14 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
                             ui.dropdown_value(&mut selected, (*id).to_owned(), *label);
                         }
                     });
+                if draft.edited["mode"] != selected {
+                    draft.edited["limit_ms"] = json!(if matches!(selected.as_str(), "press-to-win" | "toggle" | "clear-all") {0} else {60000});
+                }
                 draft.edited["mode"] = json!(selected);
+                let mut timed = draft.edited["limit_ms"].as_u64().unwrap_or(0) > 0;
+                if ui.checkbox(&mut timed, "Time limit").changed() {
+                    draft.edited["limit_ms"] = json!(if timed {60000} else {0});
+                }
                 for field in [
                     "limit_ms",
                     "warning_ms",
@@ -477,6 +512,7 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
                     "palette_size",
                     "fixed_target",
                 ] {
+                    if !setting_visible(&selected, field, timed) { continue; }
                     if let Some(mut number) = draft.edited[field].as_u64() {
                         let (min, max, label) = bounds(field).unwrap();
                         dialog::setting_row(ui, icons::SLIDERS_HORIZONTAL, label, None, |ui| {
@@ -494,12 +530,12 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
                         });
                     }
                 }
-                if let Some(mut hard) = draft.edited["hard"].as_bool() {
+                if matches!(selected.as_str(), "switch-pattern" | "color-match") && let Some(mut hard) = draft.edited["hard"].as_bool() {
                     if ui.checkbox(&mut hard, "Hard mode").changed() {
                         draft.edited["hard"] = json!(hard);
                     }
                 }
-                if let Some(kind) = draft.edited["toggle_kind"].as_str() {
+                if selected == "toggle" && let Some(kind) = draft.edited["toggle_kind"].as_str() {
                     let mut kind = kind.to_owned();
                     ui.horizontal_wrapped(|ui| {
                         ui.label("Switch behavior");
@@ -598,8 +634,7 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
                     }
                 }
                 ui.data_mut(|data| data.insert_temp(id, draft));
-            });
-        });
+        }); }
     });
     requests
 }
@@ -607,6 +642,25 @@ pub fn controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool) -> Vec
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn untimed_press_and_toggle_hide_irrelevant_elapsed_timer() {
+        assert!(!shows_elapsed("press-to-win"));
+        assert!(!shows_elapsed("toggle"));
+        assert!(shows_elapsed("clear-all"));
+        let ctx = egui::Context::default();
+        let mut s = status();
+        s.minigame["mode"] = json!("press-to-win");
+        s.minigame["timed"] = json!(false);
+        s.minigame["elapsed_ms"] = json!(12345);
+        for _ in 0..2 {
+            let mut output = ctx.run_ui(Default::default(), |ui| {
+                assert!(controls(ui, &s, true).is_empty());
+                assert!(settings_controls(ui, &s, true).is_empty());
+            });
+            assert!(!format!("{:?}", output.shapes).contains("Elapsed"));
+            output.textures_delta.clear();
+        }
+    }
     fn status() -> DeviceStatus {
         serde_json::from_value(json!({"board_id":"fixture","boot_id":"boot",
             "capabilities":{"role":"first-wins"},"minigame":{"ready":true,"revision":1,

@@ -44,6 +44,7 @@ impl BoxView {
 #[derive(Default)]
 pub struct Output {
     pub trigger: Option<u8>,
+    pub blocked_trigger: Option<u8>,
     pub layout_changed: bool,
     pub selection_changed: bool,
     pub editing: Option<bool>,
@@ -54,6 +55,10 @@ pub struct Output {
 // one card-owned popup, muted identity, grouped actions and capability gates.
 fn context_menu(ui: &mut egui::Ui, target: Option<u8>, selection: &mut Selection,
     models: &[BoxView; 9], editing: bool, can_trigger: bool, out: &mut Output) {
+    // A custom full-width choice must measure against the menu, not inherit
+    // the designer canvas's width during the popup's initial sizing pass.
+    ui.set_max_width(240.0);
+    ui.set_width(220.0);
     super::cell_table::compact_menu(ui);
     ui.strong(target.map_or_else(|| text("Boxes"), |key| format!("{} {key}", text("Box"))));
     ui.weak(format!("{} selected", selection.ids.len()));
@@ -98,10 +103,43 @@ fn context_menu(ui: &mut egui::Ui, target: Option<u8>, selection: &mut Selection
     });
 }
 
+/// Fixed allocation/ink origins: selection and pointer state affect color only.
+/// Adapt Pealayer 5b3d5c1's inherited stroke/font contract without an atomic
+/// Button/SelectableLabel frame calculating different margins per state.
+pub fn arrange_control(ui: &mut egui::Ui, selected: bool) -> egui::Response {
+    let label = format!("{}  {}", icons::DOTS_SIX_VERTICAL, text("Arrange boxes"));
+    let font = egui::TextStyle::Button.resolve(ui.style());
+    let galley = ui.painter().layout_no_wrap(label.clone(), font, ui.visuals().text_color());
+    let size = egui::vec2(
+        (galley.size().x + 2.0 * ui.spacing().button_padding.x).min(ui.available_width()),
+        super::control_density::height(ui),
+    );
+    let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
+    response.widget_info(|| egui::WidgetInfo::selected(
+        egui::WidgetType::Button, ui.is_enabled(), selected, &label));
+    let visuals = ui.style().interact_selectable(&response, selected);
+    let border = ui.visuals().widgets.inactive.bg_stroke.width;
+    let stroke = if response.has_focus() || selected {
+        Stroke::new(border, ui.visuals().selection.bg_fill)
+    } else { Stroke::new(border, visuals.bg_stroke.color) };
+    ui.painter().rect(rect, ui.visuals().widgets.inactive.corner_radius,
+        visuals.weak_bg_fill, stroke, egui::StrokeKind::Inside);
+    ui.painter().with_clip_rect(rect.shrink(1.0)).galley(
+        egui::pos2(rect.left() + ui.spacing().button_padding.x,
+            rect.center().y - galley.size().y / 2.0), galley, visuals.text_color());
+    response
+}
+
 #[derive(Clone, Copy)]
 struct Drag {
     index: usize,
     grab_offset: Vec2,
+    last_frame: u64,
+}
+#[derive(Clone)]
+struct Marquee {
+    origin: Pos2,
+    base: std::collections::BTreeSet<u8>,
     last_frame: u64,
 }
 
@@ -347,12 +385,14 @@ pub fn show(
         .id_salt(("key-box-scroll", board_id))
         .show(ui, |ui| {
             let (canvas, background) =
-                ui.allocate_exact_size(egui::vec2(canvas_width, HEIGHT), egui::Sense::click());
+                ui.allocate_exact_size(egui::vec2(canvas_width, HEIGHT), egui::Sense::click_and_drag());
             ui.set_clip_rect(ui.clip_rect().intersect(canvas));
             let inner = canvas.shrink(16.0);
             let rects = layout_rects(inner, positions);
             let state_id = ui.make_persistent_id(("key-box-drag", board_id));
             let mut drag = ui.data_mut(|data| data.get_temp::<Drag>(state_id));
+            let marquee_id = state_id.with("selection");
+            let mut marquee = ui.data_mut(|data| data.get_temp::<Marquee>(marquee_id));
             let mut out = Output::default();
             let previous_selection = selection.ids.clone();
             let modifiers = ui.input(|input| input.modifiers);
@@ -364,6 +404,19 @@ pub fn show(
                 .ctx()
                 .pointer_hover_pos()
                 .or_else(|| released.then(|| ui.ctx().pointer_interact_pos()).flatten());
+            if editing || !ui.input(|input| input.focused) || pointer.is_none()
+                || marquee.as_ref().is_some_and(|active| current_frame > active.last_frame.saturating_add(1)) {
+                marquee = None;
+            }
+            if marquee.is_some() && ui.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape)) {
+                selection.group(marquee.as_ref().unwrap().base.iter().copied(), false);
+                marquee = None;
+            }
+            if !editing && background.drag_started_by(egui::PointerButton::Primary) {
+                if let Some(origin) = ui.input(|input| input.pointer.press_origin()).filter(|p| canvas.contains(*p)) {
+                    marquee = Some(Marquee { origin, base: if modifiers.command || modifiers.ctrl || modifiers.shift { selection.ids.clone() } else { Default::default() }, last_frame: current_frame });
+                }
+            }
             if !editing
                 || !ui.input(|input| input.focused)
                 || (drag.is_some()
@@ -451,7 +504,7 @@ pub fn show(
                     )
                 });
                 focus[index] = response.has_focus();
-                if response.clicked() {
+                if response.clicked() && marquee.is_none() {
                     selection.click(key, modifiers.command || modifiers.ctrl, modifiers.shift);
                     response.request_focus();
                     card_clicked = true;
@@ -525,9 +578,10 @@ pub fn show(
                             }
                         }
                     }
-                } else if response.clicked() && trigger_on_click && can_trigger && models[index].enabled
+                } else if response.clicked() && marquee.is_none() && trigger_on_click && models[index].enabled
                     && !modifiers.command && !modifiers.ctrl && !modifiers.shift {
-                    out.trigger = Some(key);
+                    if can_trigger { out.trigger = Some(key); }
+                    else { out.blocked_trigger = Some(key); }
                 }
                 response
                     .on_hover_cursor(if editing {
@@ -632,6 +686,19 @@ pub fn show(
                 }
                 ui.ctx().request_repaint();
             }
+            if let (Some(active), Some(pointer)) = (&mut marquee, pointer) {
+                let area = Rect::from_two_pos(active.origin, pointer).intersect(canvas);
+                let targets: Vec<_> = rects.iter().enumerate().map(|(i, rect)| ((i + 1) as u8, *rect)).collect();
+                selection.marquee(area, &targets, &active.base);
+                ui.painter().rect(area, 4.0, accent.gamma_multiply(0.12), Stroke::new(1.0, accent), egui::StrokeKind::Inside);
+                active.last_frame = current_frame;
+                if released || !ui.input(|input| input.pointer.primary_down()) { marquee = None; }
+                ui.ctx().request_repaint();
+            }
+            ui.data_mut(|data| {
+                if let Some(active) = marquee { data.insert_temp(marquee_id, active); }
+                else { data.remove::<Marquee>(marquee_id); }
+            });
             ui.data_mut(|data| {
                 if let Some(mut drag) = drag {
                     drag.last_frame = current_frame;
@@ -666,6 +733,39 @@ pub fn show(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn background_drag_selects_boxes_without_triggering_or_moving_them() {
+        let ctx = egui::Context::default();
+        let mut positions = crate::native_workspace::default_key_positions();
+        let original = positions;
+        let mut selection = Selection::default();
+        let mut rects = [Rect::NOTHING; 9];
+        let mut frame = |events| {
+            let mut result = Output::default();
+            let mut rendered = ctx.run_ui(egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, egui::vec2(800.0, 600.0))),
+                events, focused: true, ..Default::default()
+            }, |ui| {
+                ui.set_width(720.0);
+                rects = layout_rects(Rect::from_min_size(ui.cursor().min, egui::vec2(720.0, HEIGHT)).shrink(16.0), &positions);
+                result = show(ui, "marquee-fixture", &mut positions, &models(true), &mut selection, false, true, true, false);
+            });
+            rendered.textures_delta.clear();
+            assert!(result.trigger.is_none());
+            assert!(!result.layout_changed);
+            (rects, selection.cells())
+        };
+        let (rects, _) = frame(vec![]);
+        let start = rects[0].min - egui::vec2(8.0, 8.0);
+        let end = rects[1].max + egui::vec2(4.0, 4.0);
+        frame(vec![egui::Event::PointerMoved(start), pointer_button(start, true)]);
+        let (_, ids) = frame(vec![egui::Event::PointerMoved(end)]);
+        assert_eq!(ids, vec![1, 2]);
+        let (_, ids) = frame(vec![pointer_button(end, false)]);
+        assert_eq!(ids, vec![1, 2]);
+        assert_eq!(positions, original);
+    }
 
     #[test]
     fn box_clicks_reuse_selection_and_secondary_menu_never_actuates() {
@@ -803,6 +903,51 @@ mod tests {
         })
     }
 
+    #[test]
+    fn box_context_menu_does_not_inherit_the_canvas_width() {
+        for width in [448.0, 1200.0, 2400.0] {
+            let ctx = egui::Context::default();
+            let mut menu_width = 0.0;
+            for _ in 0..3 {
+                let mut rendered = ctx.run_ui(egui::RawInput {
+                    screen_rect: Some(Rect::from_min_size(Pos2::ZERO, egui::vec2(width, 700.0))),
+                    ..Default::default()
+                }, |ui| {
+                    ui.set_width(width);
+                    egui::Area::new(egui::Id::new("box-menu-width"))
+                        .order(egui::Order::Foreground).fixed_pos(egui::pos2(20.0, 20.0))
+                        .show(ui.ctx(), |ui| {
+                            egui::Frame::popup(ui.style()).show(ui, |ui| {
+                                context_menu(ui, Some(1), &mut Selection::default(), &models(true),
+                                    false, true, &mut Output::default());
+                                menu_width = ui.min_rect().width();
+                            });
+                        });
+                });
+                rendered.textures_delta.clear();
+            }
+            assert!((220.0..=240.0).contains(&menu_width), "canvas={width}, menu={menu_width}");
+        }
+    }
+
+    #[test]
+    fn both_illumination_and_indicator_accept_exactly_one_press() {
+        for group in 0..2 {
+            let ctx = egui::Context::default();
+            let mut positions = crate::native_workspace::default_key_positions();
+            let models = models(true);
+            let (_, bounds) = frame(&ctx, &mut positions, &models, false, true, vec![]);
+            let card = layout_rects(bounds.shrink(16.0), &positions)[0];
+            let point = card.min + egui::vec2(40.0, 69.0 + group as f32 * 24.0);
+            for events in [vec![egui::Event::PointerMoved(point)], vec![pointer_button(point, true)]] {
+                assert!(frame(&ctx, &mut positions, &models, false, true, events).0.trigger.is_none());
+            }
+            assert_eq!(frame(&ctx, &mut positions, &models, false, true,
+                vec![pointer_button(point, false)]).0.trigger, Some(1));
+            assert!(frame(&ctx, &mut positions, &models, false, true, vec![]).0.trigger.is_none());
+        }
+    }
+
     fn frame(
         context: &egui::Context,
         positions: &mut [[f32; 2]; 9],
@@ -892,6 +1037,7 @@ mod tests {
                 result.trigger, expected,
                 "editing={editing} allowed={allowed} enabled={enabled}"
             );
+            assert_eq!(result.blocked_trigger, (!editing && !allowed && enabled).then_some(1));
             assert!(!result.layout_changed);
             assert_eq!(positions, initial);
         }

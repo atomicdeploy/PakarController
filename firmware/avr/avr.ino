@@ -237,6 +237,7 @@ void sendHello(uint8_t sequence = 0) {
       PAKAR_FIRST_WINS_ENABLED ? 1 : 0, // Explicit remote first-wins press support.
       1, // Explicit buffered AVR audio stream support.
       PAKAR_FIRST_WINS_ENABLED ? 1 : 0, // Raw key edges and ESP-owned game outputs.
+      1, // Atomic autonomous flash/audio timeline through kAudioStream action6.
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }

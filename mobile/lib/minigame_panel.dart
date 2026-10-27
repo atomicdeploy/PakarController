@@ -282,33 +282,38 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                           ),
                         ),
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            snapshot.json['timed'] == true
-                                ? Icons.timer_outlined
-                                : Icons.av_timer,
-                            color: phaseTone,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 9),
-                          Flexible(
-                            child: Text(
-                              '${snapshot.json['timed'] == true ? 'Remaining' : 'Elapsed'}: ${seconds.toStringAsFixed(1)} s',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    fontFeatures: const [
-                                      FontFeature.tabularFigures(),
-                                    ],
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                      if (snapshot.json['timed'] == true ||
+                          !const [
+                            'press-to-win',
+                            'toggle',
+                          ].contains(snapshot.mode))
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              snapshot.json['timed'] == true
+                                  ? Icons.timer_outlined
+                                  : Icons.av_timer,
+                              color: phaseTone,
+                              size: 22,
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 9),
+                            Flexible(
+                              child: Text(
+                                '${snapshot.json['timed'] == true ? 'Remaining' : 'Elapsed'}: ${seconds.toStringAsFixed(1)} s',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                   const SizedBox(height: 16),

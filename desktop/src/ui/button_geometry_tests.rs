@@ -4,7 +4,7 @@
 //! paint-only states must not move either the hit target or the caption ink.
 use eframe::egui;
 
-const CAPTIONS: [&str; 4] = ["Ordinary", "Selectable", "Apply", "Primary"];
+const CAPTIONS: [&str; 5] = ["Ordinary", "Selectable", "Apply", "Primary", "Arrange boxes"];
 
 #[derive(Debug)]
 struct FrameGeometry {
@@ -92,7 +92,8 @@ fn draw_frame(
                                 ui.add(button)
                             }
                             2 => super::dialog::action_button(ui, "+", CAPTIONS[index]),
-                            _ => super::dialog::primary_action_button(ui, "+", CAPTIONS[index]),
+                            3 => super::dialog::primary_action_button(ui, "+", CAPTIONS[index]),
+                            _ => super::key_boxes::arrange_control(ui, selected),
                         })
                         .inner;
                     geometry.rects.push(response.rect);
@@ -114,7 +115,7 @@ fn draw_frame(
     assert_eq!(geometry.text_origins.len(), CAPTIONS.len());
     if menu_scope {
         let ordinary = geometry.rects[0];
-        for action in &geometry.rects[1..] {
+        for action in &geometry.rects[1..4] {
             assert_eq!(
                 action.height(),
                 ordinary.height(),

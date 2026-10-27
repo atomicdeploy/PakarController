@@ -92,6 +92,26 @@ Widget fixture(
 );
 
 void main() {
+  testWidgets('Untimed press to win has no elapsed countdown', (tester) async {
+    final base = miniStatus().json;
+    final status = DeviceStatus({
+      ...base,
+      'minigame': {
+        ...base['minigame'] as Map,
+        'timed': false,
+        'remaining_ms': 0,
+        'settings': {
+          ...(base['minigame'] as Map)['settings'] as Map,
+          'limit_ms': 0,
+        },
+      },
+    });
+    await tester.pumpWidget(fixture(status, (_, _) async => true));
+    await tester.pump();
+    expect(find.textContaining('Elapsed:'), findsNothing);
+    expect(find.textContaining('Remaining:'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
     'Advertised unready service never falls back to legacy game presses',
     (tester) async {
