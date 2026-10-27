@@ -5,7 +5,14 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 const source=await read('web/index.html');
-for(const script of source.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi))new vm.Script(script[1]);
+// Syntax extraction only, never HTML sanitization. Match the forgiving end tags
+// a browser accepts so a malformed closing tag cannot hide an unchecked script.
+const scripts=html=>[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script[^>]*>/gi)];
+for(const closing of ['</script>','</script >','</SCRIPT>','</script ignored="yes">']){
+  assert.equal(scripts('<SCRIPT type="text/javascript">throw new Error("checked")'+closing).length,1);
+  assert.throws(()=>new vm.Script(scripts('<script>const = broken'+closing)[0][1]));
+}
+for(const script of scripts(source))new vm.Script(script[1]);
 const plain=value=>JSON.parse(JSON.stringify(value));
 const layoutContext=vm.createContext({});
 vm.runInContext(await read('web/modules/table-layout.js'),layoutContext);

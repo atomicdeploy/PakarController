@@ -819,7 +819,7 @@
         {
           "path": "tests/web_app_contract_test.mjs",
           "anchor": "workspace.offset('ArrowLeft',rtl)",
-          "sha256": "23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f"
+          "sha256": "f391f960109c5ca69d64913ef90073a52d214c2a63d54de67255a181163bf984"
         }
       ],
       "omissions": [
@@ -859,12 +859,12 @@
         {
           "path": "tests/web_app_contract_test.mjs",
           "anchor": "workspace.normalize({order:'corrupt'",
-          "sha256": "23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f"
+          "sha256": "f391f960109c5ca69d64913ef90073a52d214c2a63d54de67255a181163bf984"
         },
         {
           "path": "tests/web_app_contract_test.mjs",
           "anchor": "Reordering leaves original state immutable",
-          "sha256": "23bff6b92080fb708a49efff4d5042384052f797ae2deef0ff63a6bf593b9b2f"
+          "sha256": "f391f960109c5ca69d64913ef90073a52d214c2a63d54de67255a181163bf984"
         }
       ],
       "omissions": [

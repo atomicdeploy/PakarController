@@ -2,6 +2,13 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Post-dependency verification at57244ea passed Rust461/461 and Flutter722 with
+3 environment/live skips; analysis is clean. The fresh GitHub security scan
+confirmed the descriptor/configuration fixes, but found an additional forgiving
+HTML-end-tag case in the test-only script extractor. It now includes whitespace
+and ignored end-tag attributes, with negative syntax tests for all variants.
+No security check was disabled. Exact final-head CI remains the merge gate.
+
 Dependency integration preserves the original PR21/22/23 commits through normal
 merges, not squash/cherry-pick deletion of their history. PR23 archive4 requires
 its real rawContent.getStream(decompress:false) and CompressionType.deflate APIs;
