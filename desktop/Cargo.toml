@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/atomicdeploy/PakarController"
 
 [dependencies]
-eframe = { version = "0.36.2", features = ["glow", "persistence"] }
+eframe = { version = "0.37.0", features = ["glow", "persistence"] }
 egui-phosphor = { version = "0.14.0", default-features = false, features = ["regular"] }
 egui_dock = { version = "0.21.1", features = ["serde"] }
 egui-elegance = "=0.16.2"
@@ -25,7 +25,7 @@ image = { version = "0.25.10", default-features = false, features = ["png"] }
 tray-icon = "=0.26.1"
 crossterm = "0.29.0"
 unicode-width = "0.2.2"
-mdns-sd = "=0.21.5"
+mdns-sd = "=0.21.6"
 socket2 = "0.6.5"
 httparse = "1.10.1"
 network-interface = "2.0.5"
