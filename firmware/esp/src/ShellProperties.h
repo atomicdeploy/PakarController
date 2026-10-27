@@ -43,6 +43,19 @@ static const ShellProperty shellProperties[] PAKAR_SHELL_METADATA_STORAGE={
 #endif
  {"shell.enabled","shell","enabled",'b',true,false},{"shell.port","shell","port",'n',true,false},
  {"shell.color","shell","color",'b',true,false}
+#if PAKAR_FIRST_WINS_ENABLED
+ ,{"game.enabled_mask","game","enabled_mask",'n',true,false},
+ {"game.auto_reset_ms","game","auto_reset_ms",'n',true,false},
+ {"game.effects","game","extended_effects",'b',true,false},
+ {"game.chase_ms","game","chase_period_ms",'n',true,false},
+ {"game.neighbors","game","chase_neighbors",'b',true,false},
+ {"game.invert","game","chase_invert",'b',true,false},
+ {"game.idle_rgb","game","idle_rgb",'n',true,false},
+ {"game.win_rgb","game","win_rgb",'n',true,false},
+ {"game.lose_rgb","game","lose_rgb",'n',true,false},
+ {"game.winner_cue","game","winner_cue",'s',true,false},
+ {"game.reset_cue","game","reset_cue",'s',true,false}
+#endif
 };
 constexpr size_t shellPropertyCount=sizeof(shellProperties)/sizeof(*shellProperties);
 inline ShellProperty shellPropertyAt(size_t index){

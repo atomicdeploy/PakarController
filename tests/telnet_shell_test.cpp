@@ -12,12 +12,29 @@ int main() {
   auto receive = [&](uint8_t byte) { input.push_back(byte); };
   TelnetParser parser;
   parser.greet(write);
-  assert((output == std::vector<uint8_t>{255,251,1,255,251,3,255,253,3}));
+  assert((output == std::vector<uint8_t>{255,251,1,255,251,3,255,253,3,255,253,31,255,253,24,255,251,0,255,253,0}));
   output.clear();
-  for (uint8_t byte : {255,253,1,255,253,3,255,251,3}) parser.feed(byte, write, receive);
+  for (uint8_t byte : {255,253,1,255,253,3,255,251,3,255,253,0,255,251,0}) parser.feed(byte, write, receive);
   assert(output.empty()); // No negotiation loops on greeting acknowledgements.
   for (uint8_t byte : {255,253,42,255,251,24}) parser.feed(byte, write, receive);
-  assert((output == std::vector<uint8_t>{255,252,42,255,254,24}));
+  assert((output == std::vector<uint8_t>{255,252,42,255,250,24,1,255,240}));
+  output.clear();
+  for(uint8_t byte:{255,251,24,255,251,31,255,251,31})parser.feed(byte,write,receive);
+  assert(output.empty());
+  for(uint8_t byte:{255,250,31,0,120,0,40,255,240})parser.feed(byte,write,receive);
+  assert(parser.columns()==120&&parser.rows()==40);
+  for(uint8_t byte:{255,250,24,0,100,117,109,98,255,240})parser.feed(byte,write,receive);
+  assert(!parser.ansi()&&std::string(parser.terminal())=="dumb");
+  // Escaped IAC is data inside NAWS; zero dimensions keep their prior value.
+  for(uint8_t byte:{255,250,31,0,255,255,0,0,255,240})parser.feed(byte,write,receive);
+  assert(parser.columns()==240&&parser.rows()==40);
+  for(uint8_t byte:{255,250,24,0,27,91,50,74,255,240})parser.feed(byte,write,receive);
+  assert(std::string(parser.terminal())=="dumb");
+  for(uint8_t byte:{255,250,24,0})parser.feed(byte,write,receive);
+  for(unsigned i=0;i<200;++i)parser.feed('x',write,receive);
+  parser.feed(255,write,receive);parser.feed(240,write,receive);
+  assert(std::string(parser.terminal())=="dumb");
+  assert(!parser.size(1,1)&&parser.size(80,24));
   for (uint8_t byte : {255,250,24,65,255,255,66,255,240,115,255,255,255,241,116}) parser.feed(byte, write, receive);
   assert((input == std::vector<uint8_t>{115,255,116}));
   parser.feed(255, write, receive); parser.reset(); parser.feed('X', write, receive);

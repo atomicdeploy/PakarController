@@ -67,6 +67,20 @@ int main(){
   model.begin(false);output.clear();assert(model.render(snapshot,write));assert(output.find('\x1b')==std::string::npos);
   assert(sizeof(model)<2048); // No heap, IO object, unbounded transcript or SDK dependency.
 
+  T game;T::Snapshot keys;keys.canGame=true;keys.gameReady=true;keys.enabledKeys=3;keys.unicode=true;keys.terminalSettings=true;
+  game.begin();game.feed('\t',keys,action);game.feed('\t',keys,action);
+  assert(game.page()==T::Game&&action.type==T::Action::None);
+  output.clear();assert(game.render(keys,write));assert(output.find("\xe2\x95\xad\xe2\x94\x80 ")!=std::string::npos);
+  assert(output.find("1-9 press box")!=std::string::npos&&output.size()<4096);
+  assert(game.feed('1',keys,action)&&action.type==T::Action::Press&&action.index==1);
+  assert(!game.feed('3',keys,action)&&action.type==T::Action::None);
+  assert(game.feed('r',keys,action)&&action.type==T::Action::Reset);
+  keys.gameReady=false;assert(!game.feed('1',keys,action));assert(!game.feed('r',keys,action));
+  keys.lines=16;keys.gameReady=true;assert(!game.feed('1',keys,action));
+  output.clear();game.render(keys,write);assert(output.find("Resize terminal")!=std::string::npos);
+  keys.lines=24;game.feed('\t',keys,action);assert(game.page()==T::TerminalPage);
+  keys.unicode=false;output.clear();game.render(keys,write);assert(output.find("\xe2\x95\xad")==std::string::npos);
+
   // Physical groups follow current prefix spans, not a six-pixel assumption or
   // the logical table permutation. Every explicit action carries its revision.
   T variable;T::Snapshot geometry;
@@ -113,6 +127,21 @@ int main(){
   assert(!input("g"));for(unsigned i=0;i<11;++i)assert(input("+"));
   assert(action.index==215&&action.count==1);assert(!input("+"));
   output.clear();assert(variable.render(geometry,write));assert(output.find("/ 216 (216 capacity)")!=std::string::npos);
+  geometry.lines=16;assert(!input("\x1b[D"));assert(variable.selectedPixel()==215);
+  geometry.lines=24;
+
+  // A resize redraws an open form without erasing its draft or overflowing the
+  // narrow editor; small-terminal arrows never become output commands.
+  T resized;T::Snapshot narrow;T::Row editable={"Device label","label","saved",true,false};
+  narrow.rows=&editable;narrow.rowCount=1;resized.begin();
+  resized.feed('\r',narrow,action);resized.feed('x',narrow,action);
+  const std::string savedDraft=resized.draft();
+  output.clear();resized.render(narrow,write);narrow.columns=40;
+  output.clear();assert(resized.render(narrow,write));assert(savedDraft==resized.draft());
+  assert(output.find("Edit Device label: savedx")!=std::string::npos);
+  narrow.lines=16;output.clear();assert(resized.render(narrow,write));
+  assert(output.find("Resize terminal")!=std::string::npos&&resized.editing());
+  narrow.lines=24;resized.render(narrow,write);assert(savedDraft==resized.draft());
 
   alignas(T) unsigned char modelStorage[sizeof(T)]{};
   auto *dying=new(modelStorage) T;dying->begin();

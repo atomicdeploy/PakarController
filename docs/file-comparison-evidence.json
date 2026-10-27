@@ -87,7 +87,7 @@
         {
           "path": "firmware/esp/src/ShellProperties.h",
           "anchor": "struct ShellProperty",
-          "sha256": "7f5e741f7ff29d308da7d201a59b37f116a5b846ec7bcb157032477ca7f34816"
+          "sha256": "90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -127,7 +127,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -172,7 +172,7 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154"
+          "sha256": "2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b"
         }
       ],
       "proof": [
@@ -201,7 +201,7 @@
         {
           "path": "tools/test-shell.ps1",
           "anchor": "foreach($taskName",
-          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4"
+          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -318,12 +318,12 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4"
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d"
         }
       ],
       "proof": [
@@ -369,7 +369,7 @@
         {
           "path": "tools/telnet-shell.mjs",
           "anchor": "export function connectShell",
-          "sha256": "9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab"
+          "sha256": "85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812"
         }
       ],
       "proof": [
@@ -381,7 +381,7 @@
         {
           "path": "tests/telnet_client_test.mjs",
           "anchor": "async function session",
-          "sha256": "e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0"
+          "sha256": "6d38cafbcf7c44ce351f1b70691dfda3c57132134c2aea52a5abe18f43d00f42"
         }
       ],
       "omissions": [
@@ -410,12 +410,12 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
         },
         {
           "path": "tools/telnet-shell.mjs",
           "anchor": "export function connectShell",
-          "sha256": "9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab"
+          "sha256": "85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812"
         }
       ],
       "proof": [
@@ -427,7 +427,7 @@
         {
           "path": "tests/telnet_client_test.mjs",
           "anchor": "async function session",
-          "sha256": "e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0"
+          "sha256": "6d38cafbcf7c44ce351f1b70691dfda3c57132134c2aea52a5abe18f43d00f42"
         }
       ],
       "omissions": [
@@ -455,17 +455,17 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154"
+          "sha256": "2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4"
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
         }
       ],
       "proof": [
@@ -490,7 +490,7 @@
       "remaining": [
         "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
       ],
-      "improvement": "Actual command/VT100 integration preserves bounded authenticated owners and adds tested, non-executing command/property completion instead of a Tab bell placeholder."
+      "improvement": "Actual command/VT100 integration preserves bounded authenticated owners and adds tested, non-executing command/property completion instead of a Tab bell placeholder. Device TUI adds Unicode frame bytes, bounded NAWS/TTYPE-aware layout, session terminal preferences and role-gated game actions/settings. Full Unicode entry, grapheme/RTL layout, CHARSET negotiation, advanced presentation override editing and live acceptance remain issue #29 work."
     },
     {
       "origin": "portable-shell",
@@ -507,7 +507,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -517,7 +517,7 @@
         {
           "path": "tools/telnet-shell.mjs",
           "anchor": "export function connectShell",
-          "sha256": "9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab"
+          "sha256": "85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812"
         }
       ],
       "proof": [
@@ -529,7 +529,7 @@
         {
           "path": "tests/telnet_client_test.mjs",
           "anchor": "async function session",
-          "sha256": "e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0"
+          "sha256": "6d38cafbcf7c44ce351f1b70691dfda3c57132134c2aea52a5abe18f43d00f42"
         }
       ],
       "omissions": [
@@ -557,22 +557,22 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154"
+          "sha256": "2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4"
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
         },
         {
           "path": "firmware/esp/src/ShellTui.h",
           "anchor": "class ShellTui",
-          "sha256": "43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc"
+          "sha256": "3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682"
         }
       ],
       "proof": [
@@ -614,7 +614,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -624,7 +624,7 @@
         {
           "path": "tools/telnet-shell.mjs",
           "anchor": "export function connectShell",
-          "sha256": "9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab"
+          "sha256": "85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812"
         }
       ],
       "proof": [
@@ -636,7 +636,7 @@
         {
           "path": "tests/telnet_client_test.mjs",
           "anchor": "async function session",
-          "sha256": "e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0"
+          "sha256": "6d38cafbcf7c44ce351f1b70691dfda3c57132134c2aea52a5abe18f43d00f42"
         }
       ],
       "omissions": [
@@ -664,17 +664,17 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154"
+          "sha256": "2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4"
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
         }
       ],
       "proof": [
@@ -2892,14 +2892,14 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc",
+          "sha256": "3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682",
           "anchor": "class ShellTui"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "assert(output.size()<=4096)"
         }
       ],
@@ -20661,12 +20661,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
           "anchor": "class LineEditor"
         },
         {
           "path": "firmware/esp/src/ShellProperties.h",
-          "sha256": "7f5e741f7ff29d308da7d201a59b37f116a5b846ec7bcb157032477ca7f34816",
+          "sha256": "90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1",
           "anchor": "static const ShellProperty shellProperties[]"
         },
         {
@@ -20676,7 +20676,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b",
+          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -20698,12 +20698,12 @@
         },
         {
           "path": "tests/shell_properties_test.cpp",
-          "sha256": "0d2aa839f477d639f994c57cf5432a9d135a70cc869932f5d991bb6788b11ca6",
+          "sha256": "91dad9a0a6064afe8a11bb1dd6da31ce685a95709a8f6b89e4a930cb91c29e28",
           "anchor": "int main()"
         },
         {
           "path": "tests/telnet_shell_test.cpp",
-          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "sha256": "9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62",
           "anchor": "editor.redrawEvent("
         },
         {
@@ -20713,12 +20713,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "Unchanged Enter is not a write."
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4",
+          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20778,12 +20778,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
           "anchor": "class LineEditor"
         },
         {
           "path": "firmware/esp/src/ShellProperties.h",
-          "sha256": "7f5e741f7ff29d308da7d201a59b37f116a5b846ec7bcb157032477ca7f34816",
+          "sha256": "90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1",
           "anchor": "static const ShellProperty shellProperties[]"
         },
         {
@@ -20793,7 +20793,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b",
+          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -20815,12 +20815,12 @@
         },
         {
           "path": "tests/shell_properties_test.cpp",
-          "sha256": "0d2aa839f477d639f994c57cf5432a9d135a70cc869932f5d991bb6788b11ca6",
+          "sha256": "91dad9a0a6064afe8a11bb1dd6da31ce685a95709a8f6b89e4a930cb91c29e28",
           "anchor": "int main()"
         },
         {
           "path": "tests/telnet_shell_test.cpp",
-          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "sha256": "9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62",
           "anchor": "editor.redrawEvent("
         },
         {
@@ -20830,12 +20830,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "Unchanged Enter is not a write."
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4",
+          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20897,12 +20897,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
           "anchor": "class TelnetParser"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -20929,7 +20929,7 @@
         },
         {
           "path": "tests/telnet_shell_test.cpp",
-          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "sha256": "9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62",
           "anchor": "No negotiation loops on greeting acknowledgements."
         },
         {
@@ -20944,7 +20944,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4",
+          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20994,12 +20994,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
           "anchor": "class TelnetParser"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21026,7 +21026,7 @@
         },
         {
           "path": "tests/telnet_shell_test.cpp",
-          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "sha256": "9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62",
           "anchor": "No negotiation loops on greeting acknowledgements."
         },
         {
@@ -21041,7 +21041,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4",
+          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -21092,12 +21092,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b",
+          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
           "anchor": "shellGet(property)"
         },
         {
@@ -21124,12 +21124,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "Readonly never emits Set."
         },
         {
           "path": "tests/telnet_shell_test.cpp",
-          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "sha256": "9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62",
           "anchor": "!editor.remember(true)"
         }
       ],
@@ -21190,12 +21190,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b",
+          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
           "anchor": "shellGet(property)"
         },
         {
@@ -21222,12 +21222,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "Readonly never emits Set."
         },
         {
           "path": "tests/telnet_shell_test.cpp",
-          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "sha256": "9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62",
           "anchor": "!editor.remember(true)"
         }
       ],
@@ -21279,29 +21279,29 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc",
+          "sha256": "3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682",
           "anchor": "if(editing_)return edit(ch,snapshot,action);"
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b",
+          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
           "anchor": "struct ShellTuiSnapshot"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "private\\trefresh"
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "Async observation cannot repaint draft."
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "rows[0].editable=false"
         }
       ],
@@ -21342,17 +21342,17 @@
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
+          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
           "anchor": "inline size_t terminalText"
         },
         {
           "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc",
+          "sha256": "3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682",
           "anchor": "class ShellTui"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
+          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
           "anchor": "void closeDeviceShells()"
         },
         {
@@ -21374,12 +21374,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e",
+          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
           "anchor": "never-render-this"
         },
         {
           "path": "tests/telnet_shell_test.cpp",
-          "sha256": "c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1",
+          "sha256": "9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62",
           "anchor": "Inspect the caller-owned backing bytes"
         }
       ],

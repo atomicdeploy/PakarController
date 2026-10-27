@@ -7,6 +7,13 @@ const decode=telnetDecoder(b=>replies.push([...b]),b=>received.push(...b));
 for(const byte of [255,251,1,255,251,1,255,253,3,255,253,42,255,250,24,65,255,255,66,255,240,120,255,255])decode([byte]);
 assert.deepEqual(replies,[[255,253,1],[255,251,3],[255,252,42]]);
 assert.deepEqual(received,[120,255]);assert.deepEqual([...escapeTelnet([120,255])],[120,255,255]);
+const negotiated=[];let dimensions=[120,40];
+const terminal=telnetDecoder(b=>negotiated.push([...b]),()=>assert.fail('Negotiation leaked to text'),{type:'xterm-256color',size:()=>dimensions});
+for(const byte of [255,253,31,255,253,31,255,253,24,255,250,24,1,255,240])terminal([byte]);
+assert.deepEqual(negotiated.slice(0,3),[[255,251,31],[255,250,31,0,120,0,40,255,240],[255,251,24]]);
+assert.equal(Buffer.from(negotiated[3].slice(4,-2)).toString(),'xterm-256color');
+dimensions=[255,24];terminal.resize();assert.deepEqual(negotiated.at(-1),[255,250,31,0,255,255,0,24,255,240]);
+terminal([255,254,31]);const stopped=negotiated.length;terminal.resize();assert.equal(negotiated.length,stopped);
 assert.throws(()=>connectShell({host:'board',execute:'reset\nreset'}),/one printable/);
 assert.throws(()=>connectShell({host:'board',port:0,execute:'status'}),/port/);
 async function session(kind){

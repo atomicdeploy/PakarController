@@ -10341,3 +10341,43 @@ rather than Dart record/map identity. Final tests exercise the real gesture
 callbacks, not direct invocation alone. ASUS localhost:8022 refused its SSH
 handshake and local ADB listed no authorized device, so no tablet replacement
 or physical remote-button result is claimed.
+
+## Device terminal and contextual Game editor, 2026-10-27
+
+Reconsulted device-shell and actual PU850 LocalLib/Telnet.cpp, portable-shell
+src/portable_shell.c, include/portable_shell.h and src/vt100.c. The existing
+bounded parser/editor and callback terminal ownership are retained. NAWS and
+TTYPE now parse fragmented, escaped, bounded subnegotiation instead of discarding
+it; the Node client reports terminal type and resizes. BINARY is negotiated;
+unsupported options are refused. No full RFC1143 or CHARSET claim is made.
+
+The existing device-owned TUI gains UTF-8 frame styling, Terminal and role-gated
+Game pages, safe viewport edits, preserved resize drafts and explicit enabled-box
+press/reset commands. Game settings use the current shared router and flash
+persistence, not a second game engine. Terminal preferences are session-only.
+Capability/admission loss and undersized windows cannot dispatch actions. Help
+and completion hide unrelated role commands. Unicode text entry/RTL, arbitrary
+presentation-override editing and complete graphical-client parity remain open;
+UTF-8 framing is not evidence of these features.
+
+The first SDK compile exposed C++23 char8_t incompatibility in u8 literals while
+C++17 host tests passed. Actual donor VT100 uses char byte callbacks; the repair
+keeps that transport and emits explicit UTF-8 bytes. The canonical TUI fixture
+now compiles as C++23 to cover this boundary. No compiler flag workaround, cache
+clean or donor modification was used. The focused shell tests pass, including
+malformed/fragmented negotiation, client resize, authority/lease retirement,
+two-session service, game gates and resize drafts; metadata tests cover ordinary,
+ESP8266, S3 table and S3 first-wins profiles. Live terminal and physical game
+acceptance remain separate. No production board was contacted or changed.
+
+Final canonical S3 builds passed for both roles: table-selection uses 2,308,307
+bytes of program storage and 138,724 bytes static RAM; first-wins uses 2,309,583
+bytes and 125,604 bytes static RAM. Both use the 3,342,336-byte OTA slot, buffered
+UART, 16MB flash/OPI profile, both LED drivers, Ethernet and BLE-disabled build.
+Only the table profile carries its previously acknowledged ISP electrical flag;
+the generic key candidate does not grant ISP authority. The final key application
+file is 2,309,728 bytes, SHA256
+`8eeb6551973ec3a13cbc3423f456e372c66e74ed3beec3402a75486200d06370`.
+These are compile/package figures, not runtime free heap or target provisioning
+proof. Source and comparison checks passed; no CI completion/main merge or live
+deployment is claimed by this checkpoint.

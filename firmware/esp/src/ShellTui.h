@@ -9,7 +9,7 @@
 namespace PakarShell {
 class ShellTui {
  public:
-  enum Page : uint8_t { Device, Network, Led, Pixel };
+  enum Page : uint8_t { Device, Network, Led, Pixel, Game, TerminalPage };
   struct Row {
     const char* label=nullptr;
     const char* key=nullptr;
@@ -28,9 +28,12 @@ class ShellTui {
     uint8_t groupCount=0;
     uint32_t groupLayoutRevision=0;
     bool canLeds=false,canPixels=false; // Independently ACKed, default denied.
+    bool canGame=false,gameReady=false,terminalSettings=false,unicode=false;
+    uint16_t enabledKeys=0,columns=80,lines=24;
+    uint8_t winner=0;
   };
   struct Action {
-    enum Type : uint8_t { None, Set, Cell, Pixel, Refresh, Exit } type=None;
+    enum Type : uint8_t { None, Set, Cell, Pixel, Refresh, Exit, Press, Reset } type=None;
     char key[32]{},value[385]{};
     // Cell: logical1..80; Pixel: ZERO-based physical span from this snapshot.
     uint16_t index=0;
@@ -57,6 +60,7 @@ class ShellTui {
   bool group()const{return group_;}
   const char* draft()const{return draft_;} // Secret draft is NEVER rendered.
   void invalidate(){if(!editing_)dirty_=true;}
+  void setAnsi(bool enabled){if(ansi_!=enabled){ansi_=enabled;dirty_=full_=true;}}
   void feedback(const char* text){setNotice(text);}
   // A standalone ESC needs an idle delimiter (~35ms); CSI may span callbacks.
   // Only the transport owner decides that delimiter. Never flush each chunk.
@@ -75,7 +79,7 @@ class ShellTui {
         escape_=escapeBytes_=0;return false;
       }
       if(++escapeBytes_>16){escape_=escapeBytes_=0;return false;}
-      if(ch>=0x40 && ch<=0x7e){escape_=escapeBytes_=0;return arrow(ch,snapshot,action);}
+      if(ch>=0x40 && ch<=0x7e){escape_=escapeBytes_=0;if(snapshot.lines<24||snapshot.columns<40)return false;return arrow(ch,snapshot,action);}
       return false;
     }
     if(ch==27){escape_=1;escapeBytes_=0;return false;}
@@ -84,9 +88,22 @@ class ShellTui {
       active_=false;action.type=Action::Exit;return true;
     }
     if(ch==12){dirty_=full_=true;return false;}
+    if(snapshot.lines<24||snapshot.columns<40)return false;
     if(editing_)return edit(ch,snapshot,action);
     if(ch=='\t') {nextPage(snapshot);return false;}
     if(ch==18){action.type=Action::Refresh;return true;}
+    if(page_==Game){
+      if(ch>='1'&&ch<='9'){
+        if(!snapshot.canGame||!snapshot.gameReady||!(snapshot.enabledKeys&(1U<<(ch-'1')))){
+          setNotice("Box unavailable: check AVR, enabled mask or maintenance");return false;
+        }
+        action.type=Action::Press;action.index=ch-'0';return true;
+      }
+      if(ch=='r'){
+        if(!snapshot.canGame||!snapshot.gameReady){setNotice("Game unavailable");return false;}
+        action.type=Action::Reset;return true;
+      }
+    }
     if((page_==Led&&!snapshot.canLeds)||(page_==Pixel&&!pixels(snapshot)))return false;
     if(page_==Pixel)syncPixel(snapshot);
     if(ch=='f' && (page_==Led||page_==Pixel)) {grid_=!grid_;dirty_=true;return false;}
@@ -116,20 +133,29 @@ class ShellTui {
   }
   template<typename Write> bool render(const Snapshot& snapshot,Write write,bool force=false) {
     if(!active_)return false;
+    if(columns_!=snapshot.columns||lines_!=snapshot.lines){columns_=snapshot.columns;lines_=snapshot.lines;dirty_=full_=true;}
     if(!editing_){const uint32_t next=hash(snapshot);if(next!=lastHash_)dirty_=true;lastHash_=next;}
     if(!dirty_&&!force)return false;
     dirty_=false;
     if(editing_&&!full_&&!force){editLine(write);return true;}
     full_=false;
-    Writer<Write> out(write);if(ansi_)out.raw("\x1b[H\x1b[2J\x1b[1;36m");
-    out.safe(snapshot.title,64);if(ansi_)out.raw("\x1b[0m");out.raw("\r\n");
-    for(uint8_t i=0;i<4;++i){
+    Writer<Write> out(write);if(ansi_)out.raw("\x1b[H\x1b[2J\x1b[1;32m");
+    const size_t width=snapshot.columns<40?40:snapshot.columns>100?100:snapshot.columns;
+    // UTF-8 wire bytes are char-based under both C++17 and C++23.
+    out.raw(snapshot.unicode?"\xe2\x95\xad\xe2\x94\x80 ":"+- ");out.safe(snapshot.title,width-10);
+    if(ansi_){out.raw("\x1b[0m");}out.raw("\r\n");
+    if(snapshot.lines<24||snapshot.columns<40){out.raw("Resize terminal to at least 40 x 24.\r\nEsc returns to shell.\r\n");return true;}
+    for(uint8_t i=0;i<6;++i){
       if((i==Led&&!snapshot.canLeds)||(i==Pixel&&!pixels(snapshot)))continue;
+      if((i==Game&&!snapshot.canGame)||(i==TerminalPage&&!snapshot.terminalSettings))continue;
       if(ansi_&&i==page_)out.raw("\x1b[7m");
-      out.raw(i==Device?" Device ":i==Network?" Network ":i==Led?" LEDs ":" Pixels ");
+      out.raw(i==Device?" Device ":i==Network?" Network ":i==Led?" LEDs ":i==Pixel?" Pixels ":i==Game?" Game ":" Term ");
       if(ansi_)out.raw("\x1b[0m");
     }
     out.raw("\r\n");
+    if(ansi_)out.raw("\x1b[90m");
+    for(size_t i=0;i<width-1;++i)out.raw(snapshot.unicode?"\xe2\x94\x80":"-");
+    if(ansi_){out.raw("\x1b[0m");}out.raw("\r\n");
     const bool allowed=page_!=Led&&page_!=Pixel?true:page_==Led?snapshot.canLeds:pixels(snapshot);
     if(!allowed){out.raw("Unavailable\r\n");}
     else {
@@ -141,8 +167,9 @@ class ShellTui {
         if(at<count){
           const Row& row=snapshot.rows[at];const bool selected=at==selected_&&!grid_;
           if(ansi_&&selected){out.raw("\x1b[7m");}out.raw(selected?"> ":"  ");
-          out.field(row.label,18);out.raw(row.editable?" [edit] ":" [read] ");
-          out.safe(row.secret?"[hidden]":row.value,44);
+          const size_t labelWidth=width<60?12:22;
+          out.field(row.label,labelWidth);out.raw(row.editable?" [edit] ":" [read] ");
+          out.safe(row.secret?"[hidden]":row.value,width-labelWidth-12);
           if(ansi_)out.raw("\x1b[0m");
         }
         out.raw("\r\n");
@@ -163,6 +190,16 @@ class ShellTui {
           out.raw("\r\n");
         }
         out.raw("Arrows: list | w white | r red | o off\r\n");
+      } else if(page_==Game){
+        out.raw("\r\n");
+        for(uint8_t id=1;id<=9;++id){
+          const bool enabled=snapshot.enabledKeys&(1U<<(id-1));
+          if(ansi_)out.raw(!enabled?"\x1b[90m":snapshot.winner==id?"\x1b[1;32m":snapshot.winner?"\x1b[31m":"\x1b[37m");
+          char box[8];snprintf(box,sizeof(box),"[%u]%s",id,id==9?"\r\n":" ");out.raw(box);
+          if(ansi_)out.raw("\x1b[0m");
+        }
+        char winner[64];snprintf(winner,sizeof(winner),"Winner: %u | %s\r\n",snapshot.winner,snapshot.gameReady?"Ready":"AVR / maintenance unavailable");out.raw(winner);
+        out.raw("1-9 press box | r reset to white\r\n");
       } else if(page_==Pixel){
         syncPixel(snapshot);
         const uint8_t count=group_?snapshot.groupCounts[groupAt(snapshot,pixel_)]:1;
@@ -170,7 +207,8 @@ class ShellTui {
         out.raw("Arrows +/-: step | g group | w/r/o color | Enter show\r\n");
       }
     }
-    out.raw("Tab pages | Enter edit | f fields | Esc back | Ctrl-R refresh\r\n");
+    out.raw("Tab pages | Enter edit | Esc back\r\n");
+    out.raw("f fields | Ctrl-R refresh\r\n");
     out.safe(notice_,64);out.raw("\r\n");
     if(ansi_)out.raw("\x1b[23;1H\x1b[2K");
     if(editing_)editText(out);else out.raw(" ");
@@ -214,7 +252,7 @@ class ShellTui {
   void clearDraft(){scrub(draft_,sizeof(draft_));scrub(editKey_,sizeof(editKey_));scrub(editLabel_,sizeof(editLabel_));cursor_=0;editing_=secret_=draftChanged_=false;}
   void setNotice(const char* text){terminalText(notice_,sizeof(notice_),text);dirty_=true;}
   void nextPage(const Snapshot& s){
-    for(uint8_t i=0;i<4;++i){page_=static_cast<Page>((page_+1)%4);if((page_!=Led||s.canLeds)&&(page_!=Pixel||pixels(s)))break;}
+    for(uint8_t i=0;i<6;++i){page_=static_cast<Page>((page_+1)%6);if((page_!=Led||s.canLeds)&&(page_!=Pixel||pixels(s))&&(page_!=Game||s.canGame)&&(page_!=TerminalPage||s.terminalSettings))break;}
     selected_=0;grid_=page_==Led||page_==Pixel;dirty_=full_=true;notice_[0]=0;
   }
   bool pixelAction(const Snapshot& s,Action& a){
@@ -253,7 +291,7 @@ class ShellTui {
   bool edit(uint8_t ch,const Snapshot& s,Action& action){
     if(ch=='\r'||ch=='\n'){
       crPending_=ch=='\r';const Row* row=currentRow(s);
-      if((page_==Led&&!s.canLeds)||(page_==Pixel&&!pixels(s))||!row||!row->editable||!keySafe(row->key)||strcmp(row->key,editKey_)||row->secret!=secret_){clearDraft();setNotice("Field changed; edit cancelled");full_=true;return false;}
+      if((page_==Led&&!s.canLeds)||(page_==Pixel&&!pixels(s))||(page_==Game&&!s.canGame)||!row||!row->editable||!keySafe(row->key)||strcmp(row->key,editKey_)||row->secret!=secret_){clearDraft();setNotice("Field changed; edit cancelled");full_=true;return false;}
       if(!draftChanged_){clearDraft();dirty_=full_=true;return false;}
       action.type=Action::Set;copy(action.key,sizeof(action.key),editKey_);copy(action.value,sizeof(action.value),draft_);
       clearDraft();dirty_=full_=true;return true;
@@ -268,16 +306,22 @@ class ShellTui {
     dirty_=true;return false;
   }
   template<typename Write> void editText(Writer<Write>& out)const {
-    out.raw("Edit ");out.safe(editLabel_,18);out.raw(": ");
-    const size_t length=strlen(draft_),start=cursor_>38?cursor_-38:0;
-    char visible[41]{};for(size_t i=0;i<40&&start+i<length;++i)visible[i]=secret_?'*':draft_[start+i];out.raw(visible);
-    if(ansi_){char cursor[24];char label[19];terminalText(label,sizeof(label),editLabel_);snprintf(cursor,sizeof(cursor),"\x1b[23;%uH",static_cast<unsigned>(8+strlen(label)+cursor_-start));out.raw(cursor);}
+    char label[19];terminalText(label,sizeof(label),editLabel_);
+    out.raw("Edit ");out.raw(label);out.raw(": ");
+    const size_t width=columns_<40?40:columns_>100?100:columns_;
+    const size_t capacity=width-strlen(label)-9;
+    const size_t length=strlen(draft_),start=cursor_>=capacity?cursor_-capacity+1:0;
+    char visible[101]{};for(size_t i=0;i<capacity&&start+i<length;++i)visible[i]=secret_?'*':draft_[start+i];out.raw(visible);
+    if(ansi_){char cursor[24];snprintf(cursor,sizeof(cursor),"\x1b[23;%uH",static_cast<unsigned>(8+strlen(label)+cursor_-start));out.raw(cursor);}
   }
   template<typename Write> void editLine(Write write)const {Writer<Write> out(write);if(ansi_)out.raw("\x1b[23;1H\x1b[2K");else out.raw("\r");editText(out);}
   static uint32_t hash(const Snapshot& s){
     uint32_t value=2166136261U;
     auto add=[&](const char* text){for(size_t i=0;text&&text[i]&&i<384;++i){value^=static_cast<uint8_t>(text[i]);value*=16777619U;}};
     add(s.title);value^=s.canLeds?1:0;value^=s.canPixels?2:0;value^=s.pixelCount;
+    value^=s.enabledKeys;value*=16777619U;value^=s.winner;value*=16777619U;
+    value^=s.columns;value*=16777619U;value^=s.lines;value*=16777619U;
+    value^=(s.canGame?16:0)|(s.gameReady?32:0)|(s.unicode?64:0);
     value^=s.usedPixels;value*=16777619U;value^=s.groupLayoutRevision;value*=16777619U;
     if(pixels(s))for(uint8_t i=0;i<s.groupCount;++i){value^=s.groupCounts[i];value*=16777619U;value^=s.groupStarts[i];value*=16777619U;}
     for(uint8_t i=0;i<rowCount(s);++i){add(s.rows[i].label);add(s.rows[i].key);if(!s.rows[i].secret)add(s.rows[i].value);value^=(s.rows[i].editable?4:0)|(s.rows[i].secret?8:0);}
@@ -285,7 +329,7 @@ class ShellTui {
     return value;
   }
   Page page_=Device;uint8_t selected_=0,cell_=1,pixelColor_=1;
-  uint16_t pixel_=0;size_t cursor_=0;
+  uint16_t pixel_=0,columns_=80,lines_=24;size_t cursor_=0;
   bool active_=false,ansi_=true,dirty_=true,full_=true,editing_=false,secret_=false,draftChanged_=false,grid_=false,group_=false,crPending_=false;
   uint8_t escape_=0,escapeBytes_=0;uint32_t lastHash_=0;
   char draft_[385]{},editKey_[32]{},editLabel_[49]{},notice_[65]{};

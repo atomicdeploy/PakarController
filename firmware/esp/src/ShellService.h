@@ -20,7 +20,7 @@ struct DeviceShellSession : public Print {
   String output;
   uint32_t lastInput=0,lastDrain=0,escapeAt=0;
   uint32_t accessRevision=0;
-  bool authenticated=false,closing=false,fault=false,color=true,watch=false,upper=false;
+  bool authenticated=false,closing=false,fault=false,color=true,watch=false,upper=false,unicode=true,alternateScreen=false;
   size_t write(uint8_t byte) override{return write(&byte,1);}
   size_t write(const uint8_t *bytes,size_t size) override {
     if(fault||output.length()+size>8192U){fault=true;return 0;}
@@ -63,7 +63,15 @@ String shellGet(const ShellProperty &p){
   if(key=="led.brightness")return String(grid.brightness());if(key=="led.effect")return grid.patternName();
   if(key=="shell.enabled")return shellSettings.enabled()?F("true"):F("false");
   if(key=="shell.port")return String(shellSettings.port());if(key=="shell.color")return shellSettings.color()?F("true"):F("false");
-  JsonDocument d;const String json=String(p.domain)=="driver"?grid.outputCapabilitiesJson():String(p.domain)=="network"?networkConfigurationJson():cloudConfigurationJson();
+  JsonDocument d;
+#if PAKAR_FIRST_WINS_ENABLED
+  if(String(p.domain)=="game"){
+    if(deserializeJson(d,keySettings.json()))return F("unknown");
+    const auto value=d[p.field];if(value.is<bool>())return value.as<bool>()?F("true"):F("false");
+    if(value.is<const char*>())return value.as<String>();return String(value.as<uint32_t>());
+  }
+#endif
+  const String json=String(p.domain)=="driver"?grid.outputCapabilitiesJson():String(p.domain)=="network"?networkConfigurationJson():cloudConfigurationJson();
   if(deserializeJson(d,json))return F("unknown");
   const auto v=d[p.field];if(v.is<bool>())return v.as<bool>()?F("true"):F("false");
   if(v.is<const char*>())return v.as<String>();if(v.is<uint32_t>())return String(v.as<uint32_t>());return F("unknown");
@@ -78,7 +86,7 @@ bool shellSet(const String &key,const String &value,String &result){
     if(value!="true"&&value!="false"&&value!="on"&&value!="off"&&value!="1"&&value!="0"){result=F("Use true or false");return false;}
     boolean=value=="true"||value=="on"||value=="1";
   }
-  if(p->type=='n'&&!PakarShell::unsignedNumber(value.c_str(),65535,number)){result=F("Invalid bounded integer");return false;}
+  if(p->type=='n'&&!PakarShell::unsignedNumber(value.c_str(),UINT32_MAX,number)){result=F("Invalid bounded integer");return false;}
   if(String(p->domain)=="shell"){
     JsonDocument patch;if(p->type=='b')patch[p->field]=boolean;else patch[p->field]=number;
     return updateShellConfiguration(patch.as<JsonObjectConst>(),result);
@@ -91,6 +99,9 @@ bool shellSet(const String &key,const String &value,String &result){
     if(key=="led.brightness"){d["command"]="brightness";d["value"]=number;}
     else if(key=="led.effect"){d["command"]="effect";d["value"]=value;}
     else {d["command"]="led-output";if(p->type=='b')d[p->field]=boolean;else d[p->field]=value;}
+  }else if(String(p->domain)=="game"){
+    d["command"]="game-settings";
+    if(p->type=='b')d[p->field]=boolean;else if(p->type=='n')d[p->field]=number;else d[p->field]=value;
   }else{
     d["command"]=String(p->domain)=="network"?"configure-network":"configure-cloud";
     auto settings=d["settings"].to<JsonObject>();
@@ -103,7 +114,7 @@ bool shellSet(const String &key,const String &value,String &result){
   String json;serializeJson(d,json);return handleCloudCommand(json,result);
 }
 void shellPrompt(DeviceShellSession &s){
-  s.editor.setPrompt(deviceIdentity.hostname(),s.color);
+  s.editor.setPrompt(deviceIdentity.hostname(),s.color&&s.parser.ansi());
   s.editor.prompt([&](const uint8_t *p,size_t n){s.write(p,n);});
 }
 void shellSafePrint(DeviceShellSession &s,const String &message){
@@ -135,17 +146,47 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   const auto *command=PakarShell::findCommand(verb.c_str());
   if(!command){shellResult(s,false,F("Unknown command; use help"));shellPrompt(s);return;}
   verb=command->canonical;
-  const bool query=command->readOnly||(verb=="firmware"&&args=="status");
+  const bool query=command->readOnly||((verb=="firmware"||verb=="game")&&args=="status");
   if(shellBusy()&&!query){shellResult(s,false,F("Maintenance active; command not dispatched"));shellPrompt(s);return;}
   if(verb=="exit"||verb=="quit"){s.println(F("Goodbye."));s.closing=true;return;}
-  if(verb=="tui"){s.tui.begin(s.color);shellTuiDraw(s,true);return;}
+  if(verb=="tui"){s.alternateScreen=s.color&&s.parser.ansi();if(s.alternateScreen)s.print(F("\x1b[?1049h"));s.tui.begin(s.color&&s.parser.ansi());shellTuiDraw(s,true);return;}
   if(verb=="help"||verb=="?"){
-    for(const auto& item:PakarShell::commands)if(item.usage)s.println(item.usage);
+    for(const auto& item:PakarShell::commands)if(item.usage){
+      if(!PAKAR_FIRST_WINS_ENABLED&&!strcmp(item.name,"game"))continue;
+      if(PAKAR_FIRST_WINS_ENABLED&&(!strcmp(item.name,"cell")||!strcmp(item.name,"cells")))continue;
+      s.println(item.usage);
+    }
     s.println(F("Tab completes commands and get/set properties. Up/Down recall 8 safe commands. TUI: Tab/Arrows/Enter/Esc."));
   }else if(verb=="properties"||verb=="get"){
     if(args.length()){
       ShellProperty property;if(shellProperty(args.c_str(),property)){shellSafePrint(s,shellGet(property));s.println();}else shellResult(s,false,F("Unknown property"));
     }else for(size_t index=0;index<shellPropertyCount;++index){const auto p=shellPropertyAt(index);s.print(p.writable?F("rw "):F("ro "));s.print(p.key);s.print(F(" = "));shellSafePrint(s,shellGet(p));s.println();}
+  }else if(verb=="terminal"){
+    if(args=="unicode on"||args=="unicode off")s.unicode=args.endsWith("on");
+    else if(args=="color on"||args=="color off")s.color=args.endsWith("on");
+    else if(args.startsWith("size ")){
+      const int split=args.indexOf(' ',5);uint32_t w=0,h=0;
+      if(split<0||!PakarShell::unsignedNumber(args.substring(5,split).c_str(),240,w)||
+         !PakarShell::unsignedNumber(args.substring(split+1).c_str(),100,h)||!s.parser.size(w,h)){
+        shellResult(s,false,F("Use terminal size 40..240 16..100; TUI needs 24 rows"));shellPrompt(s);return;}
+    }else if(args.length()){shellResult(s,false,F("Use terminal, terminal unicode|color on|off, terminal size COLS ROWS"));shellPrompt(s);return;}
+    s.print(F("Terminal "));s.print(s.parser.terminal());s.print(F(" | "));s.print(s.parser.columns());s.print('x');s.print(s.parser.rows());
+    s.print(F(" | Unicode "));s.print(s.unicode?F("on"):F("off"));s.print(F(" | ANSI "));s.println(s.color&&s.parser.ansi()?F("on"):F("off"));
+  }else if(verb=="game"){
+    String result;JsonDocument d;bool valid=PAKAR_FIRST_WINS_ENABLED;
+    if(args=="status"){
+#if PAKAR_FIRST_WINS_ENABLED
+      s.print(F("Winner "));s.println(winner);s.println(keySettings.json());
+#else
+      shellResult(s,false,F("This board has no First-wins game"));
+#endif
+    }else{
+      if(args=="reset")d["command"]="reset";
+      else if(args.startsWith("press ")){uint32_t key=0;valid=valid&&PakarShell::unsignedNumber(args.substring(6).c_str(),9,key)&&key>0;d["command"]="game-press";d["key"]=key;}
+      else valid=false;
+      if(!valid)shellResult(s,false,F("Use game status|press 1..9|reset on a First-wins board"));
+      else{String json;serializeJson(d,json);const bool accepted=handleCloudCommand(json,result);shellResult(s,accepted,result);}
+    }
   }else if(verb=="set"){
     const int at=args.indexOf(' ');String result;
     if(at<1)shellResult(s,false,F("Use set KEY VALUE"));
@@ -203,11 +244,12 @@ void executeDeviceShell(DeviceShellSession &s,String line){
       }
     }else if(verb=="pixel"){
       d["command"]="pixel-diagnostic";d["off"]=args=="off";d["index"]=0;d["count"]=1;d["rgb"]=0xffffff;
+      d["group_layout_revision"]=grid.groupLayout().revision();
       if(args!="off"){
         const int a=args.indexOf(' '),b=a<0?-1:args.indexOf(' ',a+1);uint32_t index=0,count=1;
         const String position=a<0?args:args.substring(0,a);
-        valid=PakarShell::unsignedNumber(position.c_str(),479,index);
-        if(a>=0)valid=valid&&PakarShell::unsignedNumber((b<0?args.substring(a+1):args.substring(a+1,b)).c_str(),6,count)&&(count==1||count==6);
+        valid=PakarShell::unsignedNumber(position.c_str(),LedGrid::kPixels-1,index);
+        if(a>=0)valid=valid&&PakarShell::unsignedNumber((b<0?args.substring(a+1):args.substring(a+1,b)).c_str(),255,count)&&count>0&&index+count<=LedGrid::kPixels;
         uint32_t rgb=0xffffff;if(b>=0){String hex=args.substring(b+1);valid=valid&&hex.length()==6;rgb=0;
           for(size_t i=0;i<hex.length()&&valid;++i){const char c=hex[i];const int digit=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:c>='A'&&c<='F'?c-'A'+10:-1;if(digit<0)valid=false;else rgb=(rgb<<4)|digit;}}
         d["index"]=index;d["count"]=count;d["rgb"]=rgb;
@@ -236,7 +278,12 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
     if(!s.authenticated)return;
     auto write=[&](const uint8_t *p,size_t n){s.write(p,n);};
     const char* line=s.editor.line();const char* space=strchr(line,' ');
-    if(!space)s.editor.complete(0,PakarShell::commandCount,[](size_t i){return PakarShell::commands[i].name;},write);
+    if(!space)s.editor.complete(0,PakarShell::commandCount,[](size_t i)->const char*{
+      const char* name=PakarShell::commands[i].name;
+      if(!PAKAR_FIRST_WINS_ENABLED&&!strcmp(name,"game"))return nullptr;
+      if(PAKAR_FIRST_WINS_ENABLED&&(!strcmp(name,"cell")||!strcmp(name,"cells")))return nullptr;
+      return name;
+    },write);
     else if(!strncmp(line,"get ",4)||!strncmp(line,"set ",4)||!strncmp(line,"properties ",11)){
       const size_t start=space-line+1;
       if(!strchr(line+start,' '))s.editor.complete(start,shellPropertyCount,[&](size_t i){

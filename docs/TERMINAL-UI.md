@@ -1,5 +1,67 @@
 # Interactive terminal checkpoint
 
+## Board-owned Telnet / encapsulated serial shell
+
+The device shell is distinct from the host TUI described below. Connect with
+`node tools/telnet-shell.mjs --host keycontroller.local` (or the configured board
+hostname), then enter `tui`. It reuses the existing authenticated, loop-owned
+command router; navigation alone never changes an output. Telnet is plaintext:
+enable it only on an appropriately restricted network.
+
+The board negotiates ECHO, suppress-go-ahead, BINARY, terminal type and window
+size. The bundled client reports resizes and escapes IAC in NAWS values. Unknown
+options are refused, fragmented messages are bounded, and malformed terminal
+names cannot inject control sequences. These implement the NAWS and TTYPE
+contracts in RFC1073 and RFC1091, not every optional Telnet extension.
+
+`terminal` shows negotiated type/size and rendering preferences.
+`terminal unicode off` selects ASCII borders; `terminal color off` disables TUI
+ANSI presentation. `terminal size 80 24` supplies dimensions when the client does
+not negotiate them. Terminal settings are per-session, not flash writes. The
+Terminal page edits the same values. TUI needs at least 40 columns and 24 rows;
+resizing below this pauses editing/actions while retaining the draft. Escape
+returns to the shell. Unicode currently covers the rendered frame, not general
+Unicode text entry: editable property values remain ASCII; full UTF-8 editing,
+grapheme-width layout, RTL and CHARSET negotiation are still pending.
+
+The colored, scrollable property table exposes Device, Network, capability-gated
+LEDs/Pixels, role-gated Game, and Terminal pages. Tab changes pages; arrows select
+rows; Enter edits/commits; Escape cancels a draft. Hidden passwords are never
+rendered or retained in command history. A selected pixel/group follows the
+board's actual group spans, including twelve-pixel keycontroller groups, rather
+than assuming six pixels.
+
+First-wins builds add an enabled/dimmed nine-box view, live winner/readiness,
+explicit `1` through `9` press and `r` reset, plus editable enabled mask, effects,
+auto-reset, chase period/neighbors/inversion, state colors and cue names. These
+use the existing game-settings persistence and game command admission, including
+AVR readiness and maintenance checks. Equivalent commands:
+
+```text
+game status
+game press 1
+game reset
+get game.enabled_mask
+set game.enabled_mask 3
+set game.effects true
+set game.chase_ms 900
+set game.auto_reset_ms 0
+set game.win_rgb 65280
+```
+
+These examples are output-changing when submitted; opening this document/TUI
+does not run them. Mask 3 means boxes 1 and 2; colors are decimal packed RGB,
+and auto-reset 0 disables the timer. Validators remain authoritative. Table
+builds do not advertise first-wins commands; key builds omit table commands from
+help/completion. Existing generic network, telemetry, audio, display, firmware,
+get/set and watch commands remain available according to capabilities/ownership.
+
+Host fixtures cover negotiation, resize/draft retention, malicious terminal
+input, role metadata, guarded actions and two sessions. Candidate compilation
+and these fixtures do not establish installed-board, interactive-terminal or
+physical LED/audio acceptance. Full game-presentation override editing,
+localized Unicode input and graphical-client parity remain open in issue #29.
+
 Run `PakarController.exe --tui` in an interactive terminal. It uses the same
 `PAKAR_ENDPOINT`, `PAKAR_USER` and private `PAKAR_PASSWORD` as the CLI; prefer
 `http://ledboard.local`. Redirected stdin/stdout is rejected before raw mode,

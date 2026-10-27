@@ -8,7 +8,13 @@ int main(){
 #else
  0;
 #endif
- assert(shellPropertyCount==46+added);
+ constexpr unsigned gameAdded=
+#if PAKAR_FIRST_WINS_ENABLED
+ 11;
+#else
+ 0;
+#endif
+ assert(shellPropertyCount==46+added+gameAdded);
  unsigned secrets=0,writable=0;
  for(size_t index=0;index<shellPropertyCount;++index){
   const auto property=shellPropertyAt(index);ShellProperty found{};
@@ -19,7 +25,9 @@ int main(){
   for(size_t earlier=0;earlier<index;++earlier)assert(strcmp(property.key,shellPropertyAt(earlier).key));
   secrets+=property.secret;writable+=property.writable;
  }
- assert(secrets==3+added/2&&writable==32+added);
+ assert(secrets==3+added/2&&writable==32+added+gameAdded);
+ ShellProperty game{};
+ assert(shellProperty("game.enabled_mask",game)==(gameAdded!=0));
  ShellProperty ntfy{};
 #if defined(ARDUINO_ARCH_ESP32)
  assert(shellProperty("ntfy.enabled",ntfy)&&ntfy.writable&&!ntfy.secret);

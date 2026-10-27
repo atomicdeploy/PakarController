@@ -7,28 +7,40 @@ import {pathToFileURL} from 'node:url';
 
 // Incremental RFC 854 framing, unlike the donor's raw recv() socket callback.
 // Bounded state; no growing subnegotiation payload or duplicate negotiation loop.
-export function telnetDecoder(reply,receive){
-  let state=0,verb=0;const peer=new Map(),local=new Map();
-  return bytes=>{const text=[];
+export function telnetDecoder(reply,receive,terminal={}){
+  let state=0,verb=0,sub=[],overflow=false;const peer=new Map(),local=new Map();
+  const window=()=>{
+    if(local.get(31)!==251)return;
+    const size=terminal.size?.()??[80,24];
+    const [w,h]=size.map((n,i)=>Number.isInteger(n)&&n>0?Math.min(n,65535):[80,24][i]);
+    reply(Buffer.concat([Buffer.from([255,250,31]),escapeTelnet([w>>8,w&255,h>>8,h&255]),Buffer.from([255,240])]));
+  };
+  const finishSub=()=>{
+    if(overflow||sub.length!==2||sub[0]!==24||sub[1]!==1||local.get(24)!==251)return;
+    const type=typeof terminal.type==='string'&&/^[a-zA-Z0-9_-]{1,32}$/.test(terminal.type)?terminal.type:'xterm-256color';
+    reply(Buffer.concat([Buffer.from([255,250,24,0]),Buffer.from(type),Buffer.from([255,240])]));
+  };
+  const decode=bytes=>{const text=[];
     for(const c of bytes){
       if(state===0){if(c===255)state=1;else text.push(c);}
       else if(state===1){
         if(c===255){text.push(c);state=0;}
-        else if(c===250)state=3;
+        else if(c===250){state=3;sub=[];overflow=false;}
         else if(c>=251&&c<=254){verb=c;state=2;}
         else state=0;
       }else if(state===2){
         const remote=verb===251||verb===252, table=remote?peer:local;
         const enabled=verb===251||verb===253;
-        const supported=remote?(c===1||c===3):c===3;
+        const supported=remote?(c===0||c===1||c===3):(c===0||c===3||c===24||c===31);
         const response=remote?(enabled&&supported?253:254):(enabled&&supported?251:252);
-        if(table.get(c)!==response){table.set(c,response);reply(Buffer.from([255,response,c]));}
+        if(table.get(c)!==response){table.set(c,response);reply(Buffer.from([255,response,c]));if(!remote&&c===31&&enabled)window();}
         state=0;
-      }else if(state===3){if(c===255)state=4;}
-      else if(state===4)state=c===240?0:3;
+      }else if(state===3){if(c===255)state=4;else if(sub.length<64)sub.push(c);else overflow=true;}
+      else if(state===4){if(c===240){finishSub();state=0;}else {if(c===255&&sub.length<64)sub.push(c);else overflow=true;state=3;}}
     }
     if(text.length)receive(Buffer.from(text));
   };
+  decode.resize=window;return decode;
 }
 export function escapeTelnet(bytes){
   const out=[];for(const c of bytes){out.push(c);if(c===255)out.push(c);}return Buffer.from(out);
@@ -56,7 +68,7 @@ export function connectShell({host,port=23,execute,deadlineMs=8000,input=process
     const onDrain=()=>{if(!finished)socket.resume();};
     const finish=error=>{
       if(finished)return;finished=true;clearTimeout(timer);
-      input.removeListener('data',onInput);input.removeListener('end',onEnd);output.removeListener('drain',onDrain);
+      input.removeListener('data',onInput);input.removeListener('end',onEnd);output.removeListener('drain',onDrain);output.removeListener('resize',onResize);
       output.removeListener('error',finish);input.removeListener('error',finish);
       socket.destroy();
       if(interactive){input.setRawMode(wasRaw);if(wasFlowing)input.resume();else input.pause();
@@ -64,6 +76,7 @@ export function connectShell({host,port=23,execute,deadlineMs=8000,input=process
         if(!output.destroyed)output.write('\x1b[0m\x1b[?1049l');}
       if(error)reject(error);else resolve({completed:!interactive,transport:'tcp',replayed:false});
     };
+    const onResize=()=>decode.resize();
     const decode=telnetDecoder(send,bytes=>{
       if(!output.write(bytes))socket.pause();
       if(interactive)return;
@@ -74,7 +87,8 @@ export function connectShell({host,port=23,execute,deadlineMs=8000,input=process
       if(!/(?:^|\r?\n)[a-zA-Z0-9-]{1,63}> $/.test(text))return;
       if(phase==='greeting'){phase='command';tail='';send(Buffer.from(execute+'\r'));arm();}
       else finish(failedCommand?Error('Board rejected the command; see terminal output'):undefined);
-    });
+    },{type:process.env.TERM,size:()=>[output.columns,output.rows]});
+    output.on('resize',onResize);
     socket.on('data',decode);
     socket.on('error',finish);
     socket.on('end',()=>finish(interactive?undefined:Error('Disconnected before final prompt; command not replayed')));

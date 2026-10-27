@@ -45,11 +45,25 @@ inline size_t terminalText(char* out, size_t capacity, const char* text,
 
 class TelnetParser {
  public:
-  void reset() { state_ = Data; negotiation_ = 0; echo_ = sga_ = peerSga_ = false; }
+  void reset() {
+    state_=Data;negotiation_=0;echo_=sga_=peerSga_=binary_=peerBinary_=false;
+    naws_=type_=nawsPending_=typePending_=false;subSize_=0;subOverflow_=false;
+    columns_=80;rows_=24;strcpy(terminal_,"unknown");
+  }
+  uint16_t columns()const{return columns_;}
+  uint16_t rows()const{return rows_;}
+  const char* terminal()const{return terminal_;}
+  bool ansi()const{return strcmp(terminal_,"dumb")&&strcmp(terminal_,"DUMB");}
+  bool size(uint16_t columns,uint16_t rows){
+    if(columns<40||columns>240||rows<16||rows>100)return false;
+    columns_=columns;rows_=rows;return true;
+  }
   template <typename Write> void greet(Write write) {
     reset();
     send(write, Will, Echo); send(write, Will, Sga); send(write, Do, Sga);
     echo_ = sga_ = peerSga_ = true;
+    send(write,Do,Naws);send(write,Do,Type);nawsPending_=typePending_=true;
+    send(write,Will,Binary);send(write,Do,Binary);binary_=peerBinary_=true;
   }
   template <typename Write, typename Input>
   void feed(uint8_t ch, Write write, Input input) {
@@ -61,36 +75,65 @@ class TelnetParser {
         if (ch == Iac) { state_ = Data; input(ch); }
         else if (ch == Do || ch == Dont || ch == Will || ch == Wont) {
           negotiation_ = ch; state_ = Option;
-        } else if (ch == Sb) state_ = Sub;
+        } else if (ch == Sb) {state_=Sub;subSize_=0;subOverflow_=false;}
         else state_ = Data; // Ignore NOP, GA and other simple commands.
         break;
       case Option: negotiate(ch, write); state_ = Data; break;
-      case Sub: if (ch == Iac) state_ = SubIac; break;
-      case SubIac: state_ = ch == Se ? Data : Sub; break;
+      case Sub: if (ch == Iac) state_ = SubIac; else append(ch); break;
+      case SubIac:
+        if(ch==Se){subnegotiation();state_=Data;}
+        else {if(ch==Iac)append(ch);else subOverflow_=true;state_=Sub;}
+        break;
     }
   }
  private:
   enum State : uint8_t { Data, Command, Option, Sub, SubIac };
   enum : uint8_t { Se = 240, Sb = 250, Will = 251, Wont = 252,
-                   Do = 253, Dont = 254, Iac = 255, Echo = 1, Sga = 3 };
+                   Do = 253, Dont = 254, Iac = 255, Binary=0, Echo = 1, Sga = 3, Type=24, Naws=31 };
+  void append(uint8_t ch){if(subSize_<sizeof(sub_))sub_[subSize_++]=ch;else subOverflow_=true;}
+  void subnegotiation(){
+    if(subOverflow_||!subSize_)return;
+    if(sub_[0]==Naws&&naws_&&subSize_==5){
+      const uint16_t w=uint16_t(sub_[1])<<8|sub_[2],h=uint16_t(sub_[3])<<8|sub_[4];
+      // NAWS zero means unspecified. Retain the last useful dimension; cap
+      // layout independently so a hostile terminal cannot enlarge allocations.
+      if(w)columns_=w>240?240:w;
+      if(h)rows_=h>100?100:h;
+    }else if(sub_[0]==Type&&type_&&subSize_>2&&sub_[1]==0&&subSize_<=34){
+      for(uint8_t i=2;i<subSize_;++i)if(sub_[i]<32||sub_[i]>126)return;
+      memcpy(terminal_,sub_+2,subSize_-2);terminal_[subSize_-2]=0;
+    }
+  }
   template <typename Write> static void send(Write write, uint8_t command, uint8_t option) {
     const uint8_t bytes[] = {Iac, command, option}; write(bytes, sizeof(bytes));
   }
   template <typename Write> void negotiate(uint8_t option, Write write) {
     if (negotiation_ == Do || negotiation_ == Dont) {
-      bool* enabled = option == Echo ? &echo_ : option == Sga ? &sga_ : nullptr;
+      bool* enabled = option == Echo ? &echo_ : option == Sga ? &sga_ : option==Binary?&binary_:nullptr;
       if (!enabled) { if (negotiation_ == Do) send(write, Wont, option); return; }
       const bool accept = negotiation_ == Do;
       if (*enabled != accept) { send(write, accept ? Will : Wont, option); *enabled = accept; }
     } else if (negotiation_ == Will || negotiation_ == Wont) {
-      if (option != Sga) { if (negotiation_ == Will) send(write, Dont, option); return; }
+      if(option==Naws||option==Type){
+        bool &enabled=option==Naws?naws_:type_,&pending=option==Naws?nawsPending_:typePending_;
+        const bool accept=negotiation_==Will;
+        if(enabled!=accept){if(!pending)send(write,accept?Do:Dont,option);enabled=accept;
+          if(accept&&option==Type){const uint8_t request[]={Iac,Sb,Type,1,Iac,Se};write(request,sizeof(request));}}
+        pending=false;return;
+      }
+      if (option != Sga && option!=Binary) { if (negotiation_ == Will) send(write, Dont, option); return; }
       const bool accept = negotiation_ == Will;
-      if (peerSga_ != accept) { send(write, accept ? Do : Dont, option); peerSga_ = accept; }
+      bool &enabled=option==Binary?peerBinary_:peerSga_;
+      if (enabled != accept) { send(write, accept ? Do :Dont, option); enabled=accept; }
     }
   }
   State state_ = Data;
   uint8_t negotiation_ = 0;
   bool echo_ = false, sga_ = false, peerSga_ = false;
+  bool binary_=false,peerBinary_=false;
+  bool naws_=false,type_=false,nawsPending_=false,typePending_=false,subOverflow_=false;
+  uint8_t sub_[64]{},subSize_=0;
+  uint16_t columns_=80,rows_=24;char terminal_[33]="unknown";
 };
 
 class LineEditor {

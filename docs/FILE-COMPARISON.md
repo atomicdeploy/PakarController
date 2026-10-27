@@ -221,10 +221,10 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `1fd6ae8518b9de9ca62b4f94391c5615056409ace250755e5dc185ba090ceb15`.
 
-- Target: `firmware/esp/src/ShellTui.h:10 [UTF8-LF sha256=43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc; anchor=class ShellTui]`.
+- Target: `firmware/esp/src/ShellTui.h:10 [UTF8-LF sha256=3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682; anchor=class ShellTui]`.
 - Retained: Read the entire loose snippet. VT100 clear/home, bounded row rendering, task inspection intent and interactive command editing are retained by the structured shell TUI rather than pasted into production AVR loop code.
 - Omitted/replaced code: `top-level task('x')/cancel/add statements and private TaskItem memory dump`. Disposition: **replaced**. Reason: The loose text is not a compilable owner and reaches private scheduler internals. The shell exposes bounded public properties/actions without arbitrary callback addresses or unsafe pasted globals.
-- Test-code evidence: `tests/shell_tui_test.cpp:19 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=assert(output.size()<=4096)]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:19 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=assert(output.size()<=4096)]`.
 - Scoped advantage: A bounded navigable TUI with secret redaction and draft ownership replaces non-compilable debug fragments and raw callback-address dumping.
 - Remaining: Actual serial/Telnet multi-session terminal rendering and hardware-control acceptance remain separate from the host model test.
 
@@ -3975,7 +3975,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `eafe52b90f65b56c32fedbc846463be5c4472994eb2584d3d260c64bbc2f4e35`.
 
-- Target: `firmware/esp/src/ShellProperties.h:11 [UTF8-LF sha256=7f5e741f7ff29d308da7d201a59b37f116a5b846ec7bcb157032477ca7f34816; anchor=struct ShellProperty]`.
+- Target: `firmware/esp/src/ShellProperties.h:11 [UTF8-LF sha256=90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1; anchor=struct ShellProperty]`.
 - Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14; anchor=# Portable Shell source integration]`.
 - Retained: Read all API/parameter/transport guidance; retained source documentation with corrected integration guidance.
 - Omitted/replaced code: `Raw-pointer parameter binding and advertised editable TUI`. Disposition: **replaced**. Reason: Pakar validates durable settings through owner APIs and has a genuinely interactive staged TUI; no second unsafe parameter owner.
@@ -3986,8 +3986,8 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `fe59231f346c7f5d8e44b206c5f1862e4fd71f308e7473fe1723c54bdcc3bcce`.
 
-- Target: `firmware/esp/src/ShellService.h:130 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void executeDeviceShell]`.
-- Target: `firmware/esp/src/TelnetShell.h:96 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=class LineEditor]`.
+- Target: `firmware/esp/src/ShellService.h:141 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void executeDeviceShell]`.
+- Target: `firmware/esp/src/TelnetShell.h:139 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=class LineEditor]`.
 - Retained: Read complete sample callback/loop pattern. Existing loop-fed editor uses caller-owned output and bounded byte budgets.
 - Omitted/replaced code: `Direct GPIO sample commands, while(!Serial), analogRead(0) loop`. Disposition: **replaced**. Reason: Arbitrary LED/pin access conflicts with board pin ownership; startup/loop work must not block UART/game scheduling.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a; anchor=const source=]`.
@@ -3999,32 +3999,32 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 - Target: `tools/device-shell.ps1:2 [UTF8-LF sha256=4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55; anchor=param(]`.
 - Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14; anchor=# Portable Shell source integration]`.
-- Target: `tools/telnet-shell.mjs:37 [UTF8-LF sha256=9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab; anchor=export function connectShell]`.
+- Target: `tools/telnet-shell.mjs:49 [UTF8-LF sha256=85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812; anchor=export function connectShell]`.
 - Retained: Read complete termios raw-mode sample and parameter setup; existing host shell tool retained.
 - Retained: Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners.
 - Omitted/replaced code: `POSIX-only sample, stop-as-reboot and fake all-operational status`. Disposition: **replaced**. Reason: Use the existing device client/owned USB transport rather than a disconnected demo process or false status. Runtime behavior cannot be fabricated.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a; anchor=const source=]`.
-- Test-code evidence: `tests/telnet_client_test.mjs:12 [UTF8-LF sha256=e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0; anchor=async function session]`.
+- Test-code evidence: `tests/telnet_client_test.mjs:19 [UTF8-LF sha256=6d38cafbcf7c44ce351f1b70691dfda3c57132134c2aea52a5abe18f43d00f42; anchor=async function session]`.
 - Remaining: Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task.
 
 ### portable-shell: `examples/telnet_server.c`
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `779a8e30dba97d85f24e2d3a76d7b3d1a3aeeb4b8066682d90bfdc5bcb0f4295`.
 
-- Target: `firmware/esp/src/ShellService.h:130 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void executeDeviceShell]`.
-- Target: `tools/telnet-shell.mjs:37 [UTF8-LF sha256=9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab; anchor=export function connectShell]`.
+- Target: `firmware/esp/src/ShellService.h:141 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void executeDeviceShell]`.
+- Target: `tools/telnet-shell.mjs:49 [UTF8-LF sha256=85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812; anchor=export function connectShell]`.
 - Retained: Read entire skeleton; preserved as reference, not wired into production.
 - Retained: Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners.
 - Omitted/replaced code: `Printed server banner and unimplemented bind/accept/session loop`. Disposition: **replaced**. Reason: Pakar already has actual bounded multi-session Telnet admission, authentication and network lifecycle.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a; anchor=const source=]`.
-- Test-code evidence: `tests/telnet_client_test.mjs:12 [UTF8-LF sha256=e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0; anchor=async function session]`.
+- Test-code evidence: `tests/telnet_client_test.mjs:19 [UTF8-LF sha256=6d38cafbcf7c44ce351f1b70691dfda3c57132134c2aea52a5abe18f43d00f42; anchor=async function session]`.
 - Remaining: Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task.
 
 ### portable-shell: `IMPLEMENTATION.md`
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `d024ffc22f99a7c9f50fa68bbaf02b0e722d68b0edaf39512454643e6f1986e2`.
 
-- Target: `firmware/esp/src/ShellService.h:130 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void executeDeviceShell]`.
+- Target: `firmware/esp/src/ShellService.h:141 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void executeDeviceShell]`.
 - Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14; anchor=# Portable Shell source integration]`.
 - Retained: Read each asserted requirement and reconciled against actual donor code rather than trusting completion checkmarks.
 - Omitted/replaced code: `Thread-safe variable and full editor completeness claims`. Disposition: **replaced**. Reason: No synchronization exists for raw pointers; editor only prints and waits. Existing loop ownership and staged TUI retained.
@@ -4035,28 +4035,28 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **scoped-improvement**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `d2f886686945f5df81dea9aa42f8f6c364e7f54c01c614c3d14d6e9d92815fa9`.
 
-- Target: `firmware/esp/src/PortableShellCore.h:14 [UTF8-LF sha256=03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154; anchor=struct Command]`.
-- Target: `firmware/esp/src/TelnetShell.h:96 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=class LineEditor]`.
-- Target: `firmware/esp/src/ShellService.h:130 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void executeDeviceShell]`.
+- Target: `firmware/esp/src/PortableShellCore.h:14 [UTF8-LF sha256=2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b; anchor=struct Command]`.
+- Target: `firmware/esp/src/TelnetShell.h:139 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=class LineEditor]`.
+- Target: `firmware/esp/src/ShellService.h:141 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void executeDeviceShell]`.
 - Retained: Adapted PSCommand name/help model and portable callback output into immutable command catalogue/Terminal; independent session state remains in LineEditor.
 - Omitted/replaced code: `Heap-linked arbitrary register/unregister, Arduino bool/HIGH/LOW macros, raw mutable parameter pointers`. Disposition: **replaced**. Reason: Build-time immutable descriptors prevent dangling name/callback ownership and duplicate registrations; C++ types remain intact; settings go through validation.
 - Test-code evidence: `tests/portable_shell_test.cpp:7 [UTF8-LF sha256=d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6; anchor=int main()]`.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a; anchor=const source=]`.
-- Scoped advantage: Actual command/VT100 integration preserves bounded authenticated owners and adds tested, non-executing command/property completion instead of a Tab bell placeholder.
+- Scoped advantage: Actual command/VT100 integration preserves bounded authenticated owners and adds tested, non-executing command/property completion instead of a Tab bell placeholder. Device TUI adds Unicode frame bytes, bounded NAWS/TTYPE-aware layout, session terminal preferences and role-gated game actions/settings. Full Unicode entry, grapheme/RTL layout, CHARSET negotiation, advanced presentation override editing and live acceptance remain issue #29 work.
 - Remaining: Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task.
 
 ### portable-shell: `include/ps_io.h`
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `024a3ac2231b9b76b3a558a7f81406b5660ba7694c4f9e2f9b7caa585f05bcb1`.
 
-- Target: `firmware/esp/src/ShellService.h:130 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void executeDeviceShell]`.
+- Target: `firmware/esp/src/ShellService.h:141 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void executeDeviceShell]`.
 - Target: `firmware/esp/src/ShellWire.h:9 [UTF8-LF sha256=af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216; anchor=class SerialChannel]`.
-- Target: `tools/telnet-shell.mjs:37 [UTF8-LF sha256=9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab; anchor=export function connectShell]`.
+- Target: `tools/telnet-shell.mjs:49 [UTF8-LF sha256=85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812; anchor=export function connectShell]`.
 - Retained: Read callback/context contracts; preserved per-session transport-independent output and existing explicit USB ownership.
 - Retained: Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners.
 - Omitted/replaced code: `New PSSocketContext/PSUdpContext/PSSerialContext and undefined stdio initializer`. Disposition: **replaced**. Reason: Existing WiFiClient/SerialChannel owners already provide the real transports with authentication and replay fencing; no duplicate socket or serial owner.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a; anchor=const source=]`.
-- Test-code evidence: `tests/telnet_client_test.mjs:12 [UTF8-LF sha256=e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0; anchor=async function session]`.
+- Test-code evidence: `tests/telnet_client_test.mjs:19 [UTF8-LF sha256=6d38cafbcf7c44ce351f1b70691dfda3c57132134c2aea52a5abe18f43d00f42; anchor=async function session]`.
 - Remaining: Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task.
 
 ### portable-shell: `LICENSE`
@@ -4064,7 +4064,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `b00e51aca5e080d2fcb8734e9a4779dc917e8df2f38730cca2e82e4ad08184aa`.
 
 - Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14; anchor=# Portable Shell source integration]`.
-- Target: `firmware/esp/src/PortableShellCore.h:14 [UTF8-LF sha256=03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154; anchor=struct Command]`.
+- Target: `firmware/esp/src/PortableShellCore.h:14 [UTF8-LF sha256=2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b; anchor=struct Command]`.
 - Retained: MIT copyright and complete license retained with original source; derived header points to this notice.
 - No production-code omission claimed for this reviewed file.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a; anchor=const source=]`.
@@ -4074,7 +4074,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `e9d0814b7f08de2a7f53d004192a60cb329652e7b745bdee379144373cb26f4f`.
 
-- Target: `tools/test-shell.ps1:8 [UTF8-LF sha256=0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4; anchor=foreach($taskName]`.
+- Target: `tools/test-shell.ps1:8 [UTF8-LF sha256=1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062; anchor=foreach($taskName]`.
 - Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14; anchor=# Portable Shell source integration]`.
 - Retained: Read full targets and retained upstream build recipe as reference. Tests integrated into the existing guarded native runner.
 - Omitted/replaced code: `Separate donor make clean/install/uninstall and -g profile`. Disposition: **replaced**. Reason: No second build cache or uncontrolled system installation; existing cross-platform canonical low-write test/build wrappers remain authoritative.
@@ -4095,10 +4095,10 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **scoped-improvement**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `d64aef3c23476fe37d5fabdec15b5e9fb5638a200a157a52d06349a587448a45`.
 
-- Target: `firmware/esp/src/PortableShellCore.h:14 [UTF8-LF sha256=03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154; anchor=struct Command]`.
-- Target: `firmware/esp/src/TelnetShell.h:96 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=class LineEditor]`.
-- Target: `firmware/esp/src/ShellService.h:130 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void executeDeviceShell]`.
-- Target: `firmware/esp/src/ShellTui.h:10 [UTF8-LF sha256=43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc; anchor=class ShellTui]`.
+- Target: `firmware/esp/src/PortableShellCore.h:14 [UTF8-LF sha256=2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b; anchor=struct Command]`.
+- Target: `firmware/esp/src/TelnetShell.h:139 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=class LineEditor]`.
+- Target: `firmware/esp/src/ShellService.h:141 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void executeDeviceShell]`.
+- Target: `firmware/esp/src/ShellTui.h:10 [UTF8-LF sha256=3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682; anchor=class ShellTui]`.
 - Retained: Adapted strcmp command lookup and name/help metadata into the compiled catalogue; expanded Tab placeholder into real safe prefix completion; edit aliases to real TUI.
 - Omitted/replaced code: `ps_create/destroy/run, heap history, strtok argv, synchronous escape reads, raw-pointer atoi/atof setters, blocking edit loop`. Disposition: **replaced**. Reason: Existing fixed/scrubbed history, incremental parser, output backpressure, property validation and staged TUI prevent allocation failures, secret retention, truncated execution and blocking LED/UART work.
 - Test-code evidence: `tests/portable_shell_test.cpp:7 [UTF8-LF sha256=d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6; anchor=int main()]`.
@@ -4110,23 +4110,23 @@ Verdict: **scoped-improvement**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `1eb80f98d09fb1042fee3f5facb9dfc3813962b0645c05307c701064aa6e6df6`.
 
-- Target: `firmware/esp/src/ShellService.h:130 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void executeDeviceShell]`.
+- Target: `firmware/esp/src/ShellService.h:141 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void executeDeviceShell]`.
 - Target: `firmware/esp/src/ShellWire.h:9 [UTF8-LF sha256=af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216; anchor=class SerialChannel]`.
-- Target: `tools/telnet-shell.mjs:37 [UTF8-LF sha256=9d199a23b03757ee198904a7eed4ba5a8b2d2f557fc8b172c117c03ebc93ccab; anchor=export function connectShell]`.
+- Target: `tools/telnet-shell.mjs:49 [UTF8-LF sha256=85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812; anchor=export function connectShell]`.
 - Retained: Read all TCP/UDP/serial implementation; preserved original for review. Existing actual nonblocking Telnet and encapsulated USB remain single transport owners.
 - Retained: Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners.
 - Omitted/replaced code: `Blocking IPv4-only connect/recv, single partial send, unconnected UDP replies, serial init=-1 and no-op close`. Disposition: **replaced**. Reason: Avoid loop stalls, dropped output, invalid UDP destinations and fake serial support; hostname-first discovery and binary recovery are already shared project facilities.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a; anchor=const source=]`.
-- Test-code evidence: `tests/telnet_client_test.mjs:12 [UTF8-LF sha256=e5150375a144937228d0d50e0386912ed27f6d562e044ea45692d678af7fb1b0; anchor=async function session]`.
+- Test-code evidence: `tests/telnet_client_test.mjs:19 [UTF8-LF sha256=6d38cafbcf7c44ce351f1b70691dfda3c57132134c2aea52a5abe18f43d00f42; anchor=async function session]`.
 - Remaining: Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task.
 
 ### portable-shell: `src/vt100.c`
 
 Verdict: **scoped-improvement**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `fa151f1510abac7ecef369c512b9ce1132f14e37b0691a74ea2bfcef53d3e9b6`.
 
-- Target: `firmware/esp/src/PortableShellCore.h:14 [UTF8-LF sha256=03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154; anchor=struct Command]`.
-- Target: `firmware/esp/src/TelnetShell.h:96 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=class LineEditor]`.
-- Target: `firmware/esp/src/ShellService.h:130 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void executeDeviceShell]`.
+- Target: `firmware/esp/src/PortableShellCore.h:14 [UTF8-LF sha256=2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b; anchor=struct Command]`.
+- Target: `firmware/esp/src/TelnetShell.h:139 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=class LineEditor]`.
+- Target: `firmware/esp/src/ShellService.h:141 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void executeDeviceShell]`.
 - Retained: Adapted actual ANSI clear/line/cursor/color/reset formatting into bounded callback emitters and used them by the live LineEditor and clear command.
 - Omitted/replaced code: `Unbounded signed cursor/color formatting and unused standalone cursor-home/right wrappers`. Disposition: **replaced**. Reason: Validate coordinate/SGR ranges; existing editor retains echo-free password handling, plain-terminal behavior and movement semantics without duplicated control owners.
 - Test-code evidence: `tests/portable_shell_test.cpp:7 [UTF8-LF sha256=d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6; anchor=int main()]`.
@@ -4548,8 +4548,8 @@ Verdict: **scoped-improvement**. Revision: `431104072952f694a35b3a83c19f13fbb098
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `5181d7cc83efe2416a3a198ff88aad2aeffc8871ee2ef7a2a1ffdad51d31b88e`.
 
-- Target: `firmware/esp/src/ShellService.h:72 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=bool shellSet(]`.
-- Target: `firmware/esp/src/ShellTuiBinding.h:28 [UTF8-LF sha256=6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b; anchor=shellGet(property)]`.
+- Target: `firmware/esp/src/ShellService.h:80 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=bool shellSet(]`.
+- Target: `firmware/esp/src/ShellTuiBinding.h:43 [UTF8-LF sha256=5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037; anchor=shellGet(property)]`.
 - Target: `firmware/esp/src/ShellSettings.h:20 [UTF8-LF sha256=9e73a173b820cf54b70e4fc6506bccbb67fee5e4ab600fc9660503d05c491417; anchor=bool configure(]`.
 - Target: `docs/PU850-PARITY.md:98 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Fresh runtime and shell section review, 2026-10-19]`.
 - Retained: DeviceParameter name/type/read-only/get/set design is adapted to ShellProperty descriptors for hostname/label, network mode/DHCP/static addressing, station SSID/write-only password, MQTT/WebSocket endpoints, telemetry interval, shell settings and LED mode/brightness/effect.
@@ -4563,8 +4563,8 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `Commented AP_IP/AP_Gateway/AP_Subnet parameter entries`. Disposition: **pending**. Reason: The donor leaves these entries commented out. Pakar station static-address fields are implemented, but independent configurable AP address/gateway/subnet via the shell is not claimed complete.
 - Test-code evidence: `tests/shell_metadata_test.mjs:41 [UTF8-LF sha256=20e80f14d1cfb22f4b48e7d83496dc57e2a97dc9f737c1aac35d91b0bcafbdd5; anchor=Actual read-only firmware hash/build date getters]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:29 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=4294967296]`.
-- Test-code evidence: `tests/shell_tui_test.cpp:35 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=Readonly never emits Set.]`.
-- Test-code evidence: `tests/telnet_shell_test.cpp:71 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=!editor.remember(true)]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:35 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=Readonly never emits Set.]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:88 [UTF8-LF sha256=9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62; anchor=!editor.remember(true)]`.
 - Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
@@ -4574,8 +4574,8 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `48c0deb76d6105090fe1d58a2449427681a88775b1e63ddbb1b28ecff6341961`.
 
-- Target: `firmware/esp/src/ShellService.h:72 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=bool shellSet(]`.
-- Target: `firmware/esp/src/ShellTuiBinding.h:28 [UTF8-LF sha256=6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b; anchor=shellGet(property)]`.
+- Target: `firmware/esp/src/ShellService.h:80 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=bool shellSet(]`.
+- Target: `firmware/esp/src/ShellTuiBinding.h:43 [UTF8-LF sha256=5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037; anchor=shellGet(property)]`.
 - Target: `firmware/esp/src/ShellSettings.h:20 [UTF8-LF sha256=9e73a173b820cf54b70e4fc6506bccbb67fee5e4ab600fc9660503d05c491417; anchor=bool configure(]`.
 - Target: `docs/PU850-PARITY.md:98 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Fresh runtime and shell section review, 2026-10-19]`.
 - Retained: DeviceParameter name/type/read-only/get/set design is adapted to ShellProperty descriptors for hostname/label, network mode/DHCP/static addressing, station SSID/write-only password, MQTT/WebSocket endpoints, telemetry interval, shell settings and LED mode/brightness/effect.
@@ -4589,8 +4589,8 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `Commented AP_IP/AP_Gateway/AP_Subnet parameter entries`. Disposition: **pending**. Reason: The donor leaves these entries commented out. Pakar station static-address fields are implemented, but independent configurable AP address/gateway/subnet via the shell is not claimed complete.
 - Test-code evidence: `tests/shell_metadata_test.mjs:41 [UTF8-LF sha256=20e80f14d1cfb22f4b48e7d83496dc57e2a97dc9f737c1aac35d91b0bcafbdd5; anchor=Actual read-only firmware hash/build date getters]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:29 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=4294967296]`.
-- Test-code evidence: `tests/shell_tui_test.cpp:35 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=Readonly never emits Set.]`.
-- Test-code evidence: `tests/telnet_shell_test.cpp:71 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=!editor.remember(true)]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:35 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=Readonly never emits Set.]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:88 [UTF8-LF sha256=9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62; anchor=!editor.remember(true)]`.
 - Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
@@ -4805,10 +4805,10 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `0113acbff973285f5af186a4857d94cc2df3c99813e0db4ba876f861e7c1083b`.
 
-- Target: `firmware/esp/src/TelnetShell.h:96 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=class LineEditor]`.
-- Target: `firmware/esp/src/ShellProperties.h:15 [UTF8-LF sha256=7f5e741f7ff29d308da7d201a59b37f116a5b846ec7bcb157032477ca7f34816; anchor=static const ShellProperty shellProperties[]]`.
+- Target: `firmware/esp/src/TelnetShell.h:139 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=class LineEditor]`.
+- Target: `firmware/esp/src/ShellProperties.h:15 [UTF8-LF sha256=90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1; anchor=static const ShellProperty shellProperties[]]`.
 - Target: `firmware/esp/src/ShellWire.h:9 [UTF8-LF sha256=af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216; anchor=class SerialChannel]`.
-- Target: `firmware/esp/src/ShellTuiBinding.h:3 [UTF8-LF sha256=6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b; anchor=struct ShellTuiSnapshot]`.
+- Target: `firmware/esp/src/ShellTuiBinding.h:3 [UTF8-LF sha256=5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037; anchor=struct ShellTuiSnapshot]`.
 - Target: `tools/device-shell.ps1:8 [UTF8-LF sha256=4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55; anchor=AutomaticCommandRetry=$false]`.
 - Retained: PU ShellSession transport/editor separation, insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL behavior are adapted in instance-owned TelnetParser/LineEditor.
 - Retained: Generic parameter lookup/read-only enforcement and dispatch now map to ShellProperty descriptors, typed shellSet and the existing Pakar command/configuration owners; the same descriptors feed the device TUI.
@@ -4821,11 +4821,11 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `Donor printable-ASCII editor and richer Unicode terminals`. Disposition: **pending**. Reason: Arduino line editor/TUI deliberately accepts printable ASCII and sanitizes external controls. Persian/UTF-8 editing, bidi layout and font support are not supplied by this shell adaptation.
 - Test-code evidence: `tests/shell_service_test.mjs:18 [UTF8-LF sha256=287a22bebfcf0457e307416b1bb6524d71a28a8876646691b449df017b023be6; anchor=Actual shell fixture extraction markers changed]`.
 - Test-code evidence: `tests/shell_service_test.cpp:132 [UTF8-LF sha256=f235dde1902ae6949f8a4460a03c55b99c8886adf6befc113af9f9ea6112294b; anchor=Accept crosses millis rollover.]`.
-- Test-code evidence: `tests/shell_properties_test.cpp:4 [UTF8-LF sha256=0d2aa839f477d639f994c57cf5432a9d135a70cc869932f5d991bb6788b11ca6; anchor=int main()]`.
-- Test-code evidence: `tests/telnet_shell_test.cpp:88 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=editor.redrawEvent(]`.
+- Test-code evidence: `tests/shell_properties_test.cpp:4 [UTF8-LF sha256=91dad9a0a6064afe8a11bb1dd6da31ce685a95709a8f6b89e4a930cb91c29e28; anchor=int main()]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:105 [UTF8-LF sha256=9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62; anchor=editor.redrawEvent(]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:11 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=C::Duplicate]`.
-- Test-code evidence: `tests/shell_tui_test.cpp:26 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=Unchanged Enter is not a write.]`.
-- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4; anchor=-Concern device-shell -Gate]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:26 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=Unchanged Enter is not a write.]`.
+- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062; anchor=-Concern device-shell -Gate]`.
 - Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
@@ -4834,10 +4834,10 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `9f8e76509ad917d8e204a82d9495e376607a159547d4eee3de6760e6bd5d7da6`.
 
-- Target: `firmware/esp/src/TelnetShell.h:96 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=class LineEditor]`.
-- Target: `firmware/esp/src/ShellProperties.h:15 [UTF8-LF sha256=7f5e741f7ff29d308da7d201a59b37f116a5b846ec7bcb157032477ca7f34816; anchor=static const ShellProperty shellProperties[]]`.
+- Target: `firmware/esp/src/TelnetShell.h:139 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=class LineEditor]`.
+- Target: `firmware/esp/src/ShellProperties.h:15 [UTF8-LF sha256=90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1; anchor=static const ShellProperty shellProperties[]]`.
 - Target: `firmware/esp/src/ShellWire.h:9 [UTF8-LF sha256=af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216; anchor=class SerialChannel]`.
-- Target: `firmware/esp/src/ShellTuiBinding.h:3 [UTF8-LF sha256=6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b; anchor=struct ShellTuiSnapshot]`.
+- Target: `firmware/esp/src/ShellTuiBinding.h:3 [UTF8-LF sha256=5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037; anchor=struct ShellTuiSnapshot]`.
 - Target: `tools/device-shell.ps1:8 [UTF8-LF sha256=4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55; anchor=AutomaticCommandRetry=$false]`.
 - Retained: PU ShellSession transport/editor separation, insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL behavior are adapted in instance-owned TelnetParser/LineEditor.
 - Retained: Generic parameter lookup/read-only enforcement and dispatch now map to ShellProperty descriptors, typed shellSet and the existing Pakar command/configuration owners; the same descriptors feed the device TUI.
@@ -4850,11 +4850,11 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `Donor printable-ASCII editor and richer Unicode terminals`. Disposition: **pending**. Reason: Arduino line editor/TUI deliberately accepts printable ASCII and sanitizes external controls. Persian/UTF-8 editing, bidi layout and font support are not supplied by this shell adaptation.
 - Test-code evidence: `tests/shell_service_test.mjs:18 [UTF8-LF sha256=287a22bebfcf0457e307416b1bb6524d71a28a8876646691b449df017b023be6; anchor=Actual shell fixture extraction markers changed]`.
 - Test-code evidence: `tests/shell_service_test.cpp:132 [UTF8-LF sha256=f235dde1902ae6949f8a4460a03c55b99c8886adf6befc113af9f9ea6112294b; anchor=Accept crosses millis rollover.]`.
-- Test-code evidence: `tests/shell_properties_test.cpp:4 [UTF8-LF sha256=0d2aa839f477d639f994c57cf5432a9d135a70cc869932f5d991bb6788b11ca6; anchor=int main()]`.
-- Test-code evidence: `tests/telnet_shell_test.cpp:88 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=editor.redrawEvent(]`.
+- Test-code evidence: `tests/shell_properties_test.cpp:4 [UTF8-LF sha256=91dad9a0a6064afe8a11bb1dd6da31ce685a95709a8f6b89e4a930cb91c29e28; anchor=int main()]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:105 [UTF8-LF sha256=9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62; anchor=editor.redrawEvent(]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:11 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=C::Duplicate]`.
-- Test-code evidence: `tests/shell_tui_test.cpp:26 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=Unchanged Enter is not a write.]`.
-- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4; anchor=-Concern device-shell -Gate]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:26 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=Unchanged Enter is not a write.]`.
+- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062; anchor=-Concern device-shell -Gate]`.
 - Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
@@ -4910,8 +4910,8 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `a78d88c149d19d8989c6db3dce0731189c2bf46c45fd64b73e9871a80f6c9bdd`.
 
-- Target: `firmware/esp/src/TelnetShell.h:46 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=class TelnetParser]`.
-- Target: `firmware/esp/src/ShellService.h:281 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void serviceDeviceShells()]`.
+- Target: `firmware/esp/src/TelnetShell.h:46 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=class TelnetParser]`.
+- Target: `firmware/esp/src/ShellService.h:328 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void serviceDeviceShells()]`.
 - Target: `firmware/esp/src/ShellSettings.h:10 [UTF8-LF sha256=9e73a173b820cf54b70e4fc6506bccbb67fee5e4ab600fc9660503d05c491417; anchor=class ShellSettings]`.
 - Target: `firmware/esp/src/ShellBuild.h:5 [UTF8-LF sha256=a2a8a9ee528e9cb48a64ad11268ff473cfbaecc8351ab01c1d9c0d55ed8128a7; anchor=PAKAR_TELNET_SESSIONS]`.
 - Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, server ECHO/SGA greeting and unsupported-option rejection are retained. Option state suppresses greeting-ACK negotiation loops.
@@ -4923,10 +4923,10 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `TelnetNetworkAvailable stop/restart and mDNS remove on every AP/station loss`. Disposition: **pending**. Reason: Source now supports durable enable/port rebind and truthful actual-listener discovery. Exact donor network-loss transition parity and multi-interface socket behavior still need explicit review/live acceptance rather than being inferred from settings tests.
 - Test-code evidence: `tests/shell_service_test.mjs:18 [UTF8-LF sha256=287a22bebfcf0457e307416b1bb6524d71a28a8876646691b449df017b023be6; anchor=Actual shell fixture extraction markers changed]`.
 - Test-code evidence: `tests/shell_service_test.cpp:132 [UTF8-LF sha256=f235dde1902ae6949f8a4460a03c55b99c8886adf6befc113af9f9ea6112294b; anchor=Accept crosses millis rollover.]`.
-- Test-code evidence: `tests/telnet_shell_test.cpp:18 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=No negotiation loops on greeting acknowledgements.]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:18 [UTF8-LF sha256=9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62; anchor=No negotiation loops on greeting acknowledgements.]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:34 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=fs.failRename=true]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:36 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=!corrupt.enabled()]`.
-- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4; anchor=-Concern device-shell -Gate]`.
+- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062; anchor=-Concern device-shell -Gate]`.
 - Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
@@ -4935,8 +4935,8 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `e85f5f1a4f2767323d9886313ddb2aabfd3acad7d781c2770bc8d2b2d2c6cb15`.
 
-- Target: `firmware/esp/src/TelnetShell.h:46 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=class TelnetParser]`.
-- Target: `firmware/esp/src/ShellService.h:281 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void serviceDeviceShells()]`.
+- Target: `firmware/esp/src/TelnetShell.h:46 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=class TelnetParser]`.
+- Target: `firmware/esp/src/ShellService.h:328 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void serviceDeviceShells()]`.
 - Target: `firmware/esp/src/ShellSettings.h:10 [UTF8-LF sha256=9e73a173b820cf54b70e4fc6506bccbb67fee5e4ab600fc9660503d05c491417; anchor=class ShellSettings]`.
 - Target: `firmware/esp/src/ShellBuild.h:5 [UTF8-LF sha256=a2a8a9ee528e9cb48a64ad11268ff473cfbaecc8351ab01c1d9c0d55ed8128a7; anchor=PAKAR_TELNET_SESSIONS]`.
 - Retained: Actual five-state IAC/option/subnegotiation parser, escaped IAC, server ECHO/SGA greeting and unsupported-option rejection are retained. Option state suppresses greeting-ACK negotiation loops.
@@ -4948,10 +4948,10 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `TelnetNetworkAvailable stop/restart and mDNS remove on every AP/station loss`. Disposition: **pending**. Reason: Source now supports durable enable/port rebind and truthful actual-listener discovery. Exact donor network-loss transition parity and multi-interface socket behavior still need explicit review/live acceptance rather than being inferred from settings tests.
 - Test-code evidence: `tests/shell_service_test.mjs:18 [UTF8-LF sha256=287a22bebfcf0457e307416b1bb6524d71a28a8876646691b449df017b023be6; anchor=Actual shell fixture extraction markers changed]`.
 - Test-code evidence: `tests/shell_service_test.cpp:132 [UTF8-LF sha256=f235dde1902ae6949f8a4460a03c55b99c8886adf6befc113af9f9ea6112294b; anchor=Accept crosses millis rollover.]`.
-- Test-code evidence: `tests/telnet_shell_test.cpp:18 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=No negotiation loops on greeting acknowledgements.]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:18 [UTF8-LF sha256=9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62; anchor=No negotiation loops on greeting acknowledgements.]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:34 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=fs.failRename=true]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:36 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=!corrupt.enabled()]`.
-- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=0f705e475bfdd4e5dbd6022f0264f11395f02963085868b75116c72d79896ab4; anchor=-Concern device-shell -Gate]`.
+- Test-code evidence: `tools/test-shell.ps1:5 [UTF8-LF sha256=1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062; anchor=-Concern device-shell -Gate]`.
 - Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
@@ -6092,16 +6092,16 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `3a3b4f13d0c839664edc2b15bb4418254463ff4d36016cb798a799016ef2890a`.
 
-- Target: `firmware/esp/src/ShellTui.h:87 [UTF8-LF sha256=43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc; anchor=if(editing_)return edit(ch,snapshot,action);]`.
-- Target: `firmware/esp/src/ShellTuiBinding.h:3 [UTF8-LF sha256=6f60f8f299f835d901e1ba510bfa13eadb7a3ed31c68c602e3b548fe780a6a2b; anchor=struct ShellTuiSnapshot]`.
+- Target: `firmware/esp/src/ShellTui.h:92 [UTF8-LF sha256=3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682; anchor=if(editing_)return edit(ch,snapshot,action);]`.
+- Target: `firmware/esp/src/ShellTuiBinding.h:3 [UTF8-LF sha256=5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037; anchor=struct ShellTuiSnapshot]`.
 - Retained: formIsFiltering focused-field key ownership is adapted to a pure ShellTui editing state: printable input/Tab cannot invoke workspace shortcuts while a draft is active; Esc/Ctrl-C cancel without applying.
 - Retained: Readonly fields cannot emit Set, unchanged Enter is not a write, CR-LF submits once, and a draft is cancelled if its key/editable/secret authority changes. Observed refreshes do not repaint or replace an active draft.
 - Retained: One shared ShellProperty snapshot binds TUI fields to the same shell/configuration validators, rather than introducing a separate TUI business or persistence layer.
 - Omitted/replaced code: `Huh form types, Go interface assertions and Bubble Tea runtime`. Disposition: **replaced**. Reason: The microcontroller uses an allocation-free C++ editing state and explicit Action handoff. No Go/Huh/Bubble Tea runtime is ported or required, and no full Huh select-filter UI is claimed.
 - Omitted/replaced code: `Unicode/Persian input and desktop form widgets`. Disposition: **pending**. Reason: Current Arduino form accepts bounded printable ASCII only; terminal character shaping, Persian editing and richer host widgets require separate implementation and acceptance.
-- Test-code evidence: `tests/shell_tui_test.cpp:37 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=private\trefresh]`.
-- Test-code evidence: `tests/shell_tui_test.cpp:31 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=Async observation cannot repaint draft.]`.
-- Test-code evidence: `tests/shell_tui_test.cpp:66 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=rows[0].editable=false]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:37 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=private\trefresh]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:31 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=Async observation cannot repaint draft.]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:66 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=rows[0].editable=false]`.
 - Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
@@ -6159,9 +6159,9 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte SHA-256: `3b56b9ee2bfa2e40b02e464c7cc2cd471d6dbb2148f06091bd56dfdf2926e1b3`.
 
 - Target: `firmware/esp/src/ShellWire.h:31 [UTF8-LF sha256=af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216; anchor=class OutputWindow]`.
-- Target: `firmware/esp/src/TelnetShell.h:18 [UTF8-LF sha256=cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4; anchor=inline size_t terminalText]`.
-- Target: `firmware/esp/src/ShellTui.h:10 [UTF8-LF sha256=43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc; anchor=class ShellTui]`.
-- Target: `firmware/esp/src/ShellService.h:263 [UTF8-LF sha256=57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a; anchor=void closeDeviceShells()]`.
+- Target: `firmware/esp/src/TelnetShell.h:18 [UTF8-LF sha256=d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d; anchor=inline size_t terminalText]`.
+- Target: `firmware/esp/src/ShellTui.h:10 [UTF8-LF sha256=3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682; anchor=class ShellTui]`.
+- Target: `firmware/esp/src/ShellService.h:310 [UTF8-LF sha256=d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144; anchor=void closeDeviceShells()]`.
 - Target: `tools/device-shell.ps1:25 [UTF8-LF sha256=4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55; anchor=Exactly once; uncertain input is NEVER replayed.]`.
 - Retained: Session-fenced immutable input/output ownership is adapted into SerialChannel/OutputWindow and the host terminal tool: explicit Open/token, no uncertain input replay, nonwrapping sequences, output ACK before consumption and explicit close.
 - Retained: Terminal safety is adapted into bounded terminalText and TUI rendering: external CSI/OSC/DCS/control payloads cannot inject terminal actions, and only the project renderer emits ANSI; output/drafts/transcripts are bounded.
@@ -6171,8 +6171,8 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot-no-git`. Original-byte S
 - Omitted/replaced code: `Transparent raw serial and automatic uncertain write retry`. Disposition: **replaced**. Reason: An additive boot/token-fenced COBS channel preserves ordinary USB recovery. Host terminal sends input once and does not reopen/replay actions automatically after uncertainty.
 - Test-code evidence: `tests/shell_wire_test.cpp:21 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=Lost read reply replays same bytes]`.
 - Test-code evidence: `tests/shell_wire_test.cpp:26 [UTF8-LF sha256=d3b4221251b6d150bdec3b9a9e78d3506e9d9c123b5699eef2919cc957da8562; anchor=output.sequence()==UINT16_MAX]`.
-- Test-code evidence: `tests/shell_tui_test.cpp:14 [UTF8-LF sha256=b9920bdc69621d9e07b82909dbfa8e4a7a508c8868adf3b7cd50edc86302863e; anchor=never-render-this]`.
-- Test-code evidence: `tests/telnet_shell_test.cpp:98 [UTF8-LF sha256=c0a3b2937c012535482557a093176894af3c6a600291839b0c38565afe8b45e1; anchor=Inspect the caller-owned backing bytes]`.
+- Test-code evidence: `tests/shell_tui_test.cpp:14 [UTF8-LF sha256=a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d; anchor=never-render-this]`.
+- Test-code evidence: `tests/telnet_shell_test.cpp:115 [UTF8-LF sha256=9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62; anchor=Inspect the caller-owned backing bytes]`.
 - Scoped advantage: Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending.
 - Remaining: Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.
 - Remaining: Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.
