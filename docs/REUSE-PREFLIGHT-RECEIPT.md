@@ -10519,3 +10519,36 @@ MaintenanceRoutes.h and FilesystemTelemetry.h were inspected for exact fields,
 AVR freshness and cached filesystem age. CPU usage and wear remain unmeasured.
 Fixtures and existing-artifact parsing passed; live ASUS DNS lookup failed for
 ledcontroller.local. No current board usage or production change is claimed.
+
+## 2026-10-27 Web correction Reload focus recovery
+
+Consulted ui-shell and the exact donor-audit EffectGroupDialog.tsx route; reread
+the complete unchanged Pealayer source (8c90f7a8...) and existing shared dialog,
+correction/group reload owners and their regression tests. The native HTML
+dialog adaptation remains the sole dialog owner; no additional framework.
+
+Actual 1280x720 loopback preview exposed approval returning keyboard focus to
+the page background: Reload disabled its origin before dialog close could
+restore focus. Both editors now await their original peer-pinned read inside
+the existing asynchronous dialog action, enabling the trigger before close.
+Late dismissed/changed-peer approvals stay inert. Delayed-read regressions for
+both editors and existing shared-dialog tests pass. The first group test draft
+selected an already overridden group and made no edit; corrected the test to
+explicit group3 before testing the pending-read boundary.
+
+Actual correction browser check after rebuild: Reload restores focus; Escape
+preserves edits and restores Reload; Cancel is initial focus. Tab visits Reload,
+browser chrome, then Close without entering background page controls. Expanded
+Wire map, exact480 filter and saved filter across reload work; diagnostic cursor2
+produces rule Wire2/Raw2 and a black second slot in its local six-slot diagram.
+Test draft was discarded only in the isolated fixture. No board requests,
+firmware/app deployment, GPIO/color command or cloud change occurred.
+
+Full/onboard Web assets share revision
+fe7608229fd89223b505c64720d187ff1b68081b26228b5bd559c736c75f3b34,
+147889 gzip HTML bytes. Only Web assets rebuilt, using unchanged-write skipping.
+Screenshot: outputs/PakarController/staging/web-correction-discard-20261027.png
+under the task parent; current local preview remains localhost:63200.
+The nested map/rules scroll regions remain cramped when both are expanded at
+720px height; layout refinement and phone/tablet/RTL acceptance remain open.
+This is rendered fixture evidence, not production hardware acceptance.

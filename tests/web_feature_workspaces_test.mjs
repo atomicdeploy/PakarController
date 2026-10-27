@@ -146,6 +146,23 @@ await promptButton('Reload').onclick();assert.equal(reads,noModalReads);assert.e
 assert(errors.at(-1).message.includes('confirmation is unavailable'));context.WebUI=sharedUi;
 const disposedReload=promptButton('Reload').onclick();promptWorkspace.dispose();await disposedReload;
 assert.equal(writes,1);assert.equal(layout.children.length,0);
+// Approval stays pending while Reload disables its trigger. Native dialog
+// close must run only after that trigger can receive restored keyboard focus.
+{
+ let releaseRead,readCount=0,finished=false;
+ state={board_id:'focus-reload',boot_id:'boot',pixel_corrections_revision:0};
+ const focusWorkspace=context.createFeatureWorkspaces({...options,api:()=>++readCount===1?Promise.resolve(structuredClone(configuration)):new Promise(resolve=>{releaseRead=resolve;})});
+ await new Promise(setImmediate);
+ const card=document.getElementById('pixelCorrectionsCard'),control=label=>card.querySelectorAll('button').find(b=>b.textContent===label);
+ await control('Add rule').onclick();const decision=control('Reload').onclick(),prompt=modalRequests.at(-1);
+ const approval=prompt.spec.actions[1].action().then(()=>{finished=true;});
+ await new Promise(setImmediate);
+ assert.equal(finished,false,'Reload dialog action must await the actual read');
+ assert.equal(control('Reload').disabled,true);
+ releaseRead(structuredClone(configuration));await approval;
+ assert.equal(control('Reload').disabled,false,'Trigger is enabled before dialog closes');
+ prompt.close();await decision;assert.equal(readCount,2,'Approval reads once, never after closing');focusWorkspace.dispose();
+}
 // Disabling, reordering and saving preserve each row's flag and still require
 // an explicit commit. A checkbox is not an empty numeric draft.
 const rowErrorsBefore=errors.length;
@@ -393,6 +410,18 @@ const groupDisconnect=groupButton('Reload').onclick();features.delete('pixel-gro
 features.add('pixel-group-layout');groupWorkspace.update();assert(groupDirty());
 context.WebUI={};const missingGroupReads=groupReads;await groupButton('Reload').onclick();assert.equal(groupReads,missingGroupReads);assert(groupDirty());assert(errors.at(-1).message.includes('Group confirmation is unavailable'));context.WebUI=sharedUi;
 const groupDispose=groupButton('Reload').onclick();groupWorkspace.dispose();await groupDispose;assert.equal(groupWrites,1);assert.equal(layout.children.length,0);
+{
+ let releaseRead,readCount=0,finished=false;
+ const focusGroups=context.createFeatureWorkspaces({...groupOptions,api:()=>++readCount===1?Promise.resolve(structuredClone(custom)):new Promise(resolve=>{releaseRead=resolve;})});
+ await new Promise(setImmediate);
+ const card=document.getElementById('pixelGroupsCard'),control=label=>card.querySelectorAll('button').find(b=>b.textContent===label);
+ card.querySelectorAll('input').find(n=>n.getAttribute('aria-label')==='Physical group').value='3';
+ await control('Customize group').onclick();const decision=control('Reload').onclick(),prompt=modalRequests.at(-1);
+ const approval=prompt.spec.actions[1].action().then(()=>{finished=true;});await new Promise(setImmediate);
+ assert.equal(finished,false,'Group Reload retains modal ownership until its read finishes');assert(control('Reload').disabled);
+ releaseRead(structuredClone(custom));await approval;assert.equal(control('Reload').disabled,false);
+ prompt.close();await decision;assert.equal(readCount,2);assert.equal(groupWrites,1);focusGroups.dispose();
+}
 // Invalid typed counts are drafts too; structural redraw/peer return must not
 // replace them with the last valid value and accidentally re-enable Save.
 state={...oldGroupState,boot_id:'typed-counts',pixel_groups:custom};groupSaved=custom;

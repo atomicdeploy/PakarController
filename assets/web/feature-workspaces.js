@@ -368,15 +368,20 @@
       const expected=owner,record=model;
       if(record.dirty){
         if(!ui()?.dialog)throw Error('Correction confirmation is unavailable. Edits were kept.');
-        const approved=await new Promise(resolve=>{
+        await new Promise(resolve=>{
           const prompt=ui().dialog({title:translate('Discard correction edits?'),closeLabel:translate('Close'),
             description:translate('Reload keeps the saved board configuration and discards only these edits.'),
             actions:[{label:translate('Cancel'),icon:'close',autofocus:true},
-              {label:translate('Reload'),icon:'refresh',variant:'primary',action:()=>resolve(true)}]});
+              {label:translate('Reload'),icon:'refresh',variant:'primary',action:async()=>{
+                if(reloadPrompt!==prompt||!current(expected)||model!==record||!writable())return false;
+                // Keep the modal's async owner until the read restores enabled
+                // controls, so native close can return focus to Reload.
+                await load();resolve(true);
+              }}]});
           reloadPrompt=prompt;
           prompt.element.addEventListener('close',()=>{if(reloadPrompt===prompt)reloadPrompt=null;resolve(false);},{once:true});
         });
-        if(!approved)return;
+        return;
       }
       requireCurrent(expected);
       if(model!==record)throw Error('Device session changed. Edits were kept.');
