@@ -10499,3 +10499,23 @@ the pinned revisions recorded in the canonical ledger. No donor was modified.
 The complete local quality suite passed after the CI repair; focused documentation,
 governance and both PowerShell storage fixtures passed. Source/fixture evidence
 is not a green remote run, complete donor parity, package deployment or board proof.
+
+## Resource reporting checkpoint (2026-10-27)
+
+Consulted updates-telemetry and the exact PU850 build.sh donor mapping. Reviewed
+its actual binary-size/flash-percentage/build-info export and the existing adapted
+firmware-report.mjs. Retained that report's artifact hashing/unchanged-write
+implementation; the new resource-report.mjs uses actual partition slots rather
+than the donor's total-flash denominator, and AVR packaging/ELF rather than padded
+recovery-image length. Forced cleans, gzip renamed to .bin and timestamp rewrites
+remain excluded for the previously documented integrity/storage reasons.
+
+CI now retains JSON resource reports and compares the previous successful main
+report where its hardware profile matches. Numeric feature flags/version/FQBN
+are captured only by actual successful builds; arbitrary private defines are
+never exported. Live collection reuses deviceOrigin/deviceRequest and shared
+client headers from check-ethernet-live.mjs without its mutating test flow.
+MaintenanceRoutes.h and FilesystemTelemetry.h were inspected for exact fields,
+AVR freshness and cached filesystem age. CPU usage and wear remain unmeasured.
+Fixtures and existing-artifact parsing passed; live ASUS DNS lookup failed for
+ledcontroller.local. No current board usage or production change is claimed.

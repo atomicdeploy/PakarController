@@ -274,6 +274,17 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         }
         Write-PakarStep "Firmware $board · $LinkMode · reusable cache (CLI may invalidate source/options); no automatic flash"
         Invoke-PakarNative -WorkingDirectory $projectRoot -FilePath $cli -Arguments $arguments
+        # Preserve only public numeric feature flags, never arbitrary compiler
+        # defines (which may contain names, paths or credentials).
+        $resourceFlags = [ordered]@{}
+        foreach ($match in [regex]::Matches($flags, '-D(PAKAR_[A-Z0-9_]+)=(-?\d+)(?=\s|$)')) {
+            $resourceFlags[$match.Groups[1].Value] = [int]$match.Groups[2].Value
+        }
+        if ($ledProfile) {
+            foreach ($match in [regex]::Matches($ledProfile.Content, '(?m)^#define (PAKAR_[A-Z0-9_]+) (-?\d+)\s*$')) {
+                $resourceFlags[$match.Groups[1].Value] = [int]$match.Groups[2].Value
+            }
+        }
     } finally {
         if ($ledProfileLease) { $ledProfileLease.Dispose() }
     }
@@ -284,6 +295,15 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         if ((Get-Item -LiteralPath $mergedImage).Length -ne 32768) {
             throw 'Merged AVR application plus Urboot image is not exactly 32768 bytes'
         }
+    }
+    $resourceArtifact = if ($board -eq 'avr') { Join-Path $output 'avr.ino.with_bootloader.bin' } else { Join-Path $output "$board.ino.bin" }
+    $resourceVersion = [regex]::Match([IO.File]::ReadAllText((Join-Path $projectRoot 'libraries/BoardCore/src/BuildInfo.h')), 'kVersion\[\] = "([^"]+)"').Groups[1].Value
+    $resourceMetadata = [ordered]@{ fqbn=$fqbn; version=$resourceVersion; numeric_feature_flags=$resourceFlags;
+        artifact_sha256=(Get-FileHash -LiteralPath $resourceArtifact -Algorithm SHA256).Hash.ToLowerInvariant() }
+    $resourceMetadataPath = Join-Path $output 'resource-build.json'
+    $resourceText = ($resourceMetadata | ConvertTo-Json -Depth 4) + "`n"
+    if (-not (Test-Path -LiteralPath $resourceMetadataPath) -or [IO.File]::ReadAllText($resourceMetadataPath) -cne $resourceText) {
+        [IO.File]::WriteAllText($resourceMetadataPath,$resourceText,[Text.UTF8Encoding]::new($false))
     }
 }
 if (-not $Plan) { Write-Host "Requested firmware builds passed in $LinkMode mode." }

@@ -2331,7 +2331,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -2378,7 +2378,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -2928,7 +2928,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         },
         {
@@ -3042,7 +3042,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -3089,7 +3089,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -9643,7 +9643,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -9694,7 +9694,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -11158,7 +11158,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6"
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043"
         }
       ],
       "omissions": [
@@ -11481,7 +11481,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c"
+          "sha256": "2d0347c4dbc5e63974d11fbc7d6187357b96b2969af11341ed7a82b7d733981b"
         }
       ],
       "omissions": [
@@ -11901,7 +11901,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c"
+          "sha256": "2d0347c4dbc5e63974d11fbc7d6187357b96b2969af11341ed7a82b7d733981b"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -12294,7 +12294,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🔧 ESP32-S3 + AVR\"",
-          "sha256": "a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c"
+          "sha256": "2d0347c4dbc5e63974d11fbc7d6187357b96b2969af11341ed7a82b7d733981b"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -12443,7 +12443,8 @@
         "bytes": 19981
       },
       "preserved": [
-        "Retain PU mode/target preflight and explicit build stages through the same portable dispatcher and guarded compiler wrapper. Artifact size/hash and optional gzip reporting live in firmware-report.mjs instead of shell parsing."
+        "Retain PU mode/target preflight and explicit build stages through the same portable dispatcher and guarded compiler wrapper. Artifact size/hash and optional gzip reporting live in firmware-report.mjs instead of shell parsing.",
+        "Resource reporting extends the existing PU size/hash adaptation with real OTA-slot and AVR ELF/static budgets, retained CI baselines and separate timestamped read-only live observations."
       ],
       "targets": [
         {
@@ -12460,6 +12461,11 @@
           "path": "pakar.sh",
           "anchor": "exec node tools/pakar.mjs",
           "sha256": "0e5554e3fb7a614178d57a8a39f081862a1ac382e5e4d87e9806b56d4512c680"
+        },
+        {
+          "path": "tools/resource-report.mjs",
+          "anchor": "export function collectBuild",
+          "sha256": "6aa6044ed6813ed6a3d8028ef7efbf71e838d8efbd07ba228bd6e09bd23ef6a5"
         }
       ],
       "omissions": [
@@ -12479,6 +12485,11 @@
           "path": "tests/script_tooling_test.ps1",
           "anchor": "PowerShell utilities parse",
           "sha256": "d3c679d8caa22177e7a5590564cd1141b84e1b194b3c3ee0bb825c26a4d46305"
+        },
+        {
+          "path": "tests/resource_report_test.mjs",
+          "anchor": "Resource reports:",
+          "sha256": "90947f5b882e8204f3609d0d29d12068bfc0de8d1b5ce09e57a0bef6e26de376"
         }
       ],
       "remaining": [
@@ -13562,7 +13573,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -13613,7 +13624,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -17770,7 +17781,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "a74137b7ba5ba6f24c881dafdd3e9f3872da7261b6b8aceac3112a576a16fc1c",
+          "sha256": "2d0347c4dbc5e63974d11fbc7d6187357b96b2969af11341ed7a82b7d733981b",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -17780,7 +17791,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "741d9d2dd3e47fb81d1310a707b141e210ea19622b81af78b6a7fa2f014050d2",
+          "sha256": "295acbe801e622e6b7c34f522c16198acaeaab395fe745d2d3bdec56b734f0bd",
           "anchor": "export function runChecks"
         },
         {
@@ -23798,7 +23809,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -24105,7 +24116,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
+          "sha256": "f4e9885094c432d467c70e7d7c7ea6264913958a85381fc1dead4472738b0043",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -25650,7 +25661,7 @@
         },
         {
           "path": "docs/README.md",
-          "sha256": "ec19e28f41dec4d739f2094b74abf8d685069de0206bc8c815fc3be5c23b2efb",
+          "sha256": "006973cc50167b64df88e80d539604df763b3edffac561a9ada86fcc7b69683b",
           "anchor": "## Operate and recover"
         }
       ],

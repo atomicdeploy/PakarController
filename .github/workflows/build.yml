@@ -105,6 +105,9 @@ jobs:
     needs: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -137,6 +140,34 @@ jobs:
           # builds a no-matrix image, which must not be the release artifact.
           bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi --s3-led-gpio --s3-led-rmt-dma
           node tools/firmware-report.mjs --require --write
+      - name: Previous successful main resource baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if run=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty'); then
+            if [[ -n "$run" ]]; then
+              if ! gh run download "$run" --repo "$GITHUB_REPOSITORY" --name PakarController-resources --dir build/resource-baseline; then
+                echo 'No retained resource baseline available; absolute budgets still enforced.'
+              fi
+            fi
+          else
+            echo 'Baseline lookup unavailable; absolute budgets still enforced.'
+          fi
+      - name: Resource budgets and historical comparison
+        run: |
+          args=()
+          if [[ -f build/resource-baseline/resource-report.json ]]; then
+            args+=(--baseline build/resource-baseline/resource-report.json)
+          fi
+          node tools/resource-report.mjs --write "${args[@]}"
+      - name: Publish resource report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: PakarController-resources
+          path: build/resource-report.json
+          retention-days: 90
+          if-no-files-found: warn
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: PakarController-firmware

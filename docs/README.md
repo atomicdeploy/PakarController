@@ -15,6 +15,7 @@ clients. Start with the guide for your task; production acceptance remains in
 | Browse or transfer files | [User files and protected paths](USER-FILES.md) |
 | Update boards | [Remote maintenance](REMOTE-MAINTENANCE.md), [tooling](SCRIPT-TOOLING.md) |
 | Update and monitor client applications | [Client management](CLIENT-MANAGEMENT.md) |
+| Inspect build budgets or live board memory | [Resource usage](RESOURCE-USAGE.md) |
 
 ## Develop and integrate
 

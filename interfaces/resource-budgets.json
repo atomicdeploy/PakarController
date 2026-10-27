@@ -1,0 +1,5 @@
+{
+  "esp_ota": {"max_used_percent": 95, "max_growth_bytes": 262144},
+  "avr_flash": {"max_used_percent": 98, "max_growth_bytes": 2048},
+  "avr_static_ram": {"max_used_percent": 90, "max_growth_bytes": 128}
+}
