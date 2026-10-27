@@ -2,6 +2,7 @@
   "schema": 1,
   "authority": "docs/file-comparison-evidence.json",
   "concerns": [
+    {"id":"udp-diagnostic-query","origins":["PU850-ESP"],"path_pattern":"^LocalLib/RemoteCommand\\.cpp$","required_reviews":["PU850-ESP|LocalLib/RemoteCommand.cpp"],"issue":29},
     {"id":"portable-shell","origins":["portable-shell"],"path_pattern":".*","required_reviews":["portable-shell|include/portable_shell.h","portable-shell|src/portable_shell.c","portable-shell|src/vt100.c","portable-shell|tests/test_shell.c"],"issue":29},
     {"id":"user-files","origins":["Pealayer"],"path_pattern":"^web_ui/src/components/ServerFilePicker\\.tsx$","required_reviews":["Pealayer|web_ui/src/components/ServerFilePicker.tsx"],"issue":28},
     {"id":"pixel-group-layout","origins":["PCController","Pealayer"],"path_pattern":"(^Project/(AddressableLeds|SettingsStore)\\.(cpp|h)$|^mobile/lib/unified/(controller_dialog|pwm_control|effect_editor)\\.dart$|^web_ui/src/components/NumericValueControl\\.tsx$)","required_reviews":["PCController|Project/AddressableLeds.cpp","PCController|Project/SettingsStore.cpp","Pealayer|web_ui/src/components/NumericValueControl.tsx"],"issue":2},

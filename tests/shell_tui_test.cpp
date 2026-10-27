@@ -6,6 +6,11 @@
 
 int main(){
   using T=PakarShell::ShellTui;
+  {T pages;T::Snapshot s;T::Action a;s.cloudSettings=s.notificationSettings=true;pages.begin();
+   pages.feed('\t',s,a);assert(pages.page()==T::Network);
+   pages.feed('\t',s,a);assert(pages.page()==T::Cloud);
+   pages.feed('\t',s,a);assert(pages.page()==T::Notifications);
+   pages.feed('\t',s,a);assert(pages.page()==T::Device);}
   T model;T::Action action;T::Snapshot snapshot;
   uint8_t counts[80];uint16_t starts[80];
   for(unsigned i=0;i<80;++i){counts[i]=6;starts[i]=i*6;}

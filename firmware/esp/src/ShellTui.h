@@ -1,5 +1,7 @@
 #pragma once
 #include "TelnetShell.h"
+#include "ShellPixelCommand.h"
+#include "ShellRemoteQuery.h"
 
 // Allocation-free device-owned presentation. Adapted from RayanLamp's keys,
 // formIsFiltering, deterministic runtime model, bounded terminal renderer and
@@ -9,7 +11,7 @@
 namespace PakarShell {
 class ShellTui {
  public:
-  enum Page : uint8_t { Device, Network, Led, Pixel, Game, TerminalPage };
+  enum Page : uint8_t { Device, Network, Led, Pixel, Game, TerminalPage, Cloud, Notifications, PageCount };
   struct Row {
     const char* label=nullptr;
     const char* key=nullptr;
@@ -29,6 +31,7 @@ class ShellTui {
     uint32_t groupLayoutRevision=0;
     bool canLeds=false,canPixels=false; // Independently ACKed, default denied.
     bool canGame=false,gameReady=false,terminalSettings=false,unicode=false;
+    bool cloudSettings=false,notificationSettings=false;
     uint16_t enabledKeys=0,columns=80,lines=24;
     uint8_t winner=0;
   };
@@ -145,11 +148,13 @@ class ShellTui {
     out.raw(snapshot.unicode?"\xe2\x95\xad\xe2\x94\x80 ":"+- ");out.safe(snapshot.title,width-10);
     if(ansi_){out.raw("\x1b[0m");}out.raw("\r\n");
     if(snapshot.lines<24||snapshot.columns<40){out.raw("Resize terminal to at least 40 x 24.\r\nEsc returns to shell.\r\n");return true;}
-    for(uint8_t i=0;i<6;++i){
+    for(uint8_t i=0;i<PageCount;++i){
       if((i==Led&&!snapshot.canLeds)||(i==Pixel&&!pixels(snapshot)))continue;
       if((i==Game&&!snapshot.canGame)||(i==TerminalPage&&!snapshot.terminalSettings))continue;
+      if((i==Cloud&&!snapshot.cloudSettings)||(i==Notifications&&!snapshot.notificationSettings))continue;
+      if(width<80&&i!=page_)continue;
       if(ansi_&&i==page_)out.raw("\x1b[7m");
-      out.raw(i==Device?" Device ":i==Network?" Network ":i==Led?" LEDs ":i==Pixel?" Pixels ":i==Game?" Game ":" Term ");
+      out.raw(i==Device?" Device ":i==Network?" Network ":i==Led?" LEDs ":i==Pixel?" Pixels ":i==Game?" Game ":i==TerminalPage?" Term ":i==Cloud?" Cloud ":" Notify ");
       if(ansi_)out.raw("\x1b[0m");
     }
     out.raw("\r\n");
@@ -252,7 +257,7 @@ class ShellTui {
   void clearDraft(){scrub(draft_,sizeof(draft_));scrub(editKey_,sizeof(editKey_));scrub(editLabel_,sizeof(editLabel_));cursor_=0;editing_=secret_=draftChanged_=false;}
   void setNotice(const char* text){terminalText(notice_,sizeof(notice_),text);dirty_=true;}
   void nextPage(const Snapshot& s){
-    for(uint8_t i=0;i<6;++i){page_=static_cast<Page>((page_+1)%6);if((page_!=Led||s.canLeds)&&(page_!=Pixel||pixels(s))&&(page_!=Game||s.canGame)&&(page_!=TerminalPage||s.terminalSettings))break;}
+    for(uint8_t i=0;i<PageCount;++i){page_=static_cast<Page>((page_+1)%PageCount);if((page_!=Led||s.canLeds)&&(page_!=Pixel||pixels(s))&&(page_!=Game||s.canGame)&&(page_!=TerminalPage||s.terminalSettings)&&(page_!=Cloud||s.cloudSettings)&&(page_!=Notifications||s.notificationSettings))break;}
     selected_=0;grid_=page_==Led||page_==Pixel;dirty_=full_=true;notice_[0]=0;
   }
   bool pixelAction(const Snapshot& s,Action& a){

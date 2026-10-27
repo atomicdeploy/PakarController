@@ -155,7 +155,7 @@ class LineEditor {
     const char* first=nullptr;size_t matches=0,common=0;
     for(size_t i=0;i<count;++i){
       const char* name=candidate(i);
-      if(!name || strncmp(name,command_+start,typed))continue;
+      if(!name || !namePrefix(name,command_+start,typed))continue;
       if(!matches){first=name;common=strlen(name);}
       else{size_t n=0;while(n<common && name[n] && name[n]==first[n])++n;common=n;}
       ++matches;
@@ -170,10 +170,10 @@ class LineEditor {
     }
     emit(write,"\r\n");
     for(size_t i=0;i<count;++i){const char* name=candidate(i);
-      if(name && !strncmp(name,command_+start,typed)){emit(write,name);emit(write,"  ");}}
+      if(name && namePrefix(name,command_+start,typed)){emit(write,name);emit(write,"  ");}}
     emit(write,"\r\n");redraw(write);
   }
-  void reset() { clear(); clearHistory(); crPending_ = false; echo_ = false; }
+  void reset() { clear(); clearHistory(); crPending_ = false; echo_ = upper_ = false; }
   void clear() {
     // Scrub password bytes after authentication, disconnect or cancellation.
     volatile char* p = command_;
@@ -182,6 +182,7 @@ class LineEditor {
     cursor_ = 0; escape_ = attribute_ = escapeBytes_ = 0; overflow_ = false;
   }
   void setEcho(bool enabled) { echo_ = enabled; }
+  void setUpper(bool enabled) { upper_ = enabled; }
   void setPrompt(const char* label, bool ansi=true) {
     terminalText(prompt_,sizeof(prompt_),label,128);ansi_=ansi;
   }
@@ -217,7 +218,7 @@ class LineEditor {
   }
   template <typename Write> void redraw(Write write) const {
     if(!echo_)return;
-    Terminal::clearLine(write,ansi_);prompt(write);emit(write,command_);
+    Terminal::clearLine(write,ansi_);prompt(write);emitInput(write,command_);
     cursorBack(write,strlen(command_)-cursor_);
   }
   template <typename Write> void redrawEvent(const char* text, Write write) const {
@@ -264,7 +265,7 @@ class LineEditor {
     // Donor ShellShiftRight/ShellShiftLeft, with a fixed extra NUL slot.
     for (size_t i = kCapacity; i > cursor_; --i) command_[i] = command_[i - 1];
     command_[cursor_++] = static_cast<char>(ch);
-    if (echo_) { const char text[] = {static_cast<char>(ch), 0}; emit(write, text); fixCursor(write, false); }
+    if (echo_) { const char text[] = {static_cast<char>(ch), 0}; emitInput(write, text); fixCursor(write, false); }
     return None;
   }
  private:
@@ -289,6 +290,10 @@ class LineEditor {
   template <typename Write> static void emit(Write write, const char* text) {
     write(reinterpret_cast<const uint8_t*>(text), strlen(text));
   }
+  template <typename Write> void emitInput(Write write,const char* text) const {
+    if(!upper_){emit(write,text);return;}
+    for(;*text;++text){const uint8_t c=*text>='a'&&*text<='z'?*text-('a'-'A'):*text;write(&c,1);}
+  }
   template <typename Write> void bell(Write write) { if (echo_) emit(write, "\a"); }
   template <typename Write> void cursorBack(Write write,size_t count) const {
     if(!echo_||!count)return;
@@ -298,8 +303,8 @@ class LineEditor {
   template <typename Write> void fixCursor(Write write, bool clearAfter) {
     const size_t length = strlen(command_);
     if (cursor_ != length) {
-      if(ansi_){emit(write, "\x1b[s"); emit(write, command_ + cursor_);emit(write, "\x1b[K\x1b[u");}
-      else {emit(write,command_+cursor_);if(clearAfter)emit(write," ");cursorBack(write,length-cursor_+(clearAfter?1:0));}
+      if(ansi_){emit(write, "\x1b[s"); emitInput(write, command_ + cursor_);emit(write, "\x1b[K\x1b[u");}
+      else {emitInput(write,command_+cursor_);if(clearAfter)emit(write," ");cursorBack(write,length-cursor_+(clearAfter?1:0));}
     } else if (clearAfter) {if(ansi_)emit(write, "\x1b[K");else emit(write," \b");}
   }
   template <typename Write> void history(bool older,Write write) {
@@ -322,7 +327,7 @@ class LineEditor {
       --cursor_; cursorBack(write,1);
     } else if (direction == 'C') {
       if (cursor_ == length) { bell(write); return; }
-      if(echo_){if(ansi_)emit(write,"\x1b[C");else{const char c[]={command_[cursor_],0};emit(write,c);}}++cursor_;
+      if(echo_){if(ansi_)emit(write,"\x1b[C");else{const char c[]={command_[cursor_],0};emitInput(write,c);}}++cursor_;
     } else if (direction == 'H' || direction == 'F') {
       const size_t target = direction == 'H' ? 0 : length;
       while (cursor_ != target) move(cursor_ > target ? 'D' : 'C', write);
@@ -356,6 +361,6 @@ class LineEditor {
   size_t historyNext_=0,historyCount_=0,historyOffset_=0,draftCursor_=0;
   size_t cursor_ = 0;
   uint8_t escape_ = 0, attribute_ = 0,escapeBytes_=0;
-  bool echo_ = false, crPending_ = false, overflow_ = false,ansi_=true;
+  bool echo_ = false, crPending_ = false, overflow_ = false,ansi_=true,upper_=false;
 };
 } // namespace PakarShell

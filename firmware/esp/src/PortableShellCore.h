@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "ShellNames.h"
 
 // Adapted from portable-shell 67c5dcb8 include/portable_shell.h (PSCommand),
 // src/portable_shell.c (command lookup/help) and src/vt100.c. MIT license and
@@ -34,7 +35,7 @@ inline constexpr Command commands[] = {
  {"effect","effect","effect NAME : select an available effect",false},
  {"mode","mode","mode NAME : select a supported board mode",false},
  {"brightness","brightness","brightness 1..255",false},
- {"pixel","pixel","pixel INDEX[zero-based] [COUNT] [RRGGBB] | pixel off",false},
+ {"pixel","pixel","pixel INDEX[zero-based] [COUNT] [RRGGBB] | pixel group GROUP[one-based] [RRGGBB] | pixel off",false},
  {"audio","audio","audio CUE : play a supported cue",false},
  {"display","display","display VALUE|stop | display text once|loop|interval SPEED HOLD PAUSE SCROLL TEXT",false},
  {"network","network","network scan|scan-results|reconnect",false},
@@ -57,8 +58,13 @@ inline constexpr size_t commandCount = sizeof(commands)/sizeof(commands[0]);
 inline const Command* findCommand(const char* name) {
   if (!name) return nullptr;
   for (const auto& command : commands)
-    if (strcmp(command.name,name)==0) return &command;
+    if (sameName(command.name,name)) return &command;
   return nullptr;
+}
+inline bool commandAvailable(const Command& command,bool firstWins){
+  if(sameName(command.canonical,"game"))return firstWins;
+  if(sameName(command.canonical,"cell")||sameName(command.canonical,"cells"))return !firstWins;
+  return true;
 }
 
 // Donor VT100 emitters retain callback-based transport independence. Unlike the

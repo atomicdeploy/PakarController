@@ -22,6 +22,7 @@ param(
     [ValidateRange(1,4)] [int] $ShellSessions = 2,
     [switch] $DisableSerialShell,
     [switch] $DisableTelnet,
+    [switch] $EnableUdpDiagnostics,
     [switch] $DisableNetworking,
     [ValidateSet('enabled','disabled')] [string] $PixelCorrections = 'enabled',
     [switch] $DisablePeerVersionChecks,
@@ -58,7 +59,8 @@ if($AvrRecoveryImage){
 }
 if ($AvrRadio -and $Target -notin @('avr','both')) { throw 'AVR radio requires an AVR build target.' }
 if ($AvrLedDiagnostic -and ($Target -ne 'avr' -or $AvrRadio)) { throw 'D6 diagnostic requires an AVR-only build with RF disabled.' }
-if(($PSBoundParameters.ContainsKey('ShellSessions') -or $DisableSerialShell -or $DisableTelnet) -and $Target -ne 'esp32s3'){throw 'Shell build switches currently use the S3 application-only profile; other targets retain macro defaults.'}
+if(($PSBoundParameters.ContainsKey('ShellSessions') -or $DisableSerialShell -or $DisableTelnet -or $EnableUdpDiagnostics) -and $Target -ne 'esp32s3'){throw 'Shell build switches currently use the S3 application-only profile; other targets retain macro defaults.'}
+if($EnableUdpDiagnostics -and $DisableNetworking){throw 'UDP diagnostics require networking.'}
 . (Join-Path $PSScriptRoot 'script-runtime.ps1')
 if ($Target -eq 'esp32s3' -and -not $PSBoundParameters.ContainsKey('LinkMode') -and -not $env:PAKAR_LINK_MODE) { $LinkMode = 'buffered' }
 if ($Target -eq 'esp32s3' -and $LinkMode -ne 'buffered') { throw 'ESP32-S3 UART integration requires the explicit paired buffered profile.' }
@@ -99,6 +101,7 @@ if ($Target -eq 'esp32s3') {
 }
 if ($Target -ne 'avr') {
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-shell -Gate | Out-Null
+    if($EnableUdpDiagnostics){& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern udp-diagnostic-query -Gate | Out-Null}
     # Route evidence is a separate reviewed artifact from the file ledger.
     # Fail before compiling/flashing if a changed sketch has stale route hashes.
     & node (Join-Path $PSScriptRoot '../tests/pu_routes_test.mjs') | ForEach-Object { Write-Host $_ }
@@ -235,6 +238,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
             Content = "#pragma once`n#ifndef PAKAR_GAME_MODE`n#define PAKAR_GAME_MODE $gameModeCode`n#endif`n#ifndef PAKAR_INITIAL_KEY_MASK`n#define PAKAR_INITIAL_KEY_MASK $InitialKeyMask`n#endif`n#define PAKAR_S3_LED_GPIO_ENABLED $(if ($S3LedGpio) { 1 } else { 0 })`n#define PAKAR_S3_LED_RMT_ENABLED $(if ($S3LedRmtDma) { 1 } else { 0 })`n#define PAKAR_S3_LED_DEFAULT_BACKEND $s3LedDefaultCode`n#ifndef PAKAR_S3_BLE_ENABLED`n#define PAKAR_S3_BLE_ENABLED $(if ($S3Bluetooth -eq 'disabled') { 0 } else { 1 })`n#endif`n#define PAKAR_TELNET_SESSIONS $ShellSessions`n#define PAKAR_SERIAL_SHELL_ENABLED $(if ($DisableSerialShell) { 0 } else { 1 })`n#define PAKAR_TELNET_ENABLED $(if ($DisableTelnet) { 0 } else { 1 })`n"
         }
         $ledProfile.Content += "#define PAKAR_NETWORK_ENABLED $(if($DisableNetworking){0}else{1})`n"
+        $ledProfile.Content += "#define PAKAR_REMOTE_QUERY_UDP_ENABLED $(if($EnableUdpDiagnostics){1}else{0})`n"
         $ledProfile.Content += "#define PAKAR_MICROSD_ENABLED $(if($S3MicroSd){1}else{0})`n"
         if($S3MicroSd){$ledProfile.Content += "#define PAKAR_SD_CLK $S3SdClk`n#define PAKAR_SD_CMD $S3SdCmd`n#define PAKAR_SD_D0 $S3SdD0`n"}
         $ledProfile.Content += "#define PAKAR_AVR_RECOVERY_IMAGE_AVAILABLE $(if($recoveryBytes){1}else{0})`n"

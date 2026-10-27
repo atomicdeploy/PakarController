@@ -87,7 +87,7 @@
         {
           "path": "firmware/esp/src/ShellProperties.h",
           "anchor": "struct ShellProperty",
-          "sha256": "90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1"
+          "sha256": "9b4a3bfc3a8a5d4771624441856a287578b20a32b6c3296878292c2f47b7d552"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -127,7 +127,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -172,7 +172,7 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b"
+          "sha256": "6073098b5018ff71f534c1efae37cee36dc424bd66a26ea1990a63c016298e38"
         }
       ],
       "proof": [
@@ -201,7 +201,7 @@
         {
           "path": "tools/test-shell.ps1",
           "anchor": "foreach($taskName",
-          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062"
+          "sha256": "58c668784ff8429a208e93f8376e91079fbecf14833f468462f63a84f2cd102d"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -318,12 +318,12 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d"
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a"
         }
       ],
       "proof": [
@@ -410,7 +410,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -455,24 +455,24 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b"
+          "sha256": "6073098b5018ff71f534c1efae37cee36dc424bd66a26ea1990a63c016298e38"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d"
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_test.cpp",
           "anchor": "int main()",
-          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+          "sha256": "e35fb7938a8d3399b6376bc110648fa61ad860f043d2b350da8537979db79bdc"
         },
         {
           "path": "tests/portable_shell_source_test.mjs",
@@ -507,7 +507,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -557,29 +557,29 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b"
+          "sha256": "6073098b5018ff71f534c1efae37cee36dc424bd66a26ea1990a63c016298e38"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d"
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538"
         },
         {
           "path": "firmware/esp/src/ShellTui.h",
           "anchor": "class ShellTui",
-          "sha256": "3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682"
+          "sha256": "476d98bf56cdab0656085fb7198ff98da99531cba19e8509ccd28a05bafe4e60"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_test.cpp",
           "anchor": "int main()",
-          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+          "sha256": "e35fb7938a8d3399b6376bc110648fa61ad860f043d2b350da8537979db79bdc"
         },
         {
           "path": "tests/portable_shell_source_test.mjs",
@@ -614,7 +614,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -664,24 +664,24 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "2088d47ab4bd4d46fc311b1461d9c8ff83f235af91aada99d904d09d6736b60b"
+          "sha256": "6073098b5018ff71f534c1efae37cee36dc424bd66a26ea1990a63c016298e38"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d"
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144"
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_test.cpp",
           "anchor": "int main()",
-          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+          "sha256": "e35fb7938a8d3399b6376bc110648fa61ad860f043d2b350da8537979db79bdc"
         },
         {
           "path": "tests/portable_shell_source_test.mjs",
@@ -715,7 +715,7 @@
         {
           "path": "tests/portable_shell_test.cpp",
           "anchor": "int main()",
-          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+          "sha256": "e35fb7938a8d3399b6376bc110648fa61ad860f043d2b350da8537979db79bdc"
         },
         {
           "path": "tests/portable_shell_source_test.mjs",
@@ -727,7 +727,7 @@
         {
           "path": "tests/portable_shell_test.cpp",
           "anchor": "int main()",
-          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+          "sha256": "e35fb7938a8d3399b6376bc110648fa61ad860f043d2b350da8537979db79bdc"
         },
         {
           "path": "tests/portable_shell_source_test.mjs",
@@ -2331,7 +2331,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -2378,7 +2378,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -2892,14 +2892,14 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682",
+          "sha256": "476d98bf56cdab0656085fb7198ff98da99531cba19e8509ccd28a05bafe4e60",
           "anchor": "class ShellTui"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "assert(output.size()<=4096)"
         }
       ],
@@ -2928,7 +2928,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         },
         {
@@ -3042,7 +3042,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -3089,7 +3089,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -3395,7 +3395,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
         },
         {
@@ -3410,7 +3410,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         }
       ],
@@ -3489,7 +3489,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
         }
       ],
@@ -3559,7 +3559,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C++ transfer and UART, 2026-10-19"
         }
       ],
@@ -3627,7 +3627,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -3685,7 +3685,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -3749,7 +3749,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -3807,7 +3807,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -3856,7 +3856,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -3908,7 +3908,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         },
         {
@@ -3923,7 +3923,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         }
       ],
@@ -3998,7 +3998,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4071,7 +4071,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4125,7 +4125,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         },
         {
@@ -4135,7 +4135,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         }
       ],
@@ -4201,7 +4201,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4274,7 +4274,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4360,7 +4360,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4413,7 +4413,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4458,7 +4458,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4498,7 +4498,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4540,7 +4540,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4582,7 +4582,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4629,7 +4629,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4682,7 +4682,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19"
         }
       ],
@@ -4735,7 +4735,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -4777,7 +4777,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -4829,7 +4829,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -4871,7 +4871,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -4904,7 +4904,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -4952,7 +4952,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -4998,7 +4998,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -5046,7 +5046,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -5092,7 +5092,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -5139,7 +5139,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -5198,7 +5198,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -5266,7 +5266,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         },
         {
@@ -5281,7 +5281,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         }
       ],
@@ -5351,7 +5351,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -5415,7 +5415,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -5503,7 +5503,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         },
         {
@@ -5518,7 +5518,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         }
       ],
@@ -5580,7 +5580,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: editor and Go client slice, 2026-10-19"
         }
       ],
@@ -5633,7 +5633,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5670,7 +5670,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5704,7 +5704,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5739,7 +5739,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5796,7 +5796,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5841,7 +5841,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5878,7 +5878,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5915,7 +5915,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5950,7 +5950,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -5987,7 +5987,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6031,7 +6031,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6065,7 +6065,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6099,7 +6099,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6140,7 +6140,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6187,7 +6187,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6224,25 +6224,53 @@
       "verdict": "parity-gap",
       "preserved": [
         "Every section/function read through EOF: all UDP state/ports; initUdpDebug/UdpService/udpSend/handleUdpReceive/executeCommand; all ServiceEvent cases",
-        "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice."
+        "Function-by-function disposition and exact remaining behaviors are recorded in docs/PU850-PARITY.md foundation slice.",
+        "initUdpDebug/UdpService receive/reply lifecycle adapted in ShellRemoteQuery: explicit opt-in public read-only UDP, fixed port 9876, network-address rebinding, bounded datagrams, correlated unicast responses and bind backoff."
       ],
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
+        },
+        {
+          "path": "firmware/esp/src/ShellRemoteQuery.h",
+          "sha256": "d5c21db264e3bc5519ca63c0ff7568183dc5b321ce6a6842468052068449c0e4",
+          "anchor": "class RemoteQuery"
+        },
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538",
+          "anchor": "void serviceShellRemoteQuery()"
+        },
+        {
+          "path": "tools/udp-device-query.mjs",
+          "sha256": "1d0c45a2f2f05a2564ed9a80d116fc52c4564e0e79b07cebb09ee8bd872e7e25",
+          "anchor": "const nonce="
         }
       ],
-      "proof": [],
+      "proof": [
+        {
+          "path": "tests/shell_remote_query_test.cpp",
+          "sha256": "5d3a8434ea40cc4d5458f739eb5c23524d5d586bda1af129859d0980accb16b3",
+          "anchor": "int main()"
+        },
+        {
+          "path": "tests/udp_device_query_test.mjs",
+          "sha256": "45cf835ed865cdcd02a6cb0458c07d17815b7b5b0299475e7a9e5d9d9c4d6f19",
+          "anchor": "assert.equal(requests,1)"
+        }
+      ],
       "omissions": [
         {
           "code": "Generic bounded UDP diagnostic/network-event lifecycle",
-          "disposition": "pending",
-          "reason": "File is disabled in donor sketch, input truncates at254 bytes, no auth/identity, and UdpService tests a function pointer. Define capability/ownership/fixtures before adding any listener or SDK event adapter."
+          "disposition": "replaced",
+          "reason": "The disabled donor listener is now an opt-in public read-only query with correlation, bounded input/output, rate limiting, unicast response and lifecycle fixtures. Auth-enabled policy disables this UDP surface. Arbitrary command execution, UDP authentication/ownership and live LAN acceptance remain pending."
         }
       ],
       "remaining": [
-        "File is disabled in donor sketch, input truncates at254 bytes, no auth/identity, and UdpService tests a function pointer. Define capability/ownership/fixtures before adding any listener or SDK event adapter."
+        "Read-only UDP candidate requires actual LAN/AP/Ethernet tests; host socket fixtures do not establish board reachability.",
+        "Authenticated mutating UDP commands are not implemented: use existing protected Telnet/USB/HTTP/WebSocket routing; never copy donor unauthenticated dispatch."
       ]
     },
     {
@@ -6264,7 +6292,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6306,7 +6334,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6347,7 +6375,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -6390,7 +6418,7 @@
       "targets": [
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Exhaustive continuation: foundation slice, 2026-10-19"
         }
       ],
@@ -9585,7 +9613,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -9636,7 +9664,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -10599,7 +10627,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         }
       ],
@@ -11100,7 +11128,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28"
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a"
         }
       ],
       "omissions": [
@@ -12150,7 +12178,7 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Actual backup-before-update orchestration, 2026-10-19"
         },
         {
@@ -13504,7 +13532,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -13555,7 +13583,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -16728,7 +16756,7 @@
         },
         {
           "path": "tests/basic_cells_test.mjs",
-          "sha256": "953273b10f6c4967158d8bf668c3817a06450d7ca909be41ab433436912d8439",
+          "sha256": "f5ec6d762e512f58942eb0d5ad2b71fde81207b5a02af84e3ce9dee34daa46ff",
           "anchor": "No optimistic paint after POST/ACK"
         }
       ],
@@ -20661,12 +20689,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a",
           "anchor": "class LineEditor"
         },
         {
           "path": "firmware/esp/src/ShellProperties.h",
-          "sha256": "90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1",
+          "sha256": "9b4a3bfc3a8a5d4771624441856a287578b20a32b6c3296878292c2f47b7d552",
           "anchor": "static const ShellProperty shellProperties[]"
         },
         {
@@ -20676,7 +20704,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
+          "sha256": "2c12a883e19d7652548ccad2dcd2b4d5f5ffc703ed0aa0c08c7b94de957be62b",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -20698,7 +20726,7 @@
         },
         {
           "path": "tests/shell_properties_test.cpp",
-          "sha256": "91dad9a0a6064afe8a11bb1dd6da31ce685a95709a8f6b89e4a930cb91c29e28",
+          "sha256": "e163889bb60548ac97ced20837e35d22c14bb41217f564c6f0a6cff36b32ff30",
           "anchor": "int main()"
         },
         {
@@ -20713,12 +20741,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "Unchanged Enter is not a write."
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062",
+          "sha256": "58c668784ff8429a208e93f8376e91079fbecf14833f468462f63a84f2cd102d",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20740,8 +20768,8 @@
         },
         {
           "code": "upper/noupper applies to all donor input echo and prompt redraw",
-          "disposition": "pending",
-          "reason": "Current session upper option changes echo command output only; the original wider input-display behavior is not claimed equivalent."
+          "disposition": "replaced",
+          "reason": "Input echo, insertion, cursor redraw and history recall now uppercase only displayed bytes, preserving raw commands and secret suppression; portable_shell_test covers it."
         },
         {
           "code": "Donor printable-ASCII editor and richer Unicode terminals",
@@ -20778,12 +20806,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a",
           "anchor": "class LineEditor"
         },
         {
           "path": "firmware/esp/src/ShellProperties.h",
-          "sha256": "90efbb438783c5f6208ee7312d1e9f07dafa61584065cde19491e44ae09316b1",
+          "sha256": "9b4a3bfc3a8a5d4771624441856a287578b20a32b6c3296878292c2f47b7d552",
           "anchor": "static const ShellProperty shellProperties[]"
         },
         {
@@ -20793,7 +20821,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
+          "sha256": "2c12a883e19d7652548ccad2dcd2b4d5f5ffc703ed0aa0c08c7b94de957be62b",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -20815,7 +20843,7 @@
         },
         {
           "path": "tests/shell_properties_test.cpp",
-          "sha256": "91dad9a0a6064afe8a11bb1dd6da31ce685a95709a8f6b89e4a930cb91c29e28",
+          "sha256": "e163889bb60548ac97ced20837e35d22c14bb41217f564c6f0a6cff36b32ff30",
           "anchor": "int main()"
         },
         {
@@ -20830,12 +20858,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "Unchanged Enter is not a write."
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062",
+          "sha256": "58c668784ff8429a208e93f8376e91079fbecf14833f468462f63a84f2cd102d",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20857,8 +20885,8 @@
         },
         {
           "code": "upper/noupper applies to all donor input echo and prompt redraw",
-          "disposition": "pending",
-          "reason": "Current session upper option changes echo command output only; the original wider input-display behavior is not claimed equivalent."
+          "disposition": "replaced",
+          "reason": "Input echo, insertion, cursor redraw and history recall now uppercase only displayed bytes, preserving raw commands and secret suppression; portable_shell_test covers it."
         },
         {
           "code": "Donor printable-ASCII editor and richer Unicode terminals",
@@ -20897,12 +20925,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a",
           "anchor": "class TelnetParser"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -20944,7 +20972,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062",
+          "sha256": "58c668784ff8429a208e93f8376e91079fbecf14833f468462f63a84f2cd102d",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20994,12 +21022,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a",
           "anchor": "class TelnetParser"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21041,7 +21069,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "1b6a1b4fde3274f531c21aa53cd93a3f740cb7d175b880aa8c45563f1acb8062",
+          "sha256": "58c668784ff8429a208e93f8376e91079fbecf14833f468462f63a84f2cd102d",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -21092,12 +21120,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
+          "sha256": "2c12a883e19d7652548ccad2dcd2b4d5f5ffc703ed0aa0c08c7b94de957be62b",
           "anchor": "shellGet(property)"
         },
         {
@@ -21107,15 +21135,25 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Fresh runtime and shell section review, 2026-10-19"
+        },
+        {
+          "path": "firmware/esp/src/ShellPixelCommand.h",
+          "sha256": "a5a9f5a43035578d904c547848429e71acd68867418c36f7e5fb1d6375ad32e6",
+          "anchor": "template<class Layout>"
+        },
+        {
+          "path": "firmware/esp/src/ShellNames.h",
+          "sha256": "d5900e6687a9930fc4fb173c5be73d7f976040eb99a7a39d54e0015f421859e7",
+          "anchor": "inline bool sameName"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_metadata_test.mjs",
-          "sha256": "20e80f14d1cfb22f4b48e7d83496dc57e2a97dc9f737c1aac35d91b0bcafbdd5",
-          "anchor": "Actual read-only firmware hash/build date getters"
+          "sha256": "3c60db8c4b47cd32ac9b9be66c470a854c250e5e910ef15a335441efb168b580",
+          "anchor": "const start=source.indexOf"
         },
         {
           "path": "tests/shell_wire_test.cpp",
@@ -21124,13 +21162,23 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "Readonly never emits Set."
         },
         {
           "path": "tests/telnet_shell_test.cpp",
           "sha256": "9554e3744bd58435e52bbc0879ebcb6fe24a965eb9db111e05812d7db8739b62",
           "anchor": "!editor.remember(true)"
+        },
+        {
+          "path": "tests/shell_pixel_test.cpp",
+          "sha256": "f914cdb8df67ea915d286187b89208be931cfde70cac255a10b30e0d63b05690",
+          "anchor": "int main()"
+        },
+        {
+          "path": "tests/shell_metadata_test.mjs",
+          "sha256": "3c60db8c4b47cd32ac9b9be66c470a854c250e5e910ef15a335441efb168b580",
+          "anchor": "const tuiKeys="
         }
       ],
       "omissions": [
@@ -21190,12 +21238,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
+          "sha256": "2c12a883e19d7652548ccad2dcd2b4d5f5ffc703ed0aa0c08c7b94de957be62b",
           "anchor": "shellGet(property)"
         },
         {
@@ -21205,15 +21253,15 @@
         },
         {
           "path": "docs/PU850-PARITY.md",
-          "sha256": "fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e",
+          "sha256": "90fd0fcaa4c6bfab14639db6e6fa479a2f70729100ed5800edd73020f494d1a3",
           "anchor": "## Fresh runtime and shell section review, 2026-10-19"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_metadata_test.mjs",
-          "sha256": "20e80f14d1cfb22f4b48e7d83496dc57e2a97dc9f737c1aac35d91b0bcafbdd5",
-          "anchor": "Actual read-only firmware hash/build date getters"
+          "sha256": "3c60db8c4b47cd32ac9b9be66c470a854c250e5e910ef15a335441efb168b580",
+          "anchor": "const start=source.indexOf"
         },
         {
           "path": "tests/shell_wire_test.cpp",
@@ -21222,7 +21270,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "Readonly never emits Set."
         },
         {
@@ -21279,29 +21327,29 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682",
+          "sha256": "476d98bf56cdab0656085fb7198ff98da99531cba19e8509ccd28a05bafe4e60",
           "anchor": "if(editing_)return edit(ch,snapshot,action);"
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5fdbc89c729454f71b25803faa2ff429f075e4549b3eb30ae2c3b445393e6037",
+          "sha256": "2c12a883e19d7652548ccad2dcd2b4d5f5ffc703ed0aa0c08c7b94de957be62b",
           "anchor": "struct ShellTuiSnapshot"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "private\\trefresh"
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "Async observation cannot repaint draft."
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "rows[0].editable=false"
         }
       ],
@@ -21342,17 +21390,17 @@
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d9390bba674942b59dcc02a372f3227e942d649f3d6af7e290eb65573cdacb5d",
+          "sha256": "202efe56a9bf4f3a83c12bcfb55ffe1f317a88d3316e399d069dde8c4d156c0a",
           "anchor": "inline size_t terminalText"
         },
         {
           "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "3a56b927d9c3eb4ba57b6e5c70066ba035d6d9ace0418e035d5d87d0b02a3682",
+          "sha256": "476d98bf56cdab0656085fb7198ff98da99531cba19e8509ccd28a05bafe4e60",
           "anchor": "class ShellTui"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "d71196e32dca881bccb9b7c6017cb95282b315d2738af4655c8a7a14a21d3144",
+          "sha256": "073ad8757369c7335dc4773c64285d1b904a11c55129b3ee378062dfb6b2d538",
           "anchor": "void closeDeviceShells()"
         },
         {
@@ -21374,7 +21422,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "a11ca474f43a0b7aa762c939933324d5e16590d39476045096ef757c34bf660d",
+          "sha256": "b2e5fcc540222c33e23cc96fff951ef0e7fde0a1591d82abeff1855a42174d0b",
           "anchor": "never-render-this"
         },
         {
@@ -23720,7 +23768,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -24027,7 +24075,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "2e3759fd2d09ba5ffdcc346fb6196d04e1d3b750ae31d8ce417eddc141efbc28",
+          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
           "anchor": "CellChaseOnBoot"
         },
         {

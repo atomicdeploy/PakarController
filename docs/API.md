@@ -454,12 +454,14 @@ the API; blank omitted password/token fields preserve the stored value.
 Cloud `display` also accepts the same text scheduling fields above or
 `{"command":"display","release":true}`. An omitted repeat means one-shot.
 
-The password-authenticated Telnet shell on TCP 23 exposes `status`, `mode`,
+The Telnet shell (default TCP 23) exposes `status`, `mode`,
 `cell`, `cells`, `brightness`, `effect`, `display`, `audio`, and `reset`. It uses the
-same validation and state transitions as cloud JSON commands. The password is
-the HTTP development password; the service is advertised through mDNS as
-`_telnet._tcp`. USB serial remains a framed machine interface rather than a
-text shell, so Telnet cannot interfere with the simultaneous desktop link.
+same validation and state transitions as cloud JSON commands. Authentication
+follows the saved access policy; when enabled, the shell requires its password.
+The service is advertised through mDNS as `_telnet._tcp`. USB provides the same
+text shell encapsulated in a boot-bound COBS channel, alongside the normal
+machine protocol. It never switches the AVR UART into raw text mode.
+See [terminal commands and TUI](TERMINAL-UI.md) and `tools/device-shell.ps1`.
 Telnet supports `display stop` and
 `display text <once|loop|interval> <speed_ms> <hold_ms> <pause_seconds> <scroll 0|1> <TEXT>`.
 Atomic selection example: `cells 1-80 red fade`; melody example: `audio welcome`

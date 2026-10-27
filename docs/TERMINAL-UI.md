@@ -1,5 +1,48 @@
 # Interactive terminal checkpoint
 
+## Shell consistency and UDP diagnostic checkpoint
+
+`pixel 0 1 FF0000` selects API pixel index zero. `pixel group 1 FF0000`
+selects the entire first **physical cable group**, not logical cell 1. Both
+use the live custom group layout and send its revision through the common API
+router. Counts must be one pixel or exactly the complete addressed group;
+unused capacity and cross-group spans are rejected. No saved corrections or
+numbering records are migrated. `pixel off` stops the diagnostic.
+
+Command/property identifiers and completion are ASCII case-insensitive; values
+retain case. `upper`/`noupper` affect typed-input display and redraw only, as
+in PU850, never the command bytes or stored SSID/password. Secrets remain
+write-only and excluded from history. Help/completion/dispatch share role gates.
+
+The TUI now exposes the entire current property catalogue across Device,
+Network, LEDs/Pixels, Game (first-wins only), Terminal, Cloud and Notifications
+(S3 only). Network includes station/AP enable and priority auto-switch controls;
+AP SSID is the hostname, deliberately read-only here. Separate AP credentials,
+fallback-network list editing and arbitrary game override forms remain gaps,
+not fabricated setters. Cloud/notification pages configure the existing shared
+owners and never enable anything merely by opening the page.
+
+An optional PU850-derived **read-only** UDP listener is included by S3 build
+flag `-EnableUdpDiagnostics` (`PAKAR_REMOTE_QUERY_UDP_ENABLED=1`). Default is
+excluded. It additionally requires a ready access policy with authentication
+disabled and shell enabled; enabling authentication shuts the listener down.
+UDP is not an authentication mechanism or an alternative firmware/control
+channel. Port 9876 accepts `16-hex-nonce hello` or `16-hex-nonce status`; replies
+echo the nonce and report public hostname, boot ID, version, uptime and AVR
+presence. No credentials, files, settings, effects or mutating shell commands
+are exposed. Requests over 64 bytes, control/NUL bytes and malformed nonces are
+discarded. Replies are unicast, under 384 bytes and limited to four per second;
+listener bind failures back off for five seconds. Socket rebinding follows
+primary/AP address changes. No production instance is enabled by this change.
+
+```powershell
+node tools/udp-device-query.mjs keycontroller.local status
+```
+
+UDP control/authenticated ownership and real-board terminal interoperability
+remain acceptance work. Use existing protected Telnet, framed USB, HTTP or
+WebSocket commands for mutations, not this diagnostic listener.
+
 ## Board-owned Telnet / encapsulated serial shell
 
 The device shell is distinct from the host TUI described below. Connect with
@@ -25,7 +68,7 @@ Unicode text entry: editable property values remain ASCII; full UTF-8 editing,
 grapheme-width layout, RTL and CHARSET negotiation are still pending.
 
 The colored, scrollable property table exposes Device, Network, capability-gated
-LEDs/Pixels, role-gated Game, and Terminal pages. Tab changes pages; arrows select
+LEDs/Pixels, role-gated Game, Terminal, Cloud and S3 Notifications pages. Tab changes pages; arrows select
 rows; Enter edits/commits; Escape cancels a draft. Hidden passwords are never
 rendered or retained in command history. A selected pixel/group follows the
 board's actual group spans, including twelve-pixel keycontroller groups, rather

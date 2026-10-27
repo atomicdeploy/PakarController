@@ -1,5 +1,59 @@
 # Donor-first preflight receipt
 
+## PU850 shell consistency follow-up (issue #29)
+
+Re-read actual PU850 4311040 LocalLib/Shell.cpp/.h, Telnet.cpp/.h,
+Commands.cpp/.h and RemoteCommand.cpp. The pasted 2a17b8c audit predates
+6a8d911's group revision, terminal negotiation and Game page changes. This
+follow-up uses current PixelGroupLayout::diagnosticRange rather than trusting
+the earlier capacity-only text parser: single pixels or exact current physical
+groups, explicit zero-based index/one-based group syntax, custom lengths and
+revision forwarding. Shared role gates cover help/completion/dispatch.
+
+CompStr identifier folding and upper/noupper input-display behavior are adapted
+without changing values, secret handling, history bytes or command arguments.
+The existing property owners now also expose station/AP flags and auto-switch;
+separate Cloud/Notifications TUI pages cover the current descriptor catalogue.
+Independent AP credential ownership, fallback-list forms, richer game override
+forms and Unicode input remain pending; no fake property adapters were added.
+
+RemoteCommand.cpp's listener/rebind/datagram/reply structure is adapted as an
+explicitly built public read-only diagnostic listener. Its function-pointer
+startup bug, truncated dispatch, broadcast hello, unauthenticated mutations and
+unconditional success are not copied. Requests are bounded, nonce-correlated,
+rate-limited and unicast; enabling authentication disables this public endpoint.
+This is not full UDP control parity. No production device has been contacted.
+
+The first test attempt correctly stopped at the donor hash gate after reviewed
+consumer changes. Only the changed, rereviewed consumer/proof hashes are refreshed;
+the gate is retained. Focused verification results are recorded on issue #29.
+
+Final source fixtures passed: canonical shell/Telnet/TUI/serial/access/service,
+live-topology pixel parser, UDP lifecycle and real loopback client, four property
+profiles and actual getter/TUI-catalogue coverage for both S3 roles. Comparison
+generation/check and whitespace checks passed. Final S3 first-wins SDK compile
+with UDP included uses 2,311,887 bytes program/125,732 bytes static RAM; image
+SHA256 `736d4c9f462730cd5cc7f186dd15ad59aac6ba2291ea43330049651b685d56e7`.
+Final table SDK compile with UDP excluded uses 2,309,735 bytes program/138,724
+bytes static RAM; image SHA256
+`4dba1664ea561719b25ba381071991b157d233ac34570a2f26a9ff6c3468670b`.
+Both profiles use buffered UART, 16MB/OPI, Ethernet, both LED backends and BLE
+disabled. Only the table carries its acknowledged ISP electrical build flag.
+The canonical cache holds the last table candidate; no duplicate release-cache
+copy, flash, reboot, network query to a board or settings change was performed.
+
+Previous-head GitHub run 40553395778 failed on a stale basic_cells_test assertion
+requiring direct request->send after the route moved to StaticAssetService.
+Reviewed the actual bounded SnapshotResponse, HTTP fixture and donor
+AsyncWebServer.cpp/.h; updated the assertion to require the current immutable
+GET/HEAD route, explicit asset length and validator. This keeps the guard rather
+than removing it. The basic-cell behavioral fixture passes. This is not a claim
+that the next complete GitHub run has passed. A route-hash preflight also rejected
+unnecessary entrypoint includes; dependencies now reside in the shell header,
+leaving application.ino and its unrelated route evidence unchanged. One local
+PowerShell report pipeline failed on formatting objects; generation was rerun
+through Out-Null without filtering the generator's internal formatting records.
+
 ## Portable Shell integration (issue #29)
 
 Read all 17 tracked entries from the exact requested branch revision

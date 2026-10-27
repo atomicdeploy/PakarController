@@ -15,6 +15,9 @@ int main(){
     for(size_t j=0;j<i;++j)assert(strcmp(commands[i].name,commands[j].name));
   }
   assert(!findCommand(nullptr)&&!findCommand("unknown")&&!findCommand("setx"));
+  assert(findCommand("STATUS")==findCommand("status"));
+  assert(commandAvailable(*findCommand("game"),true)&&!commandAvailable(*findCommand("game"),false));
+  assert(!commandAvailable(*findCommand("cells"),true)&&commandAvailable(*findCommand("cells"),false));
   assert(std::string(findCommand("edit")->canonical)=="tui");
   assert(std::string(findCommand("cls")->canonical)=="clear");
   assert(!findCommand("set")->readOnly&&!findCommand("reset")->readOnly);
@@ -52,5 +55,12 @@ int main(){
   // All sessions share descriptors, not mutable history/input or IO buffers.
   b.setEcho(true);feed(b,"edi");b.complete(0,commandCount,candidates,write);
   assert(std::string(b.line())=="edit "&&std::string(a.line())==full);
+  a.clear();feed(a,"STA");a.complete(0,commandCount,candidates,write);assert(std::string(a.line())=="status ");
+  a.clear();a.setUpper(true);output.clear();feed(a,"echo MixedCase");
+  assert(output=="ECHO MIXEDCASE"&&std::string(a.line())=="echo MixedCase");
+  output.clear();a.redraw(write);assert(output.find("ECHO MIXEDCASE")!=std::string::npos);
+  assert(a.remember(true));a.clear();feed(a,"\x1b[A");assert(std::string(a.line())=="echo MixedCase");
+  a.clear();a.setEcho(false);output.clear();feed(a,"Sensitive");assert(output.empty());
+  a.reset();a.setEcho(true);output.clear();feed(a,"lower");assert(output=="lower");
   std::cout<<"Portable-shell catalogue, VT100 and bounded completion passed.\n";
 }

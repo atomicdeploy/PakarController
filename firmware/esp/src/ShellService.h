@@ -11,6 +11,23 @@
 #ifndef PAKAR_TELNET_ENABLED
 #define PAKAR_TELNET_ENABLED 1
 #endif
+#ifndef PAKAR_REMOTE_QUERY_UDP_ENABLED
+#define PAKAR_REMOTE_QUERY_UDP_ENABLED 0
+#endif
+#if PAKAR_REMOTE_QUERY_UDP_ENABLED
+WiFiUDP shellQuerySocket;
+PakarShell::RemoteQuery shellRemoteQuery;
+void serviceShellRemoteQuery(){
+  // Rebind when either interface address changes, including W5500 selection.
+  const uint32_t primary=NetworkPath::ready()?uint32_t(NetworkPath::localIP()):0;
+  const uint32_t accessPoint=apStarted?uint32_t(WiFi.softAPIP()):0;
+  static uint32_t previousPrimary=0,previousAp=0,epoch=1;
+  if(primary!=previousPrimary||accessPoint!=previousAp){previousPrimary=primary;previousAp=accessPoint;if(!++epoch)epoch=1;}
+  shellRemoteQuery.service(shellQuerySocket,millis(),(primary||accessPoint)?epoch:0,accessConfig.ready()&&!accessConfig.enabled()&&shellSettings.enabled(),[](char* value,size_t capacity){
+    snprintf(value,capacity,"hostname=%s boot_id=%s version=%s uptime=%lu avr=%s",deviceIdentity.hostname(),pcBootId.c_str(),BoardCore::BuildInfo::kVersion,static_cast<unsigned long>(millis()/1000U),avrOnline?"online":"offline");
+  });
+}
+#endif
 static_assert(PAKAR_TELNET_SESSIONS>=1&&PAKAR_TELNET_SESSIONS<=4,"Shell session count outside1..4");
 struct DeviceShellSession : public Print {
   PakarShell::TelnetParser parser;
@@ -58,6 +75,10 @@ String shellGet(const ShellProperty &p){
   if(key=="firmware.phase")return PakarUpdate::name(otaProgress.snapshot().phase);
   if(key=="network.mode")return networkConfig.accessPointEnabled()?(networkConfig.stationEnabled()?F("both"):F("ap")):F("station");
   if(key=="network.ssid")return networkConfig.stationSsid();
+  if(key=="network.station_enabled")return networkConfig.stationEnabled()?F("true"):F("false");
+  if(key=="network.ap_enabled")return networkConfig.accessPointEnabled()?F("true"):F("false");
+  if(key=="network.auto_switch")return networkConfig.autoSwitch()?F("true"):F("false");
+  if(key=="network.ap_ssid")return String(deviceIdentity.hostname()).substring(0,32);
   if(key=="led.enabled")return grid.outputEnabled()?F("true"):F("false");
   if(key=="led.mode")return grid.staticMode()?F("static"):F("effects");
   if(key=="led.brightness")return String(grid.brightness());if(key=="led.effect")return grid.patternName();
@@ -77,8 +98,9 @@ String shellGet(const ShellProperty &p){
   if(v.is<const char*>())return v.as<String>();if(v.is<uint32_t>())return String(v.as<uint32_t>());return F("unknown");
 }
 bool shellBusy(){return urbootBusy.get()||remoteFirmware.busy()||otaActive||otaRebootAt||avrUploadOwner||programmingLatched||cloudServices.ioActive();}
-bool shellSet(const String &key,const String &value,String &result){
-  ShellProperty property;if(!shellProperty(key.c_str(),property)||!property.writable){result=F("Unknown or read-only property");return false;}
+bool shellSet(const String &requestedKey,const String &value,String &result){
+  ShellProperty property;if(!shellProperty(requestedKey.c_str(),property)||!property.writable){result=F("Unknown or read-only property");return false;}
+  const String key(property.key);
   const auto *p=&property;
   if(shellBusy()){result=F("Maintenance active; nothing changed");return false;}
   uint32_t number=0;bool boolean=false;
@@ -144,7 +166,7 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   const int space=line.indexOf(' ');String verb=space<0?line:line.substring(0,space);
   verb.toLowerCase();String args=space<0?String():line.substring(space+1);args.trim();
   const auto *command=PakarShell::findCommand(verb.c_str());
-  if(!command){shellResult(s,false,F("Unknown command; use help"));shellPrompt(s);return;}
+  if(!command||!PakarShell::commandAvailable(*command,PAKAR_FIRST_WINS_ENABLED)){shellResult(s,false,F("Unknown or unavailable command; use help"));shellPrompt(s);return;}
   verb=command->canonical;
   const bool query=command->readOnly||((verb=="firmware"||verb=="game")&&args=="status");
   if(shellBusy()&&!query){shellResult(s,false,F("Maintenance active; command not dispatched"));shellPrompt(s);return;}
@@ -152,8 +174,7 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   if(verb=="tui"){s.alternateScreen=s.color&&s.parser.ansi();if(s.alternateScreen)s.print(F("\x1b[?1049h"));s.tui.begin(s.color&&s.parser.ansi());shellTuiDraw(s,true);return;}
   if(verb=="help"||verb=="?"){
     for(const auto& item:PakarShell::commands)if(item.usage){
-      if(!PAKAR_FIRST_WINS_ENABLED&&!strcmp(item.name,"game"))continue;
-      if(PAKAR_FIRST_WINS_ENABLED&&(!strcmp(item.name,"cell")||!strcmp(item.name,"cells")))continue;
+      if(!PakarShell::commandAvailable(item,PAKAR_FIRST_WINS_ENABLED))continue;
       s.println(item.usage);
     }
     s.println(F("Tab completes commands and get/set properties. Up/Down recall 8 safe commands. TUI: Tab/Arrows/Enter/Esc."));
@@ -193,9 +214,9 @@ void executeDeviceShell(DeviceShellSession &s,String line){
     else{String value=args.substring(at+1);value.trim();if(value.length()>=2&&value[0]=='"'&&value[value.length()-1]=='"')value=value.substring(1,value.length()-1);
       shellResult(s,shellSet(args.substring(0,at),value,result),result);}
   }else if(verb=="clear"||verb=="cls")PakarShell::Terminal::clear([&](const uint8_t *p,size_t n){s.write(p,n);},s.color);
-  else if(verb=="echo"){if(s.upper)args.toUpperCase();s.println(args);}
+  else if(verb=="echo")s.println(args);
   else if(verb=="history")s.editor.printHistory([&](const uint8_t *p,size_t n){s.write(p,n);});
-  else if(verb=="upper"||verb=="noupper")s.upper=verb=="upper";
+  else if(verb=="upper"||verb=="noupper"){s.upper=verb=="upper";s.editor.setUpper(s.upper);}
   else if(verb=="color"||verb=="watch"){
     if(args!="on"&&args!="off")shellResult(s,false,F("Use on or off"));
     else{if(verb=="color")s.color=args=="on";else s.watch=args=="on";shellResult(s,true,F("Session setting changed"));}
@@ -243,17 +264,10 @@ void executeDeviceShell(DeviceShellSession &s,String line){
         d["state"]=b<0?args.substring(a+1):args.substring(a+1,b);d["effect"]=b<0?String("immediate"):args.substring(b+1);
       }
     }else if(verb=="pixel"){
-      d["command"]="pixel-diagnostic";d["off"]=args=="off";d["index"]=0;d["count"]=1;d["rgb"]=0xffffff;
-      d["group_layout_revision"]=grid.groupLayout().revision();
-      if(args!="off"){
-        const int a=args.indexOf(' '),b=a<0?-1:args.indexOf(' ',a+1);uint32_t index=0,count=1;
-        const String position=a<0?args:args.substring(0,a);
-        valid=PakarShell::unsignedNumber(position.c_str(),LedGrid::kPixels-1,index);
-        if(a>=0)valid=valid&&PakarShell::unsignedNumber((b<0?args.substring(a+1):args.substring(a+1,b)).c_str(),255,count)&&count>0&&index+count<=LedGrid::kPixels;
-        uint32_t rgb=0xffffff;if(b>=0){String hex=args.substring(b+1);valid=valid&&hex.length()==6;rgb=0;
-          for(size_t i=0;i<hex.length()&&valid;++i){const char c=hex[i];const int digit=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:c>='A'&&c<='F'?c-'A'+10:-1;if(digit<0)valid=false;else rgb=(rgb<<4)|digit;}}
-        d["index"]=index;d["count"]=count;d["rgb"]=rgb;
-      }
+      PakarShell::PixelCommand pixel;valid=PakarShell::pixelCommand(args.c_str(),grid.groupLayout(),pixel);
+      d["command"]="pixel-diagnostic";d["off"]=pixel.off;d["index"]=pixel.index;d["count"]=pixel.count;d["rgb"]=pixel.rgb;
+      d["group_layout_revision"]=pixel.revision;
+      if(!valid){shellResult(s,false,F("Use a zero-based pixel or an exact physical group: pixel group 1 FF0000. COUNT must be 1 or the full current group."));shellPrompt(s);return;}
     }else if(verb!="reset")valid=false;
     if(!valid)shellResult(s,false,F("Invalid command/arguments; use help"));
     else{String json;serializeJson(d,json);const bool ok=handleCloudCommand(json,result);shellResult(s,ok,result);}
@@ -279,15 +293,13 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
     auto write=[&](const uint8_t *p,size_t n){s.write(p,n);};
     const char* line=s.editor.line();const char* space=strchr(line,' ');
     if(!space)s.editor.complete(0,PakarShell::commandCount,[](size_t i)->const char*{
-      const char* name=PakarShell::commands[i].name;
-      if(!PAKAR_FIRST_WINS_ENABLED&&!strcmp(name,"game"))return nullptr;
-      if(PAKAR_FIRST_WINS_ENABLED&&(!strcmp(name,"cell")||!strcmp(name,"cells")))return nullptr;
-      return name;
+      const auto& command=PakarShell::commands[i];
+      return PakarShell::commandAvailable(command,PAKAR_FIRST_WINS_ENABLED)?command.name:nullptr;
     },write);
-    else if(!strncmp(line,"get ",4)||!strncmp(line,"set ",4)||!strncmp(line,"properties ",11)){
+    else if(PakarShell::namePrefix(line,"get ",4)||PakarShell::namePrefix(line,"set ",4)||PakarShell::namePrefix(line,"properties ",11)){
       const size_t start=space-line+1;
       if(!strchr(line+start,' '))s.editor.complete(start,shellPropertyCount,[&](size_t i){
-        const auto p=shellPropertyAt(i);return (!strncmp(line,"set ",4)&&!p.writable)?nullptr:p.key;
+        const auto p=shellPropertyAt(i);return (PakarShell::namePrefix(line,"set ",4)&&!p.writable)?nullptr:p.key;
       },write);
     }
     return;
@@ -302,8 +314,8 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
     if(!valid){s.println(F("Authentication failed."));s.closing=true;return;}
     s.authenticated=true;s.editor.setEcho(true);shellPrompt(s);return;
   }
-  String line(s.editor.line());bool historySafe=true;
-  if(line.startsWith("set ")){const int at=line.indexOf(' ',4);ShellProperty property;historySafe=at>4&&shellProperty(line.substring(4,at).c_str(),property)&&!property.secret;}
+  String line(s.editor.line());line.trim();bool historySafe=true;
+  if(PakarShell::namePrefix(line.c_str(),"set ",4)){const int at=line.indexOf(' ',4);ShellProperty property;historySafe=at>4&&shellProperty(line.substring(4,at).c_str(),property)&&!property.secret;}
   if(line.indexOf("://")>=0)historySafe=false;
   s.editor.remember(historySafe);s.editor.clear();executeDeviceShell(s,line);
 }
@@ -322,11 +334,18 @@ String shellStatusJson(){
   JsonDocument d;d["enabled"]=bool(PAKAR_TELNET_ENABLED)&&shellSettings.enabled();d["port"]=shellSettings.port();
   d["listening"]=shellListening;d["sessions"]=shellConnectionCount();d["session_limit"]=PAKAR_TELNET_SESSIONS;
   d["color"]=shellSettings.color();d["history_limit"]=8;d["serial_encapsulated"]=bool(PAKAR_SERIAL_SHELL_ENABLED);
+  d["udp_query_built"]=bool(PAKAR_REMOTE_QUERY_UDP_ENABLED);d["udp_query_read_only"]=true;
+#if PAKAR_REMOTE_QUERY_UDP_ENABLED
+  d["udp_query_listening"]=shellRemoteQuery.listening();d["udp_query_port"]=PakarShell::RemoteQuery::port;
+#endif
   d["serial_open"]=shellChannel.active();d["tui"]=true;String json;serializeJson(d,json);return json;
 }
 void beginDeviceShells(){shellSettings.begin(LittleFS);shellRebindAt=millis();}
 void serviceDeviceShells(){
   const uint32_t now=millis();
+#if PAKAR_REMOTE_QUERY_UDP_ENABLED
+  serviceShellRemoteQuery();
+#endif
 #if defined(ARDUINO_ARCH_ESP32)
   if(shellCloseRequested.exchange(false))retireDeviceShells();
 #else
@@ -391,8 +410,13 @@ void serviceDeviceShells(){
     String observed=String("event STA ")+(networkConfig.stationConnected()?"up":"down")+" AP "+(apStarted?"up":"down")+" AVR "+(avrOnline?"up":"down")+" update "+(remoteFirmware.busy()?String(remoteFirmware.phase()):String(PakarUpdate::name(otaProgress.snapshot().phase)));
     const auto progress=remoteFirmware.busy()?remoteFirmware.progress():otaProgress.snapshot();
     if(progress.known())observed+=" "+String(progress.percent())+"%";
+#if PAKAR_FIRST_WINS_ENABLED
+    observed+=" | winner "+String(winner)+" enabled_mask "+String(keySettings.enabledMask);
+#else
     unsigned red=0,off=0;for(uint8_t id=1;id<=80;++id){red+=grid.state(id)==kCellRed;off+=grid.state(id)==kCellOff;}
-    observed+=" | cells red "+String(red)+" off "+String(off)+" | output "+String(grid.outputEnabled()?"on":"off");
+    observed+=" | cells red "+String(red)+" off "+String(off);
+#endif
+    observed+=" | output "+String(grid.outputEnabled()?"on":"off");
     if(observed!=shellObserved){shellObserved=observed;
       for(auto &slot:telnetSessions)if(slot&&slot->authenticated&&slot->watch&&!slot->tui.active()&&slot->output.length()<1024U)
         slot->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){slot->write(p,n);});

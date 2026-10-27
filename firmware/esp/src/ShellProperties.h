@@ -1,6 +1,7 @@
 #pragma once
 #include <stddef.h>
 #include <string.h>
+#include "ShellNames.h"
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <pgmspace.h>
 #define PAKAR_SHELL_METADATA_STORAGE PROGMEM
@@ -20,6 +21,10 @@ static const ShellProperty shellProperties[] PAKAR_SHELL_METADATA_STORAGE={
  {"avr.online","device","avr",'b',false,false},{"display.ack","device","display",'b',false,false},
  {"firmware.phase","device","phase",'s',false,false},
  {"network.mode","network","mode",'s',true,false},
+ {"network.station_enabled","network","station_enabled",'b',true,false},
+ {"network.ap_enabled","network","ap_enabled",'b',true,false},
+ {"network.auto_switch","network","auto_switch",'b',true,false},
+ {"network.ap_ssid","network","ap_ssid",'s',false,false},
  {"network.dhcp","network","dhcp",'b',true,false},{"network.ssid","network","ssid",'s',true,false},
  {"network.password","network","password",'s',true,true},
  {"network.address","network","address",'s',true,false},{"network.gateway","network","gateway",'s',true,false},
@@ -70,7 +75,7 @@ inline ShellProperty shellPropertyAt(size_t index){
 inline bool shellProperty(const char *key,ShellProperty &result){
   if(key)for(size_t index=0;index<shellPropertyCount;++index){
     const auto candidate=shellPropertyAt(index);
-    if(!strcmp(key,candidate.key)){result=candidate;return true;}
+    if(PakarShell::sameName(key,candidate.key)){result=candidate;return true;}
   }
   result={};return false;
 }
