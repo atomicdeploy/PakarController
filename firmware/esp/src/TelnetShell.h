@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "PortableShellCore.h"
 
 // Adapted from atomicdeploy/pu850-esp 4311040 LocalLib/Telnet.cpp and
 // Shell.cpp: the IAC/subnegotiation state machine, NVT CR coalescing,
@@ -97,11 +98,38 @@ class LineEditor {
   // Full bounded HTTPS endpoint (383), SHA-256 and target fit without truncation.
   static constexpr size_t kCapacity = 512;
   static constexpr size_t kHistory = 8;
-  enum Event : uint8_t { None, Submit, Cancel, TooLong, Close };
+  enum Event : uint8_t { None, Submit, Cancel, TooLong, Close, Complete };
   ~LineEditor() { reset(); } // Disconnect/destruction never leaves partial secrets in freed storage.
   const char* line() const { return command_; }
   size_t cursor() const { return cursor_; }
   size_t historySize() const { return historyCount_; }
+  // Completion never executes, records history, or operates on password input.
+  // Only an end-of-line token may be replaced; text to the right stays untouched.
+  template<class Candidate,class Write>
+  void complete(size_t start,size_t count,Candidate candidate,Write write) {
+    if(!echo_ || overflow_ || escape_ || cursor_!=strlen(command_) || start>cursor_)return;
+    const size_t typed=cursor_-start;
+    const char* first=nullptr;size_t matches=0,common=0;
+    for(size_t i=0;i<count;++i){
+      const char* name=candidate(i);
+      if(!name || strncmp(name,command_+start,typed))continue;
+      if(!matches){first=name;common=strlen(name);}
+      else{size_t n=0;while(n<common && name[n] && name[n]==first[n])++n;common=n;}
+      ++matches;
+    }
+    if(!matches){bell(write);return;}
+    const size_t extra=matches==1?1:0;
+    if(start+common+extra>kCapacity){bell(write);return;}
+    if(common>typed || matches==1){
+      memcpy(command_+start,first,common);cursor_=start+common;
+      if(extra)command_[cursor_++]=' ';
+      command_[cursor_]=0;historyOffset_=0;redraw(write);return;
+    }
+    emit(write,"\r\n");
+    for(size_t i=0;i<count;++i){const char* name=candidate(i);
+      if(name && !strncmp(name,command_+start,typed)){emit(write,name);emit(write,"  ");}}
+    emit(write,"\r\n");redraw(write);
+  }
   void reset() { clear(); clearHistory(); crPending_ = false; echo_ = false; }
   void clear() {
     // Scrub password bytes after authentication, disconnect or cancellation.
@@ -146,7 +174,7 @@ class LineEditor {
   }
   template <typename Write> void redraw(Write write) const {
     if(!echo_)return;
-    emit(write,ansi_?"\r\x1b[2K":"\r");prompt(write);emit(write,command_);
+    Terminal::clearLine(write,ansi_);prompt(write);emit(write,command_);
     cursorBack(write,strlen(command_)-cursor_);
   }
   template <typename Write> void redrawEvent(const char* text, Write write) const {
@@ -165,6 +193,7 @@ class LineEditor {
     if (overflow_) return None; // Never execute a silently truncated command.
     if (escape_) { escape(ch, write); return None; }
     if (ch == 27) { escape_ = 1; return None; }
+    if (ch == '\t') return echo_ ? Complete : None;
     if(ch==1 || ch==5){move(ch==1?'H':'F',write);return None;}
     if(ch==21 || ch==23) {
       size_t target=cursor_;
@@ -179,7 +208,7 @@ class LineEditor {
       return None;
     }
     if (ch == 12) {
-      if (echo_) { emit(write, ansi_?"\x1b[H\x1b[2J":"\r\n"); redraw(write); }
+      if (echo_) { Terminal::clear(write,ansi_); redraw(write); }
       return None;
     }
     if (ch == 8 || ch == 127) {
@@ -220,8 +249,7 @@ class LineEditor {
   template <typename Write> void bell(Write write) { if (echo_) emit(write, "\a"); }
   template <typename Write> void cursorBack(Write write,size_t count) const {
     if(!echo_||!count)return;
-    if(ansi_){char text[20];snprintf(text,sizeof(text),"\x1b[%uD",static_cast<unsigned>(count));emit(write,text);}
-    else while(count--)emit(write,"\b");
+    Terminal::cursorLeft(write,count,ansi_);
   }
   void shiftLeft() { for (size_t i = cursor_; i < kCapacity; ++i) command_[i] = command_[i + 1]; }
   template <typename Write> void fixCursor(Write write, bool clearAfter) {

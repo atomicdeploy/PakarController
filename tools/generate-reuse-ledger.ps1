@@ -12,7 +12,7 @@ param(
     [string]$EvidencePath,
     [string]$ComparisonPath=(Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
     [string]$OutputPath,
-    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp','esp32WS2811')]
+    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp','esp32WS2811','portable-shell')]
     [string]$OnlyOrigin
 )
 
@@ -135,6 +135,26 @@ if ($OnlyOrigin) {
 
 if (-not $OnlyOrigin -or $OnlyOrigin -eq 'RayanLamp') {
     Add-LedgerRows -Rows $rows -Origin 'RayanLamp' -Root $RayanLampRoot -Revision 'filesystem-snapshot-no-git' -RelativePaths (Get-RayanLampFiles $RayanLampRoot)
+}
+
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'portable-shell') {
+    $portableRoot=Join-Path $PSScriptRoot '../third_party/portable-shell'
+    $portableSource=Get-Content -LiteralPath (Join-Path $portableRoot 'source.json') -Raw | ConvertFrom-Json
+    foreach($file in $portableSource.files){
+        if($file.snapshot){
+            $text=[IO.File]::ReadAllText((Join-Path $portableRoot $file.snapshot)).Replace("`r`n","`n")
+            $bytes=[Text.Encoding]::UTF8.GetBytes($text)
+            $digest=[Security.Cryptography.SHA256]::Create()
+            try{$hash=([BitConverter]::ToString($digest.ComputeHash($bytes))).Replace('-','').ToLowerInvariant()}finally{$digest.Dispose()}
+            if($hash -ne $file.sha256 -or $bytes.Length -ne $file.bytes){throw "Pinned portable-shell snapshot changed: $($file.path)"}
+        } elseif($file.path -ne '_codeql_detected_source_root'){throw 'Unexpected omitted portable-shell snapshot'}
+        $rows.Add([pscustomobject][ordered]@{
+            origin='portable-shell';revision=$portableSource.revision;path=$file.path;sha256=$file.sha256;bytes=$file.bytes;
+            category=(Get-Category -Origin 'portable-shell' -RelativePath $file.path);availability=$(if($file.snapshot){'present'}else{'pinned-blob'});
+            screening_signals='shell';review_status=$(if($file.snapshot){'screened'}else{'reviewed'});reuse_target='';
+            notes='Pinned branch read through EOF; immutable source snapshot (CodeQL marker recorded only). Manual dispositions in file-comparison-evidence.json.'
+        })
+    }
 }
 
 if (-not $OnlyOrigin -or $OnlyOrigin -eq 'Pealayer') {

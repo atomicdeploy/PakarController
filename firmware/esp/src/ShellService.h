@@ -132,18 +132,16 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   if(s.output.length()>1024U){shellResult(s,false,F("Terminal busy; drain output before another command"));shellPrompt(s);return;}
   const int space=line.indexOf(' ');String verb=space<0?line:line.substring(0,space);
   verb.toLowerCase();String args=space<0?String():line.substring(space+1);args.trim();
-  const bool query=verb=="help"||verb=="?"||verb=="get"||verb=="status"||verb=="info"||verb=="properties"||verb=="history"||(verb=="firmware"&&args=="status");
+  const auto *command=PakarShell::findCommand(verb.c_str());
+  if(!command){shellResult(s,false,F("Unknown command; use help"));shellPrompt(s);return;}
+  verb=command->canonical;
+  const bool query=command->readOnly||(verb=="firmware"&&args=="status");
   if(shellBusy()&&!query){shellResult(s,false,F("Maintenance active; command not dispatched"));shellPrompt(s);return;}
   if(verb=="exit"||verb=="quit"){s.println(F("Goodbye."));s.closing=true;return;}
   if(verb=="tui"){s.tui.begin(s.color);shellTuiDraw(s,true);return;}
   if(verb=="help"||verb=="?"){
-    s.println(F("tui | properties | get KEY | set KEY VALUE | status | info | telemetry"));
-    s.println(F("cell ID white|red|off [immediate|fade|pulse] | cells IDS STATE [EFFECT]"));
-    s.println(F("led-output on|off|static|effects | effect none|rainbow|fire|cell-chase | brightness1..255"));
-    s.println(F("pixel INDEX[0..479] [1|6] [RRGGBB] | pixel off | audio CUE | display VALUE | display stop"));
-    s.println(F("network scan | network scan-results | network reconnect | firmware status|fetch|apply|cancel ..."));
-    s.println(F("clear|cls | echo TEXT | hex NUMBER | upper|noupper | color on|off | watch on|off | history | exit"));
-    s.println(F("Editing: arrows/Home/End/Delete, Ctrl-A/E/U/W/L/C; Up/Down recall8 commands. TUI: Tab/Arrows/Enter/Esc."));
+    for(const auto& item:PakarShell::commands)if(item.usage)s.println(item.usage);
+    s.println(F("Tab completes commands and get/set properties. Up/Down recall 8 safe commands. TUI: Tab/Arrows/Enter/Esc."));
   }else if(verb=="properties"||verb=="get"){
     if(args.length()){
       ShellProperty property;if(shellProperty(args.c_str(),property)){shellSafePrint(s,shellGet(property));s.println();}else shellResult(s,false,F("Unknown property"));
@@ -153,7 +151,7 @@ void executeDeviceShell(DeviceShellSession &s,String line){
     if(at<1)shellResult(s,false,F("Use set KEY VALUE"));
     else{String value=args.substring(at+1);value.trim();if(value.length()>=2&&value[0]=='"'&&value[value.length()-1]=='"')value=value.substring(1,value.length()-1);
       shellResult(s,shellSet(args.substring(0,at),value,result),result);}
-  }else if(verb=="clear"||verb=="cls")s.print(F("\x1b[H\x1b[2J"));
+  }else if(verb=="clear"||verb=="cls")PakarShell::Terminal::clear([&](const uint8_t *p,size_t n){s.write(p,n);},s.color);
   else if(verb=="echo"){if(s.upper)args.toUpperCase();s.println(args);}
   else if(verb=="history")s.editor.printHistory([&](const uint8_t *p,size_t n){s.write(p,n);});
   else if(verb=="upper"||verb=="noupper")s.upper=verb=="upper";
@@ -234,6 +232,19 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
   if(s.tui.active()){shellTuiInput(s,ch);s.escapeAt=millis();return;}
   const auto event=s.editor.feed(ch,[&](const uint8_t *p,size_t n){s.write(p,n);});
   if(event==PakarShell::LineEditor::None)return;
+  if(event==PakarShell::LineEditor::Complete){
+    if(!s.authenticated)return;
+    auto write=[&](const uint8_t *p,size_t n){s.write(p,n);};
+    const char* line=s.editor.line();const char* space=strchr(line,' ');
+    if(!space)s.editor.complete(0,PakarShell::commandCount,[](size_t i){return PakarShell::commands[i].name;},write);
+    else if(!strncmp(line,"get ",4)||!strncmp(line,"set ",4)||!strncmp(line,"properties ",11)){
+      const size_t start=space-line+1;
+      if(!strchr(line+start,' '))s.editor.complete(start,shellPropertyCount,[&](size_t i){
+        const auto p=shellPropertyAt(i);return (!strncmp(line,"set ",4)&&!p.writable)?nullptr:p.key;
+      },write);
+    }
+    return;
+  }
   if(event==PakarShell::LineEditor::Close){s.closing=true;return;}
   if(event==PakarShell::LineEditor::Cancel||event==PakarShell::LineEditor::TooLong){
     if(event==PakarShell::LineEditor::TooLong)shellResult(s,false,F("Line too long; discarded"));s.editor.clear();

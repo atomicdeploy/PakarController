@@ -2,6 +2,17 @@
 
 PakarController is integration code built from earlier AtomicDeploy projects.
 
+- `firmware/esp/src/PortableShellCore.h` adapts command descriptors/lookup and
+  VT100 formatting from `atomicdeploy/portable-shell` revision
+  `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d` (requested branch
+  `copilot/organize-readme-into-plan`). Copyright (c) 2024 Portable Shell
+  Contributors, MIT. The complete license and 16 original regular files are
+  retained in `third_party/portable-shell/upstream/`; its root CodeQL symlink is
+  inventoried but not recreated. The original C runtime is reference-only;
+  the bounded adaptation is used by Pakar's single authenticated device shell.
+  Tests adapt the donor's command/context/VT100 scenarios and extend them with
+  non-executing completion, secret isolation and fragmented-input assertions.
+
 - `tools/prepare-avr-image.mjs` adapts Intel HEX validation, AVR jump encoding,
   unused-vector validation and boot-chain merging from PCController
   `Tools/Bootloader/Urboot-Custom/build.mjs` at

@@ -1,0 +1,109 @@
+{
+  "repository": "atomicdeploy/portable-shell",
+  "branch": "copilot/organize-readme-into-plan",
+  "revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "b7abe7efbbcb839e230ceb828522604b59f4faaf7b28b697aecb4c9df9f77fe0",
+      "bytes": 221,
+      "snapshot": "upstream/.gitignore"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "7dd7e6e515634cc0c81ff1b1528ad5f0e5c29631417c427d50916a0de132224f",
+      "bytes": 2117,
+      "snapshot": "upstream/CHANGELOG.md"
+    },
+    {
+      "path": "DOCUMENTATION.md",
+      "sha256": "eafe52b90f65b56c32fedbc846463be5c4472994eb2584d3d260c64bbc2f4e35",
+      "bytes": 7541,
+      "snapshot": "upstream/DOCUMENTATION.md"
+    },
+    {
+      "path": "IMPLEMENTATION.md",
+      "sha256": "d024ffc22f99a7c9f50fa68bbaf02b0e722d68b0edaf39512454643e6f1986e2",
+      "bytes": 6217,
+      "snapshot": "upstream/IMPLEMENTATION.md"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "b00e51aca5e080d2fcb8734e9a4779dc917e8df2f38730cca2e82e4ad08184aa",
+      "bytes": 1084,
+      "snapshot": "upstream/LICENSE"
+    },
+    {
+      "path": "Makefile",
+      "sha256": "e9d0814b7f08de2a7f53d004192a60cb329652e7b745bdee379144373cb26f4f",
+      "bytes": 1724,
+      "snapshot": "upstream/Makefile"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f7228b81aa68c7553cd67100da5c77abe97a8e1ad086e756cdb79c1783cfdcd2",
+      "bytes": 6176,
+      "snapshot": "upstream/README.md"
+    },
+    {
+      "path": "_codeql_detected_source_root",
+      "sha256": "cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8",
+      "bytes": 1,
+      "snapshot": null
+    },
+    {
+      "path": "examples/arduino_example.ino",
+      "sha256": "fe59231f346c7f5d8e44b206c5f1862e4fd71f308e7473fe1723c54bdcc3bcce",
+      "bytes": 3428,
+      "snapshot": "upstream/examples/arduino_example.ino"
+    },
+    {
+      "path": "examples/linux_example.c",
+      "sha256": "543e25c4d9c5a99ed9b7d225f33d984f05f5efd61e2bd43e68be75eec22aebf1",
+      "bytes": 2430,
+      "snapshot": "upstream/examples/linux_example.c"
+    },
+    {
+      "path": "examples/telnet_server.c",
+      "sha256": "779a8e30dba97d85f24e2d3a76d7b3d1a3aeeb4b8066682d90bfdc5bcb0f4295",
+      "bytes": 1179,
+      "snapshot": "upstream/examples/telnet_server.c"
+    },
+    {
+      "path": "include/portable_shell.h",
+      "sha256": "d2f886686945f5df81dea9aa42f8f6c364e7f54c01c614c3d14d6e9d92815fa9",
+      "bytes": 4055,
+      "snapshot": "upstream/include/portable_shell.h"
+    },
+    {
+      "path": "include/ps_io.h",
+      "sha256": "024a3ac2231b9b76b3a558a7f81406b5660ba7694c4f9e2f9b7caa585f05bcb1",
+      "bytes": 1028,
+      "snapshot": "upstream/include/ps_io.h"
+    },
+    {
+      "path": "src/portable_shell.c",
+      "sha256": "d64aef3c23476fe37d5fabdec15b5e9fb5638a200a157a52d06349a587448a45",
+      "bytes": 21135,
+      "snapshot": "upstream/src/portable_shell.c"
+    },
+    {
+      "path": "src/ps_io_socket.c",
+      "sha256": "1eb80f98d09fb1042fee3f5facb9dfc3813962b0645c05307c701064aa6e6df6",
+      "bytes": 4647,
+      "snapshot": "upstream/src/ps_io_socket.c"
+    },
+    {
+      "path": "src/vt100.c",
+      "sha256": "fa151f1510abac7ecef369c512b9ce1132f14e37b0691a74ea2bfcef53d3e9b6",
+      "bytes": 1717,
+      "snapshot": "upstream/src/vt100.c"
+    },
+    {
+      "path": "tests/test_shell.c",
+      "sha256": "f26c767cd4ab7471a586b3b1500f9a613cc0ce00ac3f0ad23733e0c04af526eb",
+      "bytes": 6263,
+      "snapshot": "upstream/tests/test_shell.c"
+    }
+  ]
+}

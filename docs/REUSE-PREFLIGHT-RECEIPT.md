@@ -1,5 +1,33 @@
 # Donor-first preflight receipt
 
+## Portable Shell integration (issue #29)
+
+Read all 17 tracked entries from the exact requested branch revision
+`67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`, including all code, tests, examples,
+build rules, license and documentation. The 16 regular source files are preserved
+verbatim under `third_party/portable-shell/upstream`; the CodeQL root symlink
+targets `.` and is recorded rather than recreated. Donor checkout was not changed.
+
+The compiled adaptation is `PortableShellCore.h`: PSCommand name/help catalogue,
+lookup and VT100 callback output used by the existing shell editor/service. Help,
+command aliases, completion and maintenance admission share that catalogue.
+Added real command/property Tab completion; `edit` opens the actual staged TUI.
+No second shell, raw serial interpreter, UDP execution listener or unchecked
+parameter pointer setter is installed. Preserved existing password/history
+scrubbing, Telnet negotiation, USB replay fencing/output ACKs, leases and partial
+write backpressure. Exact per-file omissions are in the existing comparison ledger.
+
+The first new fixture caught a missing help descriptor for `noupper`; fixed and
+rerun successfully. `tools/test-shell.ps1`, `tests/shell_metadata_test.mjs`,
+`tests/reuse_preflight_test.ps1`, the 17-file snapshot check, donor gate and
+comparison `-Check` passed. Final ESP32-S3 buffered build passed: 2,302,399 bytes
+of 3,342,336-byte application budget; static globals 138,724 bytes. These are
+compiler figures, not runtime heap or timing measurements. The profile retains
+16 MiB flash/OPI PSRAM, both LED backends, RMT default, BLE disabled and optional
+Ethernet. No AVR/client rebuild was needed for this ESP-shell-only change.
+Production firmware and live USB/Telnet sessions remain separate gates; no board
+was contacted, flashed, reset or actuated by this integration.
+
 ## Static file serving comparison (issue #28)
 
 Reread PU850-ESP `pu850-esp.ino` routes `/file/download`, `/`, and default

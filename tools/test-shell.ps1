@@ -5,7 +5,7 @@ $ErrorActionPreference='Stop'
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-shell -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate | Out-Null
 $taskRoot=Split-Path -Parent $PSScriptRoot
-foreach($taskName in @('telnet_shell','shell_tui','shell_wire')){
+foreach($taskName in @('portable_shell','telnet_shell','shell_tui','shell_wire')){
   $taskOutput=Join-Path $taskRoot "build/native/${taskName}_test.exe"
   $taskArgs=@('-std=c++17','-Wall','-Wextra','-Werror','-I',(Join-Path $taskRoot 'firmware/esp/src'),'-I',(Join-Path $taskRoot 'tests/access_stubs'),(Join-Path $taskRoot "tests/${taskName}_test.cpp"),'-o',$taskOutput)
   if($Plan){[pscustomobject]@{Executable='g++';Arguments=$taskArgs};continue}
@@ -30,3 +30,5 @@ if($LASTEXITCODE){throw 'Shell mDNS fixture compilation failed'}
 if($LASTEXITCODE){throw 'Shell mDNS fixture failed'}
 & node (Join-Path $taskRoot 'tests/shell_service_test.mjs')
 if($LASTEXITCODE){throw 'Actual shell service lease fixture failed'}
+& node (Join-Path $taskRoot 'tests/portable_shell_source_test.mjs')
+if($LASTEXITCODE){throw 'Portable-shell source inventory fixture failed'}

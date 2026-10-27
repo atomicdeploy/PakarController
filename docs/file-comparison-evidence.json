@@ -4,6 +4,706 @@
   "scope": "Manual source-file comparison; not full repository superiority or live hardware certification.",
   "files": [
     {
+      "origin": "portable-shell",
+      "path": ".gitignore",
+      "sha256": "b7abe7efbbcb839e230ceb828522604b59f4faaf7b28b697aecb4c9df9f77fe0",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Build/editor artifact exclusions retained in the exact reference snapshot; Pakar keeps its existing repository ignore policy."
+      ],
+      "targets": [
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Global wildcard ignores",
+          "disposition": "replaced",
+          "reason": "Applying *.exe, *.a and IDE exclusions repo-wide would hide tracked recovery/test assets and existing project policies."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "CHANGELOG.md",
+      "sha256": "7dd7e6e515634cc0c81ff1b1528ad5f0e5c29631417c427d50916a0de132224f",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read complete historical claims; retained verbatim as donor history, not imported as Pakar release certification."
+      ],
+      "targets": [
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Complete/security/performance claims",
+          "disposition": "replaced",
+          "reason": "Source inspection shows placeholders and allocation in history/parser; an old claim of zero alerts cannot establish current safety."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "DOCUMENTATION.md",
+      "sha256": "eafe52b90f65b56c32fedbc846463be5c4472994eb2584d3d260c64bbc2f4e35",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read all API/parameter/transport guidance; retained source documentation with corrected integration guidance."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/ShellProperties.h",
+          "anchor": "struct ShellProperty",
+          "sha256": "7f5e741f7ff29d308da7d201a59b37f116a5b846ec7bcb157032477ca7f34816"
+        },
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Raw-pointer parameter binding and advertised editable TUI",
+          "disposition": "replaced",
+          "reason": "Pakar validates durable settings through owner APIs and has a genuinely interactive staged TUI; no second unsafe parameter owner."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "IMPLEMENTATION.md",
+      "sha256": "d024ffc22f99a7c9f50fa68bbaf02b0e722d68b0edaf39512454643e6f1986e2",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read each asserted requirement and reconciled against actual donor code rather than trusting completion checkmarks."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "anchor": "void executeDeviceShell",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        },
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Thread-safe variable and full editor completeness claims",
+          "disposition": "replaced",
+          "reason": "No synchronization exists for raw pointers; editor only prints and waits. Existing loop ownership and staged TUI retained."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "LICENSE",
+      "sha256": "b00e51aca5e080d2fcb8734e9a4779dc917e8df2f38730cca2e82e4ad08184aa",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "MIT copyright and complete license retained with original source; derived header points to this notice."
+      ],
+      "targets": [
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        },
+        {
+          "path": "firmware/esp/src/PortableShellCore.h",
+          "anchor": "struct Command",
+          "sha256": "03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "Makefile",
+      "sha256": "e9d0814b7f08de2a7f53d004192a60cb329652e7b745bdee379144373cb26f4f",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read full targets and retained upstream build recipe as reference. Tests integrated into the existing guarded native runner."
+      ],
+      "targets": [
+        {
+          "path": "tools/test-shell.ps1",
+          "anchor": "foreach($taskName",
+          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62"
+        },
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Separate donor make clean/install/uninstall and -g profile",
+          "disposition": "replaced",
+          "reason": "No second build cache or uncontrolled system installation; existing cross-platform canonical low-write test/build wrappers remain authoritative."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "README.md",
+      "sha256": "f7228b81aa68c7553cd67100da5c77abe97a8e1ad086e756cdb79c1783cfdcd2",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read entire requested branch README, including API examples and completed plan. Useful capabilities mapped to actual compiled owners."
+      ],
+      "targets": [
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Production-ready/comprehensive claims and example server instructions",
+          "disposition": "replaced",
+          "reason": "Examples and tests do not implement promised transport/editor behaviors; integration guide records inspected limitations explicitly."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "_codeql_detected_source_root",
+      "sha256": "cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Inspected Git mode 120000 and target '.' at the pinned revision; accounted for without creating a recursive reference."
+      ],
+      "targets": [
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "CodeQL root symlink to '.'",
+          "disposition": "not-applicable",
+          "reason": "Environment-specific analysis marker is not shell code; recreating it would introduce self-referential source traversal."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ],
+      "source_blob": {
+        "repository": "atomicdeploy/portable-shell",
+        "revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+        "git_sha": "945c9b46d684f08ec84cb316e1dc0061e361f794",
+        "sha256": "cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8",
+        "bytes": 1
+      }
+    },
+    {
+      "origin": "portable-shell",
+      "path": "examples/arduino_example.ino",
+      "sha256": "fe59231f346c7f5d8e44b206c5f1862e4fd71f308e7473fe1723c54bdcc3bcce",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read complete sample callback/loop pattern. Existing loop-fed editor uses caller-owned output and bounded byte budgets."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "anchor": "void executeDeviceShell",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        },
+        {
+          "path": "firmware/esp/src/TelnetShell.h",
+          "anchor": "class LineEditor",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Direct GPIO sample commands, while(!Serial), analogRead(0) loop",
+          "disposition": "replaced",
+          "reason": "Arbitrary LED/pin access conflicts with board pin ownership; startup/loop work must not block UART/game scheduling."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "examples/linux_example.c",
+      "sha256": "543e25c4d9c5a99ed9b7d225f33d984f05f5efd61e2bd43e68be75eec22aebf1",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read complete termios raw-mode sample and parameter setup; existing host shell tool retained."
+      ],
+      "targets": [
+        {
+          "path": "tools/device-shell.ps1",
+          "anchor": "param(",
+          "sha256": "4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55"
+        },
+        {
+          "path": "third_party/portable-shell/README.md",
+          "anchor": "# Portable Shell source integration",
+          "sha256": "de0fb23618a10e3326a39be5f5ae4f6b22433370aa1b5b41944d2d784fdb8e4d"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "POSIX-only sample, stop-as-reboot and fake all-operational status",
+          "disposition": "replaced",
+          "reason": "Use the existing device client/owned USB transport rather than a disconnected demo process or false status. Runtime behavior cannot be fabricated."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "examples/telnet_server.c",
+      "sha256": "779a8e30dba97d85f24e2d3a76d7b3d1a3aeeb4b8066682d90bfdc5bcb0f4295",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read entire skeleton; preserved as reference, not wired into production."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "anchor": "void executeDeviceShell",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Printed server banner and unimplemented bind/accept/session loop",
+          "disposition": "replaced",
+          "reason": "Pakar already has actual bounded multi-session Telnet admission, authentication and network lifecycle."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "include/portable_shell.h",
+      "sha256": "d2f886686945f5df81dea9aa42f8f6c364e7f54c01c614c3d14d6e9d92815fa9",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "preserved": [
+        "Adapted PSCommand name/help model and portable callback output into immutable command catalogue/Terminal; independent session state remains in LineEditor."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/PortableShellCore.h",
+          "anchor": "struct Command",
+          "sha256": "03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154"
+        },
+        {
+          "path": "firmware/esp/src/TelnetShell.h",
+          "anchor": "class LineEditor",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4"
+        },
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "anchor": "void executeDeviceShell",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_test.cpp",
+          "anchor": "int main()",
+          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+        },
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Heap-linked arbitrary register/unregister, Arduino bool/HIGH/LOW macros, raw mutable parameter pointers",
+          "disposition": "replaced",
+          "reason": "Build-time immutable descriptors prevent dangling name/callback ownership and duplicate registrations; C++ types remain intact; settings go through validation."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ],
+      "improvement": "Actual command/VT100 integration preserves bounded authenticated owners and adds tested, non-executing command/property completion instead of a Tab bell placeholder."
+    },
+    {
+      "origin": "portable-shell",
+      "path": "include/ps_io.h",
+      "sha256": "024a3ac2231b9b76b3a558a7f81406b5660ba7694c4f9e2f9b7caa585f05bcb1",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read callback/context contracts; preserved per-session transport-independent output and existing explicit USB ownership."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "anchor": "void executeDeviceShell",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        },
+        {
+          "path": "firmware/esp/src/ShellWire.h",
+          "anchor": "class SerialChannel",
+          "sha256": "af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "New PSSocketContext/PSUdpContext/PSSerialContext and undefined stdio initializer",
+          "disposition": "replaced",
+          "reason": "Existing WiFiClient/SerialChannel owners already provide the real transports with authentication and replay fencing; no duplicate socket or serial owner."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "src/portable_shell.c",
+      "sha256": "d64aef3c23476fe37d5fabdec15b5e9fb5638a200a157a52d06349a587448a45",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "preserved": [
+        "Adapted strcmp command lookup and name/help metadata into the compiled catalogue; expanded Tab placeholder into real safe prefix completion; edit aliases to real TUI."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/PortableShellCore.h",
+          "anchor": "struct Command",
+          "sha256": "03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154"
+        },
+        {
+          "path": "firmware/esp/src/TelnetShell.h",
+          "anchor": "class LineEditor",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4"
+        },
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "anchor": "void executeDeviceShell",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        },
+        {
+          "path": "firmware/esp/src/ShellTui.h",
+          "anchor": "class ShellTui",
+          "sha256": "43269b4efd622253cbf664f6d345ceb4c13bb5a72ae2c208c48277ee1d9aa6dc"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_test.cpp",
+          "anchor": "int main()",
+          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+        },
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "ps_create/destroy/run, heap history, strtok argv, synchronous escape reads, raw-pointer atoi/atof setters, blocking edit loop",
+          "disposition": "replaced",
+          "reason": "Existing fixed/scrubbed history, incremental parser, output backpressure, property validation and staged TUI prevent allocation failures, secret retention, truncated execution and blocking LED/UART work."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ],
+      "improvement": "Actual command/VT100 integration preserves bounded authenticated owners and adds tested, non-executing command/property completion instead of a Tab bell placeholder."
+    },
+    {
+      "origin": "portable-shell",
+      "path": "src/ps_io_socket.c",
+      "sha256": "1eb80f98d09fb1042fee3f5facb9dfc3813962b0645c05307c701064aa6e6df6",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "equivalent-behavior",
+      "preserved": [
+        "Read all TCP/UDP/serial implementation; preserved original for review. Existing actual nonblocking Telnet and encapsulated USB remain single transport owners."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "anchor": "void executeDeviceShell",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        },
+        {
+          "path": "firmware/esp/src/ShellWire.h",
+          "anchor": "class SerialChannel",
+          "sha256": "af3f23d908310dd349b0c90d1fc4385a212e6439b10c72f8dc2f37dace4b5216"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Blocking IPv4-only connect/recv, single partial send, unconnected UDP replies, serial init=-1 and no-op close",
+          "disposition": "replaced",
+          "reason": "Avoid loop stalls, dropped output, invalid UDP destinations and fake serial support; hostname-first discovery and binary recovery are already shared project facilities."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "src/vt100.c",
+      "sha256": "fa151f1510abac7ecef369c512b9ce1132f14e37b0691a74ea2bfcef53d3e9b6",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "preserved": [
+        "Adapted actual ANSI clear/line/cursor/color/reset formatting into bounded callback emitters and used them by the live LineEditor and clear command."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/PortableShellCore.h",
+          "anchor": "struct Command",
+          "sha256": "03e92bea71a29aaa19e8057b4349c7918158fc7936975c385a4e0133c1ada154"
+        },
+        {
+          "path": "firmware/esp/src/TelnetShell.h",
+          "anchor": "class LineEditor",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4"
+        },
+        {
+          "path": "firmware/esp/src/ShellService.h",
+          "anchor": "void executeDeviceShell",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_test.cpp",
+          "anchor": "int main()",
+          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+        },
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Unbounded signed cursor/color formatting and unused standalone cursor-home/right wrappers",
+          "disposition": "replaced",
+          "reason": "Validate coordinate/SGR ranges; existing editor retains echo-free password handling, plain-terminal behavior and movement semantics without duplicated control owners."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ],
+      "improvement": "Actual command/VT100 integration preserves bounded authenticated owners and adds tested, non-executing command/property completion instead of a Tab bell placeholder."
+    },
+    {
+      "origin": "portable-shell",
+      "path": "tests/test_shell.c",
+      "sha256": "f26c767cd4ab7471a586b3b1500f9a613cc0ce00ac3f0ad23733e0c04af526eb",
+      "source_revision": "67c5dcb8a63f4055cbdaf02e9ff271c53b46410d",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "preserved": [
+        "Read all eight donor test scenarios; retained original tests and adapted independent-context, built-in, command-lookup, line-edit and VT100 output assertions into production-header fixtures."
+      ],
+      "targets": [
+        {
+          "path": "tests/portable_shell_test.cpp",
+          "anchor": "int main()",
+          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+        },
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_test.cpp",
+          "anchor": "int main()",
+          "sha256": "d9aceac8d8419cf250a82d485bbd6e9e8c1d2a5f2913ed6bf1a8ddcc2fee3ad6"
+        },
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "anchor": "const source=",
+          "sha256": "63636f2791c5c5799f5f0e2611ab5337b40641b26de0332c5078af4f74b47f8a"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Mock no-crash checks as completeness evidence",
+          "disposition": "replaced",
+          "reason": "New tests assert exact bytes, safe aliases, bounds, password isolation, ambiguous/property completion and fragmented escape handling, alongside existing history/TUI/USB/lease tests."
+        }
+      ],
+      "remaining": [
+        "Issue #29: source/fixture acceptance only; no production flash or live USB/Telnet session acceptance in this integration task."
+      ],
+      "improvement": "Actual command/VT100 integration preserves bounded authenticated owners and adds tested, non-executing command/property completion instead of a Tab bell placeholder."
+    },
+    {
       "origin": "Pealayer",
       "path": "web_ui/src/components/ColorPicker.tsx",
       "sha256": "024fdabb482a714c38a91d0dde5d0be11486b20859a019f4fbc2d3dd34295022",
@@ -19901,7 +20601,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
           "anchor": "class LineEditor"
         },
         {
@@ -19958,7 +20658,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "5eda930ea11c15531c71b593dc7fa7de7a15a9376e090185774cc9bbb2a78d85",
+          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20018,7 +20718,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
           "anchor": "class LineEditor"
         },
         {
@@ -20075,7 +20775,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "5eda930ea11c15531c71b593dc7fa7de7a15a9376e090185774cc9bbb2a78d85",
+          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20137,12 +20837,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
           "anchor": "class TelnetParser"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "897ac8e49f95e1e2ebc8b59dbd1a76148d1fcaaecf609cf33d99d067fc849a0c",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -20184,7 +20884,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "5eda930ea11c15531c71b593dc7fa7de7a15a9376e090185774cc9bbb2a78d85",
+          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20234,12 +20934,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
           "anchor": "class TelnetParser"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "897ac8e49f95e1e2ebc8b59dbd1a76148d1fcaaecf609cf33d99d067fc849a0c",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -20281,7 +20981,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "5eda930ea11c15531c71b593dc7fa7de7a15a9376e090185774cc9bbb2a78d85",
+          "sha256": "cad0631d093760114e4644c964f395638a406f1ac4ca3313e7df6b7562e3ae62",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -20332,7 +21032,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "897ac8e49f95e1e2ebc8b59dbd1a76148d1fcaaecf609cf33d99d067fc849a0c",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
           "anchor": "bool shellSet("
         },
         {
@@ -20430,7 +21130,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "897ac8e49f95e1e2ebc8b59dbd1a76148d1fcaaecf609cf33d99d067fc849a0c",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
           "anchor": "bool shellSet("
         },
         {
@@ -20582,7 +21282,7 @@
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "20e75d8dd8f39bea93c0df3da5aff98635b857eefb55003cfebeabd4e5c92281",
+          "sha256": "cf68a0ff5b2edaffceab1d8c0ff892dcc3de2ec0a05bbb384c991adb1d8959e4",
           "anchor": "inline size_t terminalText"
         },
         {
@@ -20592,7 +21292,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "897ac8e49f95e1e2ebc8b59dbd1a76148d1fcaaecf609cf33d99d067fc849a0c",
+          "sha256": "57b6d16effea8240ef1abc9a9e29d91ad14bcbe21cc0852168e0b694ee5d8f7a",
           "anchor": "void closeDeviceShells()"
         },
         {
