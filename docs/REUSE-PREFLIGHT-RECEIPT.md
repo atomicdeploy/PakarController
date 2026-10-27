@@ -2,6 +2,21 @@
 
 ## GitHub handoff consolidation and CI repair
 
+The early e33f54c quality gate caught intermittent download_firmware_test
+rejection failure before SDK work. Read the actual downloader/fixture and the
+mapped pinned PU Go watch digestUnchangedFile/validateWatchCandidate functions
+(blob61bdc4e0554059a142d83daec5f33b4993ebafa5), not an invented replacement.
+The existing late same-size partial write can escape Windows stat timestamps
+while a handle remains open. Reuse the existing bounded descriptor digest after
+the awaited final peer-status read, compare both hashes, then retain all original
+descriptor/path/size/time and atomic no-overwrite checks. The fixture now names
+the failing scenario and verifies the late mutation actually ran and remains an
+unpublished failed partial. Ten consecutive complete download fixtures pass;
+backup-before-update integration is rechecked after rebinding only the two
+reviewed target/test hashes. Its first guarded invocation correctly refused the
+changed stale hash, rather than bypassing the gate. No device requests or writes
+were performed; this is backup-integrity/source evidence, not physical OTA proof.
+
 Actual GitHub54c0dbe passed native tests/package, Android analysis/tests/APK,
 all quality/tooling jobs and CodeQL. All three AVR profiles and all three S3
 variants also compiled, but the Linux host suite then failed because its

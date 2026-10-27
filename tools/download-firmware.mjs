@@ -122,6 +122,11 @@ export async function downloadFirmware({origin='http://ledboard.local',output,re
     if(!unchanged(beforeDigest,verified))throw Error('Partial file changed during verification');
     if(identity.md5!==expected)throw Error('Full firmware MD5 mismatch; partial file retained');
     const last=await json('/api/status');boardPeer(last.value,last.remote,peer,{maintenanceBoard});
+    // The awaited peer read permits other writers to run. In particular,
+    // Windows may not expose a same-size write through timestamps while this
+    // handle is open. Reuse the bounded descriptor hash, not metadata alone.
+    const confirmed=await digest(file,total);
+    if(confirmed.md5!==identity.md5||confirmed.sha256!==identity.sha256)throw Error('Partial file changed after peer verification; backup not published');
     const after=await file.stat(),named=await regularFile(part);
     if(!named||!unchanged(verified,after)||!unchanged(after,named)||after.size!==total)throw Error('Partial path changed before commit');
     check();await file.close();file=null;

@@ -2377,7 +2377,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export function parseDigestMD5("
         },
         {
@@ -2409,7 +2409,7 @@
       "proof": [
         {
           "path": "tests/download_firmware_test.mjs",
-          "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+          "sha256": "3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac",
           "anchor": "assert.equal(observed.distinctHeaders.etag.length,2);"
         },
         {
@@ -2672,7 +2672,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -2794,7 +2794,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -2895,7 +2895,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -2922,7 +2922,7 @@
       "proof": [
         {
           "path": "tests/download_firmware_test.mjs",
-          "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+          "sha256": "3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac",
           "anchor": "for(const scenario of ["
         },
         {
@@ -2985,7 +2985,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -2997,7 +2997,7 @@
       "proof": [
         {
           "path": "tests/download_firmware_test.mjs",
-          "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+          "sha256": "3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac",
           "anchor": "for(const scenario of ["
         }
       ],
@@ -3261,7 +3261,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -4033,7 +4033,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -4079,7 +4079,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -4185,7 +4185,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -4197,7 +4197,7 @@
       "proof": [
         {
           "path": "tests/download_firmware_test.mjs",
-          "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+          "sha256": "3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac",
           "anchor": "for(const scenario of ["
         }
       ],
@@ -4280,7 +4280,7 @@
       "proof": [
         {
           "path": "tests/download_firmware_test.mjs",
-          "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+          "sha256": "3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac",
           "anchor": "for(const scenario of ["
         },
         {
@@ -4338,7 +4338,7 @@
       "targets": [
         {
           "path": "tools/download-firmware.mjs",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2",
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8",
           "anchor": "export async function downloadFirmware("
         },
         {
@@ -4350,7 +4350,7 @@
       "proof": [
         {
           "path": "tests/download_firmware_test.mjs",
-          "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+          "sha256": "3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac",
           "anchor": "for(const scenario of ["
         }
       ],
@@ -4414,7 +4414,7 @@
       "proof": [
         {
           "path": "tests/download_firmware_test.mjs",
-          "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+          "sha256": "3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac",
           "anchor": "for(const scenario of ["
         }
       ],
@@ -4579,7 +4579,7 @@
       "proof": [
         {
           "path": "tests/download_firmware_test.mjs",
-          "sha256": "e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23",
+          "sha256": "3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac",
           "anchor": "for(const scenario of ["
         }
       ],
@@ -11137,7 +11137,7 @@
         {
           "path": "tools/download-firmware.mjs",
           "anchor": "export const verificationRangeBytes=16*1024;",
-          "sha256": "4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2"
+          "sha256": "1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8"
         }
       ],
       "omissions": [

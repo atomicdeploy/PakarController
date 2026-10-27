@@ -72,10 +72,14 @@ try {
       assert.deepEqual(await readFile(output),firmware);assert(await absent(output+'.part'));
       assert.equal(ranges,scenario==='complete'?0:3);assert.equal(statusReads,2);
     }else{
-      await assert.rejects(operation);assert(reads<12,'No replay loop');
+      await assert.rejects(operation,undefined,scenario);assert(reads<12,'No replay loop');
       if(scenario==='destination-race')assert.equal((await readFile(output)).toString(),'keep existing backup');
       else assert(await absent(output),'Failed download cannot publish output');
       if(scenario==='bad-whole')assert.equal((await readFile(output+'.part')).length,firmware.length);
+      if(scenario==='changed-part'){
+        assert.equal(statusReads,2,'Mutation occurs after the first whole-file verification');
+        assert.deepEqual(await readFile(output+'.part'),Buffer.alloc(firmware.length),'Late same-size write remains a failed partial, never a verified backup');
+      }
     }
   }
   const plan=await reserve('plan');let requests=0;

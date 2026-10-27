@@ -4908,7 +4908,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `14c0831141b761e303110955ba0141bc683b0d80c18890b842dce6a65f77d920`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:196 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19]`.
 - Target: `tools/update-firmware.mjs:216 [UTF8-LF sha256=f1661663563a2dcd4eaed9d1a054cc986cf03d8e3b0806bc93d6bf07560ad068; anchor=export async function updateFirmware(]`.
 - Target: `tools/peer-identity.mjs:54 [UTF8-LF sha256=869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7; anchor=export function boardPeer(]`.
@@ -4917,7 +4917,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
 - Retained: Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply.
 - Omitted/replaced code: `DownloadOnceAsync progress/error categories and remaining transport/platform acceptance`. Disposition: **pending**. Reason: Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed.
-- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23; anchor=for(const scenario of []`.
+- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac; anchor=for(const scenario of []`.
 - Test-code evidence: `tests/update_backup_test.mjs:53 [UTF8-LF sha256=9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc; anchor=Backup must precede even remote staging]`.
 - Remaining: Explicit verified backup-before-update and resumable export now imported. Remaining stable watcher/coalescing/graceful stop/skip-identical/progress, gzip consumer/platform/filesystem/transport and unported negative scenarios need applicable implementation/acceptance; no source fixture closes live/physical/restore gates.
 
@@ -4925,19 +4925,19 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `aa03832b78921b5bd2d89aaf6cce4cadb26a72f940dbc3da3ea7cefcef7443fe`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:196 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19]`.
 - Retained: Entire file/sections read through EOF: Constructor/GetMetadataAsync/DownloadAsync/ExtractExpectedMd5/EnsureHashesAgree/ValidateDownloadResponse/AddAsciiMd5Header/ValidateExpectedHash/IsMd5/ComputeMd5Async/CreateClient/CreateTimeout; records/exceptions
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `GetMetadataAsync Accept-Ranges advertisement check and real transport/storage acceptance`. Disposition: **pending**. Reason: Current backup validates hashes/lengths/same peer and never truncates unknown non-resume partials. Actual advertised range support and real storage/transport/proxy/redirect acceptance remain pending; no second HTTP runtime.
-- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23; anchor=for(const scenario of []`.
+- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac; anchor=for(const scenario of []`.
 - Remaining: Current backup validates hashes/lengths/same peer and never truncates unknown non-resume partials. Actual advertised range support and real storage/transport/proxy/redirect acceptance remain pending; no second HTTP runtime.
 
 ### PU850-ESP: `Tool/C#/Uploader/EndpointResolver.cs`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `dbb00d1703e46147b950b67837667de78c9c2b4b45899ed5bfd9187663a1ae2a`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:196 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19]`.
 - Retained: Entire file/sections read through EOF: All resolver/cache/local-DNS/ResolveAsync branches plus ResolvedEndpoint Rebase/UriAt/UpdateInfoUri/InfoUri
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
@@ -4961,7 +4961,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d09ab4bcd65490aa41ffa8ae078f8052f41cce5d368480264538b14e62117e78`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:196 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19]`.
 - Retained: Entire file/sections read through EOF: Parse, all hash-selector overloads, IsAsciiHex and FlattenJson with every value-kind/fallback branch
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
@@ -5053,7 +5053,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `53c27d11d347092c0addd510ac2de5e47ecd2e7ad7fa1dd26dbd4e1a7265ad54`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:196 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19]`.
 - Retained: Entire file/sections read through EOF: Every WatchUploader, WatchStopController, BuildWatchMonitor, WatchStateMachine, observation/stable/stamp/identity member and branch
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
@@ -5181,7 +5181,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `b5f810636d9acbbe8df4079acf10f00cf7aa71d0130023bb558205d146e69fa2`.
 
-- Target: `tools/download-firmware.mjs:25 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export function parseDigestMD5(]`.
+- Target: `tools/download-firmware.mjs:25 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export function parseDigestMD5(]`.
 - Target: `tools/check-ethernet-live.mjs:57 [UTF8-LF sha256=29e5e90657ea68415c49f947e09561a8750f7998b972e88d689bc6b79c82b08c; anchor=distinctHeaders:response.headersDistinct]`.
 - Target: `docs/PU850-PARITY.md:141 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: C++ transfer and UART, 2026-10-19]`.
 - Target: `tools/update-firmware.mjs:216 [UTF8-LF sha256=f1661663563a2dcd4eaed9d1a054cc986cf03d8e3b0806bc93d6bf07560ad068; anchor=export async function updateFirmware(]`.
@@ -5193,7 +5193,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Omitted/replaced code: `WinHTTP/BCrypt/UTF8/console/metadata selection and async close lifecycle`. Disposition: **replaced**. Reason: Existing Node request/crypto/logger and exact typed identity owner retain finite deadlines, hostname-preserving pinned TLS and stronger sanitation. Donor final HANDLE_CLOSING wait is unbounded; do not copy it.
 - Omitted/replaced code: `verified_download/replace/truncate/delete/retry/no-verify branches`. Disposition: **replaced**. Reason: Mandatory integrity, explicit resume, exclusive stable partial descriptor and no-replace atomic publication retain failures and existing backups; no ambiguous retry or no-hash success.
 - Omitted/replaced code: `Multipart streaming/progress/watch/coalescing/IPv6/native console and complete gzip corpus`. Disposition: **pending**. Reason: Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed.
-- Test-code evidence: `tests/download_firmware_test.mjs:33 [UTF8-LF sha256=e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23; anchor=assert.equal(observed.distinctHeaders.etag.length,2);]`.
+- Test-code evidence: `tests/download_firmware_test.mjs:33 [UTF8-LF sha256=3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac; anchor=assert.equal(observed.distinctHeaders.etag.length,2);]`.
 - Test-code evidence: `tests/update_backup_test.mjs:53 [UTF8-LF sha256=9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc; anchor=Backup must precede even remote staging]`.
 - Remaining: Useful generic behavior remains pending integration and actual filesystem/transport/platform acceptance; no donor/native build or live operation performed.
 
@@ -5261,7 +5261,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Retained: Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.
 - Retained: Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply.
 - Omitted/replaced code: `Raw skip/fallback-specific and remaining applicable fixtures`. Disposition: **pending**. Reason: Actual verified pre-update backup and ranged/resumable export now implemented through existing owners with same-peer/release/auth/job/boot/latch and no-overwrite checks. Watch/coalescing/graceful stop/skip-identical/progress, remaining gzip consumer/platform/filesystem/transport and exact unported negative scenarios remain pending as applicable. No donor tests, SDK builds, live update/restore or physical proof claimed.
-- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23; anchor=for(const scenario of []`.
+- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac; anchor=for(const scenario of []`.
 - Test-code evidence: `tests/update_backup_test.mjs:53 [UTF8-LF sha256=9fad7b056864a821193c642fbc8739ca60f6b490fc358853906564fd242b75cc; anchor=Backup must precede even remote staging]`.
 - Remaining: Actual byte verification, exact resume and mismatch/atomic preservation scenarios ported into shipped Node fixture plus multi-range/peer/release/cancel/time/stale partial/no-overwrite cases. Remaining uploader/gzip behaviors await real implementation; donor tests are not claimed executed.
 
@@ -5269,13 +5269,13 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `06cd1dd3150f7b0bd7f9b57f90a1ae3731767374d43527de296bdf91be3b1185`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:244 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: editor and Go client slice, 2026-10-19]`.
 - Retained: Actual Range/length/hash/resume/partial/commit flow adapted into tools/download-firmware.mjs and invoked by guarded wrapper/pakar download.
 - Retained: Complete EOF read: all constants/regex/types/functions
 - Retained: Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `Other generic client transfer modes/real network acceptance`. Disposition: **pending**. Reason: Actual metadata/hash/range/resume/part/verification flow ported to shipped backup tool. Current exact metadata, Basic auth, release/board/boot/TCP fencing replace fuzzy aliases, arbitrary second origin and bearer override; live authenticated LAN/Windows/storage acceptance remains open.
-- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23; anchor=for(const scenario of []`.
+- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac; anchor=for(const scenario of []`.
 - Remaining: Actual metadata/hash/range/resume/part/verification flow ported to shipped backup tool. Current exact metadata, Basic auth, release/board/boot/TCP fencing replace fuzzy aliases, arbitrary second origin and bearer override; live authenticated LAN/Windows/storage acceptance remains open.
 
 ### PU850-ESP: `Tool/Go/go.mod`
@@ -5297,7 +5297,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Retained: Complete EOF read: all nine tests/all HTTP branches
 - Retained: Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `Applicable gzip/manifest/env-priority/filename tests`. Disposition: **pending**. Reason: Existing script/update fixtures cover current help/plan/multipart/new-boot/secret/exit behavior; port remaining scenarios with actual generic implementation. Bearer aliases/fuzzy scalar suffixes are replaced by exact current admission; no donor test execution claim.
-- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23; anchor=for(const scenario of []`.
+- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac; anchor=for(const scenario of []`.
 - Remaining: Existing script/update fixtures cover current help/plan/multipart/new-boot/secret/exit behavior; port remaining scenarios with actual generic implementation. Bearer aliases/fuzzy scalar suffixes are replaced by exact current admission; no donor test execution claim.
 
 ### PU850-ESP: `Tool/Go/main.go`
@@ -5336,7 +5336,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **equivalent-behavior**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `b9c6d47bb4072251c72002984676b420794a4e05c3c056a19afb4b4b3b2557b5`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:244 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: editor and Go client slice, 2026-10-19]`.
 - Retained: Complete EOF read: atomicReplace/os.Rename
 - Retained: Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.
@@ -5346,7 +5346,7 @@ Verdict: **equivalent-behavior**. Revision: `431104072952f694a35b3a83c19f13fbb09
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `892dbd97703bb64d5c2ff3b6916a808350085eb034b5a7583ae5416e04a698bf`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:244 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: editor and Go client slice, 2026-10-19]`.
 - Retained: Complete EOF read: MoveFileExW flags/procedure/UTF16 conversion/atomicReplace
 - Retained: Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.
@@ -5362,20 +5362,20 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Retained: Complete EOF read: all nine tests plus writeWatchBuild/rewriteWatchBuild and each file/sentinel branch
 - Retained: Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `Remaining generic stable-watch scenarios`. Disposition: **pending**. Reason: Actual changed-content guard is exercised in backup fixture. Stable-window/no replay/newest-during-upload/deletion/sentinels/content-vs-metadata/mismatch/dedupe/missing-watch tests must follow actual optional watcher implementation.
-- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23; anchor=for(const scenario of []`.
+- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac; anchor=for(const scenario of []`.
 - Remaining: Actual changed-content guard is exercised in backup fixture. Stable-window/no replay/newest-during-upload/deletion/sentinels/content-vs-metadata/mismatch/dedupe/missing-watch tests must follow actual optional watcher implementation.
 
 ### PU850-ESP: `Tool/Go/watch.go`
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `46468b3f00791504df0b62d58adfbf6f416b840875febecf7a46868ae7051d40`.
 
-- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export async function downloadFirmware(]`.
+- Target: `tools/download-firmware.mjs:55 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export async function downloadFirmware(]`.
 - Target: `docs/PU850-PARITY.md:244 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: editor and Go client slice, 2026-10-19]`.
 - Retained: Actual digestUnchangedFile size/time/mode stability checks adapted around the held backup file hash and final commit.
 - Retained: Complete EOF read: all constants/errors/types/state branches/functions/methods
 - Retained: Exact function-by-function adaptations, safety defects and remaining contracts are recorded in the editor/Go slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `Optional generic stable-build watcher/coalescing/manifest capability`. Disposition: **pending**. Reason: Actual digestUnchangedFile size/time/mode stability is imported around backup verification/commit. Optional stable-window/newest-coalesce/once-only deployment and raw/compressed marker contracts remain useful pending explicit ownership; no watcher started or automatic device mutation enabled.
-- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=e402cda97ed5b12de77b109d530f4cb2458a7a7237b935297833052cafb67a23; anchor=for(const scenario of []`.
+- Test-code evidence: `tests/download_firmware_test.mjs:36 [UTF8-LF sha256=3c09ca35f587c750dc89e2ca21b8eca541a96bc99fe44f6eb50aab22ed2f74ac; anchor=for(const scenario of []`.
 - Remaining: Actual digestUnchangedFile size/time/mode stability is imported around backup verification/commit. Optional stable-window/newest-coalesce/once-only deployment and raw/compressed marker contracts remain useful pending explicit ownership; no watcher started or automatic device mutation enabled.
 
 ### PU850-ESP: `Tool/NODE-UPLOADER.md`
@@ -5442,7 +5442,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Target: `tools/peer-identity.mjs:54 [UTF8-LF sha256=869e9ea5db1887dde58b170c66d4c2b379aa6fb7d3c123adc5c023e1b8db1ce7; anchor=export function boardPeer(]`.
 - Target: `docs/PU850-PARITY.md:3 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Actual backup-before-update orchestration, 2026-10-19]`.
 - Target: `tools/verify-running-firmware.mjs:35 [UTF8-LF sha256=44264fe63ba4c81079517521f8bc0cde96e4602d0d56ab23dfed0356bccdaa9a; anchor=export async function verifyRunningFirmware(]`.
-- Target: `tools/download-firmware.mjs:14 [UTF8-LF sha256=4e2972928c4817927edd149233343131f044515582101d58a528a6b6a1a66ee2; anchor=export const verificationRangeBytes=16*1024;]`.
+- Target: `tools/download-firmware.mjs:14 [UTF8-LF sha256=1fd7047bd6c35cc97eb30f6c9073f841db06b74bc5794c0278098e627bc466c8; anchor=export const verificationRangeBytes=16*1024;]`.
 - Retained: Import actual logger, terminal sanitizer, stable exit categories, quiet/color rules and argv/preflight concepts into script-console.mjs/pakar.mjs. Correct OSC-before-ESC regex ordering and redirected stderr coloring. Existing updater retains hostname/TCP identity pinning, no uncertain-write replay and full postboot verification.
 - Retained: Actual Node performUpload and C# BackupInstalledFirmwareAsync backup-before-write sequencing now serves existing updater with explicit --backup/--resume-backup, first-read expected-peer fencing, metadata match and fresh auth/job/boot/latch admission before local upload or remote stage/apply.
 - Retained: Reread all 34349 bytes of this pinned donor through Git; the SHA256 remains unchanged. The standalone verify-running-firmware tool adapts verifyAfterReboot and verifiedDownload through the existing update-firmware imageIdentity/boundedReadRequest/checkWebSocket, download-firmware range/hash validators and shared boardPeer transport owners. It verifies the exact running VALID slot, image size/MD5/SHA256 and same-board/boot WebSocket using bounded 16 KiB reads; it sends no upload, reset, formatting or AVR command and creates only an exclusive JSON receipt, not another binary copy. Protocol/integrity failures are never retried; at most one pinned transport-read retry remains within the overall budget.
