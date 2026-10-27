@@ -4954,7 +4954,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Retained: Entire file/sections read through EOF: All LoadAsync/SelectFor/ComputeMd5Async/ComputeFirmwareHashesAsync/PortableFileName/generated regex methods, entries/hash/limit records and exceptions
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `Streamed FileStream/GZipStream wrappers; complete paired distribution/ESP8266 gzip upload/interruption acceptance`. Disposition: **pending**. Reason: Actual parse/portable matching/strict two records/both hashes/bounded gzip code ported into real explicit ESP8266 artifact compression. Full pair distribution/ESP8266 gzip upload/interrupted packaging acceptance remains pending.
-- Test-code evidence: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b; anchor=const content=hash(raw).toUpperCase()]`.
+- Test-code evidence: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776; anchor=const content=hash(raw).toUpperCase()]`.
 - Remaining: Actual parse/portable matching/strict two records/both hashes/bounded gzip code ported into real explicit ESP8266 artifact compression. Full pair distribution/ESP8266 gzip upload/interrupted packaging acceptance remains pending.
 
 ### PU850-ESP: `Tool/C#/Uploader/InfoParser.cs`
@@ -4984,12 +4984,12 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `2429a0837fab902db2d834fc513ee41dd21418722067c67fc46cb478c459677b`.
 
 - Target: `tools/firmware-report.mjs:35 [UTF8-LF sha256=519302644c5ead7d8d828f01311057f6ddefc4c38d73ee6e64bd43bd5b6aa89d; anchor=const gz=portableGzip(bytes),manifest=createFirmwareManifest(]`.
-- Target: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b; anchor=const content=hash(raw).toUpperCase()]`.
+- Target: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776; anchor=const content=hash(raw).toUpperCase()]`.
 - Target: `docs/PU850-PARITY.md:196 [UTF8-LF sha256=fa0f798b253216dae2da86de732cdeeeb522fc16557b5b30634cf47a203f589e; anchor=## Exhaustive continuation: C# manifest and deflate slice, 2026-10-19]`.
 - Retained: Entire file/sections read through EOF: All20top-level tests; every helper/assertion; both FakeFirmwareServer/FakeDownloadServer constructors/routes/request/response/read/write/dispose/properties and TestHttpRequest
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `TestWatchStateMachine/TestWatchStopController/TestPreStoppedWatchRunnerAsync plus remaining real TCP redirect/oversize/streaming fixtures`. Disposition: **pending**. Reason: Actual TestManifestAsync cases ported to shipped source plus bounded/corrupt output and real report consumer. Remaining watcher/graceful-stop/real-TCP oversized/redirect scenarios need applicable ports; donor tests not executed as target proof.
-- Test-code evidence: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b; anchor=const content=hash(raw).toUpperCase()]`.
+- Test-code evidence: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776; anchor=const content=hash(raw).toUpperCase()]`.
 - Remaining: Actual TestManifestAsync cases ported to shipped source plus bounded/corrupt output and real report consumer. Remaining watcher/graceful-stop/real-TCP oversized/redirect scenarios need applicable ports; donor tests not executed as target proof.
 
 ### PU850-ESP: `Tool/C#/Uploader/UploadClient.cs`
@@ -5129,7 +5129,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Retained: Entire file/sections read through EOF: Full history/format notes/includes/limits/state; bits/stored/both SLOW and fast decode/huffman/construct/codes/fixed/dynamic/puff/invalid-distance option/error contracts
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `bits/stored/decode/construct/codes/fixed/dynamic/puff raw-deflate scan/error corpus contract`. Disposition: **pending**. Reason: Node zlib supplies bounded gzip decoder with corrupt/empty/output-bound fixture, not another longjmp/static virgin-table decoder. Full Huffman/raw-deflate scan/corpus parity remains pending; no unsafe-distance option copied.
-- Test-code evidence: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b; anchor=const content=hash(raw).toUpperCase()]`.
+- Test-code evidence: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776; anchor=const content=hash(raw).toUpperCase()]`.
 - Remaining: Node zlib supplies bounded gzip decoder with corrupt/empty/output-bound fixture, not another longjmp/static virgin-table decoder. Full Huffman/raw-deflate scan/corpus parity remains pending; no unsafe-distance option copied.
 
 ### PU850-ESP: `Tool/C++/puff.h`
@@ -5141,7 +5141,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Retained: Entire file/sections read through EOF: Entire Mark Adler license/version/NIL/prototype/input-output contract
 - Retained: Exact function dispositions are in the C# manifest/deflate slice of docs/PU850-PARITY.md.
 - Omitted/replaced code: `NIL/raw-deflate scan/prototype compatibility`. Disposition: **pending**. Reason: No puff code redistributed; original license retained in read-only donor, not relabeled MIT. Existing Node zlib is bounded decoder; raw-deflate scan/corpus parity needs real consumer/proof.
-- Test-code evidence: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b; anchor=const content=hash(raw).toUpperCase()]`.
+- Test-code evidence: `tests/firmware_manifest_test.mjs:10 [UTF8-LF sha256=0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776; anchor=const content=hash(raw).toUpperCase()]`.
 - Remaining: No puff code redistributed; original license retained in read-only donor, not relabeled MIT. Existing Node zlib is bounded decoder; raw-deflate scan/corpus parity needs real consumer/proof.
 
 ### PU850-ESP: `Tool/C++/README.md`

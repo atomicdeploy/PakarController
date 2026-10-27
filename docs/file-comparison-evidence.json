@@ -2748,7 +2748,7 @@
       "proof": [
         {
           "path": "tests/firmware_manifest_test.mjs",
-          "sha256": "13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b",
+          "sha256": "0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776",
           "anchor": "const content=hash(raw).toUpperCase()"
         }
       ],
@@ -3347,7 +3347,7 @@
         },
         {
           "path": "tests/firmware_manifest_test.mjs",
-          "sha256": "13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b",
+          "sha256": "0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776",
           "anchor": "const content=hash(raw).toUpperCase()"
         },
         {
@@ -3359,7 +3359,7 @@
       "proof": [
         {
           "path": "tests/firmware_manifest_test.mjs",
-          "sha256": "13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b",
+          "sha256": "0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776",
           "anchor": "const content=hash(raw).toUpperCase()"
         }
       ],
@@ -3628,7 +3628,7 @@
       "proof": [
         {
           "path": "tests/firmware_manifest_test.mjs",
-          "sha256": "13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b",
+          "sha256": "0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776",
           "anchor": "const content=hash(raw).toUpperCase()"
         }
       ],
@@ -3681,7 +3681,7 @@
       "proof": [
         {
           "path": "tests/firmware_manifest_test.mjs",
-          "sha256": "13344971c71fd41e84781673467003a181999106dccec9d4f4a5863eabd7546b",
+          "sha256": "0e23edb29deede8a2c9aade93fc8d997d59813ea4fc5781a643d9cc42dc68776",
           "anchor": "const content=hash(raw).toUpperCase()"
         }
       ],

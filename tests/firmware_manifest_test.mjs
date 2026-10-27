@@ -31,7 +31,9 @@ for(const path of [...owned,s3+'.gz',s3+'.gz.md5'])assert(!existsSync(path),'Une
 mkdirSync(resolve(fixture,'esp8266'),{recursive:true});mkdirSync(resolve(fixture,'esp32s3-buffered'),{recursive:true});
 try {
   const image=Buffer.alloc(96);image[0]=0xe9;writeFileSync(esp,image,{flag:'wx'});writeFileSync(s3,image,{flag:'wx'});
-  const artifacts=collectArtifacts(fixture,{compress:true});
+  assert.equal(collectArtifacts(fixture,{compress:true}).filter(row=>row.format==='gzip').length,0,
+    'Primary release collection must ignore the unfinished legacy image');
+  const artifacts=collectArtifacts(fixture,{compress:true,includeLegacy:true});
   assert.equal(artifacts.filter(row=>row.format==='gzip').length,1);
   const packaged=artifacts.find(row=>row.format==='gzip');assert.equal(packaged.path,'esp8266/esp8266.ino.bin.gz');
   assert.equal(validateFirmwareManifest(readFileSync(esp+'.gz'),readFileSync(esp+'.gz.md5','utf8'),'esp8266.ino.bin.gz').raw_md5,hash(image));
