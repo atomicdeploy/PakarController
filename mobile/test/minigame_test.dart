@@ -102,9 +102,22 @@ void main() {
           return true;
         }),
       );
-      expect(find.text('Waiting for minigame readiness.'), findsOneWidget);
+      expect(find.byKey(const ValueKey('key-layout-canvas')), findsOneWidget);
       expect(find.byKey(const ValueKey('game-key-drag-1')), findsNothing);
-      expect(find.byKey(const ValueKey('minigame-key-1')), findsNothing);
+      expect(
+        tester
+            .widget<GestureDetector>(
+              find.byKey(const ValueKey('minigame-key-1')),
+            )
+            .onTap,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const ValueKey('minigame-start')))
+            .onPressed,
+        isNull,
+      );
       expect(commands, isEmpty);
     },
   );
@@ -258,6 +271,8 @@ void main() {
           return values['action'] == 'down' ? down.future : true;
         }),
       );
+      await tester.ensureVisible(find.byKey(const ValueKey('minigame-key-1')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('minigame-key-1')));
       await tester.pumpAndSettle();
       expect(commands.single.$1, minigameInput);
@@ -289,10 +304,14 @@ void main() {
     }
 
     await tester.pumpWidget(fixture(miniStatus(), command));
+    await tester.ensureVisible(find.byKey(const ValueKey('minigame-key-3')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('minigame-key-3')));
     await tester.pumpAndSettle();
     expect(commands, isEmpty);
     await tester.pumpWidget(fixture(miniStatus(), command, connected: false));
+    await tester.ensureVisible(find.byKey(const ValueKey('minigame-key-1')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('minigame-key-1')));
     await tester.pumpAndSettle();
     expect(commands, isEmpty);

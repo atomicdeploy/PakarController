@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'minigame.dart';
 import 'models.dart';
 import 'workspace_widgets.dart';
+import 'key_box_designer.dart';
+import 'table_workspace.dart';
 
 typedef MiniGameCommand = Future<bool> Function(String, Map<String, String>);
 
@@ -16,11 +18,13 @@ class MiniGamePanel extends StatefulWidget {
     required this.connected,
     required this.command,
     required this.openBoxSettings,
+    required this.workspace,
   });
   final DeviceStatus status;
   final bool connected;
   final MiniGameCommand command;
   final VoidCallback openBoxSettings;
+  final TableWorkspace workspace;
   @override
   State<MiniGamePanel> createState() => _MiniGamePanelState();
 }
@@ -174,185 +178,280 @@ class _MiniGamePanelState extends State<MiniGamePanel>
 
   @override
   Widget build(BuildContext context) {
-    final snapshot = game;
-    final keySettings = widget.status.json['key_game'];
-    final enabled = keySettings is Map ? keySettings['enabled_mask'] : null;
+    final snapshot = game, colors = Theme.of(context).colorScheme;
     final seconds =
         snapshot.number(
           snapshot.json['timed'] == true ? 'remaining_ms' : 'elapsed_ms',
         ) /
         1000;
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const WorkspaceHeader(
-          title: 'Game',
-          icon: Icons.sports_esports_outlined,
-        ),
-        const SizedBox(height: 12),
-        InputDecorator(
-          decoration: const InputDecoration(labelText: 'Game mode'),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              key: const ValueKey('minigame-mode'),
-              value: snapshot.mode,
-              isExpanded: true,
-              items: [
-                for (final entry in snapshot.modes.entries)
-                  DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+    final phaseTone = snapshot.phase == 'success'
+        ? const Color(0xff38d996)
+        : snapshot.phase == 'failed' || snapshot.phase == 'timeout'
+        ? colors.error
+        : colors.primary;
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1240),
+        child: ListView(
+          key: const PageStorageKey('minigame-workspace-scroll'),
+          padding: const EdgeInsets.all(20),
+          children: [
+            WorkspaceHeader(
+              title: 'Game studio',
+              icon: Icons.sports_esports_outlined,
+              actions: [
+                WorkspaceBadge(
+                  snapshot.phase.replaceAll('-', ' '),
+                  active: widget.connected,
+                  icon: Icons.circle,
+                ),
               ],
-              onChanged: !ready
-                  ? null
-                  : (mode) {
-                      if (mode != null && mode != snapshot.mode) {
-                        unawaited(
-                          send(minigameConfigure, {
-                            'settings': jsonEncode({'mode': mode}),
-                          }),
-                        );
-                      }
-                    },
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 16,
-          runSpacing: 8,
-          children: [
-            Text(
-              'Phase: ${snapshot.phase}',
-              key: const ValueKey('minigame-phase'),
-            ),
-            Text(
-              '${snapshot.json['timed'] == true ? 'Remaining' : 'Elapsed'}: ${seconds.toStringAsFixed(1)} s',
-            ),
-            Text('Round: ${snapshot.number('round')}'),
-            Text('Progress: ${snapshot.number('progress')}'),
-            Text('Mistakes: ${snapshot.number('mistakes')}'),
-            if (snapshot.number('winner') > 0)
-              Text('Winner: ${snapshot.number('winner')}'),
-            if (snapshot.number('target') > 0)
-              Text('Target: ${snapshot.number('target')}'),
-            if (snapshot.number('warning') > 0)
-              Text(snapshot.number('warning') > 1 ? 'Urgent' : 'Time warning'),
-            if (snapshot.number('last_reaction_ms') > 0)
-              Text('Reaction: ${snapshot.number('last_reaction_ms')} ms'),
-            if (snapshot.number('best_reaction_ms') > 0)
-              Text('Best: ${snapshot.number('best_reaction_ms')} ms'),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final action in ['start', 'pause', 'resume', 'reset', 'stop'])
-              FilledButton.tonal(
-                key: ValueKey('minigame-$action'),
-                onPressed:
-                    ready &&
-                        switch (action) {
-                          'start' =>
-                            !snapshot.running && snapshot.phase != 'paused',
-                          'pause' => snapshot.running,
-                          'resume' => snapshot.phase == 'paused',
-                          _ => true,
-                        }
-                    ? () => send(minigameControl, {'action': action})
-                    : null,
-                child: Text('${action[0].toUpperCase()}${action.substring(1)}'),
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color.alphaBlend(
+                      colors.primary.withValues(alpha: .09),
+                      colors.surfaceContainerLow,
+                    ),
+                    colors.surfaceContainerLow,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: .18),
+                ),
               ),
-            OutlinedButton(
-              onPressed: ready ? settings : null,
-              child: const Text('Game settings'),
-            ),
-            TextButton(
-              onPressed: ready ? widget.openBoxSettings : null,
-              child: const Text('Enabled boxes'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        const Text('Tap a key, or press and hold.'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (var key = 1; key <= 9; key++)
-              Builder(
-                builder: (context) {
-                  final mask = 1 << (key - 1),
-                      active = enabled is int && enabled & mask != 0;
-                  final held = snapshot.number('held_mask') & mask != 0;
-                  final latched = snapshot.number('latched_mask') & mask != 0;
-                  return Semantics(
-                    button: true,
-                    label: 'Key $key',
-                    enabled: ready && active,
-                    child: GestureDetector(
-                      key: ValueKey('minigame-key-$key'),
-                      onTap: !ready || !active
-                          ? null
-                          : () => send(minigameInput, {
-                              'key': '$key',
-                              'action': 'tap',
-                            }),
-                      onLongPressStart: !ready || !active
-                          ? null
-                          : (_) => beginHold(key),
-                      onLongPressEnd: (_) => endHold(),
-                      onLongPressCancel: endHold,
-                      child: Container(
-                        width: 88,
-                        height: 88,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            width: held || latched ? 3 : 1,
-                            color: held || latched
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.outlineVariant,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 24,
+                    runSpacing: 16,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 320,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Game mode',
+                            prefixIcon: Icon(Icons.videogame_asset_outlined),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 4,
+                            ),
                           ),
-                        ),
-                        child: Opacity(
-                          opacity: active ? 1 : .35,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '$key',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall,
-                              ),
-                              if (held)
-                                const Text('Held')
-                              else if (latched)
-                                const Text('Latched'),
-                            ],
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              key: const ValueKey('minigame-mode'),
+                              value: snapshot.mode,
+                              isExpanded: true,
+                              isDense: true,
+                              borderRadius: BorderRadius.circular(16),
+                              items: [
+                                for (final entry in snapshot.modes.entries)
+                                  DropdownMenuItem(
+                                    value: entry.key,
+                                    child: Text(
+                                      entry.value,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                              onChanged: !ready
+                                  ? null
+                                  : (mode) {
+                                      if (mode != null &&
+                                          mode != snapshot.mode) {
+                                        unawaited(
+                                          send(minigameConfigure, {
+                                            'settings': jsonEncode({
+                                              'mode': mode,
+                                            }),
+                                          }),
+                                        );
+                                      }
+                                    },
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            snapshot.json['timed'] == true
+                                ? Icons.timer_outlined
+                                : Icons.av_timer,
+                            color: phaseTone,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 9),
+                          Flexible(
+                            child: Text(
+                              '${snapshot.json['timed'] == true ? 'Remaining' : 'Elapsed'}: ${seconds.toStringAsFixed(1)} s',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final action in [
+                        'start',
+                        'pause',
+                        'resume',
+                        'reset',
+                        'stop',
+                      ])
+                        FilledButton.tonalIcon(
+                          key: ValueKey('minigame-$action'),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(96, 42),
+                            backgroundColor: action == 'start'
+                                ? colors.primary
+                                : action == 'reset'
+                                ? colors.primary.withValues(alpha: .13)
+                                : colors.surfaceContainerHigh,
+                            foregroundColor: action == 'start'
+                                ? colors.onPrimary
+                                : action == 'reset'
+                                ? colors.primary
+                                : colors.onSurface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed:
+                              ready &&
+                                  switch (action) {
+                                    'start' =>
+                                      !snapshot.running &&
+                                          snapshot.phase != 'paused',
+                                    'pause' => snapshot.running,
+                                    'resume' => snapshot.phase == 'paused',
+                                    _ => true,
+                                  }
+                              ? () => send(minigameControl, {'action': action})
+                              : null,
+                          icon: Icon(switch (action) {
+                            'start' || 'resume' => Icons.play_arrow_rounded,
+                            'pause' => Icons.pause_rounded,
+                            'reset' => Icons.restart_alt_rounded,
+                            _ => Icons.stop_rounded,
+                          }, size: 20),
+                          label: Text(
+                            '${action[0].toUpperCase()}${action.substring(1)}',
+                          ),
+                        ),
+                      TextButton.icon(
+                        onPressed: ready ? settings : null,
+                        icon: const Icon(Icons.tune, size: 19),
+                        label: const Text('Game settings'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      WorkspaceBadge(
+                        'Round: ${snapshot.number('round')}',
+                        icon: Icons.flag_outlined,
+                      ),
+                      WorkspaceBadge(
+                        'Progress: ${snapshot.number('progress')}',
+                        icon: Icons.check_circle_outline,
+                      ),
+                      WorkspaceBadge(
+                        'Mistakes: ${snapshot.number('mistakes')}',
+                        icon: Icons.close_rounded,
+                      ),
+                      if (snapshot.number('winner') > 0)
+                        WorkspaceBadge(
+                          'Winner: ${snapshot.number('winner')}',
+                          active: true,
+                          icon: Icons.emoji_events_outlined,
+                        ),
+                      if (snapshot.number('target') > 0)
+                        WorkspaceBadge(
+                          'Target: ${snapshot.number('target')}',
+                          active: true,
+                          icon: Icons.my_location,
+                        ),
+                      if (snapshot.number('last_reaction_ms') > 0)
+                        WorkspaceBadge(
+                          'Reaction: ${snapshot.number('last_reaction_ms')} ms',
+                          icon: Icons.bolt,
+                        ),
+                      if (snapshot.number('best_reaction_ms') > 0)
+                        WorkspaceBadge(
+                          'Best: ${snapshot.number('best_reaction_ms')} ms',
+                          icon: Icons.speed,
+                        ),
+                      if (snapshot.number('warning') > 0)
+                        WorkspaceBadge(
+                          snapshot.number('warning') > 1
+                              ? 'Urgent'
+                              : 'Time warning',
+                          icon: Icons.timer_outlined,
+                        ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 3,
+                    child: pending
+                        ? const LinearProgressIndicator(minHeight: 2)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            KeyBoxDesigner(
+              status: widget.status,
+              workspace: widget.workspace,
+              enabled: ready,
+              onTap: (key) =>
+                  send(minigameInput, {'key': '$key', 'action': 'tap'}),
+              onHoldStart: beginHold,
+              onHoldEnd: endHold,
+              openSettings: widget.openBoxSettings,
+              inputKeyPrefix: 'minigame-key',
+            ),
+            if (!widget.connected)
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: Text('Reconnect to control the game.'),
+              ),
+            if (error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(error!, style: TextStyle(color: colors.error)),
               ),
           ],
         ),
-        if (!widget.connected) const Text('Reconnect to control the game.'),
-        if (pending) const LinearProgressIndicator(),
-        if (error != null)
-          Text(
-            error!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-      ],
+      ),
     );
   }
 }

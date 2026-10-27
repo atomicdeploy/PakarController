@@ -642,7 +642,7 @@ void main() {
       expect(
         tester
             .widget<FilterChip>(
-              find.widgetWithText(FilterChip, 'Arrange boxes'),
+              find.byKey(const ValueKey('key-designer-arrange')),
             )
             .selected,
         true,

@@ -9,7 +9,6 @@ import 'color_picker.dart';
 
 import 'icons.dart';
 import 'models.dart';
-import 'key_pixel_preview.dart';
 import 'peer_context.dart';
 import 'pixel_diagnostic.dart';
 import 'table_workspace.dart';
@@ -17,6 +16,7 @@ import 'workspace_widgets.dart';
 import 'led_backend.dart';
 import 'led_backend_control.dart';
 import 'minigame_panel.dart';
+import 'key_box_designer.dart';
 
 enum OutputPanelSection { output, game }
 
@@ -52,7 +52,7 @@ class OutputPanel extends StatefulWidget {
 
 class _OutputPanelState extends State<OutputPanel> {
   late final workspace = widget.workspace ?? TableWorkspace();
-  bool arranging = false, arrangingKeys = false, pending = false;
+  bool arranging = false, pending = false;
   final modes = <PeerMode>[];
   String? driver, outputMode;
   bool? outputEnabled;
@@ -123,9 +123,6 @@ class _OutputPanelState extends State<OutputPanel> {
       return 'Reconnect to control the game.';
     }
     if (pending) return 'A command is still pending.';
-    if (arrangingKeys) {
-      return 'Finish arranging boxes before triggering the game.';
-    }
     if (status.json['programming_latch'] == true) {
       return 'AVR programming is active.';
     }
@@ -176,48 +173,6 @@ class _OutputPanelState extends State<OutputPanel> {
     } finally {
       if (mounted) setState(() => pending = false);
     }
-  }
-
-  Future<void> boxActions(int key) async {
-    final owner = (
-      widget.status?.json['board_id'],
-      widget.status?.json['boot_id'],
-    );
-    final reason = gameBlockedReason(key);
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text('Box $key'),
-              subtitle: Text(reason ?? 'Ready to trigger'),
-            ),
-            ListTile(
-              leading: const Icon(PakarIcons.play),
-              title: const Text('Trigger box'),
-              enabled: reason == null,
-              onTap: () => Navigator.pop(context, 'trigger'),
-            ),
-            ListTile(
-              leading: const Icon(PakarIcons.arrowCounterClockwise),
-              title: const Text('Reset to white'),
-              enabled: gameBlockedReason() == null,
-              onTap: () => Navigator.pop(context, 'reset'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (!mounted || action == null) return;
-    if (owner !=
-        (widget.status?.json['board_id'], widget.status?.json['boot_id'])) {
-      explain('The connected board changed. Open the box actions again.');
-      return;
-    }
-    await gameCommand(action == 'trigger' ? key : null);
   }
 
   Future<void> send(
@@ -624,23 +579,6 @@ class _OutputPanelState extends State<OutputPanel> {
     return mask is int && mask & (1 << (key - 1)) != 0;
   }
 
-  Color keyColor(int key) {
-    final config = widget.status?.json['key_game'];
-    final winner = widget.status?.winner ?? 0;
-    final field = winner == 0
-        ? 'idle_rgb'
-        : winner == key
-        ? 'win_rgb'
-        : 'lose_rgb';
-    final fallback = winner == 0
-        ? 0xffffff
-        : winner == key
-        ? 0x00ff00
-        : 0xff0000;
-    final value = config is Map ? config[field] : null;
-    return Color(0xff000000 | (value is int ? value : fallback));
-  }
-
   Widget card(String id, int index) {
     final status = widget.status;
     final backend = status == null
@@ -680,182 +618,16 @@ class _OutputPanelState extends State<OutputPanel> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-          if (status?.peer.role == 'first-wins')
-            Row(
-              children: [
-                FilterChip(
-                  avatar: const Icon(Icons.open_with, size: 18),
-                  label: const Text('Arrange boxes'),
-                  selected: arrangingKeys,
-                  onSelected: (value) => setState(() => arrangingKeys = value),
-                ),
-                const SizedBox(width: 8),
-                if (arrangingKeys)
-                  TextButton.icon(
-                    icon: const Icon(Icons.restart_alt),
-                    label: const Text('Reset positions'),
-                    onPressed: () => setState(workspace.resetKeyPositions),
-                  ),
-              ],
-            ),
-          if (status?.peer.role == 'first-wins')
-            LayoutBuilder(
-              builder: (context, bounds) {
-                const size = 88.0, height = 300.0;
-                final width = bounds.maxWidth.isFinite
-                    ? bounds.maxWidth
-                    : 360.0;
-                final maxX = width > size ? width - size : 0.0;
-                const maxY = height - size;
-                return Container(
-                  key: const ValueKey('key-layout-canvas'),
-                  height: height,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: arrangingKeys
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).dividerColor,
-                    ),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      for (var key = 1; key <= 9; key++)
-                        AnimatedPositioned(
-                          key: ValueKey('game-key-position-$key'),
-                          duration: arrangingKeys
-                              ? Duration.zero
-                              : const Duration(milliseconds: 160),
-                          curve: Curves.easeOutCubic,
-                          left: workspace.keyPosition(key).dx * maxX,
-                          top: workspace.keyPosition(key).dy * maxY,
-                          width: size,
-                          height: size,
-                          child: Semantics(
-                            label: 'Key $key',
-                            selected: status?.winner == key,
-                            child: GestureDetector(
-                              key: ValueKey('game-key-drag-$key'),
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => gameCommand(key),
-                              onLongPress: () => boxActions(key),
-                              onPanUpdate: !arrangingKeys
-                                  ? null
-                                  : (details) {
-                                      final current = workspace.keyPosition(
-                                        key,
-                                      );
-                                      workspace.moveKey(
-                                        key,
-                                        Offset(
-                                          maxX == 0
-                                              ? 0
-                                              : current.dx +
-                                                    details.delta.dx / maxX,
-                                          current.dy + details.delta.dy / maxY,
-                                        ),
-                                      );
-                                      setState(() {});
-                                    },
-                              child: MouseRegion(
-                                cursor: arrangingKeys
-                                    ? SystemMouseCursors.move
-                                    : MouseCursor.defer,
-                                child: Opacity(
-                                  opacity: keyEnabled(key) ? 1 : 0.3,
-                                  child: AnimatedContainer(
-                                    key: ValueKey('game-key-$key'),
-                                    duration: const Duration(milliseconds: 120),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: Color.alphaBlend(
-                                        keyColor(key).withValues(alpha: 0.3),
-                                        Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainerHighest,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        width: arrangingKeys ? 2 : 3,
-                                        color: arrangingKeys
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .outlineVariant
-                                            : status?.peer.has('inputs') ==
-                                                      true &&
-                                                  (key <= 8
-                                                      ? ((status?.activeInputs ??
-                                                                    0) &
-                                                                (1 <<
-                                                                    (key -
-                                                                        1))) !=
-                                                            0
-                                                      : status?.json['input_9'] ==
-                                                            true)
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                            : Colors.transparent,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        if (arrangingKeys)
-                                          const Icon(
-                                            Icons.drag_indicator,
-                                            size: 16,
-                                          ),
-                                        Text(
-                                          '$key',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineSmall,
-                                        ),
-                                        for (var group = 0; group < 2; group++)
-                                          SizedBox(
-                                            height: 6,
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                for (final rgb
-                                                    in keyPixelGroup(
-                                                          status,
-                                                          key,
-                                                          group,
-                                                        ) ??
-                                                        const <int>[])
-                                                  Expanded(
-                                                    child: Container(
-                                                      height: 4,
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                            right: 1,
-                                                          ),
-                                                      color: Color(
-                                                        0xff000000 | rgb,
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                );
-              },
+          if (status?.peer.role == 'first-wins' && status != null)
+            KeyBoxDesigner(
+              status: status,
+              workspace: workspace,
+              enabled: gameBlockedReason() == null,
+              onTap: gameCommand,
+              onBlockedTap: gameCommand,
+              onReset: gameCommand,
+              openSettings: gameSettings,
+              blockedReason: gameBlockedReason(),
             ),
           if (modes.length > 1)
             Wrap(
@@ -1038,21 +810,19 @@ class _OutputPanelState extends State<OutputPanel> {
     final game = widget.section == OutputPanelSection.game;
     if (game &&
         widget.status?.json['minigame'] != null &&
-        (widget.status?.peer.minigame?.ready != true ||
-            widget.verifiedCommand == null)) {
+        widget.verifiedCommand == null) {
       return const Center(child: Text('Waiting for minigame readiness.'));
     }
     if (game &&
-        widget.status?.peer.minigame?.ready == true &&
+        widget.status?.peer.minigame != null &&
         widget.verifiedCommand != null) {
       return MiniGamePanel(
-        key: ValueKey(
-          'minigame-${widget.status!.json['board_id']}/${widget.status!.json['boot_id']}',
-        ),
+        key: ValueKey('minigame-${widget.status!.json['board_id']}'),
         status: widget.status!,
         connected: widget.connected,
         command: widget.verifiedCommand!,
         openBoxSettings: gameSettings,
+        workspace: workspace,
       );
     }
     final visibleCards = game
