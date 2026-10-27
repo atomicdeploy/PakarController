@@ -30,6 +30,8 @@ pub enum Command {
     Refresh,
     Fullscreen,
     About,
+    /// Opens the separately installed mini-app; never starts a round or connects a board.
+    Snake,
     Workspaces,
     Panel {
         name: String,
@@ -438,6 +440,9 @@ mod tests {
     }
     #[test]
     fn launch_requests_use_only_known_typed_commands() {
+        assert!(matches!(parse_command(br#"{"command":"snake"}"#), Ok(Command::Snake)));
+        assert!(parse_command(br#"{"command":"snake","start":true}"#).is_err());
+        assert!(matches!(crate::ui::shell::launch_command(&["--snake".into()]), Command::Snake));
         assert!(parse_command(br#"{"command":"cell_backgrounds","value":"on"}"#).is_ok());
         assert!(parse_command(br#"{"command":"cell_backgrounds","value":"off"}"#).is_ok());
         for bytes in [br#"{"command":"cell_backgrounds","value":"toggle"}"#.as_slice(),

@@ -380,11 +380,7 @@ String stagedAccessPassword;
 String stagedDeviceName;
 String stagedDisplayName;
 #if PAKAR_SNAKE_ENABLED
-uint8_t snakeBody[LedGrid::kCells] = {};
 uint8_t snakeLength = 0;
-uint8_t snakeFood = 0;
-uint8_t snakeDirection = 1;
-uint32_t lastSnakeAt = 0;
 bool snakeAlive = false;
 #else
 constexpr uint8_t snakeLength = 0;
@@ -2061,105 +2057,7 @@ bool authenticate() {
   return false;
 }
 
-#if PAKAR_SNAKE_ENABLED
-uint8_t snakeCell(uint8_t position) {
-  const uint8_t fromRight = position % 10U;
-  const uint8_t y = position / 10U;
-  return static_cast<uint8_t>(
-      fromRight * 8U + (fromRight % 2U == 0U ? 8U - y : y + 1U));
-}
-
-void renderSnake() {
-  grid.fill(kCellOff);
-  if (snakeFood < LedGrid::kCells) {
-    grid.setCell(snakeCell(snakeFood), kCellRed, kEffectImmediate);
-  }
-  for (uint8_t index = 0; index < snakeLength; ++index) {
-    grid.setCell(snakeCell(snakeBody[index]), kCellWhite, kEffectImmediate);
-  }
-}
-
-void placeSnakeFood() {
-  uint8_t candidate = static_cast<uint8_t>((snakeFood * 17U + 23U) % 80U);
-  for (uint8_t attempts = 0; attempts < 80; ++attempts) {
-    bool occupied = false;
-    for (uint8_t index = 0; index < snakeLength; ++index) {
-      if (snakeBody[index] == candidate) {
-        occupied = true;
-        break;
-      }
-    }
-    if (!occupied) {
-      snakeFood = candidate;
-      return;
-    }
-    candidate = static_cast<uint8_t>((candidate + 1U) % 80U);
-  }
-}
-
-void startSnake() {
-  snakeLength = 3;
-  snakeBody[0] = 44;
-  snakeBody[1] = 43;
-  snakeBody[2] = 42;
-  snakeFood = 7;
-  snakeDirection = 1;
-  snakeAlive = true;
-  lastSnakeAt = millis();
-  placeSnakeFood();
-  renderSnake();
-}
-
-bool setSnakeDirection(uint8_t direction) {
-  if (direction > 3 || (direction ^ 2U) == snakeDirection) return false;
-  snakeDirection = direction;
-  return true;
-}
-
-void serviceSnake(uint32_t now) {
-  if (mode != kModeSnake || !snakeAlive ||
-      static_cast<uint32_t>(now - lastSnakeAt) < 250U) {
-    return;
-  }
-  lastSnakeAt = now;
-  const int8_t x = static_cast<int8_t>(snakeBody[0] % 10U);
-  const int8_t y = static_cast<int8_t>(snakeBody[0] / 10U);
-  const int8_t nextX = x + (snakeDirection == 1 ? 1 : snakeDirection == 3 ? -1 : 0);
-  const int8_t nextY = y + (snakeDirection == 2 ? 1 : snakeDirection == 0 ? -1 : 0);
-  if (nextX < 0 || nextX >= 10 || nextY < 0 || nextY >= 8) {
-    snakeAlive = false;
-  }
-  const uint8_t next = static_cast<uint8_t>(nextY * 10 + nextX);
-  const bool eating = snakeAlive && next == snakeFood;
-  const uint8_t collisionLimit =
-      eating ? snakeLength : static_cast<uint8_t>(snakeLength - 1U);
-  for (uint8_t index = 0; snakeAlive && index < collisionLimit; ++index) {
-    if (snakeBody[index] == next) snakeAlive = false;
-  }
-  if (!snakeAlive) {
-    const uint8_t cue = kCueLost;
-    sendToAvr(kAudioCue, sequence++, &cue, 1);
-    grid.fill(kCellRed);
-    return;
-  }
-  if (eating && snakeLength < LedGrid::kCells) ++snakeLength;
-  for (uint8_t index = snakeLength - 1U; index > 0; --index) {
-    snakeBody[index] = snakeBody[index - 1U];
-  }
-  snakeBody[0] = next;
-  if (eating) {
-    const uint8_t cue = kCueIncrease;
-    sendToAvr(kAudioCue, sequence++, &cue, 1);
-    placeSnakeFood();
-  }
-  renderSnake();
-}
-
-#else
-void startSnake() {}
-bool setSnakeDirection(uint8_t) { return false; }
-void serviceSnake(uint32_t) {}
-#endif
+#include "src/SnakeService.h"
 
 const char *modeName() {
   switch (mode) {
@@ -2334,6 +2232,7 @@ String buildStatusJson(bool compact) {
   body += F(",\"mdns_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"winner\":"); body += winner;
   body += F(",\"selected_cell\":"); body += selectedCell;
+  body += F(",\"snake\":"); body += boardSnakeJson();
   body += F(",\"snake_alive\":"); body += snakeAlive ? F("true") : F("false");
   body += F(",\"snake_length\":"); body += snakeLength;
   body += F(",\"red_lock\":"); body += grid.redLock() ? F("true") : F("false");
@@ -2452,6 +2351,9 @@ String buildStatusJson(bool compact) {
   body += F("\",\"application\":"); body += applicationIdentityJson();
   body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"pixel-diagnostic-effects\",\"pixel-diagnostic-overlay\",\"pixel-group-layout\",\"panel-events\",\"usb-demand\",\"usb-pixel-diagnostic\"");
   body += F(",\"state-presentation\",\"host-presentation\"");
+#if PAKAR_SNAKE_ENABLED
+  body += F(",\"board-snake\"");
+#endif
   body += F(",\"managed-files\"");
 #if PAKAR_MICROSD_ENABLED
   body += F(",\"microsd-files\"");
@@ -2707,7 +2609,7 @@ String commandReply(const String &message,bool boundedDiagnostic) {
     const String id=PakarCommand::stringValue(object,"request_id");
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
-    const bool supported=command=="presentation"||command=="pixel-corrections-preview"||command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
+    const bool supported=command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
         command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell"||command=="cell-assignments"||command=="cell-lock"||command=="audio"||command=="buzzer"||command=="outputs";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
@@ -2722,7 +2624,7 @@ String commandReply(const String &message,bool boundedDiagnostic) {
         String result;
         entry->accepted=!programmingLatched && !otaActive && !otaRebootAt && !avrUploadOwner &&
             !remoteFirmware.busy() && !networkApplyPending && !cloudApplyPending && handleCloudCommand(message,result);
-        if(!entry->accepted&&(command=="presentation"||command=="pixel-corrections-preview"))reply["reason"]=result;
+        if(!entry->accepted&&(command=="snake"||command=="presentation"||command=="pixel-corrections-preview"))reply["reason"]=result;
         if(!entry->accepted)entry->failure=result==F("red_cells_locked")?BoardCore::CommandReceipts::RedCellsLocked:
             result==F("invalid_cell_assignments")?BoardCore::CommandReceipts::InvalidCellAssignments:
             result==F("unsupported_board_role")?BoardCore::CommandReceipts::UnsupportedBoardRole:
@@ -2775,6 +2677,9 @@ String commandReply(const String &message,bool boundedDiagnostic) {
   }
   if(reply["accepted"]==true&&request["command"]=="presentation"){
     JsonDocument details;if(!deserializeJson(details,presentationJson()))reply["presentation"]=details.as<JsonObjectConst>();
+  }
+  if(reply["accepted"]==true&&request["command"]=="snake"){
+    JsonDocument details;if(!deserializeJson(details,boardSnakeJson()))reply["snake"]=details.as<JsonObjectConst>();
   }
 #if PAKAR_PIXEL_CORRECTIONS
   if(reply["accepted"]==true&&request["command"]=="pixel-corrections-preview"){
@@ -3199,6 +3104,7 @@ bool handleCloudCommand(const String &message, String &result) {
 #endif
   }
   if(command=="shell-config"){result=shellStatusJson();return true;}
+  if(command=="snake")return boardSnakeCommand(commandRequest,result);
   if(command=="configure-shell")return updateShellConfiguration(commandRequest["settings"].as<JsonObjectConst>(),result);
   if (command=="cloud-config" || command=="network-config" || command=="ethernet-config" ||
       command=="configure-cloud" || command=="configure-network" || command=="configure-ethernet" || command=="device-identity") {
@@ -5214,6 +5120,7 @@ void setup() {
   upgradeLifecycle.boot(millis(),PAKAR_NETWORK_ENABLED!=0);
   uint32_t presentationSeed=0;SystemPlatform::randomBytes(&presentationSeed,sizeof(presentationSeed));
   hostPresentation.begin(LittleFS,filesystemMounted,presentationSeed);
+  beginBoardSnake(filesystemMounted);
   grid.setPresentation(&hostPresentation.model);
   PakarConfiguration::changes().reset(); // Initial load/migration is not a user settings event.
   if (grid.outputEnabled()) {

@@ -32,7 +32,7 @@ int main() {
   assert(!(features(true, 0, true, true, true) & (Display | Text | Buzzer)));
   if (PAKAR_TABLE_ENABLED) {
     assert((live & Table)); assert(bool(live & CellBatch)==bool(PAKAR_TABLE_SELECTION));
-    assert((modes(live) & 8) == (PAKAR_SNAKE_ENABLED ? 8 : 0));
+    assert((modes(live) & 8) == 0); // Hidden presentation, never a business/menu mode.
     assert(strcmp(name(14),"cell-batch")==0);
     assert((modes(live) & 4) == (PAKAR_FIRST_WINS_ENABLED ? 4 : 0));
     assert(modes(live)==(1U<<BoardCore::GameRole::mode));

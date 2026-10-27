@@ -8,11 +8,12 @@ param(
     [string]$Pu850Root = (Join-Path $PSScriptRoot '..\..\repos\pu850-esp'),
     [string]$RayanLampRoot = 'C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp',
     [string]$Esp32Ws2811Root = (Join-Path $PSScriptRoot '../../repos/esp32WS2811'),
+    [string]$DrsSnakeRoot = 'I:\HTML Projects\My Scripts\Test-Cat\JSNake',
     [string]$DecisionsPath,
     [string]$EvidencePath,
     [string]$ComparisonPath=(Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
     [string]$OutputPath,
-    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp','esp32WS2811','portable-shell')]
+    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp','esp32WS2811','portable-shell','DRS-jSnake')]
     [string]$OnlyOrigin
 )
 
@@ -131,6 +132,11 @@ $rows = [System.Collections.Generic.List[object]]::new()
 if ($OnlyOrigin) {
     if (-not (Test-Path -LiteralPath $OutputPath)) { throw 'Selective refresh requires the existing complete ledger.' }
     foreach ($row in (Import-Csv -LiteralPath $OutputPath | Where-Object origin -ne $OnlyOrigin)) { $rows.Add($row) }
+}
+
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'DRS-jSnake') {
+    $snakeFiles=Get-ChildItem -LiteralPath $DrsSnakeRoot -Recurse -File | ForEach-Object { $_.FullName.Substring($DrsSnakeRoot.Length).TrimStart('\','/').Replace('\','/') }
+    Add-LedgerRows -Rows $rows -Origin 'DRS-jSnake' -Root $DrsSnakeRoot -Revision 'filesystem-snapshot' -RelativePaths $snakeFiles
 }
 
 if (-not $OnlyOrigin -or $OnlyOrigin -eq 'RayanLamp') {

@@ -20,7 +20,9 @@ pub fn launch_command(args: &[String]) -> Command {
             .filter(|v| !v.starts_with("--"))
             .cloned()
     };
-    if args.iter().any(|v| v == "--wifi") {
+    if args.iter().any(|v| v == "--snake") {
+        Command::Snake
+    } else if args.iter().any(|v| v == "--wifi") {
         Command::UseWifi {
             endpoint: option("--endpoint"),
         }
@@ -759,6 +761,7 @@ impl PakarControllerApp {
             Command::NotificationTest => self.notification_test(),
             Command::Connect => self.show_connection = true,
             Command::About => self.show_about = true,
+            Command::Snake => ctx.open_url(egui::OpenUrl::new_tab("http://127.0.0.1:18490/snake")),
             Command::Workspaces => self.show_workspaces = true,
             Command::CellManager => {
                 if !self.has_table() {

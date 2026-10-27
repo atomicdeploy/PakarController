@@ -23,6 +23,7 @@ param(
     [switch] $DisableSerialShell,
     [switch] $DisableTelnet,
     [switch] $EnableUdpDiagnostics,
+    [switch] $BoardSnake,
     [switch] $DisableNetworking,
     [ValidateSet('enabled','disabled')] [string] $PixelCorrections = 'enabled',
     [switch] $DisablePeerVersionChecks,
@@ -43,6 +44,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if($BoardSnake -and ($Target -ne 'esp32s3' -or $GameMode -ne 'table-selection')) { throw 'Board Snake is opt-in for ESP32-S3 table builds only.' }
 if ($S3MicroSd -and ($Target -ne 'esp32s3' -or $S3SdClk -eq -1 -or $S3SdCmd -eq -1 -or $S3SdD0 -eq -1 -or @(@($S3SdClk,$S3SdCmd,$S3SdD0) | Select-Object -Unique).Count -ne 3)) { throw 'microSD requires ESP32-S3 and three explicit, distinct reviewed SD_MMC pins.' }
 if (-not $S3MicroSd -and ($S3SdClk -ne -1 -or $S3SdCmd -ne -1 -or $S3SdD0 -ne -1)) { throw 'SD pins require the explicit -S3MicroSd opt-in.' }
 if ($InitializeFilesystem) { throw 'Commissioning auto-format builds are retired. Build normal firmware and use tools/initialize-device-filesystem.ps1 for explicit, erased-partition-only USB initialization.' }
@@ -239,6 +241,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         }
         $ledProfile.Content += "#define PAKAR_NETWORK_ENABLED $(if($DisableNetworking){0}else{1})`n"
         $ledProfile.Content += "#define PAKAR_REMOTE_QUERY_UDP_ENABLED $(if($EnableUdpDiagnostics){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_BOARD_SNAKE $(if($BoardSnake){1}else{0})`n"
         $ledProfile.Content += "#define PAKAR_MICROSD_ENABLED $(if($S3MicroSd){1}else{0})`n"
         if($S3MicroSd){$ledProfile.Content += "#define PAKAR_SD_CLK $S3SdClk`n#define PAKAR_SD_CMD $S3SdCmd`n#define PAKAR_SD_D0 $S3SdD0`n"}
         $ledProfile.Content += "#define PAKAR_AVR_RECOVERY_IMAGE_AVAILABLE $(if($recoveryBytes){1}else{0})`n"

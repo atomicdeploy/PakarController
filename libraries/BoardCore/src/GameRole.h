@@ -12,7 +12,13 @@
 #endif
 #define PAKAR_TABLE_SELECTION (PAKAR_GAME_MODE == 1)
 #define PAKAR_FIRST_WINS_ENABLED (PAKAR_GAME_MODE == 2)
-#define PAKAR_SNAKE_ENABLED 0
+#ifndef PAKAR_BOARD_SNAKE
+#define PAKAR_BOARD_SNAKE 0
+#endif
+#if PAKAR_BOARD_SNAKE && !PAKAR_TABLE_SELECTION
+#error "Board Snake is excluded from first-wins/keycontroller builds"
+#endif
+#define PAKAR_SNAKE_ENABLED (PAKAR_TABLE_SELECTION && PAKAR_BOARD_SNAKE)
 namespace BoardCore { namespace GameRole {
 constexpr uint8_t mode = PAKAR_GAME_MODE;
 constexpr const char *name = PAKAR_TABLE_SELECTION ? "table-selection" : "first-wins";

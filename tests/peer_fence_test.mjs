@@ -14,7 +14,7 @@ assert.match(firmware,/webAccess.configurePeerFence\(pcBoardId,\s*pcBootId,\s*ho
 assert.doesNotMatch(firmware,/webAccess.configurePeerFence\(hostname,/,
   'A configurable hostname must not replace the stable board identity');
 assert.match(firmware,/http_peer_fencing/);
-const dispatchAuth = firmware.slice(firmware.indexOf('bool authenticate()'),firmware.indexOf('uint8_t snakeCell('));
+const dispatchAuth = firmware.slice(firmware.indexOf('bool authenticate()'),firmware.indexOf('#include "src/SnakeService.h"'));
 assert.match(dispatchAuth,/!webAccess.peerAllowed\(server.request\(\)\)/,
   'Recheck the actual async continuation at loop dispatch before hardware access');
 const probe = firmware.slice(firmware.indexOf('server.on("/api/avr/probe"'),firmware.indexOf('server.on("/api/avr/backup"'));

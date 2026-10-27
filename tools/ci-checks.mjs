@@ -57,6 +57,7 @@ export const phases={
     ["node", "tests/web_appearance_mount_test.mjs"],
     ["node", "tests/web_state_presentation_test.mjs"],
     ["pwsh", "-File", "tools/test-host-presentation.ps1"],
+    ["pwsh", "-File", "tools/test-snake.ps1"],
     ["node", "tests/web_cell_assignments_test.mjs"],
     ["pwsh", "-NoProfile", "-File", "tools/test-game-role.ps1"],
     ["node", "tests/esp_front_panel_wiring_test.mjs"],

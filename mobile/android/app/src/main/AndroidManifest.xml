@@ -40,6 +40,17 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Hidden external mini-app launcher. No game code or startup actuation in Flutter. -->
+        <activity android:name=".SnakeLauncherActivity" android:exported="true"
+            android:excludeFromRecents="true" android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="pakarcontroller" android:host="mini-app" android:path="/snake" />
+            </intent-filter>
+        </activity>
         <receiver android:name=".AppUpdateResultReceiver" android:exported="false" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

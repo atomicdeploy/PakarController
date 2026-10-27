@@ -1515,7 +1515,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn draw_table(",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6"
         }
       ],
       "proof": [
@@ -1552,7 +1552,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn table_scene_fits_small_dock_and_zooms_at_pointer()",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6"
         }
       ],
       "omissions": [
@@ -1683,7 +1683,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "egui::Scene::new()",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6"
         }
       ],
       "proof": [
@@ -2331,7 +2331,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -2378,7 +2378,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -2928,7 +2928,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         },
         {
@@ -2981,7 +2981,7 @@
       "targets": [
         {
           "path": "libraries/BoardCore/src/GameRole.h",
-          "sha256": "4a5bf5ba0ec114f336c5002d3d3c26edc970e13fc07a73cfa4ffec5619471202",
+          "sha256": "d8e5d603f3669b68c40ef697e4e87744daa0ca9f029dbfd723dc690bb9749315",
           "anchor": "#ifndef PAKAR_GAME_MODE"
         },
         {
@@ -3042,7 +3042,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -3089,7 +3089,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -3171,7 +3171,7 @@
       "targets": [
         {
           "path": "libraries/BoardCore/src/GameRole.h",
-          "sha256": "4a5bf5ba0ec114f336c5002d3d3c26edc970e13fc07a73cfa4ffec5619471202",
+          "sha256": "d8e5d603f3669b68c40ef697e4e87744daa0ca9f029dbfd723dc690bb9749315",
           "anchor": "#ifndef PAKAR_GAME_MODE"
         }
       ],
@@ -8038,7 +8038,7 @@
         {
           "path": "mobile/android/app/src/main/AndroidManifest.xml",
           "anchor": "REQUEST_INSTALL_PACKAGES",
-          "sha256": "d6b34f69c5fccf910172119ad972a479a8d48a2ba7861d351f79e440d156ca0b"
+          "sha256": "826b3338c79b4752cca4768caf5264b548e5967df4aa3da473485d84adf8f43d"
         },
         {
           "path": "mobile/android/app/src/main/kotlin/ir/digitalogic/pakar/pakarcontroller/MainActivity.kt",
@@ -8242,7 +8242,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "value[\"pixel_preview\"]"
         },
         {
@@ -9613,7 +9613,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -9664,7 +9664,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -11128,7 +11128,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a"
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6"
         }
       ],
       "omissions": [
@@ -12580,7 +12580,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -13082,7 +13082,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -13140,7 +13140,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd"
         }
       ],
       "omissions": [
@@ -13201,7 +13201,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13217,7 +13217,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -13532,7 +13532,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -13583,7 +13583,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -14579,7 +14579,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -15009,7 +15009,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15334,7 +15334,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd",
           "anchor": "bool authenticate()"
         },
         {
@@ -15473,7 +15473,7 @@
         },
         {
           "path": "tests/peer_fence_test.mjs",
-          "sha256": "7f50838e49170c25a05ff35bd05eb730e070c4550cd9faae17850865f54c8767",
+          "sha256": "09291cb48a20e945aef09f5176eb9089db1bf7440fc45deb73daf9e832a456c4",
           "anchor": "Upload callbacks precede middleware"
         },
         {
@@ -15687,7 +15687,7 @@
         },
         {
           "path": "tests/peer_fence_test.mjs",
-          "sha256": "7f50838e49170c25a05ff35bd05eb730e070c4550cd9faae17850865f54c8767",
+          "sha256": "09291cb48a20e945aef09f5176eb9089db1bf7440fc45deb73daf9e832a456c4",
           "anchor": "Upload callbacks precede middleware"
         },
         {
@@ -16037,7 +16037,7 @@
           "path": "desktop/src/ui/device_settings.rs"
         },
         {
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "super::dropdown::ComboBox",
           "path": "desktop/src/ui/shell.rs"
         },
@@ -17750,7 +17750,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "f206fcd501e46c9bb5ee6db96167bca4871c450dfcad79a570f519b7c1a451de",
+          "sha256": "91985edcf7cf94cba605f19ddd324992e6a4e8d8a9dad4f08399338dcee7e93b",
           "anchor": "export function runChecks"
         },
         {
@@ -18030,12 +18030,12 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "fn save_status_bar_preferences("
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "let firmware_progress = self.firmware_observation().filter(|p| p.active);"
         },
         {
@@ -18231,7 +18231,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
@@ -18288,7 +18288,7 @@
         },
         {
           "path": "tests/device_context_test.cpp",
-          "sha256": "641d5b37785aed48b4e3b141735622e9c8463a8127e929b17ce4c8a2844a5265",
+          "sha256": "60d085c8a02ea52a3aa88875f24e22387ef9dd41415f9847127207fad0e535a3",
           "anchor": "int main("
         },
         {
@@ -18333,7 +18333,7 @@
         },
         {
           "path": "tests/device_context_test.cpp",
-          "sha256": "641d5b37785aed48b4e3b141735622e9c8463a8127e929b17ce4c8a2844a5265",
+          "sha256": "60d085c8a02ea52a3aa88875f24e22387ef9dd41415f9847127207fad0e535a3",
           "anchor": "int main("
         },
         {
@@ -18365,7 +18365,7 @@
         },
         {
           "path": "tests/device_context_test.cpp",
-          "sha256": "641d5b37785aed48b4e3b141735622e9c8463a8127e929b17ce4c8a2844a5265",
+          "sha256": "60d085c8a02ea52a3aa88875f24e22387ef9dd41415f9847127207fad0e535a3",
           "anchor": "int main("
         }
       ],
@@ -18390,7 +18390,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "fn synchronize_context("
         },
         {
@@ -18824,7 +18824,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -19332,7 +19332,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "crate::application_shortcuts::take_action"
         }
       ],
@@ -19838,7 +19838,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -19919,7 +19919,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "icons::searchable_workspace_icon_picker"
         },
         {
@@ -22642,7 +22642,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "value[\"tray_shell\"]"
         },
         {
@@ -22801,7 +22801,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6"
         }
       ],
       "omissions": [
@@ -22893,7 +22893,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -23763,12 +23763,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -23823,7 +23823,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "fn send_pixel_probe("
         },
         {
@@ -23844,7 +23844,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -24070,12 +24070,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80",
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "ad77655fc7fe006e27383d80368b401c740cb208652926b43d0a4f3fc1cd660a",
+          "sha256": "310663f802194b34e90f1e88a18ee0c243b323bbfcd809319203652920e4a7d6",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -24125,7 +24125,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6",
           "anchor": "fn send_pixel_probe("
         },
         {
@@ -24146,7 +24146,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "7b1d7cf12173a802dad90ba9586ebf704853d502de70a682ead8ae6fff38dc80"
+          "sha256": "85a8f3f018555051a7001ea15778a19580973577fa3bb15c781fd9daa99a06bd"
         }
       ],
       "omissions": [
@@ -24335,7 +24335,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
+          "sha256": "7e97a1300e7b408228e8b4cd3a040dcd833721cf1d0cb9a450b81823e14e77a6"
         },
         {
           "path": "desktop/src/ui/layout.rs",
@@ -24891,6 +24891,646 @@
       "remaining": [
         "Actual Windows NBNS name/node-status and all-netif overlap/rename tests require deployment. Actual W5500 wiring/link/LLDP-switch visibility, Ethernet-only API/WebSocket/OTA/cloud and unplug/replug acceptance remain open; host doubles and an SDK build are not physical proof.",
         "Source provenance for the LLDP shim is the installed Arduino3.3.12/IDF5.5.5 native glue and W5500 driver: standard input callback preserved exactly, TCPIP-thread TX, explicit opt-in promiscuous RX because hardware MAC filtering rejects LLDP multicast. No arbitrary raw-frame API, layer2 bridge or router capability is advertised."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "DRS-JSnake-2Players.html",
+      "sha256": "613d1d9a07d4af97e2380ed9b3994850232bab8c2c07ed68aa58197c2c4f1810",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "DRS-JSnake-2Players.html",
+          "reason": "Independent second snake is pending, not replaced with shared controls."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "DRS-JSnake-Orientation.html",
+      "sha256": "063e59c918d9130e29e6956e737b0f73682ae3b7871ccaf0c7039c27ae5aad17",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "DRS-JSnake-Orientation.html",
+          "reason": "Permission-gated device orientation input is pending; touch, keyboard and D-pad work."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "DRS-JSnake-Readme.txt",
+      "sha256": "37c51e714cc0ec35488192deb84354e3732493d9d3d39687309af87afb999e00",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "DRS-JSnake-Readme.txt",
+          "reason": "Two-player, tilt and larger host-only maps remain pending under issue 30; no whole-donor parity is claimed."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "DRS-JSnake.html",
+      "sha256": "c031519a7d02a5353085de4e9923b40bc050515ec92c275a9d8e38c24bb58e12",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "DRS-JSnake.html",
+          "reason": "Two-player, tilt and larger host-only maps remain pending under issue 30; no whole-donor parity is claimed."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "jsnake-codes.txt",
+      "sha256": "0ef664001312d670e216a8441cc10663de9f3210aef0ae131ab97b504aad3fc2",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "jsnake-codes.txt",
+          "reason": "Two-player, tilt and larger host-only maps remain pending under issue 30; no whole-donor parity is claimed."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "JSnake-Demo.html",
+      "sha256": "97d1ceb64436992c8beb72144a08965b26d078b96f8a132dbf56c6ffcd39cc69",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "JSnake-Demo.html",
+          "reason": "Two-player, tilt and larger host-only maps remain pending under issue 30; no whole-donor parity is claimed."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "jsnake-demo/jsnake-demo.png",
+      "sha256": "17b99e642aaa514327fbd3d68aa4708f93c07b0a84b8425e0b44aa873b8cc01a",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "jsnake-demo/jsnake-demo.png",
+          "reason": "Historical screenshot was visually inspected; responsive Canvas reuses tile semantics rather than embedding old screenshots as controls."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "jsnake-demo/jsnake-demo2.png",
+      "sha256": "b1a1c56f337b8d5d8b8b58b7288e1c58cbc429824c9448f96cc0195c13e1a687",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "jsnake-demo/jsnake-demo2.png",
+          "reason": "Historical screenshot was visually inspected; responsive Canvas reuses tile semantics rather than embedding old screenshots as controls."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "jsnake-demo/jsnake-thumb.png",
+      "sha256": "81deddae6f0f2cb3f3ec870b1842fa41e7f3a6b59ebcbd1832d97a28a5cea57b",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "jsnake-demo/jsnake-thumb.png",
+          "reason": "Historical screenshot was visually inspected; responsive Canvas reuses tile semantics rather than embedding old screenshots as controls."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "jsnake-map2.txt",
+      "sha256": "3a736a7cabdb4139f20c2eab93e8e6152357b717c1d3d3db2bb11308af377ce8",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "jsnake-map2.txt",
+          "reason": "Large donor maps cannot be silently cropped into the 80-cell board; larger host-only map projection remains pending."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "Maps/JSN-Map-1.html",
+      "sha256": "b95c7f2b59b73fc5de05f53668eb815dd81d7ba7a819407f44c18c2d42d30441",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "Maps/JSN-Map-1.html",
+          "reason": "Large donor maps cannot be silently cropped into the 80-cell board; larger host-only map projection remains pending."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "net/backend.php",
+      "sha256": "02f8f209b32741587c0547049be1fcdd03fe422f4e76addb635f9237664af198",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "net/backend.php",
+          "reason": "Unauthenticated PHP shared-file polling is replaced by local token-gated JSON and shared event-stream state; Internet multiplayer hosting remains pending."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "net/DRS-JSnake-NET.html",
+      "sha256": "c954f3f78aeabd18dbf4760483ba0c19f3967229b1fdf9c8792eb7d1a2871d46",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "net/DRS-JSnake-NET.html",
+          "reason": "Unauthenticated PHP shared-file polling is replaced by local token-gated JSON and shared event-stream state; Internet multiplayer hosting remains pending."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "Server/DRS-JSnake-Client.html",
+      "sha256": "cf3502c1ac6264fc2dbaa98683ea73fd0fa6f5a046b44eb6fda884460182a732",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "Server/DRS-JSnake-Client.html",
+          "reason": "Unauthenticated PHP shared-file polling is replaced by local token-gated JSON and shared event-stream state; Internet multiplayer hosting remains pending."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "Server/DRS-JSnake-Server.html",
+      "sha256": "3ec3f5910944de2e487cf97ae4a59f48967eedad93847dcddebacd45f49cec81",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "Server/DRS-JSnake-Server.html",
+          "reason": "Unauthenticated PHP shared-file polling is replaced by local token-gated JSON and shared event-stream state; Internet multiplayer hosting remains pending."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "DRS-jSnake",
+      "path": "Server/jsnake_sync.php",
+      "sha256": "556dde64ecc8b9b6af17afa2c275ed9b3d0533b0fc5735b46f160abe5157ee8b",
+      "source_revision": "filesystem-snapshot",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+      ],
+      "targets": [
+        {
+          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "path": "mini-apps/snake/README.md",
+          "anchor": "# DRS Snake"
+        },
+        {
+          "sha256": "529be1971b5fa379d4f2eb9eb1147fe67d153ae9777e6ffa8a5ab59722e38bd6",
+          "path": "mini-apps/snake/engine.mjs",
+          "anchor": "export class Snake"
+        }
+      ],
+      "proof": [
+        {
+          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "path": "tests/snake_host_test.mjs",
+          "anchor": "80 table addresses are bijective"
+        }
+      ],
+      "omissions": [
+        {
+          "disposition": "pending",
+          "code": "Server/jsnake_sync.php",
+          "reason": "Unauthenticated PHP shared-file polling is replaced by local token-gated JSON and shared event-stream state; Internet multiplayer hosting remains pending."
+        }
+      ],
+      "remaining": [
+        "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
       ]
     }
   ]
