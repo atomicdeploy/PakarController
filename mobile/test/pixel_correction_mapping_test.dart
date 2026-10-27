@@ -169,6 +169,7 @@ Future<GlobalKey<PixelCorrectionsPageState>> open(
           api: api,
           busyChanged: (_) {},
           mapping: () => null,
+          livePreviewInitiallyEnabled: false,
         ),
       ),
     ),

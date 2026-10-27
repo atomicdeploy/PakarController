@@ -72,7 +72,7 @@ const receipts=new Map();
 function fixtureCommand(packet){
   if(packet?.board_id!==status.board_id||packet?.boot_id!==status.boot_id)throw Error('peer_changed');
   if(!/^[a-f0-9]{32}$/.test(packet.request_id||''))throw Error('invalid_request_id');
-  const feature={cells:'cell-batch','game-press':'game-press',reset:'reset-ack','cell-lock':'cell-lock','pixel-diagnostic':'pixel-diagnostic',effect:'leds'}[packet.command];
+  const feature={cells:'cell-batch','game-press':'game-press',reset:'reset-ack','cell-lock':'cell-lock','pixel-diagnostic':'pixel-diagnostic','state-presentation':'state-presentation',effect:'leds'}[packet.command];
   if(!feature||!status.capabilities?.acknowledged_features.includes(feature))throw Error('fixture_command_unavailable');
   const prior=receipts.get(packet.request_id);if(prior){if(prior.packet!==JSON.stringify(packet))throw Error('request_id_conflict');return prior.receipt;}
   const now=Date.now()-started+100;if(!Number.isSafeInteger(packet.expires_at_ms)||packet.expires_at_ms<now||packet.expires_at_ms>now+10000)throw Error('command_expired');
@@ -92,6 +92,19 @@ function fixtureCommand(packet){
     case 'pixel-diagnostic': {
       if(!Number.isInteger(packet.index)||!Number.isInteger(packet.count)||packet.index<0||packet.count<1||packet.index+packet.count>status.pixels||!Number.isInteger(packet.rgb)||packet.rgb<0||packet.rgb>0xffffff)throw Error('invalid_pixel');
       status.led_output.diagnostic={revision:status.led_output.diagnostic.revision+1,active:true,index:packet.index,count:packet.count,rgb:packet.rgb,off:packet.off===true};break;
+    }
+    case 'state-presentation': {
+      const settings=packet.settings;
+      if(!settings||typeof settings!=='object')throw Error('invalid_settings');
+      for(const key of ['fade_ms','pulse_ms','ring_ms','chase_ms'])if(key in settings){if(!Number.isInteger(settings[key])||settings[key]<0||settings[key]>65535)throw Error('invalid_timing');status.state_presentation[key]=settings[key];}
+      if('enabled' in settings)status.state_presentation.enabled=settings.enabled===true;
+      for(const [key,value] of Object.entries(settings.states||{})){
+        if(!['idle','won','lost','off'].includes(key)||!value||typeof value!=='object')throw Error('invalid_state');
+        if('motion' in value&&(!Number.isInteger(value.motion)||value.motion<0||value.motion>3))throw Error('invalid_motion');
+        if('rgb' in value&&(!Number.isInteger(value.rgb)||value.rgb<0||value.rgb>0xffffff))throw Error('invalid_rgb');
+        Object.assign(status.state_presentation.states[key],value);
+      }
+      break;
     }
     case 'effect':if(!['rainbow','none'].includes(packet.value))throw Error('invalid_effect');status.effect=packet.value;break;
     default:throw Error('fixture_command_unavailable');

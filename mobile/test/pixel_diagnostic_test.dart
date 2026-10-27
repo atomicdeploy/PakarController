@@ -36,6 +36,7 @@ void main() {
       );
       expect(workspace.probe.first, 474);
       expect(workspace.snapshot(), {
+        'correction_live_preview': true,
         'index': 479,
         'group': true,
         'rgb': 0x1234ab,

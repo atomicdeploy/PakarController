@@ -2,6 +2,16 @@
 // credentials, requested text, remote URLs or uploaded payloads in an error.
 String commandFailureMessage({Object? error, int? httpStatus}) {
   const reasons = <String, String>{
+    'corrections_preview_owned': 'Another editor owns the correction preview',
+    'corrections_preview_expired':
+        'The correction preview expired; reopen it before editing',
+    'corrections_conflict': 'Saved corrections changed; reload before editing',
+    'invalid_corrections':
+        'The correction rules contain invalid addresses or values',
+    'invalid_preview_lease': 'The correction preview lease is invalid',
+    'invalid_preview_ttl':
+        'The correction preview duration is outside its safe limit',
+    'avr_outcome_unknown': 'The AVR did not acknowledge before the deadline; inspect its state before issuing another command',
     'capability_not_acknowledged':
         'This board has not acknowledged this feature',
     'unsupported_command': 'The board does not support this command',

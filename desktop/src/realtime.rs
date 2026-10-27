@@ -15,6 +15,7 @@ pub struct Intent {
     pub batch: Option<cell_batch::Correlation>,
     pub at: Instant,
     pub pixel_request: Option<u64>,
+    pub correction_request: Option<crate::pixel_corrections::PreviewRequest>,
     path: &'static str,
     form: Vec<(String, String)>,
 }
@@ -24,6 +25,10 @@ pub fn supported(status: &DeviceStatus, path: &str) -> bool {
             .capabilities
             .as_ref()
             .is_some_and(|c| c.has("reset-ack")))
+        && (path != crate::pixel_corrections::PREVIEW_PATH || status.capabilities.as_ref()
+            .is_some_and(|c|c.has(crate::pixel_corrections::PREVIEW_COMMAND_FEATURE)))
+        && (!matches!(path,"/api/audio"|"/api/buzzer"|"/api/outputs") || status.avr_online
+            && status.capabilities.as_ref().is_some_and(|c|c.has("avr-command-ack")))
         && status.command_clock_ms.is_some()
         && status
             .capabilities
@@ -45,7 +50,16 @@ pub fn supported(status: &DeviceStatus, path: &str) -> bool {
                 | "/api/brightness"
                 | "/api/led/output"
                 | "/api/led/diagnostic"
+                | "/api/audio"
+                | "/api/buzzer"
+                | "/api/outputs"
+                | crate::pixel_corrections::PREVIEW_PATH
         )
+}
+
+pub struct VerifiedReceipt {
+    pub status: DeviceStatus,
+    pub corrections: Option<crate::pixel_corrections::Configuration>,
 }
 
 pub fn older_than(value: &DeviceStatus, current: Option<&DeviceStatus>) -> bool {
@@ -88,6 +102,20 @@ impl Intent {
             return Err("Command owner retired".into());
         }
         let id = uuid::Uuid::new_v4().simple().to_string();
+        let correction_request = if path == crate::pixel_corrections::PREVIEW_PATH {
+            Some(crate::pixel_corrections::PreviewRequest::from_form(status,&form)?)
+        } else { None };
+        if matches!(path,"/api/audio"|"/api/buzzer"|"/api/outputs") {
+            let get=|name:&str|form.iter().find(|(key,_)|key==name).map(|(_,value)|value.as_str());
+            let valid=match path {
+                "/api/audio"=>form.len()==1 && get("cue").is_some_and(|cue|status.audio_cues.iter().any(|available|available==cue)),
+                "/api/buzzer"=>form.len()==2 && get("frequency").is_some_and(|value|value.parse::<u16>().is_ok_and(|hz|(20..=12000).contains(&hz)))
+                    && get("duration_ms").is_some_and(|value|value.parse::<u16>().is_ok_and(|ms|(1..=5000).contains(&ms))),
+                "/api/outputs"=>form.len()==1 && get("mask").is_some_and(|value|value.parse::<u8>().is_ok()),
+                _=>false,
+            };
+            if !valid {return Err("Invalid or unadvertised AVR command; nothing sent".into());}
+        }
         if path == "/api/game/press" && (form.len() != 1 || form[0].0 != "key"
             || !form[0].1.parse::<u8>().is_ok_and(|key| (1..=9).contains(&key))) {
             return Err("Invalid key press".into());
@@ -150,12 +178,18 @@ impl Intent {
             "/api/mode" => "mode",
             "/api/brightness" => "brightness",
             "/api/led/diagnostic" => "pixel-diagnostic",
+            "/api/audio" => "audio",
+            "/api/buzzer" => "buzzer",
+            "/api/outputs" => "outputs",
+            crate::pixel_corrections::PREVIEW_PATH => "pixel-corrections-preview",
             _ => "led-output",
         };
         let mut value = serde_json::json!({"type":"command","request_id":id,"board_id":status.board_id,
             "boot_id":status.boot_id,"expires_at_ms":status.command_clock_ms.unwrap().checked_add(8000).ok_or("Command clock overflow")?,"command":command});
         for (key, item) in &form {
-            value[key] = if key == "settings" && path == "/api/led/presentation" {
+            value[key] = if key == "configuration" && path == crate::pixel_corrections::PREVIEW_PATH {
+                correction_request.as_ref().ok_or("Missing correction preview")?.payload()
+            } else if key == "settings" && path == "/api/led/presentation" {
                 crate::state_appearance::parse(item)?
             } else if key == "presentation" {
                 crate::game_presentation::parse(item)?
@@ -169,6 +203,8 @@ impl Intent {
                 )
                 .map_err(|e| e.to_string())?
             } else if key == "id"
+                || path == "/api/buzzer" && matches!(key.as_str(), "frequency"|"duration_ms")
+                || path == "/api/outputs" && key == "mask"
                 || path == "/api/led/preview" && matches!(key.as_str(), "rgb" | "duration_ms")
                 || path == "/api/brightness" && key == "value"
                 || path == "/api/game/settings"
@@ -207,6 +243,7 @@ impl Intent {
             batch,
             at: Instant::now(),
             pixel_request: None,
+            correction_request,
             path,
             form,
         })
@@ -220,7 +257,7 @@ impl Intent {
         }
         self.scope.admit()
     }
-    pub fn verify(&self, value: serde_json::Value) -> Result<DeviceStatus, String> {
+    pub fn verify(&self, value: serde_json::Value) -> Result<VerifiedReceipt, String> {
         if value["type"] != "command-result"
             || value["request_id"] != self.id
             || !self.peer.matches_identity(
@@ -231,9 +268,9 @@ impl Intent {
             return Err("Foreign command receipt; nothing replayed".into());
         }
         if value["accepted"] != true {
-            return Err(crate::cell_assignments::rejection(
-                value["error"].as_str().unwrap_or("unknown"),
-            ));
+            let reason=value["reason"].as_str().or_else(||value["error"].as_str()).unwrap_or("unknown");
+            return Err(if self.correction_request.is_some() {crate::pixel_corrections::rejection(reason)}
+                else {crate::cell_assignments::rejection(reason)});
         }
         let status: DeviceStatus = serde_json::from_value(value["status"].clone())
             .map_err(|_| "Command receipt has no status readback")?;
@@ -243,6 +280,23 @@ impl Intent {
         if peer_http::Pin::from_status(&status).as_ref() != Some(&self.peer) {
             return Err("Command readback belongs to another boot".into());
         }
+        if let Some(request) = &self.correction_request {
+            self.admit()?;
+            let summary=&value["pixel_corrections_preview"];
+            let lease=summary["lease_id"].as_u64().and_then(|v|u32::try_from(v).ok());
+            if summary["base_revision"].as_u64()!=Some(u64::from(request.value.revision))
+                || value["corrections_revision"].as_u64()!=Some(u64::from(request.value.revision))
+                || if request.clear {summary["active"]!=false || lease!=Some(0)} else {
+                    summary["active"]!=true || lease.is_none_or(|id|id==0 || request.lease!=0&&id!=request.lease)
+                    || summary["remaining_ms"].as_u64().is_none_or(|ms|ms==0||ms>crate::pixel_corrections::PREVIEW_TTL_MS)
+                } {
+                return Err("Correction preview receipt differs; nothing replayed".into());
+            }
+            let mut expected=request.clone();
+            if !request.clear {expected.lease=lease.unwrap();}
+            let corrections=crate::pixel_corrections::read_preview(&self.endpoint,&self.peer,&expected,||self.admit())?;
+            return Ok(VerifiedReceipt{status,corrections:Some(corrections)});
+        }
         let get = |key: &str| {
             self.form
                 .iter()
@@ -251,9 +305,14 @@ impl Intent {
                 .unwrap_or_default()
         };
         if self.path == "/api/led/output" && !get("backend").is_empty() {
-            return crate::led_backend::finish_network(&self.endpoint, status, get("backend"), || self.admit());
+            return crate::led_backend::finish_network(&self.endpoint, status, get("backend"), || self.admit())
+                .map(|status|VerifiedReceipt{status,corrections:None});
         }
         let matches = match self.path {
+            "/api/audio"|"/api/buzzer"=>value["avr_acknowledged"]==true,
+            // ACK confirms the accepted command payload. active_outputs is a
+            // separate AVR snapshot and may legitimately arrive a frame later.
+            "/api/outputs"=>value["avr_acknowledged"]==true && value["acknowledged_mask"].as_u64()==get("mask").parse::<u8>().ok().map(u64::from),
             "/api/led/presentation" => crate::state_appearance::matches(
                 &crate::state_appearance::parse(get("settings"))?, &status.state_presentation),
             "/api/led/preview" => if get("cancel")=="true" {
@@ -307,10 +366,13 @@ impl Intent {
         if !matches {
             return Err("Command ACK received but readback differs; nothing replayed".into());
         }
-        Ok(status)
+        Ok(VerifiedReceipt{status,corrections:None})
     }
-    pub fn http(&self) -> Result<DeviceStatus, String> {
+    pub fn http(&self) -> Result<VerifiedReceipt, String> {
         self.admit()?;
+        if self.correction_request.is_some() {
+            return Err("Correction preview outcome unknown; no fallback mutation or command replayed".into());
+        }
         let response = self
             .peer
             .client()?
@@ -334,12 +396,21 @@ impl Intent {
                 .map_err(|_| "Invalid command recovery receipt")?,
         )
     }
-    pub fn emit(&self, events: &Sender<Event>, result: Result<DeviceStatus, String>) {
+    pub fn emit(&self, events: &Sender<Event>, result: Result<VerifiedReceipt, String>) {
         let send = |event| {
             let event = Event::ForScope(self.scope.clone(), Box::new(event));
             let event = crate::for_endpoint(&self.endpoint, event);
             let _ = events.send(Event::ForConnection(self.stamp.clone(), Box::new(event)));
         };
+        if let Some(request) = &self.correction_request {
+            let result=result.and_then(|receipt| {
+                send(Event::Status(receipt.status));
+                receipt.corrections.ok_or_else(||"Missing correction preview readback".to_owned())
+            });
+            send(Event::CorrectionPreviewFinished(request.id,result));
+            return;
+        }
+        let result=result.map(|receipt|receipt.status);
         if let Some(id) = self.pixel_request {
             if let Ok(status) = &result {
                 send(Event::Status(status.clone()));
@@ -475,6 +546,95 @@ mod tests {
             password: String::new(),
         }
     }
+    fn correction_intent() -> (Intent,DeviceStatus,connection::Gate,peer_http::Queue) {
+        let mut current=status();current.pixels=6;
+        current.capabilities.as_mut().unwrap().acknowledged_features.extend([
+            crate::pixel_corrections::PREVIEW_FEATURE.into(),crate::pixel_corrections::PREVIEW_COMMAND_FEATURE.into()]);
+        let gate=connection::Gate::default();let epoch=gate.select(Some(crate::Transport::WiFi));
+        let (tx,_)=std::sync::mpsc::channel();let mut queue=peer_http::Queue::new(tx);queue.observe(&current);
+        let form=vec![("configuration".into(),serde_json::json!({"revision":7,"enabled":true,
+            "rules":[{"kind":"black","pixel":0,"offset":0,"enabled":true}],"lease_id":0,"ttl_ms":10000}).to_string())];
+        let mut request=Intent::new(endpoint(),&current,crate::pixel_corrections::PREVIEW_PATH,form,
+            queue.capture(),gate.stamp(crate::Transport::WiFi,epoch),None).unwrap();
+        request.correction_request.as_mut().unwrap().id=31;
+        (request,current,gate,queue)
+    }
+    fn correction_receipt(request:&Intent,status:&DeviceStatus) -> serde_json::Value {
+        serde_json::json!({"type":"command-result","request_id":request.id,"accepted":true,
+            "board_id":status.board_id,"boot_id":status.boot_id,"status":status,"corrections_revision":7,
+            "pixel_corrections_preview":{"active":true,"lease_id":42,"base_revision":7,"remaining_ms":9500}})
+    }
+    #[test]
+    fn pixel_corrections_realtime_typed_receipt_requires_authoritative_mapping() {
+        let (mut request,current,_gate,_queue)=correction_intent();
+        let packet:serde_json::Value=serde_json::from_str(&request.packet).unwrap();
+        assert_eq!(packet["command"],"pixel-corrections-preview");
+        assert!(packet["configuration"].is_object());assert_eq!(packet["configuration"]["rules"][0]["pixel"],0);
+        let config=serde_json::json!({"revision":7,"enabled":true,"rules":[],"pixels":6,"sources":[0,1,2,3,4,5],
+            "active_sources":[-1,1,2,3,4,5],"preview":{"active":true,"lease_id":42,"base_revision":7,"remaining_ms":9000}});
+        let (endpoint,server)=crate::tests::mock_device(vec![(200,serde_json::to_vec(&config).unwrap()),
+            (200,serde_json::to_vec(&current).unwrap())]);request.endpoint=endpoint;
+        let result=request.verify(correction_receipt(&request,&current));
+        assert!(result.is_ok());
+        let (tx,rx)=std::sync::mpsc::channel();request.emit(&tx,result);
+        let unwrap=|mut event:Event|{loop{event=match event {
+            Event::ForScope(_,inner)|Event::ForEndpoint(_,inner)|Event::ForConnection(_,inner)=>*inner,
+            other=>break other,
+        }} };
+        assert!(matches!(unwrap(rx.recv().unwrap()),Event::Status(_)));
+        assert!(matches!(unwrap(rx.recv().unwrap()),Event::CorrectionPreviewFinished(31,Ok(value)) if value.preview.lease_id==42));
+        assert!(rx.try_recv().is_err(),"No repetitive success toast for each preview renewal");
+        let requests=server.join().unwrap();assert_eq!(requests.len(),2);
+        assert!(requests[0].starts_with("GET /api/pixels/corrections "));
+        assert!(requests.iter().all(|request|request.starts_with("GET ")));
+    }
+    #[test]
+    fn pixel_corrections_realtime_rejection_or_foreign_lease_never_falls_back() {
+        let (mut request,current,_gate,_queue)=correction_intent();
+        let mut rejected=correction_receipt(&request,&current);rejected["accepted"]=false.into();
+        rejected["reason"]="corrections_preview_owned".into();
+        assert!(request.verify(rejected).err().unwrap().contains("corrections_preview_owned"));
+        assert!(request.http().err().unwrap().contains("no fallback mutation"));
+        request.correction_request.as_mut().unwrap().lease=41;
+        assert!(request.verify(correction_receipt(&request,&current)).err().unwrap().contains("receipt differs"));
+        let mut unsupported=current.clone();unsupported.capabilities.as_mut().unwrap().acknowledged_features
+            .retain(|feature|feature!=crate::pixel_corrections::PREVIEW_COMMAND_FEATURE);
+        assert!(!supported(&unsupported,crate::pixel_corrections::PREVIEW_PATH));
+    }
+    #[test]
+    fn realtime_avr_fast_commands_require_typed_bounds_and_actual_ack() {
+        let mut current=status();current.avr_online=true;current.audio_cues=vec!["winner".into()];current.active_outputs=5;
+        current.capabilities.as_mut().unwrap().acknowledged_features.extend(["buzzer".into(),"outputs".into(),"avr-command-ack".into()]);
+        let gate=connection::Gate::default();let epoch=gate.select(Some(crate::Transport::WiFi));
+        let (tx,_)=std::sync::mpsc::channel();let mut queue=peer_http::Queue::new(tx);queue.observe(&current);
+        for (path,form,command) in [
+            ("/api/audio",vec![("cue".into(),"winner".into())],"audio"),
+            ("/api/buzzer",vec![("frequency".into(),"1000".into()),("duration_ms".into(),"70".into())],"buzzer"),
+            ("/api/outputs",vec![("mask".into(),"5".into())],"outputs"),
+        ] {
+            let request=Intent::new(endpoint(),&current,path,form.clone(),queue.capture(),gate.stamp(crate::Transport::WiFi,epoch),None).unwrap();
+            let packet:serde_json::Value=serde_json::from_str(&request.packet).unwrap();assert_eq!(packet["command"],command);
+            if path=="/api/buzzer" {assert_eq!(packet["frequency"],1000);assert_eq!(packet["duration_ms"],70);}
+            if path=="/api/outputs" {assert_eq!(packet["mask"],5);}
+            let mut receipt=serde_json::json!({"type":"command-result","request_id":request.id,"accepted":true,
+                "board_id":current.board_id,"boot_id":current.boot_id,"status":current});
+            assert!(request.verify(receipt.clone()).is_err());receipt["avr_acknowledged"]=true.into();
+            if path=="/api/outputs" {
+                assert!(request.verify(receipt.clone()).is_err());
+                receipt["acknowledged_mask"]=5.into();
+                receipt["status"]["active_outputs"]=0.into(); // A later snapshot updates the display.
+            }
+            assert!(request.verify(receipt).is_ok());
+            let mut bad=form;bad[0].1="invalid".into();
+            assert!(Intent::new(endpoint(),&current,path,bad,queue.capture(),gate.stamp(crate::Transport::WiFi,epoch),None).is_err());
+            let mut old=current.clone();old.capabilities.as_mut().unwrap().acknowledged_features.retain(|feature|feature!="avr-command-ack");
+            assert!(!supported(&old,path));
+        }
+        for (frequency,duration) in [(19,70),(12001,70),(1000,0),(1000,5001)] {
+            assert!(Intent::new(endpoint(),&current,"/api/buzzer",vec![("frequency".into(),frequency.to_string()),
+                ("duration_ms".into(),duration.to_string())],queue.capture(),gate.stamp(crate::Transport::WiFi,epoch),None).is_err());
+        }
+    }
     #[test]
     fn realtime_pixel_diagnostic_requires_exact_complete_readback_and_typed_intent() {
         let (mut request, _, _) = intent(endpoint());
@@ -516,7 +676,7 @@ mod tests {
     fn realtime_ack_requires_id_boot_count_and_every_selected_value() {
         let (request, _, _) = intent(endpoint());
         let good = receipt(&request);
-        assert_eq!(request.verify(good.clone()).unwrap().cells[79], "red");
+        assert_eq!(request.verify(good.clone()).unwrap().status.cells[79], "red");
         for field in ["request_id", "board_id", "boot_id"] {
             let mut bad = good.clone();
             bad[field] = serde_json::json!("foreign");
@@ -554,7 +714,7 @@ mod tests {
         let body = serde_json::to_vec(&receipt(&request)).unwrap();
         let (endpoint, server) = crate::tests::mock_device(vec![(200, body)]);
         request.endpoint = endpoint;
-        assert_eq!(request.http().unwrap().cells[79], "red");
+        assert_eq!(request.http().unwrap().status.cells[79], "red");
         let requests = server.join().unwrap();
         assert_eq!(requests.len(), 1);
         assert!(requests[0].starts_with("POST /api/command "));

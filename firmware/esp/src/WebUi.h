@@ -917,6 +917,9 @@ function saveLocalization(){
 function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()=>Date.now(),random=()=>crypto.getRandomValues(new Uint8Array(16))}){
   const names={'/api/cells':'cells','/api/cell':'cell','/api/game/press':'game-press','/api/game/reset':'reset','/api/game/settings':'game-settings','/api/effect':'effect','/api/mode':'mode','/api/brightness':'brightness','/api/led/output':'led-output','/api/cells/lock':'cell-lock','/api/cells/assignments':'cell-assignments','/api/led/diagnostic':'pixel-diagnostic','/api/led/presentation':'state-presentation','/api/led/preview':'color-preview'};
   const pending=new Map();
+  names['/api/pixels/corrections/preview']='pixel-corrections-preview';
+  names['/api/presentation']='presentation';
+  names['/api/audio']='audio';names['/api/buzzer']='buzzer';names['/api/outputs']='outputs';
   function receive(reply){const p=pending.get(reply?.request_id);if(!p)return false;if(reply.type!=='command-result'||reply.board_id!==p.board||reply.boot_id!==p.boot)return false;p.reply=reply;p.resolve(reply);return true}
   const integer=(value,key,min=0,max=Number.MAX_SAFE_INTEGER)=>{
     if(typeof value==='string'&&!/^(?:0|[1-9]\d*)$/.test(value))throw Error('Invalid '+key);
@@ -932,6 +935,15 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
   };
   function typedValues(path,values){
     const result={...values};
+    if(path==='/api/pixels/corrections/preview')result.configuration=structured(result.configuration,'correction preview');
+    if(path==='/api/presentation')return structured(result.presentation,'host presentation');
+    if(path==='/api/audio'&&(typeof result.cue!=='string'||!/^[a-z0-9][a-z0-9-]{0,39}$/.test(result.cue)))throw Error('Invalid melody');
+    if(path==='/api/buzzer'){
+      result.frequency=integer(result.frequency,'frequency',0,20000);
+      if(result.frequency>0&&result.frequency<20)throw Error('Invalid frequency');
+      result.duration_ms=integer(result.duration_ms,'duration_ms',1,65535);
+    }
+    if(path==='/api/outputs')result.mask=integer(result.mask,'mask',0,255);
     for(const key of ['id','key','index','count','rgb','group_layout_revision'])if(key in result)result[key]=integer(result[key],key);
     if(path==='/api/brightness')result.value=integer(result.value,'brightness',0,255);
     for(const key of ['enabled','off'])if(key in result)result[key]=boolean(result[key],key);
@@ -966,6 +978,8 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
   }
   async function send(path,values){
     const observed=snapshot();if(!names[path]||!valid()||!Number.isSafeInteger(observed.command_clock_ms)||observed.command_clock_ms<0||observed.command_clock_ms>Number.MAX_SAFE_INTEGER-8000)return null;
+    const avr=['/api/audio','/api/buzzer','/api/outputs'].includes(path);
+    if(avr&&(!observed.avr_online||!observed.capabilities?.acknowledged_features?.includes('avr-command-ack')))return null;
     // Capture immutable identity values, not a mutable snapshot object.
     const s={board_id:observed.board_id,boot_id:observed.boot_id,command_clock_ms:observed.command_clock_ms};
     const request_id=Array.from(random(),x=>x.toString(16).padStart(2,'0')).join('');
@@ -992,6 +1006,7 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
       }
       if(!same()||reply?.type!=='command-result'||reply.request_id!==request_id||reply.board_id!==s.board_id||reply.boot_id!==s.boot_id)throw Error('Uncorrelated command receipt; inspect device state');
       if(reply.accepted!==true)throw Error(reply.error||'Command rejected');
+      if(avr&&reply.avr_acknowledged!==true)throw Error('AVR did not acknowledge the command');
       if((path==='/api/game/reset'||path==='/api/game/press')&&reply.avr_acknowledged!==true)throw Error('AVR did not acknowledge the command');
       if(reply.status?.board_id!==s.board_id||reply.status?.boot_id!==s.boot_id)throw Error('Command readback missing');
       return reply;
@@ -1227,6 +1242,99 @@ g.WebWorkspace={normalize,move,offset,attach};
  }
  root.WebTableLayout={position,neighbor,zoomAt,attach};
 })(globalThis);
+
+// Adapted from the fully read mobile/lib/pixel_correction_preview.dart.
+// This controller owns only an explicit RAM preview lease, never a transport,
+// socket, renderer, saved settings or automatic startup. The canonical editor
+// must inject its existing pinned send/read functions and current owner key.
+(function(root){
+  'use strict';
+  function createPixelCorrectionPreview({owner,allowed,configuration,pixels,project,send,read,onChange=()=>{},now=()=>Date.now(),setTimer=setTimeout,clearTimer=clearTimeout}){
+    const ttl=10000,releases=new Map();let disposed=false,generation=0,captured=null,queued=false,debounce=null,renew=null,expiry=null;
+    const state={enabled:false,pending:false,lease:null,observed:null,error:null};
+    const snapshot=()=>({...state});
+    const notify=()=>{if(!disposed)try{onChange(snapshot());}catch{/* Rendering cannot strand lease cleanup. */}};
+    const same=identity=>!!identity&&owner()?.key===identity.key;
+    const active=epoch=>!disposed&&state.enabled&&generation===epoch&&allowed()&&same(captured);
+    function cancelTimers(){for(const id of [debounce,renew,expiry])if(id!==null)clearTimer(id);debounce=renew=expiry=null;}
+    function canonical(){
+      const value=configuration(),count=pixels();
+      if(!value||!Number.isInteger(value.revision)||value.revision<0||value.revision>0xffffffff||typeof value.enabled!=='boolean'||!Array.isArray(value.rules))throw Error('Invalid preview configuration');
+      const rules=value.rules.map(r=>({kind:r.kind,pixel:r.pixel,offset:r.offset??0,enabled:r.enabled??true}));
+      // Reuse the canonical correction projection/validation, not another engine.
+      const sources=project(count,value.enabled,rules);
+      if(!Number.isInteger(count)||count<1||count>480||!Array.isArray(sources)||sources.length!==count||sources.some(n=>!Number.isInteger(n)||n< -1||n>=count))throw Error('Invalid correction projection');
+      return {value:{revision:value.revision,enabled:value.enabled,rules},sources};
+    }
+    async function release(identity,lease,revision){
+      if(!same(identity)||!Number.isInteger(lease)||lease<1||lease>0xffffffff)return false;
+      const key=identity.key+':'+lease+':'+revision;if(releases.has(key))return releases.get(key);
+      const operation=(async()=>{try{
+        const reply=await send({clear:true,lease_id:lease,revision},identity);
+        return same(identity)&&!reply?.error&&reply?.revision===revision&&reply?.preview?.active===false&&reply.preview.lease_id===0&&reply.preview.base_revision===revision&&reply.preview.remaining_ms===0;
+      }catch{return false;}})();
+      releases.set(key,operation);if(releases.size>32)releases.delete(releases.keys().next().value);return operation;
+    }
+    async function stop(){
+      const lease=state.lease,revision=state.observed?.revision,identity=captured,inFlight=state.pending,epoch=++generation;
+      state.enabled=false;state.lease=null;state.observed=null;queued=false;cancelTimers();
+      if(lease!==null)state.pending=true;notify();
+      if(lease!==null){const confirmed=await release(identity,lease,revision);
+        if(!inFlight)state.pending=false;
+        if(!confirmed&&generation===epoch&&same(identity))state.error='Preview release unconfirmed. The board lease will expire; no command was replayed.';
+        notify();return confirmed;
+      }return true;
+    }
+    async function transmit(){
+      if(disposed||!state.enabled||state.pending)return;
+      if(!allowed()||!same(captured)){await stop();return;}
+      if(renew!==null)clearTimer(renew);renew=null;
+      const epoch=generation,identity=captured,issued=state.lease,started=now();let received=issued,revision=state.observed?.revision;
+      state.pending=true;state.error=null;queued=false;notify();
+      try{
+        const wanted=canonical();
+        if(issued!==null&&wanted.value.revision!==revision)throw Error('Saved corrections changed. Preview stopped without replay.');
+        revision=wanted.value.revision;
+        const reply=await send({...wanted.value,ttl_ms:ttl,...(issued===null?{}:{lease_id:issued})},identity),receipt=reply?.preview;
+        if(reply?.error)throw Error(String(reply.error));
+        if(receipt?.active!==true||!Number.isInteger(receipt.lease_id)||receipt.lease_id<1||receipt.lease_id>0xffffffff)throw Error('Preview lease receipt missing');
+        if(issued!==null&&receipt.lease_id!==issued)throw Error('Preview owner changed. No foreign preview was modified.');
+        received=receipt.lease_id;
+        if(!active(epoch)){await release(identity,received,revision);return;}
+        const result=await read(identity),preview=result?.preview,actual=result?.active_sources;
+        if(!active(epoch)){await release(identity,received,revision);return;}
+        if(result?.revision!==revision||preview?.active!==true||preview.lease_id!==received||preview.base_revision!==revision||
+          !Number.isInteger(preview.remaining_ms)||preview.remaining_ms<1||preview.remaining_ms>ttl||
+          !Array.isArray(actual)||actual.length!==wanted.sources.length||actual.some((n,i)=>n!==wanted.sources[i]))throw Error('Preview readback differs. No preview was confirmed.');
+        const remaining=Math.min(preview.remaining_ms,ttl-Math.max(0,now()-started));
+        if(remaining<500)throw Error('Preview confirmation arrived too late. No preview was confirmed.');
+        state.lease=received;state.observed={revision,lease_id:received,remaining_ms:remaining};
+        if(expiry!==null)clearTimer(expiry);
+        expiry=setTimer(()=>{state.error='Preview connection expired. No changes were saved.';void stop();},remaining);
+        renew=setTimer(()=>{renew=null;if(state.pending)queued=true;else void transmit();},Math.floor(remaining/2));
+      }catch(error){
+        if(received!==null)await release(identity,received,revision);
+        if(!disposed&&generation===epoch){state.enabled=false;state.lease=null;state.observed=null;state.error=error.message;cancelTimers();}
+      }finally{
+        state.pending=false;notify();
+        if(queued&&active(epoch)){queued=false;edited();}
+      }
+    }
+    function edited(){
+      if(disposed||!state.enabled)return;if(debounce!==null)clearTimer(debounce);
+      debounce=setTimer(()=>{debounce=null;if(state.pending)queued=true;else void transmit();},280);
+    }
+    async function start(){
+      if(disposed||state.enabled||state.pending||!allowed())return false;
+      const identity=owner();if(!identity||typeof identity.key!=='string'||!identity.key.length||identity.key.length>512)return false;
+      captured=Object.freeze({...identity});state.enabled=true;state.lease=null;state.observed=null;state.error=null;generation++;
+      await transmit();return state.enabled&&state.observed!==null;
+    }
+    function committed(){state.enabled=false;state.lease=null;state.observed=null;state.error=null;generation++;queued=false;cancelTimers();notify();}
+    return {start,edited,stop,committed,snapshot,observe(){if(state.enabled&&(!allowed()||!same(captured)))void stop();},dispose(){const cleanup=stop();disposed=true;return cleanup;}};
+  }
+  root.createPixelCorrectionPreview=createPixelCorrectionPreview;
+})(typeof window==='undefined'?globalThis:window);
 
 // Physical spans are shared by the editor, diagnostics and captured RGB preview.
 // The bounded stepper/local draft pattern is adapted from the reviewed Pealayer
@@ -1543,7 +1651,20 @@ g.WebWorkspace={normalize,move,offset,attach};
     rows.tabIndex=0;rows.setAttribute('role','region');rows.setAttribute('aria-label',translate('Correction rules'));
     corrections.body.append(fixed,rows,mapDisclosure);
     function message(text,error=false){notice.textContent=translate(text);notice.classList.toggle('field-error',error);}
-    function changed(){if(!model)return;correctionEdits++;model.dirty=true;message(model.conflict?'Board changed elsewhere. Reload before saving.':'Unsaved changes',model.conflict);sync();if(model.mappingView==='draft')drawMapping();rememberPresentation();}
+    const livePreview=input('checkbox');livePreview.checked=true;
+    const livePreviewField=field('Live preview',livePreview);fixed.append(livePreviewField);
+    const preview=root.createPixelCorrectionPreview?.({
+      owner:()=>current(owner)?{key:owner,pin:pin?.()}:null,
+      allowed:()=>current(owner)&&peer().has('pixel-corrections-preview')&&!!model?.saved&&!model.conflict&&validCorrectionDraft(model),
+      configuration:()=>({revision:model.saved.revision,enabled:model.enabled,rules:model.rules}),
+      pixels:()=>model.saved.pixels,project:correctionSources,
+      send:async(value,identity)=>{requireCurrent(identity.key);const reply=await command(correctionPath+'/preview',{configuration:JSON.stringify(value)});requireCurrent(identity.key);return reply.pixel_corrections_preview?{revision:value.revision,preview:reply.pixel_corrections_preview}:reply;},
+      read:async identity=>{requireCurrent(identity.key);return api(correctionPath,identity.pin?{peer:identity.pin}:{});},
+      onChange:state=>{if(state.error)message(state.error,true);}
+    });
+    livePreview.onchange=()=>{if(!livePreview.checked)void preview?.stop();else if(model?.dirty)startPreview();};
+    function startPreview(){if(!livePreview.checked||!preview||!validCorrectionDraft(model)||model.conflict)return;if(preview.snapshot().enabled)preview.edited();else void preview.start();}
+    function changed(){if(!model)return;correctionEdits++;model.dirty=true;message(model.conflict?'Board changed elsewhere. Reload before saving.':'Unsaved changes',model.conflict);sync();if(model.mappingView==='draft')drawMapping();rememberPresentation();startPreview();}
     enabled.onchange=()=>{if(!writable()||!model?.saved)return;model.enabled=enabled.checked;changed();};
     const validNumericDraft=(text,min,max)=>text===undefined||text.trim()!==''&&Number.isSafeInteger(Number(text))&&Number(text)>=min&&Number(text)<=max;
     const validCorrectionDraft=record=>!!record?.saved&&record.rules.every(rule=>validNumericDraft(rule.pixelDraft,1,record.saved.pixels)&&(rule.kind!=='shift'||validNumericDraft(rule.offsetDraft,-record.saved.pixels,record.saved.pixels)));
@@ -1586,14 +1707,18 @@ g.WebWorkspace={normalize,move,offset,attach};
     filter.oninput=()=>{drawMapping();rememberPresentation();};mapDisclosure.ontoggle=()=>{drawMapping();rememberPresentation();};
     const rowRefreshers=[],cursorActions=[],rulePreviews=[];let correctionEdits=0,addressContextKey='';
     function refreshRulePreviews(){if(!rulePreviews.some(view=>view.open()))return;const key=mappingColorKey(),rgb=correctionRgb(snapshot(),model?.saved?.pixels,peer().role,current(owner));for(const view of rulePreviews)view.refresh(key,rgb);}
-    // Flutter selectedDiagnosticPixel/importPixel: copy the selected OUTPUT
-    // cursor, never its projected raw source or a second 'lit pixel' guess.
+    // Diagnostics select RAW inputs. Rules select WIRE destinations. Resolve
+    // through the saved map; never migrate existing rule coordinates.
     function selectedCorrectionCursor(){
       const p=model?.probe,s=diagnosticShape(snapshot(),peer().role);
       if(!current(owner)||!peer().has('pixel-diagnostic')||!s||!p||(!p.dirty&&!p.observation))return null;
       if(position.value===''||!position.checkValidity())return null;
       const index=Number(position.value)-1,used=s.layout?.used_pixels||s.pixels;
-      return Number.isInteger(index)&&index>=0&&index<used&&index<(model.saved?.pixels||0)?index:null;
+      if(!Number.isInteger(index)||index<0||index>=used||model.conflict||(model.dirty&&preview?.snapshot().enabled))return null;
+      const sources=model.saved?.sources;
+      if(!Array.isArray(sources)||sources.length!==model.saved.pixels)return null;
+      const destinations=sources.flatMap((source,wire)=>source===index?[wire]:[]);
+      return destinations.length===1?destinations[0]:null;
     }
     function refreshCursorActions(){const index=selectedCorrectionCursor();for(const refresh of cursorActions)refresh(index);}
     function drawRows(){
@@ -1673,6 +1798,9 @@ g.WebWorkspace={normalize,move,offset,attach};
       try{
         const lease=pin?.();
         const wanted={revision:record.saved?.revision,enabled:record.enabled,rules:record.rules.map(({kind,pixel,offset,enabled})=>({kind,pixel,offset,enabled}))};
+        // Retire RAM preview before explicit save/reload. A failed release
+        // leaves the draft intact and never overwrites the stored rules.
+        if(preview&&(preview.snapshot().enabled||preview.snapshot().lease!==null||preview.snapshot().pending)&&!await preview.stop())throw Error('Preview release not confirmed; retry after it expires');
         if(save)await command(correctionPath,{configuration:JSON.stringify(wanted)});
         requireCurrent(expected);const result=parseCorrections(await api(correctionPath,lease?{peer:lease}:{}));requireCurrent(expected);
         if(save&&(!correctionsMatch(result,wanted)||result.revision<wanted.revision))throw Error('Correction readback differs. Reload before editing; no write was replayed.');
@@ -1711,6 +1839,7 @@ g.WebWorkspace={normalize,move,offset,attach};
     const reload=button('Reload',reloadCorrections,'refresh');tools.append(add,save,reload);
     function sync(){
       const ready=writable()&&!!model?.saved;
+      livePreviewField.hidden=!preview||!peer().has('pixel-corrections-preview');livePreview.disabled=!ready;
       for(const control of rows.querySelectorAll('input,select,button'))control.disabled=!ready||control.dataset.boundary==='true';
       enabled.disabled=!ready;add.disabled=!ready||model.rules.length>=32;save.disabled=!ready||!model.dirty||model.conflict||!validCorrectionDraft(model);reload.disabled=!current(owner)||!peer().has('pixel-corrections')||model?.busy===true;
       diagnosticLink.disabled=!peer().has('pixel-diagnostic')&&!peer().has('streaming');
@@ -1854,6 +1983,7 @@ g.WebWorkspace={normalize,move,offset,attach};
       const link=button('Pixel corrections',()=>reveal(corrections.card),'corrections');link.dataset.openCorrections='true';diagnostic.append(link);}
     function update(value=snapshot()){
       if(disposed)return;const next=identity(value),c=peer();
+      preview?.observe();
       if(reloadPrompt&&(!c.known||!c.has('pixel-corrections')))dismissReload();
       if(next!==owner){dismissReload();owner=next;model=next?models.get(next):null;
         if(next&&!model){const scope=options.workspaceScope?.(value)||'',draft=scope?diagnosticWorkspace(options.readWorkspace?.(scope)):null,presentation=pixelToolsWorkspace(scope?options.readPresentation?.(scope):null)||pixelToolsWorkspace({});
@@ -1878,7 +2008,7 @@ g.WebWorkspace={normalize,move,offset,attach};
     }
     const beforeUnload=event=>{if(groups?.dirty()||[...models.values()].some(record=>record.dirty||record.busy)){event.preventDefault();event.returnValue='';}};
     root.addEventListener('beforeunload',beforeUnload);
-    installed={update,workspaceSnapshot(scope){return model&&model.scope===scope?diagnosticWorkspace(model.diagnosticDraft):undefined;},presentationSnapshot(scope){return model&&model.scope===scope?pixelToolsWorkspace(model.presentation):undefined;},dispose(){disposed=true;dismissReload();root.removeEventListener('beforeunload',beforeUnload);groups?.dispose();corrections.card.remove();diagnostics.card.remove();inspector.card.remove();installed=null;}};
+    installed={update,workspaceSnapshot(scope){return model&&model.scope===scope?diagnosticWorkspace(model.diagnosticDraft):undefined;},presentationSnapshot(scope){return model&&model.scope===scope?pixelToolsWorkspace(model.presentation):undefined;},dispose(){void preview?.dispose();disposed=true;dismissReload();root.removeEventListener('beforeunload',beforeUnload);groups?.dispose();corrections.card.remove();diagnostics.card.remove();inspector.card.remove();installed=null;}};
     update();return installed;
   }
   root.createFeatureWorkspaces=create;
@@ -2055,7 +2185,7 @@ function installStudio(){
  const sidebar=make('aside','studio-sidebar'),brand=make('div','studio-wordmark'),brandImage=make('img'),brandCopy=make('div');brandImage.src='/app-icon.png';brandImage.width=30;brandImage.height=30;brandImage.alt='';const brandTitle=make('strong'),brandCaption=make('small');brandTitle.textContent='PakarController';copy(brandCaption,'Workspace');brandCopy.append(brandTitle,brandCaption);brand.append(brandImage,brandCopy);
  const nav=make('nav');nav.id='studioNav';nav.setAttribute('aria-label','Workspace');sidebar.append(brand,nav);
  const content=make('div','studio-content'),heading=make('div','studio-page-heading'),pageTitle=make('h2'),pageActions=make('div','studio-page-actions');pageTitle.id='studioPageTitle';heading.append(pageTitle,pageActions);content.append(heading);
- // Keep runtime insertion anchors alive. renderStateAppearance owns .layout .stack.
+ // Keep runtime insertion anchors alive. Dynamic panels mount on .layout.
  for(const node of [...workspace.children])if(node!==top&&node!==layout&&node.id!=='applicationActivity')content.append(node);
  content.append(layout);const activity=document.getElementById('applicationActivity');if(activity)content.append(activity);workspace.append(sidebar,top,content);
  const route=studioRoute({location:window.location,history:window.history,onNavigate:id=>navigate(id,false)});
@@ -2263,6 +2393,8 @@ function currentPeer(){return peerAvailability(state,contextReceivedAt>0&&Date.n
 function contextAllows(path,data={}){
   if(path==='/api/pixels/groups')return currentPeer().has('pixel-group-layout');
   if(path==='/api/pixels/corrections')return currentPeer().has('pixel-corrections');
+  if(path==='/api/pixels/corrections/preview')return currentPeer().has('pixel-corrections-preview');
+  if(path==='/api/presentation')return currentPeer().has('host-presentation');
   if(path==='/api/led/diagnostic')return currentPeer().has('pixel-diagnostic');
   if(path==='/api/status-rgb')return currentPeer().has('status-rgb');
   if(path==='/api/game/press')return currentPeer().has('game-press');
@@ -2550,7 +2682,8 @@ function renderKeyGame(){
   card.querySelector('[data-key-readonly]').checked=keyGameControl.readOnly;
   card.querySelector('[data-keys]').setAttribute('aria-busy',String(!!keyGameControl.pending));
   card.querySelector('[data-round-state]').textContent=state.winner?'Winner · Box '+state.winner:'Ready for first press';
-  card.querySelector('[data-enabled-count]').textContent=Number(config.enabled_count)+' boxes enabled';
+  const enabledCount=Number.isInteger(config.enabled_count)?config.enabled_count:Array.from({length:9},(_,i)=>(Number(config.enabled_mask)>>i)&1).reduce((a,b)=>a+b,0);
+  card.querySelector('[data-enabled-count]').textContent=enabledCount+' boxes enabled';
   for(const indicator of card.querySelectorAll('[data-key]')){
     const key=Number(indicator.dataset.key),enabled=(config.enabled_mask&(1<<(key-1)))!==0;
     indicator.disabled=!canPressGameKey(key);
@@ -2793,9 +2926,12 @@ function renderStateAppearance(){
   let card=document.getElementById('stateAppearanceCard');
   const available=currentPeer().has('state-presentation')&&state.state_presentation;
   if(!card&&available){
+    const host=document.querySelector('.layout');
+    if(!host)return;
     card=document.createElement('section');card.id='stateAppearanceCard';card.className='card';
+    card.dataset.capability='state-presentation';
     card.innerHTML='<h2>State colors and effects</h2><label><input id="stateEffectsEnabled" type="checkbox">Extended effects</label><div id="stateStyles"></div><div id="statePeriods" class="row"></div><div id="stateSwitches"></div><h3>Temporary color test</h3><div class="row"><input id="stateTestColor" type="color" value="#00ff00" aria-label="Test color"><button id="stateTestStart">Preview · 5 seconds</button><button id="stateTestStop">Stop preview</button></div>';
-    document.querySelector('.layout .stack').appendChild(card);
+    host.appendChild(card);
     card.querySelector('#stateEffectsEnabled').onchange=e=>saveStateAppearance({enabled:e.target.checked});
     for(const name of ['idle','won','lost']){
       const row=document.createElement('div');row.className='row';
@@ -2824,7 +2960,7 @@ function renderStateAppearance(){
   for(const name of ['idle','won','lost']){
     const color=card.querySelector('#stateColor-'+name),motion=card.querySelector('#stateMotion-'+name);
     if(document.activeElement!==color&&Number.isInteger(p.states?.[name]?.rgb))color.value='#'+p.states[name].rgb.toString(16).padStart(6,'0');
-    if(document.activeElement!==motion)motion.value=String(p.states?.[name]?.motion??0);
+    motion.value=String(p.states?.[name]?.motion??0);
     motion.hidden=!table&&name==='idle';
   }
   for(const name of ['fade_ms','pulse_ms','ring_ms','chase_ms']){const input=card.querySelector('#statePeriod-'+name);if(document.activeElement!==input)input.value=p[name];if(name==='ring_ms'){input.min=table?'100':'400';input.max=table?'20000':'3000';}}

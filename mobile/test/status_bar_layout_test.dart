@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/main.dart';
 import 'package:pakarcontroller/models.dart';
@@ -47,6 +48,47 @@ Future<void> pumpFooter(
 }
 
 void main() {
+  testWidgets(
+    'Phone footer truncates long feedback without losing its full accessible details',
+    (tester) async {
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      const message =
+          'The device rejected the command because its configuration changed while the previous preview was active.';
+      for (final width in [320.0, 390.0]) {
+        await pumpFooter(
+          tester,
+          width: width,
+          failed: true,
+          message: message,
+          status: peerFixture(hostname: 'ledcontroller-with-a-long-hostname'),
+          onConnection: () {},
+        );
+        final text = find.descendant(
+          of: find.byKey(const Key('connection-status-area')),
+          matching: find.text(message),
+        );
+        expect(tester.widget<Text>(text).maxLines, 1);
+        expect(tester.widget<Text>(text).overflow, TextOverflow.ellipsis);
+        expect(
+          tester.renderObject<RenderParagraph>(text).didExceedMaxLines,
+          true,
+        );
+        expect(find.byTooltip(message), findsOneWidget);
+        expect(tester.getSize(find.byType(StatusBar)).height, 48);
+        expect(
+          tester.getRect(find.byKey(const Key('command-status-details'))).right,
+          lessThanOrEqualTo(width),
+        );
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.byKey(const Key('command-status-details')));
+        await tester.pumpAndSettle();
+        expect(find.widgetWithText(SelectableText, message), findsOneWidget);
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
   testWidgets(
     'Entire connection status icon and text open connection, errors stay inspectable',
     (tester) async {

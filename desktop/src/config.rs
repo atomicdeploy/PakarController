@@ -208,6 +208,8 @@ pub struct AppConfig {
     pub cell_order: Vec<u8>,
     pub cell_shape: crate::ui::cell_pixels::Shape,
     pub pixel_diagnostics: bool,
+    /// Preview preference only; leases and active preview state never persist.
+    pub pixel_correction_live_preview: bool,
     pub status_items: crate::ui::status_bar::Items,
 }
 impl Default for AppConfig {
@@ -252,6 +254,7 @@ impl Default for AppConfig {
             cell_order: (1..=80).collect(),
             cell_shape: Default::default(),
             pixel_diagnostics: false,
+            pixel_correction_live_preview: true,
             status_items: Default::default(),
         }
     }

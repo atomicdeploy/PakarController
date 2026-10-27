@@ -6,6 +6,22 @@
 #include <cstdio>
 unsigned panelNotifications=0;uint8_t panelKind=0;uint16_t panelValue=0;
 void panelNotice(uint8_t kind,uint16_t value,uint8_t){++panelNotifications;panelKind=kind;panelValue=value;}
+void hostPresentationComposition(){
+  using namespace BoardCore::Protocol;
+  const auto savedNow=pixelTestNow;LedGrid grid;LedGrid::Presentation host;grid.begin();grid.setPresentation(&host);
+  const auto rgb=[&](){const auto f=grid.pixelFrameJson();return f.substr(f.find("\"rgb\":\"")+7,LedGrid::kPixels*6);};
+  const auto base=rgb();host.temporary.enabled=true;host.temporary.overlay=true;host.temporary.physical=true;
+  host.temporary.entries[0].enabled=true;host.temporary.entries[0].rgb=0x00ff00;host.revision=1;
+  grid.presentationChanged();grid.service(++pixelTestNow);
+  assert(rgb().substr(0,36)==String("00ff0000ff0000ff0000ff0000ff0000ff00"));
+  assert(rgb().substr(36)==base.substr(36));for(uint8_t id=1;id<=80;++id)assert(grid.state(id)==kCellWhite);
+  host.temporary.entries[0].effect=LedGrid::Presentation::Ring;grid.presentationChanged();
+  pixelTestNow+=50;assert(grid.needsRender(pixelTestNow));grid.service(pixelTestNow);
+  const auto first=rgb();pixelTestNow+=50;grid.service(pixelTestNow);assert(rgb()!=first); // Even GPIO-static shares explicit host effects.
+  assert(grid.resetWhite());assert(!host.active()&&host.suppressed);grid.service(++pixelTestNow);assert(rgb()==base);
+  assert(grid.pixelFrameJson().find("\"presentation_revision\":2")!=String::npos);
+  pixelTestNow=savedNow;
+}
 String withoutPending(const String& frame){
  String value=frame;const auto at=value.find(",\"pending\":");assert(at!=String::npos);
  const auto end=value.find(',',at+1);assert(end!=String::npos);value.erase(at,end-at);return value;
@@ -154,6 +170,7 @@ void repeatedFadeKeepsDeadline(){
  pixelTestNow=savedNow;
 }
 int main(){
+  hostPresentationComposition();
  repeatedFadeKeepsDeadline();
  semanticAppearance();
  sharedStateMotion();

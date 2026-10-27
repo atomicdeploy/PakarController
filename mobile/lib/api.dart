@@ -695,11 +695,28 @@ class PakarApi {
     String path,
     Map<String, String> values, {
     required bool Function() authorize,
+  }) => _fastCommand(path, values, authorize: authorize);
+
+  Future<DeviceStatus?> _fastCommand(
+    String path,
+    Map<String, String> values, {
+    required bool Function() authorize,
+    void Function(Map<String, dynamic>)? receipt,
   }) async {
     if (!commandNames.containsKey(path)) return null;
+    // Preserve the existing dedicated USB cue path. These new WS commands
+    // require the AVR-correlated envelope, not the table-only USB opcode switch.
+    if (isUsb &&
+        const ['/api/audio', '/api/buzzer', '/api/outputs'].contains(path)) {
+      return null;
+    }
     if (isUsb) return _usbCommand(path, values, authorize);
     var snapshot = _latestStatus;
     if (snapshot?.peer.has('command-ack') != true) return null;
+    if (const ['/api/audio', '/api/buzzer', '/api/outputs'].contains(path) &&
+        snapshot?.peer.has('avr-command-ack') != true) {
+      return null;
+    }
     if (path == '/api/game/reset' && snapshot?.peer.has('reset-ack') != true) {
       return null;
     }
@@ -752,6 +769,7 @@ class PakarApi {
       );
       _acceptIdentity(actual.json);
       _rememberStatus(actual);
+      receipt?.call(reply);
       return actual;
     }
     Completer<Map<String, dynamic>?>? pending;
@@ -862,6 +880,7 @@ class PakarApi {
       );
       _acceptIdentity(actual.json);
       _rememberStatus(actual);
+      receipt?.call(reply);
       return actual;
     } finally {
       if (pending != null) {
@@ -1400,6 +1419,12 @@ class PakarApi {
           authorize: () => owner == connectionRevision && connectionWanted,
         );
       }
+      if (path == '/api/pixels/corrections') {
+        final owner = connectionRevision;
+        return usb.pixelCorrectionsApi(
+          authorize: () => owner == connectionRevision && connectionWanted,
+        );
+      }
       throw const FormatException(
         'This read is unavailable through USB; no network fallback attempted',
       );
@@ -1607,6 +1632,36 @@ class PakarApi {
     return value;
   }
 
+  /// Same correlated WS/HTTP command owner as game actions. Older peers retain
+  /// their explicit single-dispatch HTTP lease endpoint; never retry a rejected
+  /// or uncertain preview through a different endpoint.
+  Future<Map<String, dynamic>> previewCorrections(
+    Map<String, dynamic> configuration, {
+    required bool Function() authorize,
+  }) async {
+    const path = '/api/pixels/corrections/preview';
+    final values = {'configuration': jsonEncode(configuration)};
+    if (!isUsb &&
+        freshStatus?.peer.has('pixel-corrections-preview-command') == true) {
+      Map<String, dynamic>? envelope;
+      final actual = await _fastCommand(
+        path,
+        values,
+        authorize: authorize,
+        receipt: (value) => envelope = value,
+      );
+      if (actual == null ||
+          envelope == null ||
+          envelope!['pixel_corrections_preview'] is! Map) {
+        throw const OperationUncertain(
+          'Correction preview receipt unavailable; no preview was replayed.',
+        );
+      }
+      return {'preview': envelope!['pixel_corrections_preview']};
+    }
+    return postJson(path, values, authorize: authorize);
+  }
+
   /// Single dispatch, form BODY (never secret-bearing URL parameters), and
   /// caller-owned capability check after any awaited identity verification.
   Future<Map<String, dynamic>> postJson(
@@ -1616,6 +1671,23 @@ class PakarApi {
   }) async {
     _requireNetwork();
     if (isUsb) {
+      if (path == '/api/pixels/corrections' ||
+          path == '/api/pixels/corrections/preview') {
+        await _ensureUsb();
+        final owner = connectionRevision;
+        final configuration = jsonDecode(values['configuration'] ?? 'null');
+        if (configuration is! Map<String, dynamic>) {
+          throw const FormatException('Invalid pixel correction configuration');
+        }
+        return usb.pixelCorrectionsApi(
+          configuration: configuration,
+          preview: path.endsWith('/preview'),
+          authorize: () =>
+              owner == connectionRevision &&
+              connectionWanted &&
+              authorize?.call() != false,
+        );
+      }
       if (path == '/api/pixels/groups') {
         await _ensureUsb();
         final owner = connectionRevision;

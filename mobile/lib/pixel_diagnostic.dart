@@ -119,6 +119,7 @@ class PixelDiagnosticObservation {
 /// Cursor/colour are user-owned workspace state, not a claim about board output.
 class PixelDiagnosticWorkspace {
   PixelDiagnosticWorkspace({Map<String, dynamic> saved = const {}}) {
+    _correctionLivePreview = saved['correction_live_preview'] != false;
     final index = saved['index'], rgb = saved['rgb'];
     _probe = PixelProbe(
       index: index is int && index >= 0 && index < diagnosticPixels ? index : 0,
@@ -236,6 +237,14 @@ class PixelDiagnosticWorkspace {
   void dispose() => _listeners.clear();
   String _position = '1';
   double _vertical = 0;
+  bool _correctionLivePreview = true;
+  bool get correctionLivePreview => _correctionLivePreview;
+  set correctionLivePreview(bool value) {
+    if (value == _correctionLivePreview) return;
+    _correctionLivePreview = value;
+    notifyListeners();
+  }
+
   String get position => _position;
   set position(String value) {
     if (value.length > 8 || value == _position) return;
@@ -266,6 +275,7 @@ class PixelDiagnosticWorkspace {
     'rgb': probe.rgb,
     'position': position,
     'vertical': vertical,
+    'correction_live_preview': correctionLivePreview,
     if (probe.extended) ...{
       'effect': probe.effect,
       'overlay': probe.overlay,

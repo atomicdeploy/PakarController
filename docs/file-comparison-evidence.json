@@ -5,6 +5,42 @@
   "files": [
     {
       "origin": "Pealayer",
+      "path": "web_ui/src/components/ColorPicker.tsx",
+      "sha256": "024fdabb482a714c38a91d0dde5d0be11486b20859a019f4fbc2d3dd34295022",
+      "source_revision": "5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad",
+      "source_read": "complete",
+      "verdict": "scoped-improvement",
+      "improvement": "Named LED presets and accessible HSV channel controls replace hex-only editing while explicit Apply avoids unintended hardware commands during dragging.",
+      "preserved": [
+        "Read the complete actual donor before implementation. Adapted preset selection, uppercase RGB representation and twelve deduplicated session recent colors into the shared Flutter picker used by semantic state appearance, temporary test color and game group overrides. An explicit Apply commits the local picker choice; Cancel makes no command or recent-color write.",
+        "Added sixteen named LED swatches, HSV hue/saturation/brightness controls, validated optional hex entry, fixed circular hit targets and semantic labels. The picker itself owns no connection or persistence; existing peer-bound command/readback and game Save paths remain authoritative."
+      ],
+      "targets": [{"path":"mobile/lib/color_picker.dart","anchor":"Future<int?> showLedColorPicker","sha256":"8d1b4206d9b99bf4067df432e0147fdfc7fe67f60c6dab83ceb04478de2560c2"}],
+      "proof": [{"path":"mobile/test/appearance_live_test.dart","anchor":"testWidgets","sha256":"e216cfc82743b33c47acae4d2a95e51b4e5358108fdb4e46f004ecff481c9daa"}],
+      "omissions": [
+        {"code":"react-color ChromePicker and Ant Design runtime","disposition":"replaced","reason":"Flutter uses native Material controls and HSVColor; embedding a second JavaScript UI runtime adds no useful color semantics."},
+        {"code":"Media-effect onChangeComplete callback","disposition":"replaced","reason":"An explicit local Apply hands the value to the existing device-owner command path, avoiding accidental board changes while dragging a color slider."}
+      ],
+      "remaining": ["Issue #26: candidate source/widget verification is not installed Android touch or physical color acceptance."]
+    },
+    {
+      "origin": "Pealayer",
+      "path": "web_ui/src/components/ColorDropdown.tsx",
+      "sha256": "49d37654faab5033df04954456d0fe980571ccbc66478caaab7007dae1b8c151",
+      "source_revision": "5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": ["Read the full donor. Retained a single focused picker, bounded scrollable content, named presets and keyboard-focusable controls, with session recents shared across callers. Flutter dialog owns Cancel/Apply and returns a color rather than inventing another state or transport owner."],
+      "targets": [{"path":"mobile/lib/color_picker.dart","anchor":"class _ColorPicker","sha256":"8d1b4206d9b99bf4067df432e0147fdfc7fe67f60c6dab83ceb04478de2560c2"}],
+      "proof": [{"path":"mobile/test/appearance_live_test.dart","anchor":"testWidgets","sha256":"e216cfc82743b33c47acae4d2a95e51b4e5358108fdb4e46f004ecff481c9daa"}],
+      "omissions": [
+        {"code":"Ant Design popup positioning and DOM refs","disposition":"replaced","reason":"Flutter dialog focus and bounded scrolling provide the corresponding modal behavior without DOM-dependent code."},
+        {"code":"Donor directional-arrow preset roving navigation","disposition":"pending","reason":"Flutter retains standard focus traversal; exact directional preset navigation has not been ported or verified."}
+      ],
+      "remaining": ["Issue #26: verify desktop keyboard and installed tablet/phone picker ergonomics; no claim of complete donor parity."]
+    },
+    {
+      "origin": "Pealayer",
       "path": "web_ui/src/components/EffectGroupDialog.tsx",
       "sha256": "8c90f7a85286efada6d5a1e24212a03dd1ae14e51bea1767f8d195a538ec8f80",
       "source_revision": "5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad",
@@ -17,22 +53,64 @@
         "Pixel-group Reload now reuses this same modal with localized title/close and Cancel focus, following the actual Flutter correction reload guard. Cancel retains the draft, approval performs only the existing peer-pinned read, duplicate prompts are suppressed, and peer/boot/capability loss or disposal retire the decision. Missing shared dialog support fails closed without discarding edits."
       ],
       "targets": [
-        {"path":"assets/web/feature-workspaces.js","anchor":"async function reloadCorrections(","sha256":"e3ee781bcd00a2f84a06f893fa224244b8d555b7b9d956edc5cfe30588aa17c0"},
-        {"path":"web/modules/components.js","anchor":"function dialog(","sha256":"84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"},
-        {"path":"assets/web/application-utilities.js","anchor":"initialFocus:search","sha256":"20744bfcfc0968df0205a46aeb3bdd513b205f0f91796b168dd99dcb16fdbbf1"},
-        {"path":"assets/web/pixel-groups.js","anchor":"async function reloadGroups(","sha256":"6541ad578203cbeeb5884e3de0425c48b8a8964214a42fcc68f95f50bcf0020f"}
+        {
+          "path": "assets/web/feature-workspaces.js",
+          "anchor": "async function reloadCorrections(",
+          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1"
+        },
+        {
+          "path": "web/modules/components.js",
+          "anchor": "function dialog(",
+          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+        },
+        {
+          "path": "assets/web/application-utilities.js",
+          "anchor": "initialFocus:search",
+          "sha256": "20744bfcfc0968df0205a46aeb3bdd513b205f0f91796b168dd99dcb16fdbbf1"
+        },
+        {
+          "path": "assets/web/pixel-groups.js",
+          "anchor": "async function reloadGroups(",
+          "sha256": "6541ad578203cbeeb5884e3de0425c48b8a8964214a42fcc68f95f50bcf0020f"
+        }
       ],
       "proof": [
-        {"path":"tests/web_feature_workspaces_test.mjs","anchor":"Only one confirmation may own the editor","sha256":"f51019992a9162e84251167d39fe4f1706446a4816c840a9daf8e146d371a9f6"},
-        {"path":"tests/web_dialog_test.mjs","anchor":"Only one asynchronous action owns the dialog","sha256":"63745a228e1e9748f7d8eb89c7f1a3eaa4f4e1e5d34b6fe5f6805c03e668552d"},
-        {"path":"tests/web_feature_workspaces_test.mjs","anchor":"Only one group confirmation owns the draft","sha256":"f51019992a9162e84251167d39fe4f1706446a4816c840a9daf8e146d371a9f6"}
+        {
+          "path": "tests/web_feature_workspaces_test.mjs",
+          "anchor": "Only one confirmation may own the editor",
+          "sha256": "eeb04e6e570164994035d3e3855fef8851ba353679901a6ab86e42d4c844fdff"
+        },
+        {
+          "path": "tests/web_dialog_test.mjs",
+          "anchor": "Only one asynchronous action owns the dialog",
+          "sha256": "63745a228e1e9748f7d8eb89c7f1a3eaa4f4e1e5d34b6fe5f6805c03e668552d"
+        },
+        {
+          "path": "tests/web_feature_workspaces_test.mjs",
+          "anchor": "Only one group confirmation owns the draft",
+          "sha256": "eeb04e6e570164994035d3e3855fef8851ba353679901a6ab86e42d4c844fdff"
+        }
       ],
       "omissions": [
-        {"code":"React/Ant Design Modal runtime","disposition":"replaced","reason":"Reuse Pakar's existing native HTML dialog with focus restoration and shared branding rather than loading a duplicate framework into the onboard build."},
-        {"code":"Effect-group name/original_name save and media-group mutation","disposition":"not-applicable","reason":"This correction reload reads saved board configuration; it must not mutate media effect groups."},
-        {"code":"EffectIconPicker searchable icon presets and live group-name/glyph preview","disposition":"pending","reason":"Generic icon-picker behavior remains useful for configurable app elements. This narrow reload dialog has no editable icon/name and does not imply that picker has been imported or its dependencies reviewed."}
+        {
+          "code": "React/Ant Design Modal runtime",
+          "disposition": "replaced",
+          "reason": "Reuse Pakar's existing native HTML dialog with focus restoration and shared branding rather than loading a duplicate framework into the onboard build."
+        },
+        {
+          "code": "Effect-group name/original_name save and media-group mutation",
+          "disposition": "not-applicable",
+          "reason": "This correction reload reads saved board configuration; it must not mutate media effect groups."
+        },
+        {
+          "code": "EffectIconPicker searchable icon presets and live group-name/glyph preview",
+          "disposition": "pending",
+          "reason": "Generic icon-picker behavior remains useful for configurable app elements. This narrow reload dialog has no editable icon/name and does not imply that picker has been imported or its dependencies reviewed."
+        }
       ],
-      "remaining": ["Rendered keyboard/focus/Escape, phone/tablet/desktop and Persian RTL acceptance remain open. Browser input was stalled in this checkpoint; passing DOM mocks are not rendered acceptance."]
+      "remaining": [
+        "Rendered keyboard/focus/Escape, phone/tablet/desktop and Persian RTL acceptance remain open. Browser input was stalled in this checkpoint; passing DOM mocks are not rendered acceptance."
+      ]
     },
     {
       "origin": "PCController",
@@ -60,7 +138,7 @@
         {
           "path": "mobile/lib/pixel_correction_menu.dart",
           "anchor": "showPixelCorrectionMenu(",
-          "sha256": "bacddb85a646905ab2430122724c5222b5a6513161f5e9ca13609e03e0ec5a8d"
+          "sha256": "2afbffed4bb273f15b2afe8043f66c26a8d6b1ce605b655004879e3db4d66129"
         }
       ],
       "proof": [
@@ -72,7 +150,7 @@
         {
           "path": "mobile/test/pixel_correction_menu_test.dart",
           "anchor": "Actual diagnostic long press opens exact correction draft without sending",
-          "sha256": "c26fbe9820c431b97d4a150452827e50e9d7df25def5846881a07fe4f0ea5a79"
+          "sha256": "f56a8538df3040e5788c2eaa0e07443bf61d53dd693b45652339374513231662"
         }
       ],
       "omissions": [
@@ -110,7 +188,7 @@
         {
           "path": "mobile/lib/pixel_corrections_editor.dart",
           "anchor": "class PixelCorrectionNumberControl",
-          "sha256": "8f2332519d2fbf57767e5999201172d1ffcd1be9010faf4b1bd2289093d5f80c"
+          "sha256": "7b307453c53c084f22bb5e3845b43ba56e34a83633447b36041c4b1facad64c5"
         },
         {
           "path": "assets/web/pixel-groups.js",
@@ -120,26 +198,50 @@
         {
           "path": "assets/web/feature-workspaces.js",
           "anchor": "function stepped(",
-          "sha256": "e3ee781bcd00a2f84a06f893fa224244b8d555b7b9d956edc5cfe30588aa17c0"
+          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1"
         },
-        {"path":"assets/web/command-transport.js","anchor":"if(path==='/api/led/diagnostic')","sha256":"59fbe53d3d9805dc65c2a22100455ba4f17c18f2bae72e080f230108f5cc96e4"},
-        {"path":"assets/web/studio.css","anchor":".studio .mapping-pixel>.mapping-dot","sha256":"4d87d4cc97b3a53b2144912cd0c123ebc21b9b7677bdb02e6901a6c695e36e22"},
-        {"path":"assets/web/controller-copy.json","anchor":"Rule preview","sha256":"0a88e85d9cd5c30c5bad9f91505a54a5740417c18f6bc17103c75ed374a22ed6"}
+        {
+          "path": "assets/web/command-transport.js",
+          "anchor": "if(path==='/api/led/diagnostic')",
+          "sha256": "3fd13622b4964c6bffd16d567ee233ed070be78b34078c29993438bacdca49ca"
+        },
+        {
+          "path": "assets/web/studio.css",
+          "anchor": ".studio .mapping-pixel>.mapping-dot",
+          "sha256": "4d87d4cc97b3a53b2144912cd0c123ebc21b9b7677bdb02e6901a6c695e36e22"
+        },
+        {
+          "path": "assets/web/controller-copy.json",
+          "anchor": "Rule preview",
+          "sha256": "0a88e85d9cd5c30c5bad9f91505a54a5740417c18f6bc17103c75ed374a22ed6"
+        }
       ],
       "proof": [
         {
           "path": "mobile/test/pixel_corrections_editor_test.dart",
           "anchor": "void main()",
-          "sha256": "b54dabf7b3b719fa4df58191a057d9e42058ae335b3a75037b6e8bab7f766370"
+          "sha256": "ab953eb195c5f8ba3c086666c2f5a7444bccd7d2fb03433c2434d412a8aedeb4"
         },
         {
           "path": "tests/web_feature_workspaces_test.mjs",
           "anchor": "Retired group row callbacks cannot mutate replacement draft",
-          "sha256": "f51019992a9162e84251167d39fe4f1706446a4816c840a9daf8e146d371a9f6"
+          "sha256": "eeb04e6e570164994035d3e3855fef8851ba353679901a6ab86e42d4c844fdff"
         },
-        {"path":"tests/web_command_transport_test.mjs","anchor":"captured.composite,'overlay'","sha256":"bcbf0f527c9ec50ea1194fecbf07341cf6eb9f7b96b5d962ea28fa426ab398e0"},
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Pixel circles retain fixed square geometry","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"},
-        {"path":"tests/web_feature_workspaces_test.mjs","anchor":"Rule window includes its prefix, not later rules","sha256":"f51019992a9162e84251167d39fe4f1706446a4816c840a9daf8e146d371a9f6"}
+        {
+          "path": "tests/web_command_transport_test.mjs",
+          "anchor": "captured.composite,'overlay'",
+          "sha256": "14e3581c9d9289f2059c9f23f4de5bcd4ff803e813f7c9db062ca0408e4b671f"
+        },
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Pixel circles retain fixed square geometry",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        },
+        {
+          "path": "tests/web_feature_workspaces_test.mjs",
+          "anchor": "Rule window includes its prefix, not later rules",
+          "sha256": "eeb04e6e570164994035d3e3855fef8851ba353679901a6ab86e42d4c844fdff"
+        }
       ],
       "omissions": [
         {
@@ -174,12 +276,12 @@
         {
           "path": "mobile/lib/pixel_corrections_editor.dart",
           "anchor": "class PixelCorrectionNumberControl",
-          "sha256": "8f2332519d2fbf57767e5999201172d1ffcd1be9010faf4b1bd2289093d5f80c"
+          "sha256": "7b307453c53c084f22bb5e3845b43ba56e34a83633447b36041c4b1facad64c5"
         },
         {
           "path": "mobile/lib/pixel_corrections_page.dart",
           "anchor": "class PixelCorrectionsPage",
-          "sha256": "392cc722fcfcf4731c6ef8880d31d26ba52a4a926be32f8b415669e42a9513a0"
+          "sha256": "731bf8e23114e7e3297efb2837244158633a79a49695e17e35276f4c592d5cb5"
         },
         {
           "path": "mobile/lib/pixel_groups_page.dart",
@@ -189,7 +291,7 @@
         {
           "path": "assets/web/feature-workspaces.js",
           "anchor": "function correctionsMatch(",
-          "sha256": "e3ee781bcd00a2f84a06f893fa224244b8d555b7b9d956edc5cfe30588aa17c0"
+          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1"
         },
         {
           "path": "assets/web/correction-preview.js",
@@ -199,14 +301,14 @@
         {
           "path": "mobile/lib/pixel_correction_preview.dart",
           "anchor": "class PixelCorrectionPreview",
-          "sha256": "16f75de8eacb1824b2b79f331e69697041a08c5f95b3a2102765f53ce314e8bd"
+          "sha256": "ab3c44bdf9bf29075e4fb825b9e2cf538097652e53582be12bd663e84c3cbb6d"
         }
       ],
       "proof": [
         {
           "path": "mobile/test/pixel_corrections_editor_test.dart",
           "anchor": "void main()",
-          "sha256": "b54dabf7b3b719fa4df58191a057d9e42058ae335b3a75037b6e8bab7f766370"
+          "sha256": "ab953eb195c5f8ba3c086666c2f5a7444bccd7d2fb03433c2434d412a8aedeb4"
         },
         {
           "path": "mobile/test/pixel_groups_test.dart",
@@ -216,7 +318,7 @@
         {
           "path": "tests/web_feature_workspaces_test.mjs",
           "anchor": "Disabled state follows a reordered rule",
-          "sha256": "f51019992a9162e84251167d39fe4f1706446a4816c840a9daf8e146d371a9f6"
+          "sha256": "eeb04e6e570164994035d3e3855fef8851ba353679901a6ab86e42d4c844fdff"
         },
         {
           "path": "tests/web_correction_preview_test.mjs",
@@ -264,7 +366,7 @@
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
           "anchor": "class PixelProbe",
-          "sha256": "c5143cb176678151bc81273fbd7ebe7d666d9a145f400efc65ac1a8e7ecb817c"
+          "sha256": "f454f8dd79f7ac69a63f8dd16a63ef6e6d34fd51dbfcd16113aed3a278f9ec75"
         },
         {
           "path": "desktop/src/pixel_groups.rs",
@@ -274,12 +376,12 @@
         {
           "path": "desktop/src/ui/panel_details.rs",
           "anchor": "pub fn physical_groups",
-          "sha256": "12e56243648941509435a13a165c89e1abb438710ccb1d311c78df8fb052096a"
+          "sha256": "d52b713fbf32ae3f9cf0c550f0ff172d2bc5450eeb985ab8a0ce1e0a7edd2d0d"
         },
         {
           "path": "desktop/src/pixel_corrections.rs",
           "anchor": "pub struct Rule",
-          "sha256": "b1303032d704a39d11fb222bb539b08a176f2fdcdef60cccb06f62a52195be19"
+          "sha256": "e94a5da1dc425966b34646b8dccc55380cd7a8f4939da066154539e326aa563b"
         },
         {
           "path": "mobile/lib/pixel_tools_navigation.dart",
@@ -289,22 +391,22 @@
         {
           "path": "mobile/lib/pixel_corrections_page.dart",
           "anchor": "Future<bool> requestLeave()",
-          "sha256": "392cc722fcfcf4731c6ef8880d31d26ba52a4a926be32f8b415669e42a9513a0"
+          "sha256": "731bf8e23114e7e3297efb2837244158633a79a49695e17e35276f4c592d5cb5"
         },
         {
           "path": "mobile/lib/main.dart",
           "anchor": "final correctionPeer = (",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84"
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44"
         },
         {
           "path": "mobile/lib/pixel_correction_address.dart",
           "anchor": "String pixelCorrectionAddress({",
-          "sha256": "d746e76f0a761ff2db83a35bd182ee7ba65edb67ad3712a4a6015e91cd242aed"
+          "sha256": "55d3ac53a28ee0eeb4b262b5ac0f74052383f613f10ccbfa2c4f9518f2ae10c6"
         },
         {
           "path": "mobile/lib/pixel_corrections_editor.dart",
           "anchor": "class PixelCorrectionRuleIntent",
-          "sha256": "8f2332519d2fbf57767e5999201172d1ffcd1be9010faf4b1bd2289093d5f80c"
+          "sha256": "7b307453c53c084f22bb5e3845b43ba56e34a83633447b36041c4b1facad64c5"
         }
       ],
       "proof": [
@@ -326,32 +428,32 @@
         {
           "path": "desktop/src/pixel_corrections.rs",
           "anchor": "fn pixel_corrections_disabled_rules_survive_read_edit_reorder_and_write",
-          "sha256": "b1303032d704a39d11fb222bb539b08a176f2fdcdef60cccb06f62a52195be19"
+          "sha256": "e94a5da1dc425966b34646b8dccc55380cd7a8f4939da066154539e326aa563b"
         },
         {
           "path": "desktop/src/pixel_corrections.rs",
           "anchor": "fn pixel_corrections_integer_adjustments_obey_boundaries_without_reenabling",
-          "sha256": "b1303032d704a39d11fb222bb539b08a176f2fdcdef60cccb06f62a52195be19"
+          "sha256": "e94a5da1dc425966b34646b8dccc55380cd7a8f4939da066154539e326aa563b"
         },
         {
           "path": "desktop/src/ui/panel_details.rs",
           "anchor": "fn pixel_corrections_toggle_is_capability_gated_and_changes_only_local_rule",
-          "sha256": "12e56243648941509435a13a165c89e1abb438710ccb1d311c78df8fb052096a"
+          "sha256": "d52b713fbf32ae3f9cf0c550f0ff172d2bc5450eeb985ab8a0ce1e0a7edd2d0d"
         },
         {
           "path": "mobile/test/pixel_corrections_exit_test.dart",
           "anchor": "Save on exit awaits persistent readback and blocks repeated Back",
-          "sha256": "f43401685bdd76d93e5374f208fd9ca13dee7ffefaddb334539ac50f15706aaf"
+          "sha256": "7f49a85b05a3f52b7ec186ef25d848b51fc64fa0917a7a246be9295b3a49095e"
         },
         {
           "path": "mobile/test/pixel_corrections_exit_test.dart",
           "anchor": "row labels distinguish wire addresses from prior-rule raw sources and custom spans",
-          "sha256": "f43401685bdd76d93e5374f208fd9ca13dee7ffefaddb334539ac50f15706aaf"
+          "sha256": "7f49a85b05a3f52b7ec186ef25d848b51fc64fa0917a7a246be9295b3a49095e"
         },
         {
           "path": "mobile/test/pixel_correction_intent_test.dart",
           "anchor": "incoming rule waits for verified load and creates only a selected local draft",
-          "sha256": "28b5254bddb0ddd21c78e9c97152eaa8928e60a53a030cb8afc011b0180b9088"
+          "sha256": "3dbc159703d2defaa692505675fdba20efbd14ec4692707a4c965221ef576d8b"
         },
         {
           "path": "mobile/test/pixel_diagnostic_layout_test.dart",
@@ -387,20 +489,54 @@
         "Dependency styling was reviewed only at donor styles.css lines 379-415 and 625-632, SHA256 6dee0982d74816eeae95efbeeaea25326272f231906e1771a5ba4266a81b7efa7d. Stable borders, min-width/flex containment and optical SVG alignment informed the current button slots. This does not certify the rest of that CSS source as read or imported."
       ],
       "targets": [
-        {"path":"web/modules/components.js","anchor":"function decorateControl(","sha256":"84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"},
-        {"path":"web/modules/components.js","anchor":"function setControlText(","sha256":"84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"},
-        {"path":"assets/web/localization.js","anchor":"function renderUiText(","sha256":"2553d87375244b6de1e8ed82e63978237d990c5736aa848e66f53a7ac7849f83"}
+        {
+          "path": "web/modules/components.js",
+          "anchor": "function decorateControl(",
+          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+        },
+        {
+          "path": "web/modules/components.js",
+          "anchor": "function setControlText(",
+          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+        },
+        {
+          "path": "assets/web/localization.js",
+          "anchor": "function renderUiText(",
+          "sha256": "2553d87375244b6de1e8ed82e63978237d990c5736aa848e66f53a7ac7849f83"
+        }
       ],
       "proof": [
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Hydration is idempotent","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"},
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Language switching cannot erase decorative SVG","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"},
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Accessible names track translated visible labels","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"}
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Hydration is idempotent",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        },
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Language switching cannot erase decorative SVG",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        },
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Accessible names track translated visible labels",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        }
       ],
       "omissions": [
-        {"code":"React component runtime and typed component props","disposition":"replaced","reason":"The single canonical embedded Web application already owns DOM handlers and localization; retain those owners rather than adding a second React runtime and duplicate state."},
-        {"code":"Other generic components in the complete donor file and remaining styles.css sections","disposition":"pending","reason":"Only Button/Icon consumers and the named style sections are reconciled in this pass. Complete source reading does not certify all other component families; the CSS source remains incompletely reviewed."}
+        {
+          "code": "React component runtime and typed component props",
+          "disposition": "replaced",
+          "reason": "The single canonical embedded Web application already owns DOM handlers and localization; retain those owners rather than adding a second React runtime and duplicate state."
+        },
+        {
+          "code": "Other generic components in the complete donor file and remaining styles.css sections",
+          "disposition": "pending",
+          "reason": "Only Button/Icon consumers and the named style sections are reconciled in this pass. Complete source reading does not certify all other component families; the CSS source remains incompletely reviewed."
+        }
       ],
-      "remaining": ["Issue #3: reconcile remaining generic components and verify installed desktop/tablet/mobile controls, keyboard focus, RTL and accessibility. DOM-contract assertions are not browser geometry or physical-board proof."]
+      "remaining": [
+        "Issue #3: reconcile remaining generic components and verify installed desktop/tablet/mobile controls, keyboard focus, RTL and accessibility. DOM-contract assertions are not browser geometry or physical-board proof."
+      ]
     },
     {
       "origin": "Pealayer",
@@ -414,18 +550,44 @@
         "Only canonical Pealayer web_ui/src/styles.css lines 77-102 and 521-552 were inspected as styling dependencies, SHA256 2d08f0129a28e29b55a137c708b9296d5282bd0aaffb6c2fdba6b9d5cf16462d. Fixed borders, optical glyph alignment and restrained tonal states were adapted; the whole stylesheet is not certified read."
       ],
       "targets": [
-        {"path":"assets/web/application-utilities.js","anchor":"function setControlCaption(","sha256":"20744bfcfc0968df0205a46aeb3bdd513b205f0f91796b168dd99dcb16fdbbf1"},
-        {"path":"web/index.html","anchor":"function renderAssignmentTools(","sha256":"64ff59a7b22d89162c426e99ee8a6f0fd9a947c58143a8d76d462b5ebca2f601"}
+        {
+          "path": "assets/web/application-utilities.js",
+          "anchor": "function setControlCaption(",
+          "sha256": "20744bfcfc0968df0205a46aeb3bdd513b205f0f91796b168dd99dcb16fdbbf1"
+        },
+        {
+          "path": "web/index.html",
+          "anchor": "function renderAssignmentTools(",
+          "sha256": "c36b30af3c0ccb389db9e1eefeb72d145c43df59efae0f1e76e526e954e76a55"
+        }
       ],
       "proof": [
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Selection follows lost semantic identity even when its configured color is green","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"},
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Semantic caption updates reuse the stable label slot","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"}
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Selection follows lost semantic identity even when its configured color is green",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        },
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Semantic caption updates reuse the stable label slot",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        }
       ],
       "omissions": [
-        {"code":"Play/Pause media command and React/Ant component runtime","disposition":"not-applicable","reason":"The board application has no media player; only authoritative state and visual/action identity are adapted into its existing DOM model."},
-        {"code":"Full cross-surface unavailable/focus/hover/runtime acceptance and unreviewed CSS sections","disposition":"pending","reason":"Source assertions do not certify installed browser state changes or every donor style. Current optical layout and peer-state checks remain separate acceptance gates."}
+        {
+          "code": "Play/Pause media command and React/Ant component runtime",
+          "disposition": "not-applicable",
+          "reason": "The board application has no media player; only authoritative state and visual/action identity are adapted into its existing DOM model."
+        },
+        {
+          "code": "Full cross-surface unavailable/focus/hover/runtime acceptance and unreviewed CSS sections",
+          "disposition": "pending",
+          "reason": "Source assertions do not certify installed browser state changes or every donor style. Current optical layout and peer-state checks remain separate acceptance gates."
+        }
       ],
-      "remaining": ["Issue #3: inspect installed semantic action state, keyboard/accessibility and all responsive sizes; no claim of completed donor Web application parity."]
+      "remaining": [
+        "Issue #3: inspect installed semantic action state, keyboard/accessibility and all responsive sizes; no claim of completed donor Web application parity."
+      ]
     },
     {
       "origin": "Pealayer",
@@ -438,19 +600,49 @@
         "The Web owner fully read actual C:/Users/David/AppData/Local/Programs/Pealayer/source/Pealayer/web_ui/src/components/ControlBar.tsx. Adapt its explicitly mapped contextual action/icon identities and separate localized captions to the existing controller actionIcons/controlIcons and semantic caption refresh. No transport, ACK or capability authority is replaced by the presentation pass; existing handlers and disabled state remain attached to their original controls."
       ],
       "targets": [
-        {"path":"web/modules/components.js","anchor":"const actionIcons=","sha256":"84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"},
-        {"path":"assets/web/application-utilities.js","anchor":"function refreshLabels(","sha256":"20744bfcfc0968df0205a46aeb3bdd513b205f0f91796b168dd99dcb16fdbbf1"}
+        {
+          "path": "web/modules/components.js",
+          "anchor": "const actionIcons=",
+          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+        },
+        {
+          "path": "assets/web/application-utilities.js",
+          "anchor": "function refreshLabels(",
+          "sha256": "20744bfcfc0968df0205a46aeb3bdd513b205f0f91796b168dd99dcb16fdbbf1"
+        }
       ],
       "proof": [
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Existing action handlers survive hydration","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"},
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Semantic caption updates reuse the stable label slot","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"}
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Existing action handlers survive hydration",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        },
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Semantic caption updates reuse the stable label slot",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        }
       ],
       "omissions": [
-        {"code":"Media transport, track selectors, playback volume and timeline-specific actions","disposition":"not-applicable","reason":"There is no corresponding media domain in the controller; generic control identity is retained independently."},
-        {"code":"Complete shared toolbar customization, drag/context layout authority and draft/ACK lifecycle","disposition":"pending","reason":"The named action/icon/caption adaptation does not establish equivalence to the donor's full customizable control-bar model or its layout persistence/input ownership."},
-        {"code":"Rotating/glowing decorative action treatment","disposition":"replaced","reason":"Stable glyphs and reduced-motion-safe treatment avoid recurring visual distraction or suggesting command progress where none is observed."}
+        {
+          "code": "Media transport, track selectors, playback volume and timeline-specific actions",
+          "disposition": "not-applicable",
+          "reason": "There is no corresponding media domain in the controller; generic control identity is retained independently."
+        },
+        {
+          "code": "Complete shared toolbar customization, drag/context layout authority and draft/ACK lifecycle",
+          "disposition": "pending",
+          "reason": "The named action/icon/caption adaptation does not establish equivalence to the donor's full customizable control-bar model or its layout persistence/input ownership."
+        },
+        {
+          "code": "Rotating/glowing decorative action treatment",
+          "disposition": "replaced",
+          "reason": "Stable glyphs and reduced-motion-safe treatment avoid recurring visual distraction or suggesting command progress where none is observed."
+        }
       ],
-      "remaining": ["Issue #3: complete generic toolbar customization/ownership parity and installed input/visual acceptance without adding media business."]
+      "remaining": [
+        "Issue #3: complete generic toolbar customization/ownership parity and installed input/visual acceptance without adding media business."
+      ]
     },
     {
       "origin": "Pealayer",
@@ -463,18 +655,44 @@
         "Read the actual complete canonical Pealayer field-label component. Its explicit field-to-icon dictionary, decorative aria-hidden glyph and separate translated copy inform the controller's explicit action/control icon dictionaries and stable label hydration. Unknown peer-provided text is not classified by translated spelling; SVG remains independent of the localizer's owned label. This is a focused icon/caption adaptation, not a claim that all designer fields exist in Pakar."
       ],
       "targets": [
-        {"path":"web/modules/components.js","anchor":"const controlIcons=","sha256":"84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"},
-        {"path":"assets/web/localization.js","anchor":"function renderUiText(","sha256":"2553d87375244b6de1e8ed82e63978237d990c5736aa848e66f53a7ac7849f83"}
+        {
+          "path": "web/modules/components.js",
+          "anchor": "const controlIcons=",
+          "sha256": "84a86483502833830a8b60c2eb4f1c47945807252e92bdaa3de0b7f7dc0c8151"
+        },
+        {
+          "path": "assets/web/localization.js",
+          "anchor": "function renderUiText(",
+          "sha256": "2553d87375244b6de1e8ed82e63978237d990c5736aa848e66f53a7ac7849f83"
+        }
       ],
       "proof": [
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Peer-provided copy is not guessed as an application action","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"},
-        {"path":"tests/web_control_presentation_test.mjs","anchor":"Language switching cannot erase decorative SVG","sha256":"f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"}
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Peer-provided copy is not guessed as an application action",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        },
+        {
+          "path": "tests/web_control_presentation_test.mjs",
+          "anchor": "Language switching cannot erase decorative SVG",
+          "sha256": "f563ad7b87d95fdb08b84737436774bfc4d21a709678007287d25706f05c2272"
+        }
       ],
       "omissions": [
-        {"code":"Media/timeline-specific field dictionary entries","disposition":"not-applicable","reason":"Only actual controller actions receive mappings; unrelated media designer labels are not fabricated."},
-        {"code":"Complete generic field-label coverage across all controller settings","disposition":"pending","reason":"This pass binds current action/control icon and caption consumers. Full settings-field inventory and installed translated field layout remain additional work."}
+        {
+          "code": "Media/timeline-specific field dictionary entries",
+          "disposition": "not-applicable",
+          "reason": "Only actual controller actions receive mappings; unrelated media designer labels are not fabricated."
+        },
+        {
+          "code": "Complete generic field-label coverage across all controller settings",
+          "disposition": "pending",
+          "reason": "This pass binds current action/control icon and caption consumers. Full settings-field inventory and installed translated field layout remain additional work."
+        }
       ],
-      "remaining": ["Issue #3: reconcile remaining applicable setting labels and inspect real responsive/RTL field alignment."]
+      "remaining": [
+        "Issue #3: reconcile remaining applicable setting labels and inspect real responsive/RTL field alignment."
+      ]
     },
     {
       "origin": "Pealayer",
@@ -507,7 +725,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn draw_table(",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679"
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
         }
       ],
       "proof": [
@@ -544,7 +762,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn table_scene_fits_small_dock_and_zooms_at_pointer()",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679"
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
         }
       ],
       "omissions": [
@@ -670,12 +888,12 @@
         {
           "path": "mobile/lib/table_viewport.dart",
           "anchor": "void zoomAt",
-          "sha256": "9086d22cf19e977ee51a9907a987b6493335a924865cd62512b9bc3863b13627"
+          "sha256": "77f4e8a580a9f0b06229e09823f4a2ca488c3103246edb78c711555b57cda53a"
         },
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "egui::Scene::new()",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679"
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
         }
       ],
       "proof": [
@@ -687,7 +905,7 @@
         {
           "path": "mobile/test/table_viewport_test.dart",
           "anchor": "Pinch zoom",
-          "sha256": "3913d6173749d919df894b334eaba5b62231c7d7a424a304ac9ff9f01bb777b2"
+          "sha256": "dc0fc929261ad8b0db1abe7e80de437d0a1cb3b322a7cfe6e5c9b1c4bf609269"
         }
       ],
       "omissions": [
@@ -742,7 +960,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "selectionHasCellState(status!.json, selection, value)",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84"
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44"
         }
       ],
       "proof": [
@@ -1441,12 +1659,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -1480,12 +1698,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -1565,7 +1783,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -1732,7 +1950,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
@@ -1782,12 +2000,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -2271,12 +2489,12 @@
       "targets": [
         {
           "path": "mobile/lib/workspace_activity_strip.dart",
-          "sha256": "fccaa432c6ff25855405fab28b9ebcddd5de82ae967a8c4246354a75ef593924",
+          "sha256": "20914014fdad132c501736a63214192ae1446070942d2c838c303c7f82182820",
           "anchor": "class WorkspaceActivityStrip"
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
           "anchor": ": WorkspaceActivityStrip("
         },
         {
@@ -2308,12 +2526,12 @@
         },
         {
           "path": "mobile/test/status_bar_layout_test.dart",
-          "sha256": "11ff7bcfe66ee8bcf0eb7037de48ae49db0275cc2f5e9dd0d40b05e9045bdf22",
+          "sha256": "52cb9e5aef5b21cb81477077b515c21c5108b075168eb410ce5617ba9614e447",
           "anchor": "Tablet footer is one 48px row without duplicate safe padding"
         },
         {
           "path": "mobile/test/status_bar_layout_test.dart",
-          "sha256": "11ff7bcfe66ee8bcf0eb7037de48ae49db0275cc2f5e9dd0d40b05e9045bdf22",
+          "sha256": "52cb9e5aef5b21cb81477077b515c21c5108b075168eb410ce5617ba9614e447",
           "anchor": "Compact status still opens complete error details"
         },
         {
@@ -5487,7 +5705,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -5570,7 +5788,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -5632,7 +5850,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -5694,7 +5912,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -5756,7 +5974,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -5818,7 +6036,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -5875,7 +6093,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -5916,7 +6134,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -5957,7 +6175,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -5998,7 +6216,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -6039,7 +6257,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -6080,7 +6298,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -6121,7 +6339,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -6162,7 +6380,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -6220,7 +6438,7 @@
       "targets": [
         {
           "path": "desktop/src/main.rs",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815",
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
           "anchor": "#![cfg_attr(windows, windows_subsystem = \"windows\")]"
         },
         {
@@ -6288,7 +6506,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815",
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
           "anchor": "cli_println!(\"{reply}\")"
         },
         {
@@ -7161,22 +7379,22 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<CellMap> _readMapping()",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         },
         {
           "path": "mobile/lib/pixel_corrections_page.dart",
           "anchor": "Future<void> _hydrateAddressMapping",
-          "sha256": "392cc722fcfcf4731c6ef8880d31d26ba52a4a926be32f8b415669e42a9513a0"
+          "sha256": "731bf8e23114e7e3297efb2837244158633a79a49695e17e35276f4c592d5cb5"
         },
         {
           "path": "mobile/lib/pixel_correction_address.dart",
           "anchor": "bool pixelCorrectionMapMatches",
-          "sha256": "d746e76f0a761ff2db83a35bd182ee7ba65edb67ad3712a4a6015e91cd242aed"
+          "sha256": "55d3ac53a28ee0eeb4b262b5ac0f74052383f613f10ccbfa2c4f9518f2ae10c6"
         },
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
           "anchor": "previous.board != board || previous.boot != boot",
-          "sha256": "c5143cb176678151bc81273fbd7ebe7d666d9a145f400efc65ac1a8e7ecb817c"
+          "sha256": "f454f8dd79f7ac69a63f8dd16a63ef6e6d34fd51dbfcd16113aed3a278f9ec75"
         },
         {
           "path": "desktop/src/ui/cell_pixels.rs",
@@ -7190,7 +7408,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "value[\"pixel_preview\"]"
         },
         {
@@ -7206,7 +7424,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<DeviceStatus> status()",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         },
         {
           "path": "mobile/lib/panel_inventory.dart",
@@ -7248,7 +7466,7 @@
         {
           "path": "mobile/test/pixel_correction_mapping_test.dart",
           "anchor": "configuration edge reloads names/order without replacing dirty rules",
-          "sha256": "34091a98f4f64a7b7e33706e73050f4cd2f693ce1b064e3f244c8b444145b7f9"
+          "sha256": "34dd9dacd4186d39f4b8a00136a03281339692d57fff72a20c56a0cd8cf1893d"
         },
         {
           "path": "mobile/test/pixel_diagnostic_page_test.dart",
@@ -7298,7 +7516,7 @@
         {
           "path": "mobile/lib/command_failure.dart",
           "anchor": "class DeviceCommandRejected",
-          "sha256": "df0347031d740fb91c69cf8030f98ff708e4d2cd16411deb79d2e39b95404a2c"
+          "sha256": "778977413377a3f3a1aa6bc706e68ec39e0b04158a64ad01806fd176d938f22b"
         },
         {
           "path": "mobile/test/command_failure_test.dart",
@@ -7342,7 +7560,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<DeviceStatus> status()",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         }
       ],
       "proof": [
@@ -7508,7 +7726,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function firmwareUpdateObservation(s)"
         }
       ],
@@ -7682,7 +7900,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a",
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555",
           "anchor": "Stream<DeviceStatus> get statusUpdates"
         }
       ],
@@ -8024,7 +8242,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "SerialCommand::Bridge(target",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815"
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605"
         }
       ],
       "omissions": [
@@ -8405,7 +8623,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "Wall-clock interpolation"
         },
         {
@@ -8427,7 +8645,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51",
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1",
           "anchor": "rainbowClockCadence"
         },
         {
@@ -8499,12 +8717,12 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void resetGame(bool playWelcome = true)"
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "bool LedGrid::resetWhite()"
         }
       ],
@@ -8516,7 +8734,7 @@
         },
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51",
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1",
           "anchor": "grid.resetWhite()"
         }
       ],
@@ -9124,7 +9342,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "void LedGrid::service(uint32_t now)"
         },
         {
@@ -9141,7 +9359,7 @@
         },
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51",
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1",
           "anchor": "partial stream never auto-shows"
         }
       ],
@@ -9233,7 +9451,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "void LedGrid::service(uint32_t now)"
         },
         {
@@ -9250,7 +9468,7 @@
         },
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51",
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1",
           "anchor": "First frame has no synthetic +3 jump."
         },
         {
@@ -9387,7 +9605,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void chooseWinner(uint8_t button)"
         },
         {
@@ -11528,7 +11746,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -11573,7 +11791,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function upgradeObservation(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         }
       ],
       "omissions": [
@@ -11693,12 +11911,12 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "e2d91e078d6dad7454eaa68f9a030ef1aa8ae2c91ba72ba522818da6b74131b8"
+          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         }
       ],
       "proof": [
@@ -11783,12 +12001,12 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "e2d91e078d6dad7454eaa68f9a030ef1aa8ae2c91ba72ba522818da6b74131b8"
+          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         }
       ],
       "proof": [
@@ -11873,12 +12091,12 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "e2d91e078d6dad7454eaa68f9a030ef1aa8ae2c91ba72ba522818da6b74131b8"
+          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         }
       ],
       "proof": [
@@ -11963,12 +12181,12 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "e2d91e078d6dad7454eaa68f9a030ef1aa8ae2c91ba72ba522818da6b74131b8"
+          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         }
       ],
       "proof": [
@@ -12030,7 +12248,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -12088,7 +12306,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
         }
       ],
       "omissions": [
@@ -12149,7 +12367,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -12165,7 +12383,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -12270,7 +12488,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -12280,7 +12498,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -12300,7 +12518,7 @@
         {
           "path": "firmware/esp/src/PixelCorrectionStore.h",
           "anchor": "const char *preview(JsonObjectConst doc,uint32_t now)",
-          "sha256": "2f1255aa95ec7d9cb3da57d18f3b6f43d4b95355b0cf52e57042cec643a18b9a"
+          "sha256": "2df74bce57295b7e2127aebd3f77ee52e35953162a8240c51510a6e11c1a708d"
         },
         {
           "path": "firmware/esp/src/LedScene.h",
@@ -12411,7 +12629,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -12421,7 +12639,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         }
       ],
       "proof": [
@@ -12600,7 +12818,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -12677,7 +12895,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -12753,7 +12971,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a",
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555",
           "anchor": "Future<Set<String>> _discoverSsdp()"
         }
       ],
@@ -13478,7 +13696,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function statusRgbOutput"
         }
       ],
@@ -13527,7 +13745,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -13612,7 +13830,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function acceptStatusRgb("
         }
       ],
@@ -13957,7 +14175,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -14086,7 +14304,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -14257,12 +14475,12 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a",
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555",
           "anchor": "bool _acceptIdentity("
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
           "anchor": "api.onPeerChanged = ()"
         },
         {
@@ -14282,7 +14500,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
           "anchor": "bool authenticate()"
         },
         {
@@ -14297,7 +14515,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815",
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
           "anchor": "fn scoped_http_request("
         },
         {
@@ -14317,17 +14535,17 @@
         },
         {
           "path": "desktop/src/realtime.rs",
-          "sha256": "fc641c1365f2e20480f48c364ee97a20e61b39e8d850dc80a85abb128ab23ce4",
+          "sha256": "1ad8d990cc3486348cc5b8d10c9d868e777ffb2be99e25f31a56a03b67a5658b",
           "anchor": "pub struct Intent"
         },
         {
           "path": "mobile/lib/command_wire.dart",
-          "sha256": "1bfce8bc4fa9ca96f6c70c9f3a1ba35d8e8a6f419ab6127e84b910feb81f50a3",
+          "sha256": "814e42cfbd9f857ca48a03a3ec3a43f1b2789c56d7a0848edec4469fff2b437c",
           "anchor": "String commandPacket("
         },
         {
           "path": "libraries/BoardCore/src/CommandReceipts.h",
-          "sha256": "86486ea6c1f770cac34e83dd69ee4477ec3e4b92992eaf1b04ec12d61539a092",
+          "sha256": "061d79642fdeb1e07f528a63438ba466c3784fc96aef7ff9ca881508675dd2dc",
           "anchor": "class CommandReceipts"
         },
         {
@@ -14441,7 +14659,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815",
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
           "anchor": "// The mapping response identifies its own producer."
         },
         {
@@ -14496,7 +14714,7 @@
         },
         {
           "path": "desktop/src/realtime.rs",
-          "sha256": "fc641c1365f2e20480f48c364ee97a20e61b39e8d850dc80a85abb128ab23ce4",
+          "sha256": "1ad8d990cc3486348cc5b8d10c9d868e777ffb2be99e25f31a56a03b67a5658b",
           "anchor": "fn realtime_actual_ws_worker_delivers_receipt_without_http_or_poll_tick()"
         },
         {
@@ -14985,7 +15203,7 @@
           "path": "desktop/src/ui/device_settings.rs"
         },
         {
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "super::dropdown::ComboBox",
           "path": "desktop/src/ui/shell.rs"
         },
@@ -15144,7 +15362,7 @@
         },
         {
           "path": "desktop/src/config.rs",
-          "sha256": "da1ad74dc53c474cb4b478cc0557c65e5daf2bc14fb9e97f88eaf5be76c0a862",
+          "sha256": "b84801a85e31a44b2691bd5f6ccefea0106d799952b0fb61e2d6162ee11b9414",
           "anchor": "pub enum UiControlDensity"
         },
         {
@@ -15436,7 +15654,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503",
+          "sha256": "c483d7b68b8accacd29f0ff9163f76af2dc8039a5ab99af518875972e63f3924",
           "anchor": "pub fn known("
         }
       ],
@@ -15527,7 +15745,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function connectWs()"
         }
       ],
@@ -15636,7 +15854,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -15728,7 +15946,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -15900,7 +16118,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function connectWs()"
         }
       ],
@@ -16003,7 +16221,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -16099,7 +16317,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -16184,7 +16402,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -16244,7 +16462,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a",
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555",
           "anchor": "Future<Uint8List> maintenanceBytes"
         }
       ],
@@ -16372,12 +16590,12 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "64ff59a7b22d89162c426e99ee8a6f0fd9a947c58143a8d76d462b5ebca2f601",
+          "sha256": "c36b30af3c0ccb389db9e1eefeb72d145c43df59efae0f1e76e526e954e76a55",
           "anchor": "function renderLedBackendControl(anchor){"
         },
         {
           "path": "web/index.html",
-          "sha256": "64ff59a7b22d89162c426e99ee8a6f0fd9a947c58143a8d76d462b5ebca2f601",
+          "sha256": "c36b30af3c0ccb389db9e1eefeb72d145c43df59efae0f1e76e526e954e76a55",
           "anchor": "function waitForLedBackend("
         }
       ],
@@ -16555,12 +16773,12 @@
         },
         {
           "path": "tools/generate-font-assets.mjs",
-          "sha256": "25206183ce0d33c9be56f11bd39d9d802a18581543263714962b053070c78466",
+          "sha256": "1096059fc83aadeac46a559a6bd0e184336fb6a222422b67a35cd1431f17d60c",
           "anchor": "const dictionary={}"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -16692,7 +16910,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-        "sha256": "bf1673bcfadf4ad4d78b2b011079e3c30b7bf072649a037b9ade59bf0a9de301",
+          "sha256": "40a5704191ca1c66a03c9d0d620f7a57f5ae5cd168a94d70b856a5c27e3213b7",
           "anchor": "export function runChecks"
         },
         {
@@ -16866,7 +17084,7 @@
         },
         {
           "path": "assets/web/feature-workspaces.js",
-          "sha256": "e3ee781bcd00a2f84a06f893fa224244b8d555b7b9d956edc5cfe30588aa17c0",
+          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1",
           "anchor": "function reveal(target)"
         },
         {
@@ -16876,7 +17094,7 @@
         },
         {
           "path": "assets/web/workspace-studio.js",
-          "sha256": "bdc455a67af4c9803cd9ea76c725d800b8bdca2e98c831968b1b5a39840266e8",
+          "sha256": "c5c4b999f9fb7ca6011b9193a1ded10ed293bba8b53d9c861ad1ea4c108a15f4",
           "anchor": "for(const[id,label]of pages)"
         },
         {
@@ -16918,7 +17136,7 @@
         },
         {
           "path": "tests/web_feature_workspaces_test.mjs",
-          "sha256": "f51019992a9162e84251167d39fe4f1706446a4816c840a9daf8e146d371a9f6",
+          "sha256": "eeb04e6e570164994035d3e3855fef8851ba353679901a6ab86e42d4c844fdff",
           "anchor": "Injected navigation must not be followed by a second targetless fallback"
         },
         {
@@ -16972,12 +17190,12 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "fn save_status_bar_preferences("
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "let firmware_progress = self.firmware_observation().filter(|p| p.active);"
         },
         {
@@ -16992,7 +17210,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function statusRgbOutput"
         },
         {
@@ -17080,7 +17298,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815",
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
           "anchor": "fn status_bar_startup_message_respects_disconnected_and_selected_route()"
         },
         {
@@ -17148,12 +17366,12 @@
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503",
+          "sha256": "c483d7b68b8accacd29f0ff9163f76af2dc8039a5ab99af518875972e63f3924",
           "anchor": "pub fn has("
         },
         {
           "path": "mobile/lib/peer_context.dart",
-          "sha256": "e2d91e078d6dad7454eaa68f9a030ef1aa8ae2c91ba72ba522818da6b74131b8",
+          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882",
           "anchor": "static PeerContext fromStatus"
         },
         {
@@ -17163,7 +17381,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
           "anchor": "Future<bool> _command"
         },
         {
@@ -17173,12 +17391,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function peerAvailability("
         }
       ],
@@ -17210,7 +17428,7 @@
         },
         {
           "path": "mobile/test/pixel_tools_navigation_test.dart",
-          "sha256": "a865e8b0f37143c687ca1fbfeffe2f5d12f1bbbe08949f34bd97e488faea16e0",
+          "sha256": "ff0558b0f9240f4b2f5ad83121ff0423c2e8bbef83a6025a424897c35fee1408",
           "anchor": "Actual overflow menu opens capability-scoped linked pixel tabs: corrections=$supported"
         },
         {
@@ -17280,7 +17498,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503",
+          "sha256": "c483d7b68b8accacd29f0ff9163f76af2dc8039a5ab99af518875972e63f3924",
           "anchor": "fn serial_manifest_is_individual_and_table_modes_are_profile_scoped"
         }
       ],
@@ -17327,12 +17545,12 @@
       "targets": [
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503",
+          "sha256": "c483d7b68b8accacd29f0ff9163f76af2dc8039a5ab99af518875972e63f3924",
           "anchor": "pub struct Manifest"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "fn synchronize_context("
         },
         {
@@ -17358,7 +17576,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -17368,7 +17586,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         }
       ],
       "omissions": [
@@ -17421,7 +17639,7 @@
         },
         {
           "path": "desktop/src/capabilities.rs",
-          "sha256": "543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503",
+          "sha256": "c483d7b68b8accacd29f0ff9163f76af2dc8039a5ab99af518875972e63f3924",
           "anchor": "fn no_profile_or_individual_ack_means_no_controls"
         },
         {
@@ -17488,7 +17706,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -17562,12 +17780,12 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
           "anchor": "Future<void> _openConnection()"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -17577,7 +17795,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -17619,7 +17837,7 @@
         },
         {
           "path": "mobile/test/status_bar_layout_test.dart",
-          "sha256": "11ff7bcfe66ee8bcf0eb7037de48ae49db0275cc2f5e9dd0d40b05e9045bdf22",
+          "sha256": "52cb9e5aef5b21cb81477077b515c21c5108b075168eb410ce5617ba9614e447",
           "anchor": "Entire connection status icon and text open connection, errors stay inspectable"
         },
         {
@@ -17658,7 +17876,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -17766,7 +17984,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
@@ -18264,7 +18482,7 @@
         },
         {
           "path": "desktop/src/config.rs",
-          "sha256": "da1ad74dc53c474cb4b478cc0557c65e5daf2bc14fb9e97f88eaf5be76c0a862",
+          "sha256": "b84801a85e31a44b2691bd5f6ccefea0106d799952b0fb61e2d6162ee11b9414",
           "anchor": "pub application_shortcuts:"
         },
         {
@@ -18274,7 +18492,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "crate::application_shortcuts::take_action"
         }
       ],
@@ -18389,7 +18607,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -18399,7 +18617,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -18559,7 +18777,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -18569,7 +18787,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -18780,7 +18998,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679"
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -18860,7 +19078,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "icons::searchable_workspace_icon_picker"
         }
       ],
@@ -19000,7 +19218,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -19051,7 +19269,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -19104,12 +19322,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -19149,12 +19367,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -19240,7 +19458,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -19296,7 +19514,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -19352,7 +19570,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -19465,12 +19683,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "uint8_t brightness_ = 255"
         },
         {
@@ -19535,12 +19753,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -20537,7 +20755,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -20642,7 +20860,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "/* Fixed manager slots:"
         },
         {
@@ -20652,12 +20870,12 @@
         },
         {
           "path": "desktop/src/ui/panel_details.rs",
-          "sha256": "12e56243648941509435a13a165c89e1abb438710ccb1d311c78df8fb052096a",
+          "sha256": "d52b713fbf32ae3f9cf0c550f0ff172d2bc5450eeb985ab8a0ce1e0a7edd2d0d",
           "anchor": "pub fn correction_rules("
         },
         {
           "path": "desktop/src/ui/panel_details.rs",
-          "sha256": "12e56243648941509435a13a165c89e1abb438710ccb1d311c78df8fb052096a",
+          "sha256": "d52b713fbf32ae3f9cf0c550f0ff172d2bc5450eeb985ab8a0ce1e0a7edd2d0d",
           "anchor": "pub fn network("
         },
         {
@@ -20755,22 +20973,22 @@
         },
         {
           "path": "desktop/src/ui/panel_details.rs",
-          "sha256": "12e56243648941509435a13a165c89e1abb438710ccb1d311c78df8fb052096a",
+          "sha256": "d52b713fbf32ae3f9cf0c550f0ff172d2bc5450eeb985ab8a0ce1e0a7edd2d0d",
           "anchor": "fn feature_chips_wrap_as_whole_slots_without_vertical_labels_or_overflow()"
         },
         {
           "path": "desktop/src/ui/panel_details.rs",
-          "sha256": "12e56243648941509435a13a165c89e1abb438710ccb1d311c78df8fb052096a",
+          "sha256": "d52b713fbf32ae3f9cf0c550f0ff172d2bc5450eeb985ab8a0ce1e0a7edd2d0d",
           "anchor": "fn network_and_corrections_stay_bounded_and_passive_in_narrow_panels()"
         },
         {
           "path": "desktop/src/ui/panel_details.rs",
-          "sha256": "12e56243648941509435a13a165c89e1abb438710ccb1d311c78df8fb052096a",
+          "sha256": "d52b713fbf32ae3f9cf0c550f0ff172d2bc5450eeb985ab8a0ce1e0a7edd2d0d",
           "anchor": "fn scoped_action_rows_fit_narrow_cards_and_keep_wide_rows_compact()"
         },
         {
           "path": "desktop/src/ui/panel_details.rs",
-          "sha256": "12e56243648941509435a13a165c89e1abb438710ccb1d311c78df8fb052096a",
+          "sha256": "d52b713fbf32ae3f9cf0c550f0ff172d2bc5450eeb985ab8a0ce1e0a7edd2d0d",
           "anchor": "fn ethernet_uses_the_board_link_up_observation()"
         },
         {
@@ -20873,7 +21091,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a",
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -21073,7 +21291,7 @@
         },
         {
           "path": "mobile/lib/usb_transport.dart",
-          "sha256": "b7cd007412b8f5da7491f61219c0d6020f72801506bc6732304df6666a923636",
+          "sha256": "4eabeb6ebe75356e472049e7b26580fc276f2d5d68be9123c71afb847d1ab84e",
           "anchor": "class PakarUsbTransport"
         },
         {
@@ -21264,7 +21482,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -21320,7 +21538,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -21376,7 +21594,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -21432,7 +21650,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "9d613a8d43be99a49bb627f427ab5fa2587c678b68b489b52e3e78983fac6f25",
+          "sha256": "1c348e3907039ef8fa10464198a0882aae39ed991784a6c124c0ca895bc177f5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -21487,7 +21705,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815",
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -21548,7 +21766,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "value[\"tray_shell\"]"
         },
         {
@@ -21611,7 +21829,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815",
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
           "anchor": "fn serial_worker("
         },
         {
@@ -21648,7 +21866,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815",
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -21707,7 +21925,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679"
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
         }
       ],
       "omissions": [
@@ -21748,7 +21966,7 @@
         },
         {
           "path": "desktop/src/config.rs",
-          "sha256": "da1ad74dc53c474cb4b478cc0557c65e5daf2bc14fb9e97f88eaf5be76c0a862",
+          "sha256": "b84801a85e31a44b2691bd5f6ccefea0106d799952b0fb61e2d6162ee11b9414",
           "anchor": "fn cell_background_preference_is_opt_in_and_roundtrips_without_other_changes()"
         },
         {
@@ -21799,7 +22017,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -21820,7 +22038,7 @@
         {
           "path": "mobile/lib/api.dart",
           "anchor": "Future<BoardSound> boardSound(",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a"
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555"
         },
         {
           "path": "mobile/lib/board_sound_preferences.dart",
@@ -21830,7 +22048,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -21850,7 +22068,7 @@
         {
           "path": "firmware/esp/src/PixelCorrectionStore.h",
           "anchor": "template <size_t Pixels> class PixelCorrectionStore",
-          "sha256": "2f1255aa95ec7d9cb3da57d18f3b6f43d4b95355b0cf52e57042cec643a18b9a"
+          "sha256": "2df74bce57295b7e2127aebd3f77ee52e35953162a8240c51510a6e11c1a708d"
         },
         {
           "path": "firmware/esp/src/LedScene.h",
@@ -21875,7 +22093,7 @@
         {
           "path": "firmware/esp/src/PixelCorrectionStore.h",
           "anchor": "const char *preview(JsonObjectConst doc,uint32_t now)",
-          "sha256": "2f1255aa95ec7d9cb3da57d18f3b6f43d4b95355b0cf52e57042cec643a18b9a"
+          "sha256": "2df74bce57295b7e2127aebd3f77ee52e35953162a8240c51510a6e11c1a708d"
         },
         {
           "path": "firmware/esp/src/PixelGroupStore.h",
@@ -21910,7 +22128,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51",
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1",
           "anchor": "Boot policy accepts existing files without restoring a saved animation"
         },
         {
@@ -22490,7 +22708,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a",
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555",
           "anchor": "final LanResolver resolver;"
         },
         {
@@ -22511,7 +22729,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "cf5ff1b17fa6bb7d8e413dc710ec7562ab57a8e354211aa0b91ad7ebd36a1815"
+          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605"
         }
       ],
       "omissions": [
@@ -22639,12 +22857,12 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "bool setCells("
         },
         {
@@ -22669,7 +22887,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -22694,7 +22912,7 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
-          "sha256": "c5143cb176678151bc81273fbd7ebe7d666d9a145f400efc65ac1a8e7ecb817c",
+          "sha256": "f454f8dd79f7ac69a63f8dd16a63ef6e6d34fd51dbfcd16113aed3a278f9ec75",
           "anchor": "class PixelProbe"
         },
         {
@@ -22704,7 +22922,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a",
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -22729,7 +22947,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "fn send_pixel_probe("
         },
         {
@@ -22740,17 +22958,17 @@
         {
           "path": "firmware/esp/src/LedGrid.cpp",
           "anchor": "bool LedGrid::diagnostic(",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251"
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7"
         },
         {
           "path": "firmware/esp/src/DiagnosticReceipt.h",
           "anchor": "inline bool diagnosticReceiptStatus",
-          "sha256": "55754a3b5197413ef778de9928decdd989b8c0d7b7b13c103f3f101ea94763b1"
+          "sha256": "160078ef95ee5212d37b57ab452128a20810c544a23d613f2d8a0d449024a8fc"
         },
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -22783,7 +23001,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51",
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1",
           "anchor": "Entire selection validation"
         },
         {
@@ -22818,7 +23036,7 @@
         },
         {
           "path": "mobile/test/pixel_diagnostic_test.dart",
-          "sha256": "134ffbe9e72eb91a25460f2c4f4610777e44ac7a2dc45a21287370843fb96e7d",
+          "sha256": "5864c45b07a12dc3e327228b35629fd58c9db99c5bf1a6ce3dbfb064d9cfe5e8",
           "anchor": "Every raw position clears"
         },
         {
@@ -22859,7 +23077,7 @@
         {
           "path": "tests/led_grid_test.cpp",
           "anchor": "void cloudAnimationProgress(",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51"
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1"
         },
         {
           "path": "desktop/src/pixel_diagnostic.rs",
@@ -22868,7 +23086,7 @@
         },
         {
           "path": "desktop/src/realtime.rs",
-          "sha256": "fc641c1365f2e20480f48c364ee97a20e61b39e8d850dc80a85abb128ab23ce4",
+          "sha256": "1ad8d990cc3486348cc5b8d10c9d868e777ffb2be99e25f31a56a03b67a5658b",
           "anchor": "fn realtime_pixel_diagnostic_requires_exact_complete_readback_and_typed_intent()"
         },
         {
@@ -22879,7 +23097,7 @@
         {
           "path": "tests/led_grid_test.cpp",
           "anchor": "Advanced diagnostics are one transient post-render layer, not a scene.",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51"
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1"
         },
         {
           "path": "tests/game_role_renderer_test.cpp",
@@ -22894,7 +23112,7 @@
         {
           "path": "tests/diagnostic_receipt_test.cpp",
           "anchor": "Captured status projection:",
-          "sha256": "1b37fd01b15e2d65c66d9f9494375030162baf58adcc2baaef14b29058e8c96f"
+          "sha256": "85a66d548c203d2f3f95c69a7c008580f95cd1c0cf024f7dc5a2aca8dab7d282"
         },
         {
           "path": "tests/usb_snapshot_budget_test.mjs",
@@ -22946,12 +23164,12 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251",
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "35e977940f6601249c8ca1aa952cfe7598f911d28cd0186147d618454cee0501",
+          "sha256": "02f7715a2a1adf2e16d71734b8a4ae4d0e57befb07bccf79ce6e93e68c4f7951",
           "anchor": "bool setCells("
         },
         {
@@ -22976,7 +23194,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0",
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -23001,7 +23219,7 @@
         },
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
-          "sha256": "c5143cb176678151bc81273fbd7ebe7d666d9a145f400efc65ac1a8e7ecb817c",
+          "sha256": "f454f8dd79f7ac69a63f8dd16a63ef6e6d34fd51dbfcd16113aed3a278f9ec75",
           "anchor": "class PixelProbe"
         },
         {
@@ -23011,7 +23229,7 @@
         },
         {
           "path": "mobile/lib/api.dart",
-          "sha256": "ad0237be070fbf17b698c929036072704fd91ee898a7cbe3940fc96618b0cb3a",
+          "sha256": "589dfb8fd189b2bb37da8999f3a3e4d0de298a4b5d109c617ffae535dac90555",
           "anchor": "Future<DeviceStatus> pixelDiagnostic("
         },
         {
@@ -23031,7 +23249,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679",
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
           "anchor": "fn send_pixel_probe("
         },
         {
@@ -23042,17 +23260,17 @@
         {
           "path": "firmware/esp/src/LedGrid.cpp",
           "anchor": "bool LedGrid::diagnostic(",
-          "sha256": "b911387e191d6e063929abe86bbacc548bf0d5e5f5932cee150d273153a69251"
+          "sha256": "7ffd801457b8b040d416a8cd6a3b2851b6a721dfb36c118ce9dbd6f6b632c8c7"
         },
         {
           "path": "firmware/esp/src/DiagnosticReceipt.h",
           "anchor": "inline bool diagnosticReceiptStatus",
-          "sha256": "55754a3b5197413ef778de9928decdd989b8c0d7b7b13c103f3f101ea94763b1"
+          "sha256": "160078ef95ee5212d37b57ab452128a20810c544a23d613f2d8a0d449024a8fc"
         },
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "2063aba68b98cb6dc166be6accd7dccf9e5e35b7ebcac994f87d7590e56bfdf0"
+          "sha256": "8f613beea9102d5a7b029fd0f938ab8b724ca6fcd1d7a5c21ffd89b4e3ee9d25"
         }
       ],
       "omissions": [
@@ -23079,7 +23297,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51",
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1",
           "anchor": "Entire selection validation"
         },
         {
@@ -23114,7 +23332,7 @@
         },
         {
           "path": "mobile/test/pixel_diagnostic_test.dart",
-          "sha256": "134ffbe9e72eb91a25460f2c4f4610777e44ac7a2dc45a21287370843fb96e7d",
+          "sha256": "5864c45b07a12dc3e327228b35629fd58c9db99c5bf1a6ce3dbfb064d9cfe5e8",
           "anchor": "Every raw position clears"
         },
         {
@@ -23144,7 +23362,7 @@
         },
         {
           "path": "desktop/src/realtime.rs",
-          "sha256": "fc641c1365f2e20480f48c364ee97a20e61b39e8d850dc80a85abb128ab23ce4",
+          "sha256": "1ad8d990cc3486348cc5b8d10c9d868e777ffb2be99e25f31a56a03b67a5658b",
           "anchor": "fn realtime_pixel_diagnostic_requires_exact_complete_readback_and_typed_intent()"
         },
         {
@@ -23155,7 +23373,7 @@
         {
           "path": "tests/led_grid_test.cpp",
           "anchor": "Advanced diagnostics are one transient post-render layer, not a scene.",
-          "sha256": "5f66f9e729268b757b5423717baafd60e7128500040da68ef5fd04a060253b51"
+          "sha256": "e0762d125813427b40760552d74b52135f50ade94b9b1d49ff81787f1d062cc1"
         },
         {
           "path": "tests/game_role_renderer_test.cpp",
@@ -23170,7 +23388,7 @@
         {
           "path": "tests/diagnostic_receipt_test.cpp",
           "anchor": "Captured status projection:",
-          "sha256": "1b37fd01b15e2d65c66d9f9494375030162baf58adcc2baaef14b29058e8c96f"
+          "sha256": "85a66d548c203d2f3f95c69a7c008580f95cd1c0cf024f7dc5a2aca8dab7d282"
         },
         {
           "path": "tests/usb_snapshot_budget_test.mjs",
@@ -23205,17 +23423,17 @@
       "targets": [
         {
           "path": "mobile/lib/output_panel.dart",
-          "sha256": "811b7686b27f226c9173c13c35f04d7d296263e73cb54c319be0560caf910476",
+          "sha256": "6414f101735aa939289a5eee2e9831b37ca84ce1458f0c6b24a4f5c5860b0d07",
           "anchor": "class OutputPanel"
         },
         {
           "path": "assets/web/feature-workspaces.js",
-          "sha256": "e3ee781bcd00a2f84a06f893fa224244b8d555b7b9d956edc5cfe30588aa17c0",
+          "sha256": "04ccd4426ff1a3f6956b7a8254596e1e3b4554323dd6f892787dcb7f5a0883c1",
           "anchor": "function diagnosticWorkspace(value)"
         },
         {
           "path": "web/index.html",
-          "sha256": "64ff59a7b22d89162c426e99ee8a6f0fd9a947c58143a8d76d462b5ebca2f601",
+          "sha256": "c36b30af3c0ccb389db9e1eefeb72d145c43df59efae0f1e76e526e954e76a55",
           "anchor": "function workspaceDiagnosticDraft()"
         },
         {
@@ -23230,18 +23448,18 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84",
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
           "path": "desktop/src/capabilities.rs",
           "anchor": "pub struct Presentation",
-          "sha256": "543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503"
+          "sha256": "c483d7b68b8accacd29f0ff9163f76af2dc8039a5ab99af518875972e63f3924"
         },
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "9794439f13e7a573b97ede3eb62c624a65fa0b353640e77e4a25c5547734f679"
+          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
         },
         {
           "path": "desktop/src/ui/layout.rs",
@@ -23256,7 +23474,7 @@
         {
           "path": "desktop/src/config.rs",
           "anchor": "pub native_workspaces",
-          "sha256": "da1ad74dc53c474cb4b478cc0557c65e5daf2bc14fb9e97f88eaf5be76c0a862"
+          "sha256": "b84801a85e31a44b2691bd5f6ccefea0106d799952b0fb61e2d6162ee11b9414"
         },
         {
           "path": "mobile/lib/table_workspace.dart",
@@ -23277,7 +23495,7 @@
         },
         {
           "path": "tests/web_feature_workspaces_test.mjs",
-          "sha256": "f51019992a9162e84251167d39fe4f1706446a4816c840a9daf8e146d371a9f6",
+          "sha256": "eeb04e6e570164994035d3e3855fef8851ba353679901a6ab86e42d4c844fdff",
           "anchor": "Live observations do not trigger durable writes"
         },
         {
@@ -23288,12 +23506,12 @@
         {
           "path": "desktop/src/capabilities.rs",
           "anchor": "fn presentation_retains_only_prior_acks_without_reviving_live_authority",
-          "sha256": "543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503"
+          "sha256": "c483d7b68b8accacd29f0ff9163f76af2dc8039a5ab99af518875972e63f3924"
         },
         {
           "path": "desktop/src/capabilities.rs",
           "anchor": "fn measured_panel_height_preserves_scroll_only_for_same_board_panel_and_width",
-          "sha256": "543af19c9516121164be806dda9967f1437a77b0fc3c9bb1aa556e6449345503"
+          "sha256": "c483d7b68b8accacd29f0ff9163f76af2dc8039a5ab99af518875972e63f3924"
         },
         {
           "path": "desktop/src/native_workspace.rs",
@@ -23406,7 +23624,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84"
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44"
         }
       ],
       "proof": [
@@ -23441,12 +23659,12 @@
         {
           "path": "mobile/lib/pixel_diagnostic.dart",
           "anchor": "class PixelDiagnosticWorkspace",
-          "sha256": "c5143cb176678151bc81273fbd7ebe7d666d9a145f400efc65ac1a8e7ecb817c"
+          "sha256": "f454f8dd79f7ac69a63f8dd16a63ef6e6d34fd51dbfcd16113aed3a278f9ec75"
         },
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "fee594559bfd86b5bfca6752fd68d9e5efb3fd3625dc7c9b1c2f1f8da70a2e84"
+          "sha256": "1e79994c257e8a2cc59a588ed2c6ca38492a52f8edce3925dc5e49ed36897a44"
         }
       ],
       "proof": [
@@ -23546,7 +23764,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function createWorkspaceStorage",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         },
         {
           "path": "assets/web/device-settings.js",
@@ -23556,7 +23774,7 @@
         {
           "path": "assets/web/workspace-studio.js",
           "anchor": "function studioRoute(",
-          "sha256": "bdc455a67af4c9803cd9ea76c725d800b8bdca2e98c831968b1b5a39840266e8"
+          "sha256": "c5c4b999f9fb7ca6011b9193a1ded10ed293bba8b53d9c861ad1ea4c108a15f4"
         }
       ],
       "proof": [
@@ -23600,7 +23818,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function workspaceSettingsRecord",
-          "sha256": "612572e98bd3ff5f17b52a90856592751df35c34507706b60fb5a5828285b44a"
+          "sha256": "2e116bbd5f1db8a75f95dc72ef3837b6ce7886e5ad746d2c11c6759c661bdb5f"
         }
       ],
       "proof": [

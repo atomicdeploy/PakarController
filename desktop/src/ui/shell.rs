@@ -470,7 +470,11 @@ impl PakarControllerApp {
         if path == pixel_corrections::PATH {
             self.pixel_corrections.pending = None;
             match serde_json::from_value::<pixel_corrections::Configuration>(value) {
-                Ok(value) if value.pixels > 0 && value.pixels <= 480 && value.rules.len() <= 32 => {
+                Ok(value) if value.validate().is_ok() => {
+                    if self.live_status().and_then(peer_http::Pin::from_status) != self.pixel_corrections.owner {
+                        self.pixel_corrections.message = "Correction readback belongs to a retired board".into();
+                        return;
+                    }
                     if self
                         .pixel_corrections
                         .expected
@@ -485,6 +489,7 @@ impl PakarControllerApp {
                     }
                     self.pixel_corrections.value = Some(value);
                     self.pixel_corrections.dirty = false;
+                    self.pixel_corrections.live.committed();
                     self.pixel_corrections.message = "Board configuration read back".into();
                 }
                 _ => self.pixel_corrections.message = "Invalid correction readback".into(),
@@ -1201,6 +1206,8 @@ impl PakarControllerApp {
                 i.viewport().occluded.unwrap_or(false),
             )
         });
+        self.service_pixel_correction_preview(!minimized && !occluded && !self.exiting
+            && self.usb_ui_visible && ctx.input(|i|i.focused));
         let ui_demand = crate::usb_demand::visible_demand(
             self.usb_ui_demand,
             self.usb_ui_visible,
@@ -2255,11 +2262,13 @@ impl PakarControllerApp {
     fn draw_pixel_corrections(&mut self, ui: &mut egui::Ui) {
         let pin = self.live_status().and_then(peer_http::Pin::from_status);
         if pin != self.pixel_corrections.owner {
+            let preview_enabled = self.config.pixel_correction_live_preview;
             self.pixel_corrections = pixel_corrections::Editor {
                 tab: true,
                 owner: pin.clone(),
                 ..Default::default()
             };
+            self.pixel_corrections.live.enabled = preview_enabled;
         }
         if self.transport != Transport::WiFi || pin.is_none() {
             ui.weak("Correction configuration requires the board Wi-Fi connection.");
@@ -2273,7 +2282,8 @@ impl PakarControllerApp {
             self.pixel_corrections.pending = None;
             self.pixel_corrections.message="No correction receipt arrived. Read from board before retrying; no write replayed.".into();
         }
-        let busy = self.pixel_corrections.pending.is_some();
+        self.pixel_corrections.live.painted_at = Some(Instant::now());
+        let busy = self.pixel_corrections.pending.is_some() || self.pixel_corrections.live.pending.is_some();
         // Match Flutter: load once when this peer's editor opens. A failed or
         // uncertain read keeps its message and requires an explicit retry.
         let mut read = self.pixel_corrections.value.is_none()
@@ -2282,6 +2292,31 @@ impl PakarControllerApp {
         let mut save = false;
         let rule_toggle=self.live_status().and_then(|s|s.capabilities.as_ref())
             .is_some_and(|c|c.has("pixel-correction-rule-toggle"));
+        let preview_supported=self.live_status().and_then(|s|s.capabilities.as_ref())
+            .is_some_and(|c|c.has(pixel_corrections::PREVIEW_FEATURE));
+        let cursor=self.live_status().and_then(|status| {
+            let observed=pixel_diagnostic::Observation::read(status)?;
+            (observed.active && !observed.off && !observed.probe.group && self.pixel_diagnostic.pending.is_none())
+                .then_some(pixel_corrections::DiagnosticCursor{raw:observed.probe.index,revision:status.pixel_corrections_revision?})
+        });
+        if preview_supported {
+            let mut enabled=self.pixel_corrections.live.enabled;
+            if ui.checkbox(&mut enabled,ui::i18n::text("Live preview")).changed() {
+                self.pixel_corrections.live.toggle(enabled);
+                self.config.pixel_correction_live_preview=enabled;
+                // Explicit preference only: do not commit open Preferences
+                // drafts, a preview lease, or board configuration here.
+                if let Err(error)=config::AppConfig::load().and_then(|mut saved|{
+                    saved.pixel_correction_live_preview=enabled;saved.save()
+                }) {self.pixel_corrections.message=format!("Preview preference not saved: {error}");}
+            }
+            if self.pixel_corrections.live.observed.is_some() {
+                ui.weak("Temporary preview · Save makes it persistent");
+            }
+            if !self.pixel_corrections.live.error.is_empty() {
+                ui.colored_label(ui.visuals().warn_fg_color,&self.pixel_corrections.live.error);
+            }
+        }
         let changed = self
             .live_status()
             .and_then(|s| s.pixel_corrections_revision)
@@ -2340,11 +2375,19 @@ impl PakarControllerApp {
             });
             ui.add_space(8.0);
             if let Some(value) = self.pixel_corrections.value.as_mut() {
-                self.pixel_corrections.dirty |= super::panel_details::correction_rules(ui, value, rule_toggle);
+                let edited=super::panel_details::correction_rules(ui, value, rule_toggle,self.pixel_corrections.live.observed.as_ref(),cursor);
+                self.pixel_corrections.dirty |= edited;
+                if edited && preview_supported {self.pixel_corrections.live.edited(Instant::now());}
             }
         });
         ui.label(&self.pixel_corrections.message);
         if read {
+            self.pixel_corrections.live.stop();
+            if self.pixel_corrections.live.save_lease().is_some() {
+                self.pixel_corrections.reload_after_preview=true;
+                self.pixel_corrections.message="Stopping temporary preview before reloading…".into();
+                return;
+            }
             self.pixel_corrections.pending = Some(std::time::Instant::now());
             self.pixel_corrections.expected = None;
             self.pixel_corrections.message = "Reading board configuration…".into();
@@ -2354,9 +2397,9 @@ impl PakarControllerApp {
             ));
         }
         if save && let Some(value) = self.pixel_corrections.value.as_ref() {
-            match serde_json::to_string(
-                &serde_json::json!({"enabled":value.enabled,"revision":value.revision,"rules":value.rules}),
-            ) {
+            let mut saved=value.write_value();
+            if let Some(lease)=self.pixel_corrections.live.save_lease() {saved["lease_id"]=lease.into();}
+            match serde_json::to_string(&saved) {
                 Ok(json) => {
                     self.pixel_corrections.expected = Some(value.clone());
                     self.pixel_corrections.pending = Some(std::time::Instant::now());
@@ -2370,6 +2413,56 @@ impl PakarControllerApp {
                 Err(error) => self.pixel_corrections.message = error.to_string(),
             }
         }
+    }
+    fn service_pixel_correction_preview(&mut self, foreground:bool) {
+        let now=Instant::now();
+        let status=self.live_status().cloned();
+        let pin=status.as_ref().and_then(peer_http::Pin::from_status);
+        if pin.is_some() && pin!=self.pixel_corrections.owner {
+            let enabled=self.config.pixel_correction_live_preview;
+            self.pixel_corrections.live=pixel_corrections::LivePreview::default();
+            self.pixel_corrections.live.enabled=enabled;
+            return; // Never send old-owner cleanup to a newly connected board.
+        }
+        let allowed=foreground && self.http_writable() && pin.is_some()
+            && status.as_ref().and_then(|s|s.capabilities.as_ref()).is_some_and(|c|c.has(pixel_corrections::PREVIEW_FEATURE))
+            && self.pixel_corrections.live.painted_at.is_some_and(|at|now.saturating_duration_since(at)<Duration::from_millis(750));
+        let changed=status.as_ref().and_then(|s|s.pixel_corrections_revision)
+            .zip(self.pixel_corrections.value.as_ref().map(|v|v.revision)).is_some_and(|(live,draft)|live!=draft);
+        if !allowed || changed {self.pixel_corrections.live.stop();}
+        // Unknown/disconnected owners expire in firmware; no discovery or
+        // reconnection is allowed to redirect a preview mutation.
+        if pin.is_none() || !self.http_writable() || self.pixel_corrections.pending.is_some() {return;}
+        if self.pixel_corrections.reload_after_preview && self.pixel_corrections.live.pending.is_none()
+            && self.pixel_corrections.live.save_lease().is_none() {
+            self.pixel_corrections.reload_after_preview=false;
+            self.pixel_corrections.pending=Some(now);
+            self.pixel_corrections.expected=None;
+            self.pixel_corrections.message="Reading board configuration…".into();
+            if self.http_tx.send(HttpCommand::Configuration(self.endpoint(),pixel_corrections::PATH)).is_err() {
+                self.pixel_corrections.pending=None;
+                self.pixel_corrections.message="Configuration worker unavailable; nothing sent".into();
+            }
+            return;
+        }
+        let Some(value)=self.pixel_corrections.value.as_ref() else {return;};
+        let Some(request)=self.pixel_corrections.live.next(value,now) else {return;};
+        let status=status.unwrap();
+        // Choose one path before dispatch. An unavailable socket may use one
+        // HTTP request, but an uncertain WS send is never replayed over HTTP.
+        let result=if self.websocket_live && realtime::supported(&status,pixel_corrections::PREVIEW_PATH) {
+            realtime::Intent::new(self.endpoint(),&status,pixel_corrections::PREVIEW_PATH,
+                vec![("configuration".into(),request.payload().to_string())],self.http_tx.capture(),
+                self.connection_gate.stamp(Transport::WiFi,self.connection_gate.epoch()),None)
+                .and_then(|mut intent| {
+                    intent.correction_request=Some(request.clone());
+                    self.ws_tx.send(WsCommand::Control(intent)).map_err(|_|"Preview worker unavailable; nothing sent".to_owned())
+                })
+        } else {
+            self.http_tx.send(HttpCommand::CorrectionPreview(self.endpoint(),request.clone()))
+                .map_err(|_|"Preview worker unavailable; nothing sent".to_owned())
+        };
+        if let Err(error)=result {self.pixel_corrections.live.finish(request.id,Err(error),now);}
     }
     fn draw_pixel_diagnostic(&mut self, ui: &mut egui::Ui) {
         let Some(status) = self

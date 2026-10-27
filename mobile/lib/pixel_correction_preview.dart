@@ -107,15 +107,8 @@ class PixelCorrectionPreview extends ChangeNotifier {
             .map((value) => Map<String, dynamic>.from(value as Map))
             .toList(),
       );
-      final reply = await api.postJson(
-        path,
-        {
-          'configuration': jsonEncode({
-            ...config,
-            'ttl_ms': ttlMs,
-            'lease_id': ?issuedLease,
-          }),
-        },
+      final reply = await api.previewCorrections(
+        {...config, 'ttl_ms': ttlMs, 'lease_id': ?issuedLease},
         authorize: () =>
             !_disposed &&
             enabled &&
@@ -226,12 +219,10 @@ class PixelCorrectionPreview extends ChangeNotifier {
         api.freshStatus?.json['board_id'] == board &&
         api.freshStatus?.json['boot_id'] == boot;
     try {
-      await api.postJson(path, {
-        'configuration': jsonEncode({
-          'clear': true,
-          'lease_id': value,
-          'revision': revision,
-        }),
+      await api.previewCorrections({
+        'clear': true,
+        'lease_id': value,
+        'revision': revision,
       }, authorize: authorized);
     } catch (_) {
       // No mutation replay. The board's bounded lease is the recovery path.

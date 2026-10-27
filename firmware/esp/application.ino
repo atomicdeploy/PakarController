@@ -91,6 +91,7 @@
 #include "src/SceneStore.h"
 #include "src/LedBackendSettings.h"
 #include "src/PixelGroupStore.h"
+#include "src/HostPresentationStore.h"
 #include "src/UsbSnapshotProjection.h"
 #if PAKAR_PIXEL_CORRECTIONS
 #include "src/PixelCorrectionStore.h"
@@ -242,6 +243,7 @@ LedGrid grid;
 SceneStore<fs::FS> sceneStore;
 LedBackendSettings<fs::FS> ledBackendSettings;
 PixelGroupStore<LedGrid::GroupLayout> pixelGroups;
+HostPresentationStore<LedGrid::kCells,LedGrid::kPixels> hostPresentation;
 #if PAKAR_PIXEL_CORRECTIONS
 PixelCorrectionStore<LedGrid::kPixels> pixelCorrections;
 #endif
@@ -616,6 +618,34 @@ String pixelGroupsJson(){
   body+=F("\",\"boot_id\":\"");body+=pcBootId;body+=F("\"}");
   return body.length()==expected?body:String();
 }
+String presentationJson(bool full=false){
+  JsonDocument reply;if(deserializeJson(reply,hostPresentation.json(full)))return String();
+  reply["board_id"]=pcBoardId;reply["boot_id"]=pcBootId;
+  reply["group_layout_revision"]=grid.groupLayout().revision();
+  String result;serializeJson(reply,result);return result;
+}
+const char *applyHostPresentation(JsonObjectConst request){
+  if(!maintenanceApiIdle()||!grid.presentationReady())return "presentation_busy";
+  const char *error=nullptr;
+#if defined(ARDUINO_ARCH_ESP32)
+  if(grid.backendPending())return "presentation_busy";
+  // Only explicit durable changes enter the existing flash pause discipline.
+  if(request["lifetime"]=="persistent"){
+    PakarS3::ScopedLedFlashPause pause;if(!pause)return "led_flash_guard_busy";
+    error=hostPresentation.apply(request,grid.groupLayout(),millis());
+  }else
+#endif
+    error=hostPresentation.apply(request,grid.groupLayout(),millis());
+  grid.presentationChanged();keyObservationPending=true;
+  return error;
+}
+#if PAKAR_PIXEL_CORRECTIONS
+const char *applyCorrectionPreview(JsonObjectConst request){
+  if(!maintenanceApiIdle())return "maintenance_busy";
+  const char *error=pixelCorrections.preview(request,millis());
+  grid.setCorrections(&pixelCorrections.mapping);keyObservationPending=true;return error;
+}
+#endif
 String pixelFrameResponse(bool fenced=false,uint32_t expectedRevision=0){
   if(fenced&&grid.groupLayout().revision()!=expectedRevision)return F("{\"error\":\"pixel_group_layout_changed\"}");
   if(fenced&&grid.publishedGroupRevision()!=expectedRevision)return F("{\"error\":\"pixel_frame_layout_pending\"}");
@@ -1708,10 +1738,28 @@ bool requestAndWaitForAck(uint8_t opcode, const uint8_t *payload = nullptr,
   while (!awaitedReplySeen &&
          static_cast<uint32_t>(millis() - startedAt) < timeoutMs) {
     link.service();
-    delay(1);
-    yield();
+    if(!awaitedReplySeen){
+#if !defined(ARDUINO_ARCH_ESP32)
+      delay(1);
+#endif
+      yield();
+    }
   }
   return awaitedReplySeen && awaitedReplyOk;
+}
+bool submitAvrCommand(uint8_t opcode,const uint8_t *payload,uint8_t length,String &result){
+  if(!avrOnline){result=F("avr_unavailable");return false;}
+  if(!requestAndWaitForAck(opcode,payload,length,150)){
+    result=awaitedReplySeen?F("avr_command_rejected"):F("avr_outcome_unknown");return false;
+  }
+  result=F("avr_acknowledged");return true;
+}
+void sendAvrHttpCommand(uint8_t opcode,const uint8_t *payload,uint8_t length){
+  String result;const bool accepted=submitAvrCommand(opcode,payload,length,result);
+  JsonDocument reply;reply["accepted"]=accepted;reply["board_id"]=pcBoardId;reply["boot_id"]=pcBootId;
+  if(accepted){reply["state"]="acknowledged";reply["avr_acknowledged"]=true;reply["physical_verified"]=false;}
+  else {reply["error"]=result;if(result=="avr_outcome_unknown")reply["outcome"]="unknown";}
+  String body;serializeJson(reply,body);server.send(accepted?200:409,"application/json",body);
 }
 
 uint8_t resumeAvrApplication() {
@@ -2178,6 +2226,7 @@ String buildStatusJson(bool compact) {
   body += F(",\"command_clock_ms\":"); body += commandTime;
   body += F(",\"configuration_revision\":");body+=PakarConfiguration::changes().revision();
   body += F(",\"pixel_groups\":");body+=pixelGroups.json(compact);
+  body += F(",\"presentation\":");body+=hostPresentation.json();
 #if PAKAR_PIXEL_CORRECTIONS
   body += F(",\"pixel_corrections_revision\":");body+=pixelCorrections.revision();
   body += F(",\"pixel_corrections_active_revision\":");body+=pixelCorrections.activeRevision();
@@ -2398,12 +2447,12 @@ String buildStatusJson(bool compact) {
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
   body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"pixel-diagnostic-effects\",\"pixel-diagnostic-overlay\",\"pixel-group-layout\",\"panel-events\",\"usb-demand\",\"usb-pixel-diagnostic\"");
-  body += F(",\"state-presentation\"");
+  body += F(",\"state-presentation\",\"host-presentation\"");
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
   body += F(",\"peer-relay-http\"");
 #endif
 #if PAKAR_PIXEL_CORRECTIONS
-  body += F(",\"pixel-corrections\",\"pixel-corrections-preview\",\"pixel-correction-rule-toggle\"");
+  body += F(",\"pixel-corrections\",\"pixel-corrections-preview\",\"pixel-correction-rule-toggle\",\"pixel-corrections-preview-command\"");
 #endif
 #if PAKAR_FIRST_WINS_ENABLED
   body += F(",\"key-settings\",\"usb-key-settings\",\"reset-ack\"");
@@ -2412,6 +2461,7 @@ String buildStatusJson(bool compact) {
   if(avrOnline&&avrRemotePress)body += F(",\"game-press\"");
 #endif
   if(avrOnline&&avrAudioStream)body += F(",\"audio-stream\"");
+  if(avrOnline)body += F(",\"avr-command-ack\"");
 #if PAKAR_TABLE_SELECTION
   body += F(",\"cell-assignments\",\"cell-lock\"");
 #endif
@@ -2649,8 +2699,8 @@ String commandReply(const String &message,bool boundedDiagnostic) {
     const String id=PakarCommand::stringValue(object,"request_id");
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
-    const bool supported=command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
-        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell"||command=="cell-assignments"||command=="cell-lock"||command=="audio"||command=="buzzer";
+    const bool supported=command=="presentation"||command=="pixel-corrections-preview"||command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
+        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell"||command=="cell-assignments"||command=="cell-lock"||command=="audio"||command=="buzzer"||command=="outputs";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
       reply["error"]="peer_changed";
@@ -2664,28 +2714,67 @@ String commandReply(const String &message,bool boundedDiagnostic) {
         String result;
         entry->accepted=!programmingLatched && !otaActive && !otaRebootAt && !avrUploadOwner &&
             !remoteFirmware.busy() && !networkApplyPending && !cloudApplyPending && handleCloudCommand(message,result);
+        if(!entry->accepted&&(command=="presentation"||command=="pixel-corrections-preview"))reply["reason"]=result;
         if(!entry->accepted)entry->failure=result==F("red_cells_locked")?BoardCore::CommandReceipts::RedCellsLocked:
             result==F("invalid_cell_assignments")?BoardCore::CommandReceipts::InvalidCellAssignments:
-            result==F("unsupported_board_role")?BoardCore::CommandReceipts::UnsupportedBoardRole:BoardCore::CommandReceipts::NoFailure;
+            result==F("unsupported_board_role")?BoardCore::CommandReceipts::UnsupportedBoardRole:
+            result==F("avr_outcome_unknown")?BoardCore::CommandReceipts::AvrOutcomeUnknown:
+            result==F("avr_command_rejected")?BoardCore::CommandReceipts::AvrRejected:BoardCore::CommandReceipts::NoFailure;
         if(entry->accepted && command=="cells") {
           BoardCore::CellBatch cells;CellState state;Effect effect;
           if(parseCellsAction(request["ids"].as<String>(),request["state"].as<String>(),request["effect"].as<String>(),cells,state,effect))entry->count=cells.count();
         }
+        if(entry->accepted&&command=="presentation")entry->observe(hostPresentation.model.revision,hostPresentation.model.lease);
+#if PAKAR_PIXEL_CORRECTIONS
+        if(entry->accepted&&command=="pixel-corrections-preview")entry->observe(pixelCorrections.activeRevision(),pixelCorrections.previewLease());
+#endif
       }
       if(admission==BoardCore::CommandReceipts::Fresh || admission==BoardCore::CommandReceipts::Cached) {
         reply["accepted"]=entry->accepted;reply["count"]=entry->count;
         reply["cached"]=admission==BoardCore::CommandReceipts::Cached;
         if(entry->accepted && (command=="reset"||command=="game-press"))reply["avr_acknowledged"]=true;
-        // UART submission is not proof that the AVR has begun audible playback.
-        if(entry->accepted && (command=="audio" || command=="buzzer"))
-          reply["state"]="queued";
+        // AVR ACK confirms its command handler, not physical acoustics/voltage.
+        if(entry->accepted && (command=="audio" || command=="buzzer"||command=="outputs")){
+          reply["state"]="acknowledged";reply["avr_acknowledged"]=true;reply["physical_verified"]=false;
+          if(command=="outputs")reply["acknowledged_mask"]=request["mask"];
+        }
+        if(entry->failure==BoardCore::CommandReceipts::AvrOutcomeUnknown)reply["outcome"]="unknown";
         if(!entry->accepted){reply["error"]=BoardCore::CommandReceipts::failureCode(entry->failure);reply["message"]=BoardCore::CommandReceipts::failureMessage(entry->failure);}
+        bool observed=true;
+        if(entry->accepted&&admission==BoardCore::CommandReceipts::Cached){
+          if(command=="presentation"){
+            if(hostPresentation.model.service(millis())){grid.presentationChanged();keyObservationPending=true;}
+            observed=entry->observationMatches(hostPresentation.model.revision,hostPresentation.model.lease);
+          }
+#if PAKAR_PIXEL_CORRECTIONS
+          if(command=="pixel-corrections-preview"){
+            if(pixelCorrections.service(millis())){grid.setCorrections(&pixelCorrections.mapping);keyObservationPending=true;}
+            observed=entry->observationMatches(pixelCorrections.activeRevision(),pixelCorrections.previewLease());
+          }
+#endif
+        }
+        if(!observed){
+          // The original mutation succeeded, but current metadata belongs to a
+          // newer revision/expired lease. Never replay or fabricate its ACK.
+          reply["accepted"]=false;reply["original_accepted"]=true;reply["outcome"]="unknown";
+          reply["error"]="readback_required";reply["readback_required"]=true;
+          reply["observed_revision"]=entry->observedRevision;reply["observed_lease_id"]=entry->observedLease;
+        }
       } else reply["error"]=admission==BoardCore::CommandReceipts::Conflict?"request_id_conflict":
           admission==BoardCore::CommandReceipts::Full?"command_capacity":
           admission==BoardCore::CommandReceipts::Expired?"command_expired":"invalid_request_id";
     }
   }
-  const bool partial=boundedDiagnostic&&request["command"]=="pixel-diagnostic";
+  if(reply["accepted"]==true&&request["command"]=="presentation"){
+    JsonDocument details;if(!deserializeJson(details,presentationJson()))reply["presentation"]=details.as<JsonObjectConst>();
+  }
+#if PAKAR_PIXEL_CORRECTIONS
+  if(reply["accepted"]==true&&request["command"]=="pixel-corrections-preview"){
+    JsonDocument details;if(!deserializeJson(details,pixelCorrections.previewJson()))reply["pixel_corrections_preview"]=details.as<JsonObjectConst>();
+    reply["corrections_revision"]=pixelCorrections.revision();reply["corrections_active_revision"]=pixelCorrections.activeRevision();
+  }
+#endif
+  const bool partial=boundedDiagnostic&&(request["command"]=="pixel-diagnostic"||request["command"]=="presentation"||request["command"]=="pixel-corrections-preview");
   if(partial)reply["status_partial"]=true;
   String body;serializeJson(reply,body);
   if(reply["accepted"]==true) {
@@ -2984,6 +3073,16 @@ bool handleCloudCommand(const String &message, String &result) {
   }
   const JsonObjectConst commandRequest=commandDocument.as<JsonObjectConst>();
   const String command=PakarCommand::stringValue(commandRequest,"command");
+  if(command=="presentation"){
+    const char *error=applyHostPresentation(commandRequest);result=error?String(error):presentationJson();return !error;
+  }
+#if PAKAR_PIXEL_CORRECTIONS
+  if(command=="pixel-corrections-preview"){
+    const auto settings=commandRequest["configuration"];
+    if(!settings.is<JsonObjectConst>()){result=F("invalid_corrections");return false;}
+    const char *error=applyCorrectionPreview(settings.as<JsonObjectConst>());result=error?String(error):pixelCorrections.previewJson();return !error;
+  }
+#endif
   if(command=="color-preview"){
     if(commandRequest["cancel"].is<bool>()&&commandRequest["cancel"].as<bool>()){
       grid.cancelPreview();result=F("preview cancelled");return true;
@@ -3324,9 +3423,7 @@ bool handleCloudCommand(const String &message, String &result) {
       return false;
     }
     const uint8_t payload[] = {static_cast<uint8_t>(mask)};
-    sendToAvr(kOutputMask, sequence++, payload, sizeof(payload));
-    result = F("outputs updated");
-    return true;
+    return submitAvrCommand(kOutputMask,payload,sizeof(payload),result);
   }
   if (command == F("display")) {
     if (PakarCommand::booleanValue(commandRequest, "release")) {
@@ -3367,11 +3464,7 @@ bool handleCloudCommand(const String &message, String &result) {
         static_cast<uint8_t>(duration),
         static_cast<uint8_t>(duration >> 8),
     };
-    if (!sendToAvr(kBuzzer, sequence++, payload, sizeof(payload))) {
-      result = F("AVR link unavailable"); return false;
-    }
-    result = F("buzzer queued");
-    return true;
+    return submitAvrCommand(kBuzzer,payload,sizeof(payload),result);
   }
   if (command == F("audio")) {
     uint8_t cue = 0;
@@ -3379,11 +3472,7 @@ bool handleCloudCommand(const String &message, String &result) {
       result = F("unknown audio cue");
       return false;
     }
-    if (!sendToAvr(kAudioCue, sequence++, &cue, 1)) {
-      result = F("AVR link unavailable"); return false;
-    }
-    result = F("audio cue queued");
-    return true;
+    return submitAvrCommand(kAudioCue,&cue,1,result);
   }
   if (command == F("snake-direction")) {
     const String value = PakarCommand::stringValue(commandRequest, "value");
@@ -4224,6 +4313,19 @@ void registerApi() {
     if(error){JsonDocument reply;reply["error"]=error;String json;serializeJson(reply,json);server.send(409,"application/json",json);return;}
     server.send(200,"application/json",pixelGroupsJson());
   });
+  server.on("/api/presentation",HTTP_GET,[](){
+    if(!authenticate())return;server.send(200,"application/json",presentationJson(true));
+  });
+  server.on("/api/presentation",HTTP_POST,[](){
+    if(!authenticate())return;
+    // Use exactly the same peer/request/deadline receipt as WS and USB.
+    JsonDocument request;const String bytes=server.jsonBody();
+    if(bytes.length()>4096||deserializeJson(request,bytes)||!request.is<JsonObject>()){
+      server.send(400,"application/json",F("{\"error\":\"invalid_presentation\"}"));return;
+    }
+    request["command"]="presentation";String message;serializeJson(request,message);
+    server.send(200,"application/json",commandReply(message));
+  });
 #if PAKAR_PIXEL_CORRECTIONS
   server.on("/api/pixels/corrections",HTTP_GET,[](){
     if(!authenticate())return;
@@ -4239,7 +4341,7 @@ void registerApi() {
       server.send(400,"application/json",F("{\"error\":\"invalid_corrections\"}"));return;
     }
     const char *error=strcmp(path,"/api/pixels/corrections/preview")==0?
-      pixelCorrections.preview(document.as<JsonObjectConst>(),millis()):pixelCorrections.save(document.as<JsonObjectConst>());
+      applyCorrectionPreview(document.as<JsonObjectConst>()):pixelCorrections.save(document.as<JsonObjectConst>());
     // Also invalidate a just-expired preview when a stale renewal/save fails.
     grid.setCorrections(&pixelCorrections.mapping);
     keyObservationPending=true;
@@ -4502,10 +4604,7 @@ void registerApi() {
         static_cast<uint8_t>(frequency), static_cast<uint8_t>(frequency >> 8),
         static_cast<uint8_t>(duration), static_cast<uint8_t>(duration >> 8),
     };
-    if (!sendToAvr(kBuzzer, sequence++, payload, sizeof(payload))) {
-      server.send(503, "text/plain", F("AVR link unavailable")); return;
-    }
-    server.send(202, "application/json", F("{\"accepted\":true,\"state\":\"queued\"}"));
+    sendAvrHttpCommand(kBuzzer,payload,sizeof(payload));
   });
   server.on("/api/audio", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -4514,10 +4613,7 @@ void registerApi() {
       server.send(400, "text/plain", F("unknown audio cue"));
       return;
     }
-    if (!sendToAvr(kAudioCue, sequence++, &cue, 1)) {
-      server.send(503, "text/plain", F("AVR link unavailable")); return;
-    }
-    server.send(202, "application/json", F("{\"accepted\":true,\"state\":\"queued\"}"));
+    sendAvrHttpCommand(kAudioCue,&cue,1);
   });
   server.on("/api/display", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -4573,8 +4669,7 @@ void registerApi() {
       return;
     }
     const uint8_t payload[] = {static_cast<uint8_t>(mask)};
-    sendToAvr(kOutputMask, sequence++, payload, sizeof(payload));
-    server.send(202, "application/json", F("{\"accepted\":true}"));
+    sendAvrHttpCommand(kOutputMask,payload,sizeof(payload));
   });
   server.on("/api/device/name", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -5113,6 +5208,9 @@ void setup() {
 #endif
 #endif
   upgradeLifecycle.boot(millis(),PAKAR_NETWORK_ENABLED!=0);
+  uint32_t presentationSeed=0;SystemPlatform::randomBytes(&presentationSeed,sizeof(presentationSeed));
+  hostPresentation.begin(LittleFS,filesystemMounted,presentationSeed);
+  grid.setPresentation(&hostPresentation.model);
   PakarConfiguration::changes().reset(); // Initial load/migration is not a user settings event.
   if (grid.outputEnabled()) {
     if(PAKAR_NETWORK_ENABLED)grid.presentMaintenance(upgradeLifecycle,millis());
@@ -5344,17 +5442,25 @@ void serviceGameLink(uint32_t now) {
 }
 void loop() {
   serviceFilesystemInitialization();
+  if(hostPresentation.model.service(millis())){grid.presentationChanged();keyObservationPending=true;}
 #if PAKAR_PIXEL_CORRECTIONS
   // Retire RAM-only leases even when output/network/animation is disabled.
   if(pixelCorrections.service(millis())){grid.setCorrections(&pixelCorrections.mapping);keyObservationPending=true;}
 #endif
-#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
-  servicePeerRelay();
-  serviceBle();
-#endif
   // A queued job executes outside any request handler. Its bounded background
   // callback services reads, but never framed AVR bytes during a raw session.
   if(urbootQueued) {serviceUpgrade();serviceUrbootJob();serviceUpgrade();return;}
+#if defined(ARDUINO_ARCH_ESP32)
+  // Prioritize accepted local work before optional outbound DNS/connect/relay
+  // housekeeping. This remains the same loop owner, not a second UART writer.
+  if(!urbootRawOwned)avrLink.service();
+  serviceHostLink();
+  serviceQueuedWebSocketMessage();
+#if PAKAR_NETWORK_ENABLED
+  servicePeerRelay();
+  serviceBle();
+#endif
+#endif
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
   passiveAvrRx.service(millis());
   passiveCaptureGuard.store(passiveAvrRx.snapshot().active,std::memory_order_release);
@@ -5416,11 +5522,6 @@ void loop() {
       physicalResetPending=sendToAvr(kGameReset,physicalResetSequence,nullptr,0);
     }
   }
-#endif
-#if defined(ARDUINO_ARCH_ESP32)
-  // Hardware UART and the LED worker are independent on S3. Dispatch pending
-  // user commands before rendering, without a telemetry/poll cadence delay.
-  serviceQueuedWebSocketMessage();
 #endif
   if(!PAKAR_NETWORK_ENABLED) {
     serviceGameLink(millis());

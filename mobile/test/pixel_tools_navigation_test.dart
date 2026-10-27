@@ -40,7 +40,7 @@ class PixelMenuApi extends LifecycleApi {
       'revision': 1,
       'pixels': 480,
       'rules': <dynamic>[],
-      'sources': [0, 1, 2],
+      'sources': List.generate(480, (index) => index),
     };
   }
 }

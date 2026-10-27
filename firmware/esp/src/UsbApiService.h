@@ -117,6 +117,11 @@ String maintenanceApi(const String &message,bool physicalUsb) {
   if(method=="POST"&&path=="/api/command") {
     String command;serializeJson(body,command);return commandReply(command,physicalUsb);
   }
+  if(path=="/api/presentation"&&(method=="GET"||method=="POST")){
+    if(method=="GET")return presentationJson(true);
+    JsonDocument request;request.set(body);request["command"]="presentation";
+    String command;serializeJson(request,command);return commandReply(command,physicalUsb);
+  }
   if(path=="/api/pixels/groups"&&(method=="GET"||method=="POST")){
     const char *error=method=="POST"?savePixelGroups(body):nullptr;
     return error?maintenanceApiError(error):pixelGroupsJson();
@@ -132,7 +137,7 @@ String maintenanceApi(const String &message,bool physicalUsb) {
     pixelCorrections.service(millis());
     const char *error=nullptr;
     if(method=="POST")error=path=="/api/pixels/corrections/preview"?
-      pixelCorrections.preview(body,millis()):pixelCorrections.save(body);
+      applyCorrectionPreview(body):pixelCorrections.save(body);
     grid.setCorrections(&pixelCorrections.mapping);
     keyObservationPending=true;
     return error?maintenanceApiError(error):pixelCorrections.json();

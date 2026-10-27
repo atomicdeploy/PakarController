@@ -1,5 +1,9 @@
 # HTTP and streaming API
 
+Host mini-apps use [host-owned presentation](HOST-PRESENTATION.md) for logical or
+physical group colors/effects, durable layers, expiring overlays and atomic
+frame fallback through the same HTTP, WebSocket, MQTT and USB command contract.
+
 ESP32-S3 also exposes the same living command/state contract through a selected
 Bluetooth LE control transport. See [Bluetooth LE](BLUETOOTH.md) for its GATT
 attributes, exact advertised routes, ownership rules and explicit binary limits.

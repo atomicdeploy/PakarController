@@ -120,6 +120,7 @@ Widget page(
   EditorApi api, {
   PixelDiagnosticWorkspace? workspace,
   bool active = true,
+  bool livePreview = false,
 }) => MaterialApp(
   debugShowCheckedModeBanner: false,
   theme: studioTheme(),
@@ -129,6 +130,7 @@ Widget page(
       busyChanged: (_) {},
       workspace: workspace,
       active: active,
+      livePreviewInitiallyEnabled: livePreview,
     ),
   ),
 );

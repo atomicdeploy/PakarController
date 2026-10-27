@@ -1397,6 +1397,8 @@ class _ControlShellState extends State<ControlShell>
                                 final intent = await showPixelCorrectionMenu(
                                   context,
                                   pixel,
+                                  api: api,
+                                  authorize: current,
                                 );
                                 if (intent == null || !current()) return;
                                 update(() => correctionIntent = intent);
@@ -1549,6 +1551,7 @@ class _ControlShellState extends State<ControlShell>
               connected: status != null && foreground,
               workspace: workspaces[workspaceBoard],
               command: scoped,
+              statusUpdates: api.statusUpdates,
               verifiedCommand: (path, values) => _command(
                 owner,
                 hostname,
@@ -2237,7 +2240,7 @@ class _TablePageState extends State<TablePage> {
       setState(() {
         applying = false;
         batchMessage = applied
-            ? '${ids.length} cell states read back after one board-side update; physical output not verified.'
+            ? '${ids.length} cells updated'
             : failure ?? 'The command did not return a verified result. Nothing was retried.';
       });
     }
@@ -2416,6 +2419,7 @@ class _TablePageState extends State<TablePage> {
                           status: status!,
                           command: widget.verifiedCommand!,
                           readStatus: widget.readStatus!,
+                          statusUpdates: widget.statusUpdates,
                           ids: selection.isEmpty
                               ? '1-80'
                               : selection.toList().join(','),

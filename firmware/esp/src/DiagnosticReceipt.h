@@ -13,7 +13,7 @@ inline bool diagnosticReceiptStatus(const String &observed,const String &frame,
   for(const char *field:{"version","compatibility","board_id","boot_id",
       "command_clock_ms","configuration_revision","hostname","capabilities",
       "pixels","led_output","pixel_groups","pixel_corrections_revision",
-      "pixel_corrections_active_revision","pixel_corrections_preview"})filter[field]=true;
+      "pixel_corrections_active_revision","pixel_corrections_preview","presentation"})filter[field]=true;
   if(deserializeJson(status,observed,DeserializationOption::Filter(filter)) ||
       !status["board_id"].is<const char*>() || !status["boot_id"].is<const char*>() ||
       !status["capabilities"].is<JsonObject>() || !status["pixels"].is<uint16_t>() ||

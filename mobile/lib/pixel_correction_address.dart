@@ -1,6 +1,31 @@
 import 'models.dart';
 import 'pixel_corrections_editor.dart';
 
+/// Diagnostics select a raw source; appended corrections address an output
+/// slot after the saved rules. The inverse can be empty or ambiguous, so callers
+/// must not substitute the raw index or silently choose the first destination.
+List<int> pixelCorrectionOutputSlots({
+  required int raw,
+  required int pixels,
+  required Object? sources,
+}) {
+  if (pixels < 1 ||
+      pixels > 480 ||
+      raw < 0 ||
+      raw >= pixels ||
+      sources is! List ||
+      sources.length != pixels ||
+      sources.any(
+        (source) => source is! int || source < -1 || source >= pixels,
+      )) {
+    throw const FormatException('Correction output mapping is unavailable');
+  }
+  return [
+    for (var wire = 0; wire < pixels; wire++)
+      if (sources[wire] == raw) wire,
+  ];
+}
+
 /// The names/order and physical spans must describe the same observed layout.
 /// An absent or malformed advertised layout never falls back to six pixels.
 bool pixelCorrectionMapMatches(DeviceStatus? status, CellMap? mapping) {

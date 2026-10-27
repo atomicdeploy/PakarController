@@ -2,6 +2,9 @@
 function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()=>Date.now(),random=()=>crypto.getRandomValues(new Uint8Array(16))}){
   const names={'/api/cells':'cells','/api/cell':'cell','/api/game/press':'game-press','/api/game/reset':'reset','/api/game/settings':'game-settings','/api/effect':'effect','/api/mode':'mode','/api/brightness':'brightness','/api/led/output':'led-output','/api/cells/lock':'cell-lock','/api/cells/assignments':'cell-assignments','/api/led/diagnostic':'pixel-diagnostic','/api/led/presentation':'state-presentation','/api/led/preview':'color-preview'};
   const pending=new Map();
+  names['/api/pixels/corrections/preview']='pixel-corrections-preview';
+  names['/api/presentation']='presentation';
+  names['/api/audio']='audio';names['/api/buzzer']='buzzer';names['/api/outputs']='outputs';
   function receive(reply){const p=pending.get(reply?.request_id);if(!p)return false;if(reply.type!=='command-result'||reply.board_id!==p.board||reply.boot_id!==p.boot)return false;p.reply=reply;p.resolve(reply);return true}
   const integer=(value,key,min=0,max=Number.MAX_SAFE_INTEGER)=>{
     if(typeof value==='string'&&!/^(?:0|[1-9]\d*)$/.test(value))throw Error('Invalid '+key);
@@ -17,6 +20,15 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
   };
   function typedValues(path,values){
     const result={...values};
+    if(path==='/api/pixels/corrections/preview')result.configuration=structured(result.configuration,'correction preview');
+    if(path==='/api/presentation')return structured(result.presentation,'host presentation');
+    if(path==='/api/audio'&&(typeof result.cue!=='string'||!/^[a-z0-9][a-z0-9-]{0,39}$/.test(result.cue)))throw Error('Invalid melody');
+    if(path==='/api/buzzer'){
+      result.frequency=integer(result.frequency,'frequency',0,20000);
+      if(result.frequency>0&&result.frequency<20)throw Error('Invalid frequency');
+      result.duration_ms=integer(result.duration_ms,'duration_ms',1,65535);
+    }
+    if(path==='/api/outputs')result.mask=integer(result.mask,'mask',0,255);
     for(const key of ['id','key','index','count','rgb','group_layout_revision'])if(key in result)result[key]=integer(result[key],key);
     if(path==='/api/brightness')result.value=integer(result.value,'brightness',0,255);
     for(const key of ['enabled','off'])if(key in result)result[key]=boolean(result[key],key);
@@ -51,6 +63,8 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
   }
   async function send(path,values){
     const observed=snapshot();if(!names[path]||!valid()||!Number.isSafeInteger(observed.command_clock_ms)||observed.command_clock_ms<0||observed.command_clock_ms>Number.MAX_SAFE_INTEGER-8000)return null;
+    const avr=['/api/audio','/api/buzzer','/api/outputs'].includes(path);
+    if(avr&&(!observed.avr_online||!observed.capabilities?.acknowledged_features?.includes('avr-command-ack')))return null;
     // Capture immutable identity values, not a mutable snapshot object.
     const s={board_id:observed.board_id,boot_id:observed.boot_id,command_clock_ms:observed.command_clock_ms};
     const request_id=Array.from(random(),x=>x.toString(16).padStart(2,'0')).join('');
@@ -77,6 +91,7 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
       }
       if(!same()||reply?.type!=='command-result'||reply.request_id!==request_id||reply.board_id!==s.board_id||reply.boot_id!==s.boot_id)throw Error('Uncorrelated command receipt; inspect device state');
       if(reply.accepted!==true)throw Error(reply.error||'Command rejected');
+      if(avr&&reply.avr_acknowledged!==true)throw Error('AVR did not acknowledge the command');
       if((path==='/api/game/reset'||path==='/api/game/press')&&reply.avr_acknowledged!==true)throw Error('AVR did not acknowledge the command');
       if(reply.status?.board_id!==s.board_id||reply.status?.boot_id!==s.boot_id)throw Error('Command readback missing');
       return reply;

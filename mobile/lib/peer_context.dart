@@ -177,6 +177,11 @@ class PeerContext {
       '/api/brightness' || '/api/effect' => has('leds'),
       '/api/led/diagnostic' => has('leds') && has('pixel-diagnostic'),
       '/api/pixels/groups' => has('leds') && has('pixel-group-layout'),
+      '/api/pixels/corrections/preview' =>
+        has('pixel-corrections-preview') &&
+            has('pixel-corrections-preview-command') &&
+            values.length == 1 &&
+            values.containsKey('configuration'),
       '/api/device/name' => has('identity'),
       '/api/network' || '/api/cloud' => has('network'),
       _ => false, // Add an explicit contract before exposing a new mutation.
@@ -255,10 +260,12 @@ const knownFeatures = {
   'usb-api',
   'status-rgb',
   'command-ack',
+  'avr-command-ack',
   'pixel-diagnostic',
   'pixel-diagnostic-effects',
   'pixel-diagnostic-overlay',
   'pixel-corrections-preview',
+  'pixel-corrections-preview-command',
   'pixel-group-layout',
   'pixel-correction-rule-toggle',
   'pixel-corrections',

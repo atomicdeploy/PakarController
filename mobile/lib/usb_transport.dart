@@ -821,6 +821,31 @@ class PakarUsbTransport {
     );
   });
 
+  /// The common boot-fenced API transaction also carries correction settings.
+  /// Preview stays RAM-only; only the explicit non-preview POST persists.
+  Future<Map<String, dynamic>> pixelCorrectionsApi({
+    Map<String, dynamic>? configuration,
+    bool preview = false,
+    required bool Function() authorize,
+  }) => _exclusive(() async {
+    if (!ready ||
+        !authorize() ||
+        !latest!.peer.has('usb-api') ||
+        !latest!.peer.has('pixel-corrections') ||
+        (preview && !latest!.peer.has('pixel-corrections-preview')) ||
+        (preview && configuration == null)) {
+      throw const FormatException(
+        'USB pixel corrections are unavailable; nothing was sent',
+      );
+    }
+    return _apiJson(
+      configuration == null ? 'GET' : 'POST',
+      preview ? '/api/pixels/corrections/preview' : '/api/pixels/corrections',
+      configuration ?? const {},
+      authorize,
+    );
+  });
+
   Future<DeviceStatus> _advancedDiagnostic(
     PixelProbe probe,
     bool off,

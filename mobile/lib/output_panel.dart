@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'game_presentation_editor.dart';
 import 'game_settings_command.dart';
 import 'state_appearance_page.dart';
+import 'color_picker.dart';
 
 import 'icons.dart';
 import 'models.dart';
@@ -30,6 +31,7 @@ class OutputPanel extends StatefulWidget {
     this.workspace,
     this.verifiedCommand,
     this.readStatus,
+    this.statusUpdates,
   });
   final DeviceStatus? status;
   final bool connected;
@@ -38,6 +40,7 @@ class OutputPanel extends StatefulWidget {
   final TableWorkspace? workspace;
   final Future<bool> Function(String, Map<String, String>)? verifiedCommand;
   final Future<DeviceStatus> Function()? readStatus;
+  final Stream<DeviceStatus>? statusUpdates;
   @override
   State<OutputPanel> createState() => _OutputPanelState();
 }
@@ -174,6 +177,7 @@ class _OutputPanelState extends State<OutputPanel> {
                             status: source,
                             command: widget.verifiedCommand!,
                             readStatus: widget.readStatus!,
+                            statusUpdates: widget.statusUpdates,
                             ids: '1-18',
                           ),
                         ),
@@ -379,6 +383,27 @@ class _OutputPanelState extends State<OutputPanel> {
                           labelText: entry.value,
                           prefixText: '#',
                           counterText: '',
+                          suffixIcon: IconButton(
+                            tooltip: 'Choose color',
+                            icon: const Icon(Icons.palette_outlined),
+                            onPressed: () async {
+                              final next = await showLedColorPicker(
+                                context,
+                                initial:
+                                    int.tryParse(
+                                      colors[entry.key]!.text,
+                                      radix: 16,
+                                    ) ??
+                                    0,
+                                title: entry.value,
+                              );
+                              if (next != null && context.mounted) {
+                                update(
+                                  () => colors[entry.key]!.text = rgbHex(next),
+                                );
+                              }
+                            },
+                          ),
                           errorText:
                               RegExp(r'^[0-9a-fA-F]{6}$')
                                   .hasMatch(colors[entry.key]!.text)

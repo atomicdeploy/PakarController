@@ -9,6 +9,9 @@ import 'game_settings_command.dart';
 import 'command_readback.dart';
 
 const commandNames = {
+  '/api/audio': 'audio',
+  '/api/buzzer': 'buzzer',
+  '/api/outputs': 'outputs',
   '/api/led/presentation': 'state-presentation',
   '/api/led/preview': 'color-preview',
   '/api/game/press': 'game-press',
@@ -23,6 +26,7 @@ const commandNames = {
   '/api/brightness': 'brightness',
   '/api/led/output': 'led-output',
   '/api/led/diagnostic': 'pixel-diagnostic',
+  '/api/pixels/corrections/preview': 'pixel-corrections-preview',
 };
 
 String commandPacket(
@@ -55,7 +59,11 @@ String commandPacket(
     ...?gameSettings,
     if (gameSettings == null)
       for (final item in values.entries)
-        item.key: path == '/api/led/presentation' && item.key == 'settings'
+        item.key:
+            path == '/api/pixels/corrections/preview' &&
+                item.key == 'configuration'
+            ? jsonDecode(item.value)
+            : path == '/api/led/presentation' && item.key == 'settings'
             ? jsonDecode(item.value)
             : path == '/api/led/preview' &&
                   ['rgb', 'duration_ms'].contains(item.key)
@@ -64,7 +72,10 @@ String commandPacket(
             ? item.value == 'true'
             : path == '/api/cells/assignments' && item.key == 'assignments'
             ? CellAssignments.fromRows(jsonDecode(item.value)).wireAssignments
-            : item.key == 'id' ||
+            : (path == '/api/buzzer' &&
+                      ['frequency', 'duration_ms'].contains(item.key)) ||
+                  (path == '/api/outputs' && item.key == 'mask') ||
+                  item.key == 'id' ||
                   (path == '/api/game/press' && item.key == 'key') ||
                   (path == '/api/led/diagnostic' &&
                       [
@@ -102,7 +113,17 @@ DeviceStatus verifyCommandReply(
     );
   }
   if (reply['accepted'] != true) {
-    throw DeviceCommandRejected(error: reply['error']);
+    throw DeviceCommandRejected(
+      error: path == '/api/pixels/corrections/preview'
+          ? reply['reason'] ?? reply['error']
+          : reply['error'],
+    );
+  }
+  if (const ['/api/audio', '/api/buzzer', '/api/outputs'].contains(path) &&
+      reply['avr_acknowledged'] != true) {
+    throw const FormatException(
+      'AVR command acknowledgment missing; command was not retried',
+    );
   }
   if ((path == '/api/game/reset' || path == '/api/game/press') &&
       reply['avr_acknowledged'] != true) {

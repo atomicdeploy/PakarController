@@ -195,7 +195,20 @@
     rows.tabIndex=0;rows.setAttribute('role','region');rows.setAttribute('aria-label',translate('Correction rules'));
     corrections.body.append(fixed,rows,mapDisclosure);
     function message(text,error=false){notice.textContent=translate(text);notice.classList.toggle('field-error',error);}
-    function changed(){if(!model)return;correctionEdits++;model.dirty=true;message(model.conflict?'Board changed elsewhere. Reload before saving.':'Unsaved changes',model.conflict);sync();if(model.mappingView==='draft')drawMapping();rememberPresentation();}
+    const livePreview=input('checkbox');livePreview.checked=true;
+    const livePreviewField=field('Live preview',livePreview);fixed.append(livePreviewField);
+    const preview=root.createPixelCorrectionPreview?.({
+      owner:()=>current(owner)?{key:owner,pin:pin?.()}:null,
+      allowed:()=>current(owner)&&peer().has('pixel-corrections-preview')&&!!model?.saved&&!model.conflict&&validCorrectionDraft(model),
+      configuration:()=>({revision:model.saved.revision,enabled:model.enabled,rules:model.rules}),
+      pixels:()=>model.saved.pixels,project:correctionSources,
+      send:async(value,identity)=>{requireCurrent(identity.key);const reply=await command(correctionPath+'/preview',{configuration:JSON.stringify(value)});requireCurrent(identity.key);return reply.pixel_corrections_preview?{revision:value.revision,preview:reply.pixel_corrections_preview}:reply;},
+      read:async identity=>{requireCurrent(identity.key);return api(correctionPath,identity.pin?{peer:identity.pin}:{});},
+      onChange:state=>{if(state.error)message(state.error,true);}
+    });
+    livePreview.onchange=()=>{if(!livePreview.checked)void preview?.stop();else if(model?.dirty)startPreview();};
+    function startPreview(){if(!livePreview.checked||!preview||!validCorrectionDraft(model)||model.conflict)return;if(preview.snapshot().enabled)preview.edited();else void preview.start();}
+    function changed(){if(!model)return;correctionEdits++;model.dirty=true;message(model.conflict?'Board changed elsewhere. Reload before saving.':'Unsaved changes',model.conflict);sync();if(model.mappingView==='draft')drawMapping();rememberPresentation();startPreview();}
     enabled.onchange=()=>{if(!writable()||!model?.saved)return;model.enabled=enabled.checked;changed();};
     const validNumericDraft=(text,min,max)=>text===undefined||text.trim()!==''&&Number.isSafeInteger(Number(text))&&Number(text)>=min&&Number(text)<=max;
     const validCorrectionDraft=record=>!!record?.saved&&record.rules.every(rule=>validNumericDraft(rule.pixelDraft,1,record.saved.pixels)&&(rule.kind!=='shift'||validNumericDraft(rule.offsetDraft,-record.saved.pixels,record.saved.pixels)));
@@ -238,14 +251,18 @@
     filter.oninput=()=>{drawMapping();rememberPresentation();};mapDisclosure.ontoggle=()=>{drawMapping();rememberPresentation();};
     const rowRefreshers=[],cursorActions=[],rulePreviews=[];let correctionEdits=0,addressContextKey='';
     function refreshRulePreviews(){if(!rulePreviews.some(view=>view.open()))return;const key=mappingColorKey(),rgb=correctionRgb(snapshot(),model?.saved?.pixels,peer().role,current(owner));for(const view of rulePreviews)view.refresh(key,rgb);}
-    // Flutter selectedDiagnosticPixel/importPixel: copy the selected OUTPUT
-    // cursor, never its projected raw source or a second 'lit pixel' guess.
+    // Diagnostics select RAW inputs. Rules select WIRE destinations. Resolve
+    // through the saved map; never migrate existing rule coordinates.
     function selectedCorrectionCursor(){
       const p=model?.probe,s=diagnosticShape(snapshot(),peer().role);
       if(!current(owner)||!peer().has('pixel-diagnostic')||!s||!p||(!p.dirty&&!p.observation))return null;
       if(position.value===''||!position.checkValidity())return null;
       const index=Number(position.value)-1,used=s.layout?.used_pixels||s.pixels;
-      return Number.isInteger(index)&&index>=0&&index<used&&index<(model.saved?.pixels||0)?index:null;
+      if(!Number.isInteger(index)||index<0||index>=used||model.conflict||(model.dirty&&preview?.snapshot().enabled))return null;
+      const sources=model.saved?.sources;
+      if(!Array.isArray(sources)||sources.length!==model.saved.pixels)return null;
+      const destinations=sources.flatMap((source,wire)=>source===index?[wire]:[]);
+      return destinations.length===1?destinations[0]:null;
     }
     function refreshCursorActions(){const index=selectedCorrectionCursor();for(const refresh of cursorActions)refresh(index);}
     function drawRows(){
@@ -325,6 +342,9 @@
       try{
         const lease=pin?.();
         const wanted={revision:record.saved?.revision,enabled:record.enabled,rules:record.rules.map(({kind,pixel,offset,enabled})=>({kind,pixel,offset,enabled}))};
+        // Retire RAM preview before explicit save/reload. A failed release
+        // leaves the draft intact and never overwrites the stored rules.
+        if(preview&&(preview.snapshot().enabled||preview.snapshot().lease!==null||preview.snapshot().pending)&&!await preview.stop())throw Error('Preview release not confirmed; retry after it expires');
         if(save)await command(correctionPath,{configuration:JSON.stringify(wanted)});
         requireCurrent(expected);const result=parseCorrections(await api(correctionPath,lease?{peer:lease}:{}));requireCurrent(expected);
         if(save&&(!correctionsMatch(result,wanted)||result.revision<wanted.revision))throw Error('Correction readback differs. Reload before editing; no write was replayed.');
@@ -363,6 +383,7 @@
     const reload=button('Reload',reloadCorrections,'refresh');tools.append(add,save,reload);
     function sync(){
       const ready=writable()&&!!model?.saved;
+      livePreviewField.hidden=!preview||!peer().has('pixel-corrections-preview');livePreview.disabled=!ready;
       for(const control of rows.querySelectorAll('input,select,button'))control.disabled=!ready||control.dataset.boundary==='true';
       enabled.disabled=!ready;add.disabled=!ready||model.rules.length>=32;save.disabled=!ready||!model.dirty||model.conflict||!validCorrectionDraft(model);reload.disabled=!current(owner)||!peer().has('pixel-corrections')||model?.busy===true;
       diagnosticLink.disabled=!peer().has('pixel-diagnostic')&&!peer().has('streaming');
@@ -506,6 +527,7 @@
       const link=button('Pixel corrections',()=>reveal(corrections.card),'corrections');link.dataset.openCorrections='true';diagnostic.append(link);}
     function update(value=snapshot()){
       if(disposed)return;const next=identity(value),c=peer();
+      preview?.observe();
       if(reloadPrompt&&(!c.known||!c.has('pixel-corrections')))dismissReload();
       if(next!==owner){dismissReload();owner=next;model=next?models.get(next):null;
         if(next&&!model){const scope=options.workspaceScope?.(value)||'',draft=scope?diagnosticWorkspace(options.readWorkspace?.(scope)):null,presentation=pixelToolsWorkspace(scope?options.readPresentation?.(scope):null)||pixelToolsWorkspace({});
@@ -530,7 +552,7 @@
     }
     const beforeUnload=event=>{if(groups?.dirty()||[...models.values()].some(record=>record.dirty||record.busy)){event.preventDefault();event.returnValue='';}};
     root.addEventListener('beforeunload',beforeUnload);
-    installed={update,workspaceSnapshot(scope){return model&&model.scope===scope?diagnosticWorkspace(model.diagnosticDraft):undefined;},presentationSnapshot(scope){return model&&model.scope===scope?pixelToolsWorkspace(model.presentation):undefined;},dispose(){disposed=true;dismissReload();root.removeEventListener('beforeunload',beforeUnload);groups?.dispose();corrections.card.remove();diagnostics.card.remove();inspector.card.remove();installed=null;}};
+    installed={update,workspaceSnapshot(scope){return model&&model.scope===scope?diagnosticWorkspace(model.diagnosticDraft):undefined;},presentationSnapshot(scope){return model&&model.scope===scope?pixelToolsWorkspace(model.presentation):undefined;},dispose(){void preview?.dispose();disposed=true;dismissReload();root.removeEventListener('beforeunload',beforeUnload);groups?.dispose();corrections.card.remove();diagnostics.card.remove();inspector.card.remove();installed=null;}};
     update();return installed;
   }
   root.createFeatureWorkspaces=create;

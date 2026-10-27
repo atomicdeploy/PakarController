@@ -38,7 +38,7 @@ function installStudio(){
  const sidebar=make('aside','studio-sidebar'),brand=make('div','studio-wordmark'),brandImage=make('img'),brandCopy=make('div');brandImage.src='/app-icon.png';brandImage.width=30;brandImage.height=30;brandImage.alt='';const brandTitle=make('strong'),brandCaption=make('small');brandTitle.textContent='PakarController';copy(brandCaption,'Workspace');brandCopy.append(brandTitle,brandCaption);brand.append(brandImage,brandCopy);
  const nav=make('nav');nav.id='studioNav';nav.setAttribute('aria-label','Workspace');sidebar.append(brand,nav);
  const content=make('div','studio-content'),heading=make('div','studio-page-heading'),pageTitle=make('h2'),pageActions=make('div','studio-page-actions');pageTitle.id='studioPageTitle';heading.append(pageTitle,pageActions);content.append(heading);
- // Keep runtime insertion anchors alive. renderStateAppearance owns .layout .stack.
+ // Keep runtime insertion anchors alive. Dynamic panels mount on .layout.
  for(const node of [...workspace.children])if(node!==top&&node!==layout&&node.id!=='applicationActivity')content.append(node);
  content.append(layout);const activity=document.getElementById('applicationActivity');if(activity)content.append(activity);workspace.append(sidebar,top,content);
  const route=studioRoute({location:window.location,history:window.history,onNavigate:id=>navigate(id,false)});

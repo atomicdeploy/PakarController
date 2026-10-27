@@ -137,7 +137,7 @@ class _WorkspaceActivityStripState extends State<WorkspaceActivityStrip> {
   Widget scrollingStrip(BuildContext context, double width) {
     final colors = Theme.of(context).colorScheme;
     // Keep one complete touch target within the viewport, even with enlarged
-    // RTL labels. The strip still scrolls; labels wrap rather than disappear.
+    // RTL labels. The strip scrolls; long labels keep a stable single line.
     final labelWidth = (width - MediaQuery.paddingOf(context).horizontal - 75)
         .clamp(24.0, double.infinity);
     return Material(
@@ -195,6 +195,8 @@ class _WorkspaceActivityStripState extends State<WorkspaceActivityStrip> {
                                   ),
                                   child: Text(
                                     item.$2,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: item.$1 == widget.selected
                                           ? colors.primary

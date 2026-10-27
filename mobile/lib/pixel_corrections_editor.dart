@@ -8,9 +8,13 @@ class PixelCorrectionRuleIntent {
     required this.kind,
     required this.pixel,
     this.offset = 0,
+    this.revision,
   });
   final String kind;
   final int pixel, offset;
+
+  /// Revision of the saved raw-to-wire projection used to choose this slot.
+  final int? revision;
   Map<String, dynamic> toRule() => {
     'kind': kind,
     'pixel': pixel,
