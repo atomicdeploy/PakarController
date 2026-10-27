@@ -338,6 +338,7 @@ class _ControlShellState extends State<ControlShell>
             [
               'overview',
               'table',
+              'game',
               'output',
               'front-panel',
               'hardware',
@@ -855,7 +856,7 @@ class _ControlShellState extends State<ControlShell>
           (mirror.segmentsEnabled || mirror.buzzerEnabled),
       pixels:
           (page == 'table' && activeWorkspace?.showIndicators == true) ||
-          (page == 'output' && presented?.peer.role == 'first-wins'),
+          (page == 'game' && presented?.peer.role == 'first-wins'),
     );
   }
 
@@ -1459,6 +1460,7 @@ class _ControlShellState extends State<ControlShell>
       ('overview', 'Overview', PakarIcons.broadcast),
       if (panelInventory.tableSelection)
         ('table', 'Table', PakarIcons.gridFour),
+      if (panelInventory.game) ('game', 'Game', PakarIcons.play),
       if (panelInventory.output) ('output', 'Output', PakarIcons.gauge),
       if (panelInventory.frontPanel)
         ('front-panel', 'Front panel', PakarIcons.gauge),
@@ -1545,8 +1547,11 @@ class _ControlShellState extends State<ControlShell>
                   api.connectionWanted &&
                   owner == api.connectionRevision,
             ),
-            'output' => OutputPanel(
-              key: ValueKey('output:${panelInventory.ownerKey}'),
+            'output' || 'game' => OutputPanel(
+              key: ValueKey('$page:${panelInventory.ownerKey}'),
+              section: page == 'game'
+                  ? OutputPanelSection.game
+                  : OutputPanelSection.output,
               status: presented,
               connected: status != null && foreground,
               workspace: workspaces[workspaceBoard],
@@ -1972,7 +1977,7 @@ class BoardOverview extends StatelessWidget {
                 icon: PakarIcons.play,
                 title: 'Game controls',
                 subtitle: 'Boxes, winner and reset',
-                onTap: navigate == null ? null : () => navigate!('output'),
+                onTap: navigate == null ? null : () => navigate!('game'),
               ),
             if (peer.has('buzzer') || peer.has('display'))
               WorkspaceActionCard(

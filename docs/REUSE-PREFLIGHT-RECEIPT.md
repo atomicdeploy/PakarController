@@ -10306,3 +10306,38 @@ snapshot from the earlier integration. A path-specific whitespace attribute
 preserves donor trailing spaces/EOF lines; all Pakar adaptations retain normal
 checks. The 17-file original byte/hash test still passes. This is not an exception
 to code checks for the production shell or to the snapshot integrity guard.
+
+## Flutter keycontroller Game workspace, 2026-10-27
+
+Reconsulted device-context and the PCController peripheral-availability donor
+mapping, reading the actual TypeScript ready-and-advertised helper and Pakar's
+PeerContext, PanelInventory, command/observation pipeline and OutputPanel. Tests
+exposed the functional cause: knownFeatures omitted game-press and
+game-presentation, although their consumers required those capabilities. Both
+advertised capabilities now survive parsing; absent capabilities still grant no
+authority. Existing firmware HTTP/WS game-press handlers were inspected without
+contacting or changing a board.
+
+The existing boxes, reset, winner and configuration implementation is reused in
+a dedicated Game activity rather than duplicated. Output retains LED service and
+diagnostics. Overview routing, persisted activity and on-demand pixel subscription
+now follow Game. Tap sends the verified press; hold opens explicit actions without
+actuation. Pending, disconnected, programming, disabled-box and unavailable AVR
+conditions explain why no command was sent. A sheet cannot send after its board
+or boot changes. Workspace arrangement remains local and does not trigger keys.
+
+Regression coverage includes real Flutter tap/hold gestures, reset, denied
+conditions, duplicate-pending suppression, unconfirmed command reporting,
+peer-change fencing, navigation and retained output/arrangement behavior. These
+fixtures are not installed-tablet or physical game acceptance. The existing
+PU850 .gitattributes target was also reread after the prior immutable-donor
+whitespace commit; its stale target hash was refreshed without changing donor
+hashes, excluding unread code or bypassing the comparison gate.
+
+Canonical mobile analysis passed. Focused tests passed: output_panel 13,
+panel_inventory 5, peer_context 7. The first interaction run caught the missing
+capability admission; a later assertion was corrected to compare map values
+rather than Dart record/map identity. Final tests exercise the real gesture
+callbacks, not direct invocation alone. ASUS localhost:8022 refused its SSH
+handshake and local ADB listed no authorized device, so no tablet replacement
+or physical remote-button result is claimed.

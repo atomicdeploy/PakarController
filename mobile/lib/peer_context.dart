@@ -251,6 +251,8 @@ class LedOutputCapability {
 
 const knownFeatures = {
   'state-presentation',
+  'game-press',
+  'game-presentation',
   'key-settings',
   'game-melodies',
   'usb-key-settings',

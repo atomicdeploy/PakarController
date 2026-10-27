@@ -1186,7 +1186,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "final correctionPeer = (",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1"
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2"
         },
         {
           "path": "mobile/lib/pixel_correction_address.dart",
@@ -1750,7 +1750,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "selectionHasCellState(status!.json, selection, value)",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1"
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2"
         }
       ],
       "proof": [
@@ -3284,7 +3284,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
           "anchor": ": WorkspaceActivityStrip("
         },
         {
@@ -3311,7 +3311,7 @@
         },
         {
           "path": "mobile/test/output_panel_test.dart",
-          "sha256": "d40cd2b5189af50d1e862629cae0facd6169d7151fbccb0325564a368312b4b6",
+          "sha256": "c08d3cb1d9a62c6b51390250c496f63bd7a5df7ace1f192b7475fe3162640e9d",
           "anchor": "Phone activity navigation keeps eight panels reachable without squeezing"
         },
         {
@@ -5628,7 +5628,7 @@
       "targets": [
         {
           "path": ".gitattributes",
-          "sha256": "613bba2c932de973fc1d5d117b0ea5d59d338fd0e9c9cd37b5b8afc37b05ec39",
+          "sha256": "3f36f7f02cd536503301801b4961dbc09a1ba4fb2c1ed0dad759be1d02ee61b9",
           "anchor": "* text=auto eol=lf"
         },
         {
@@ -8235,7 +8235,7 @@
         {
           "path": "mobile/lib/panel_inventory.dart",
           "anchor": "class PanelInventory",
-          "sha256": "f26e62bc7c5ae534546d4bcbfa1be3e75e1152e4a769d322962015bda12d5a4d"
+          "sha256": "6af5ef136289eec7b3d82ab764a194424d44aa437178531d1a5c9576b2aa3449"
         },
         {
           "path": "mobile/lib/ble_codec.dart",
@@ -8297,7 +8297,7 @@
         {
           "path": "mobile/test/panel_inventory_test.dart",
           "anchor": "testWidgets",
-          "sha256": "b9a69a5356ccf8cdb49cb4771e0d5c952834e7c8717d7421369b5ab95c7400c8"
+          "sha256": "3a4c90aa132d64ac64bcff4e67d5bcf24c42896e7f468b3930a825acf87d8b7f"
         },
         {
           "path": "mobile/test/read_deadline_transport_test.dart",
@@ -8393,7 +8393,7 @@
         {
           "path": "mobile/test/panel_inventory_test.dart",
           "anchor": "testWidgets",
-          "sha256": "b9a69a5356ccf8cdb49cb4771e0d5c952834e7c8717d7421369b5ab95c7400c8"
+          "sha256": "3a4c90aa132d64ac64bcff4e67d5bcf24c42896e7f468b3930a825acf87d8b7f"
         },
         {
           "path": "mobile/test/read_deadline_transport_test.dart",
@@ -12717,7 +12717,7 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882"
+          "sha256": "5cdc8a4622e8dae74a8f81198dc5771648fdb1b3837654fba297a83f99e18a96"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
@@ -12807,7 +12807,7 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882"
+          "sha256": "5cdc8a4622e8dae74a8f81198dc5771648fdb1b3837654fba297a83f99e18a96"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
@@ -12897,7 +12897,7 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882"
+          "sha256": "5cdc8a4622e8dae74a8f81198dc5771648fdb1b3837654fba297a83f99e18a96"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
@@ -12987,7 +12987,7 @@
         {
           "path": "mobile/lib/peer_context.dart",
           "anchor": "bool lcdObservationReady(",
-          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882"
+          "sha256": "5cdc8a4622e8dae74a8f81198dc5771648fdb1b3837654fba297a83f99e18a96"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
@@ -15286,7 +15286,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
           "anchor": "api.onPeerChanged = ()"
         },
         {
@@ -18183,7 +18183,7 @@
         },
         {
           "path": "mobile/lib/peer_context.dart",
-          "sha256": "d761a5febad9269de83f759005c0fc5c5fd878fdd89f135ca9dfb2cdddfba882",
+          "sha256": "5cdc8a4622e8dae74a8f81198dc5771648fdb1b3837654fba297a83f99e18a96",
           "anchor": "static PeerContext fromStatus"
         },
         {
@@ -18193,7 +18193,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
           "anchor": "Future<bool> _command"
         },
         {
@@ -18245,7 +18245,7 @@
         },
         {
           "path": "mobile/test/peer_context_test.dart",
-          "sha256": "6e6e31c57e98592835578476b0110d4e527d60da17f224153e9e0ae9b81c8b86",
+          "sha256": "e0dae66acf441701c737fc336ba24c4905d1f0ae68b889ee8a976390ed41fec8",
           "anchor": "Independent ACKs and measured display gate"
         },
         {
@@ -18290,7 +18290,7 @@
         },
         {
           "path": "mobile/test/peer_context_test.dart",
-          "sha256": "6e6e31c57e98592835578476b0110d4e527d60da17f224153e9e0ae9b81c8b86",
+          "sha256": "e0dae66acf441701c737fc336ba24c4905d1f0ae68b889ee8a976390ed41fec8",
           "anchor": "No peer ACK cannot be inferred"
         },
         {
@@ -18518,7 +18518,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -18592,7 +18592,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
           "anchor": "Future<void> _openConnection()"
         },
         {
@@ -24251,7 +24251,7 @@
       "targets": [
         {
           "path": "mobile/lib/output_panel.dart",
-          "sha256": "6414f101735aa939289a5eee2e9831b37ca84ce1458f0c6b24a4f5c5860b0d07",
+          "sha256": "e9bfd3fc05ffe56c48a279621f33c94b9c6a04b59fde160df377fa6c594c6853",
           "anchor": "class OutputPanel"
         },
         {
@@ -24266,7 +24266,7 @@
         },
         {
           "path": "mobile/test/output_panel_test.dart",
-          "sha256": "d40cd2b5189af50d1e862629cae0facd6169d7151fbccb0325564a368312b4b6",
+          "sha256": "c08d3cb1d9a62c6b51390250c496f63bd7a5df7ace1f192b7475fe3162640e9d",
           "anchor": "Output order is bounded, durable and independent of table selection"
         },
         {
@@ -24276,7 +24276,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1",
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -24373,7 +24373,7 @@
         },
         {
           "path": "mobile/test/output_panel_test.dart",
-          "sha256": "d40cd2b5189af50d1e862629cae0facd6169d7151fbccb0325564a368312b4b6",
+          "sha256": "c08d3cb1d9a62c6b51390250c496f63bd7a5df7ace1f192b7475fe3162640e9d",
           "anchor": "Single-mode table has no empty Scene and hidden cards keep their saved order"
         }
       ],
@@ -24452,7 +24452,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1"
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2"
         }
       ],
       "proof": [
@@ -24492,7 +24492,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "56475fdf2a90defb31492a67301790a5d9940b5a3d26af05b404617bbef79cc1"
+          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2"
         }
       ],
       "proof": [

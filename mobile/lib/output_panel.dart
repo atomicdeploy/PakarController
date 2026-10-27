@@ -17,6 +17,8 @@ import 'workspace_widgets.dart';
 import 'led_backend.dart';
 import 'led_backend_control.dart';
 
+enum OutputPanelSection { output, game }
+
 /// Pealayer layout.rs: hardware_channel_drag_handle/drop_target and
 /// effect_library_card_header: stable keyed cards, a reserved action gutter,
 /// handle-owned reordering, and no command caused by arranging the workspace.
@@ -32,6 +34,7 @@ class OutputPanel extends StatefulWidget {
     this.verifiedCommand,
     this.readStatus,
     this.statusUpdates,
+    this.section = OutputPanelSection.output,
   });
   final DeviceStatus? status;
   final bool connected;
@@ -41,6 +44,7 @@ class OutputPanel extends StatefulWidget {
   final Future<bool> Function(String, Map<String, String>)? verifiedCommand;
   final Future<DeviceStatus> Function()? readStatus;
   final Stream<DeviceStatus>? statusUpdates;
+  final OutputPanelSection section;
   @override
   State<OutputPanel> createState() => _OutputPanelState();
 }
@@ -54,6 +58,7 @@ class _OutputPanelState extends State<OutputPanel> {
   double? brightnessDraft;
   String? presentedOwner;
   bool hasSceneContent = false;
+  bool firstWins = false;
 
   void remember() {
     final peer = widget.status?.peer;
@@ -80,6 +85,7 @@ class _OutputPanelState extends State<OutputPanel> {
     outputMode = widget.status?.ledOutputMode ?? outputMode;
     outputEnabled = widget.status?.ledOutputEnabled ?? outputEnabled;
     if (peer?.known == true) {
+      firstWins = peer?.role == 'first-wins';
       hasSceneContent =
           peer?.role == 'first-wins' ||
           modes.length > 1 ||
@@ -109,6 +115,110 @@ class _OutputPanelState extends State<OutputPanel> {
 
   bool get ready => widget.connected && !pending;
   bool get ledsReady => ready && widget.status?.peer.has('leds') == true;
+
+  String? gameBlockedReason([int? key]) {
+    final status = widget.status;
+    if (!widget.connected || status == null) {
+      return 'Reconnect to control the game.';
+    }
+    if (pending) return 'A command is still pending.';
+    if (arrangingKeys) {
+      return 'Finish arranging boxes before triggering the game.';
+    }
+    if (status.json['programming_latch'] == true) {
+      return 'AVR programming is active.';
+    }
+    if (!status.avrOnline) return 'The AVR is offline.';
+    if (status.json['key_mask_applied'] != true) {
+      return 'Waiting for AVR to apply enabled boxes.';
+    }
+    if (key != null && !keyEnabled(key)) {
+      return 'Box $key is disabled in Game settings.';
+    }
+    final path = key == null ? '/api/game/reset' : '/api/game/press';
+    if (!status.peer.allows(path, key == null ? const {} : {'key': '$key'})) {
+      return key == null
+          ? 'This board has not enabled game reset.'
+          : 'This board has not enabled remote button presses.';
+    }
+    return null;
+  }
+
+  void explain(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> gameCommand([int? key]) async {
+    final reason = gameBlockedReason(key);
+    if (reason != null) {
+      explain(reason);
+      return;
+    }
+    final path = key == null ? '/api/game/reset' : '/api/game/press';
+    final values = key == null ? <String, String>{} : {'key': '$key'};
+    setState(() => pending = true);
+    try {
+      if (widget.verifiedCommand != null) {
+        if (!await widget.verifiedCommand!(path, values)) {
+          explain(
+            'The board did not confirm the command. It was not replayed.',
+          );
+        }
+      } else {
+        await widget.command(path, values);
+      }
+    } catch (error) {
+      explain(error.toString());
+    } finally {
+      if (mounted) setState(() => pending = false);
+    }
+  }
+
+  Future<void> boxActions(int key) async {
+    final owner = (
+      widget.status?.json['board_id'],
+      widget.status?.json['boot_id'],
+    );
+    final reason = gameBlockedReason(key);
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text('Box $key'),
+              subtitle: Text(reason ?? 'Ready to trigger'),
+            ),
+            ListTile(
+              leading: const Icon(PakarIcons.play),
+              title: const Text('Trigger box'),
+              enabled: reason == null,
+              onTap: () => Navigator.pop(context, 'trigger'),
+            ),
+            ListTile(
+              leading: const Icon(PakarIcons.arrowCounterClockwise),
+              title: const Text('Reset to white'),
+              enabled: gameBlockedReason() == null,
+              onTap: () => Navigator.pop(context, 'reset'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (owner !=
+        (widget.status?.json['board_id'], widget.status?.json['boot_id'])) {
+      explain('The connected board changed. Open the box actions again.');
+      return;
+    }
+    await gameCommand(action == 'trigger' ? key : null);
+  }
+
   Future<void> send(
     String path, [
     Map<String, String> values = const {},
@@ -536,7 +646,7 @@ class _OutputPanelState extends State<OutputPanel> {
         ? null
         : LedBackendState.fromStatus(status.json);
     final (title, icon) = switch (id) {
-      'scene' => ('Scene', PakarIcons.gridFour),
+      'scene' => (firstWins ? 'Boxes' : 'Scene', PakarIcons.gridFour),
       'output' => ('LED output', PakarIcons.gauge),
       _ => ('Pixel diagnostics', PakarIcons.circuitry),
     };
@@ -628,16 +738,8 @@ class _OutputPanelState extends State<OutputPanel> {
                             child: GestureDetector(
                               key: ValueKey('game-key-drag-$key'),
                               behavior: HitTestBehavior.opaque,
-                              onTap:
-                                  !arrangingKeys &&
-                                      ready &&
-                                      keyEnabled(key) &&
-                                      status?.peer.has('game-press') == true &&
-                                      status?.avrOnline == true &&
-                                      status?.json['key_mask_applied'] == true
-                                  ? () =>
-                                        send('/api/game/press', {'key': '$key'})
-                                  : null,
+                              onTap: () => gameCommand(key),
+                              onLongPress: () => boxActions(key),
                               onPanUpdate: !arrangingKeys
                                   ? null
                                   : (details) {
@@ -778,14 +880,7 @@ class _OutputPanelState extends State<OutputPanel> {
               child: FilledButton.icon(
                 icon: const Icon(PakarIcons.arrowCounterClockwise),
                 label: const Text('Reset to white'),
-                onPressed:
-                    ready &&
-                        status?.peer.modes.any((m) => m.id == 'first-wins') ==
-                            true &&
-                        status?.avrOnline == true &&
-                        status?.json['key_mask_applied'] == true
-                    ? () => send('/api/game/reset')
-                    : null,
+                onPressed: () => gameCommand(),
               ),
             ),
           if (status?.peer.has('key-settings') == true &&
@@ -939,26 +1034,32 @@ class _OutputPanelState extends State<OutputPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final visibleCards = workspace.outputCards
-        .where((id) => id != 'scene' || hasSceneContent)
-        .toList();
+    final game = widget.section == OutputPanelSection.game;
+    final visibleCards = game
+        ? [if (firstWins) 'scene']
+        : workspace.outputCards
+              .where((id) => id != 'scene' || (hasSceneContent && !firstWins))
+              .toList();
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1120),
         child: ReorderableListView.builder(
-          key: const PageStorageKey('output-panel-scroll'),
+          key: PageStorageKey(
+            game ? 'game-panel-scroll' : 'output-panel-scroll',
+          ),
           padding: const EdgeInsets.all(20),
           buildDefaultDragHandles: false,
           header: WorkspaceHeader(
-            title: 'Output',
-            icon: PakarIcons.gauge,
+            title: game ? 'Game' : 'Output',
+            icon: game ? PakarIcons.play : PakarIcons.gauge,
             actions: [
-              FilterChip(
-                label: const Text('Arrange panels'),
-                selected: arranging,
-                onSelected: (value) => setState(() => arranging = value),
-              ),
+              if (!game)
+                FilterChip(
+                  label: const Text('Arrange panels'),
+                  selected: arranging,
+                  onSelected: (value) => setState(() => arranging = value),
+                ),
             ],
           ),
           itemCount: visibleCards.length,

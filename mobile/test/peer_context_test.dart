@@ -8,6 +8,47 @@ import 'package:pakarcontroller/peer_context.dart';
 import 'peer_fixture.dart';
 
 void main() {
+  test('Advertised game press and presentation survive capability parsing', () {
+    final raw = peerFixture(
+      kind: 'keys',
+      features: [
+        'inputs',
+        'outputs',
+        'key-settings',
+        'game-press',
+        'game-presentation',
+      ],
+    ).json;
+    (raw['capabilities'] as Map)
+      ..['role'] = 'first-wins'
+      ..['keys'] = {'count': 9, 'groups_per_key': 2, 'pixels_per_group': 12};
+    final peer = DeviceStatus(raw).peer;
+    expect(peer.has('game-press'), true);
+    expect(peer.has('game-presentation'), true);
+    expect(peer.allows('/api/game/press', {'key': '1'}), true);
+    expect(peer.allows('/api/game/press', {'key': '9'}), true);
+    expect(peer.allows('/api/game/reset', {}), true);
+    for (final key in ['0', '10', '-1', '1,2']) {
+      expect(peer.allows('/api/game/press', {'key': key}), false);
+    }
+    (raw['capabilities'] as Map)['acknowledged_features'] = [
+      'inputs',
+      'outputs',
+    ];
+    expect(
+      DeviceStatus(raw).peer.allows('/api/game/press', {'key': '1'}),
+      false,
+    );
+    expect(DeviceStatus(raw).peer.has('game-presentation'), false);
+    (raw['capabilities'] as Map)
+      ..['role'] = 'table-selection'
+      ..['acknowledged_features'] = ['game-press'];
+    expect(
+      DeviceStatus(raw).peer.allows('/api/game/press', {'key': '1'}),
+      false,
+    );
+  });
+
   test('LED backend capability is explicit; omitted or invalid is unknown', () {
     for (final item in [
       {'backend': 'gpio-static', 'rmt': false, 'dma': false},
@@ -118,8 +159,11 @@ void main() {
       };
       final icon = PeerApplication.parse(json)!.icon;
       expect(icon, isNotNull);
-      expect(identical(PeerApplication.parse(Map.of(json))!.icon, icon), isTrue,
-          reason: 'Repeated telemetry must retain the MemoryImage cache key');
+      expect(
+        identical(PeerApplication.parse(Map.of(json))!.icon, icon),
+        isTrue,
+        reason: 'Repeated telemetry must retain the MemoryImage cache key',
+      );
       ByteData.sublistView(bytes).setUint32(16, 4096);
       json['icon_png_base64'] = base64Encode(bytes);
       expect(PeerApplication.parse(json)!.icon, isNull);

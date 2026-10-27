@@ -11,7 +11,222 @@ import 'package:pakarcontroller/workspace_activity_strip.dart';
 
 import 'peer_fixture.dart';
 
+DeviceStatus keyObservation({
+  bool avr = true,
+  bool mask = true,
+  bool press = true,
+  bool programming = false,
+  String board = 'keys-A',
+}) {
+  final base = peerFixture(
+    kind: 'keys',
+    features: [
+      'leds',
+      'inputs',
+      'outputs',
+      'key-settings',
+      if (press) 'game-press',
+    ],
+  ).json;
+  return DeviceStatus({
+    ...base,
+    'board_id': board,
+    'boot_id': 'boot-A',
+    'mode': 'first-wins',
+    'winner': 0,
+    'avr_online': avr,
+    'key_mask_applied': mask,
+    'programming_latch': programming,
+    'key_game': {
+      'enabled_mask': 3,
+      'enabled_count': 2,
+      'idle_rgb': 0xffffff,
+      'win_rgb': 0x00ff00,
+      'lose_rgb': 0xff0000,
+      'extended_effects': true,
+      'auto_reset_ms': 0,
+    },
+    'capabilities': {
+      ...base['capabilities'] as Map,
+      'role': 'first-wins',
+      'keys': {'count': 9, 'groups_per_key': 2, 'pixels_per_group': 12},
+      'modes': [
+        {'id': 'first-wins', 'code': 2, 'kind': 'game', 'label': 'First wins'},
+      ],
+    },
+  });
+}
+
 void main() {
+  testWidgets('Game boxes tap to press and hold for explicit actions', (
+    tester,
+  ) async {
+    final commands = <(String, Map<String, String>)>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: OutputPanel(
+            section: OutputPanelSection.game,
+            status: keyObservation(),
+            connected: true,
+            command: (path, [values = const {}]) async =>
+                commands.add((path, values)),
+            openDiagnostics: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('game-key-drag-1')));
+    await tester.pumpAndSettle();
+    expect(commands.length, 1);
+    expect(commands.last.$1, '/api/game/press');
+    expect(commands.last.$2, {'key': '1'});
+    await tester.longPress(find.byKey(const ValueKey('game-key-drag-2')));
+    await tester.pumpAndSettle();
+    expect(
+      commands.length,
+      1,
+      reason: 'Opening actions must never trigger a box',
+    );
+    await tester.tap(find.text('Trigger box'));
+    await tester.pumpAndSettle();
+    expect(commands.last.$1, '/api/game/press');
+    expect(commands.last.$2, {'key': '2'});
+    await tester.longPress(find.byKey(const ValueKey('game-key-drag-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ListTile, 'Reset to white'));
+    await tester.pumpAndSettle();
+    expect(commands.last.$1, '/api/game/reset');
+    expect(commands.last.$2, isEmpty);
+    expect(commands.length, 3);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Unavailable game actions explain why without sending', (
+    tester,
+  ) async {
+    var commands = 0;
+    for (final scenario in [
+      (keyObservation(avr: false), true, 1, 'The AVR is offline.'),
+      (
+        keyObservation(mask: false),
+        true,
+        1,
+        'Waiting for AVR to apply enabled boxes.',
+      ),
+      (
+        keyObservation(press: false),
+        true,
+        1,
+        'This board has not enabled remote button presses.',
+      ),
+      (
+        keyObservation(programming: true),
+        true,
+        1,
+        'AVR programming is active.',
+      ),
+      (keyObservation(), false, 1, 'Reconnect to control the game.'),
+      (keyObservation(), true, 3, 'Box 3 is disabled in Game settings.'),
+    ]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          key: UniqueKey(),
+          home: Scaffold(
+            body: OutputPanel(
+              section: OutputPanelSection.game,
+              status: scenario.$1,
+              connected: scenario.$2,
+              command: (_, [values = const {}]) async => commands++,
+              openDiagnostics: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(ValueKey('game-key-drag-${scenario.$3}')));
+      await tester.pumpAndSettle();
+      expect(find.text(scenario.$4), findsOneWidget);
+      expect(commands, 0);
+    }
+  });
+
+  testWidgets(
+    'Pending presses are not duplicated and unconfirmed commands are reported',
+    (tester) async {
+      final ack = Completer<bool>();
+      var commands = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: OutputPanel(
+              section: OutputPanelSection.game,
+              status: keyObservation(),
+              connected: true,
+              command: (_, [values = const {}]) async =>
+                  fail('Use verified command'),
+              verifiedCommand: (_, values) {
+                commands++;
+                return ack.future;
+              },
+              openDiagnostics: () {},
+            ),
+          ),
+        ),
+      );
+      final box = find.byKey(const ValueKey('game-key-drag-1'));
+      await tester.tap(box);
+      await tester.pump();
+      await tester.tap(box);
+      await tester.pump();
+      expect(commands, 1);
+      ack.complete(false);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'The board did not confirm the command. It was not replayed.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('Box action sheet cannot send to a replacement peer', (
+    tester,
+  ) async {
+    var status = keyObservation();
+    var commands = 0;
+    late StateSetter update;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (_, setState) {
+              update = setState;
+              return OutputPanel(
+                section: OutputPanelSection.game,
+                status: status,
+                connected: true,
+                command: (_, [values = const {}]) async => commands++,
+                openDiagnostics: () {},
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.longPress(find.byKey(const ValueKey('game-key-drag-1')));
+    await tester.pumpAndSettle();
+    update(() => status = keyObservation(board: 'keys-B'));
+    await tester.pump();
+    await tester.tap(find.text('Trigger box'));
+    await tester.pumpAndSettle();
+    expect(commands, 0);
+    expect(
+      find.text('The connected board changed. Open the box actions again.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'Phone activity navigation keeps eight panels reachable without squeezing',
     (tester) async {
@@ -296,7 +511,12 @@ void main() {
         (status.json['capabilities'] as Map)['modes'] = [
           {'id': 'cell', 'code': 1, 'kind': 'presentation', 'label': 'Cells'},
           if (multiple)
-            {'id': 'first-wins', 'code': 2, 'kind': 'game', 'label': 'First wins'},
+            {
+              'id': 'first-wins',
+              'code': 2,
+              'kind': 'game',
+              'label': 'First wins',
+            },
         ];
         return status;
       }
@@ -407,6 +627,7 @@ void main() {
               status: status,
               connected: true,
               workspace: workspace,
+              section: OutputPanelSection.game,
               command: (_, [values = const {}]) async => commands++,
               openDiagnostics: () {},
             ),
@@ -443,10 +664,22 @@ void main() {
       final restored = TableWorkspace(saved: workspace.snapshot());
       expect(restored.keyPosition(1), workspace.keyPosition(1));
       restored.dispose();
-      await tester.drag(
-        find.byType(ReorderableListView),
-        const Offset(0, -900),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: OutputPanel(
+              key: const ValueKey('outputs'),
+              status: status,
+              connected: true,
+              workspace: workspace,
+              command: (_, [values = const {}]) async => commands++,
+              openDiagnostics: () {},
+            ),
+          ),
+        ),
       );
+      expect(find.byKey(const ValueKey('key-layout-canvas')), findsNothing);
+      await tester.ensureVisible(find.text('Single pixel or 12-pixel group'));
       await tester.pumpAndSettle();
       expect(find.text('Single pixel or 12-pixel group'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
