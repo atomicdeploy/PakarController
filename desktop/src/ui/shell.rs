@@ -4070,6 +4070,9 @@ impl PakarControllerApp {
                 } else if self.connection_enabled {
                     ui.weak("Disconnect before editing the endpoint or credentials.");
                 }
+                if method == Transport::WiFi {
+                    ui::host_wifi::draw(ui, !self.identity_pending);
+                }
                 ui.add_space(12.0);
                 dialog::action_row(ui, false, |ui| {
                     let endpoint_present = match method {

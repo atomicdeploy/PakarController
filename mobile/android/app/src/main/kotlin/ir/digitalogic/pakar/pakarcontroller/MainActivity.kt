@@ -13,6 +13,7 @@ import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
     private var discovery: DiscoveryChannel? = null
+    private var hostWifi: HostWifiChannel? = null
     private var usb: UsbControllerChannel? = null
     private var ble: BleControllerChannel? = null
     private var toneMirror: ToneMirrorChannel? = null
@@ -32,6 +33,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        hostWifi = HostWifiChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         usb = UsbControllerChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         discovery = DiscoveryChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         ble = BleControllerChannel(this, flutterEngine.dartExecutor.binaryMessenger)
@@ -102,6 +104,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (hostWifi?.onActivityResult(requestCode, resultCode, data) == true) return
         if (appUpdates?.onActivityResult(requestCode, resultCode, data) == true) return
         if (requestCode != pickCode && requestCode != createCode) return
         val result = pending ?: return
@@ -160,9 +163,11 @@ class MainActivity : FlutterActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         ble?.onRequestPermissionsResult(requestCode)
+        hostWifi?.onRequestPermissionsResult(requestCode)
     }
 
     override fun onDestroy() {
+        hostWifi?.close(); hostWifi = null
         usb?.close()
         ble?.close(); ble = null
         toneMirror?.close(); toneMirror = null

@@ -1,5 +1,6 @@
 pub mod discovery;
 pub mod instance;
+pub mod host_wifi;
 pub mod notifications;
 #[cfg(windows)]
 pub mod windows_desktop;

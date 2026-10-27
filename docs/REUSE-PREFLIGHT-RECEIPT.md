@@ -1,5 +1,24 @@
 # Donor-first preflight receipt
 
+## Host Wi-Fi join and management (issue #31)
+
+Read the complete actual PCController Android DiscoveryChannel.kt, verified
+original-byte SHA256 b4b829b34dfd99d1cadcd05b4d15b23e1277d6d8ffa82090f2abfd4843d48c5c.
+Its main-loop callback ownership and close-time cleanup inform HostWifiChannel;
+the donor contains no Wi-Fi join implementation. Android consent/network binding
+and Windows Native Wi-Fi profile calls are new OS adapters. Existing Pakar shared
+dialog/dropdown controls retain their fixed geometry. Re-read the touched device
+picker and native connection-modal sections; unrelated transport/authentication,
+workspace, firmware and document-picker behavior stays unchanged.
+
+The current Android documentation and Windows WlanConnect contract informed the
+implementation: OS save/request acceptance is not a verified peer connection.
+Source checks must not join networks or interrupt production routes. The first
+mobile analysis found five local style lints; those were fixed, not suppressed.
+No donor availability or capability failure was worked around. Hashes below are
+rebound only for explicitly reviewed changed consumers; hardware/installed OS
+consent/routing acceptance remains tracked separately in #31.
+
 ## PU850 shell consistency follow-up (issue #29)
 
 Re-read actual PU850 4311040 LocalLib/Shell.cpp/.h, Telnet.cpp/.h,

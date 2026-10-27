@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 
 import 'device_registry.dart';
+import 'host_wifi.dart';
 import 'discovery.dart';
 import 'icons.dart';
 import 'cell_controls.dart';
 import 'application_artwork.dart';
+
 import 'dart:convert';
 
 import 'api.dart';
 import 'workspace_widgets.dart';
 import 'ble_transport.dart';
 import 'usb_transport.dart';
+
 final _discoveryFallbackArtwork = base64Decode(applicationArtworkBase64);
 
 class DeviceListEntry {
@@ -589,6 +592,19 @@ class _DevicesPageState extends State<DevicesPage> {
           icon: PakarIcons.circuitry,
           subtitle: '$count available · $savedCount saved',
           actions: [
+            if (method == ConnectionMethod.network && HostWifi.supported)
+              IconButton.outlined(
+                tooltip: 'Join or manage this device’s Wi-Fi',
+                onPressed: connecting
+                    ? null
+                    : () => showHostWifi(
+                        context,
+                        knownNetworks: HostWifi.knownNetworks(
+                          widget.api?.latestStatus?.json,
+                        ),
+                      ),
+                icon: const Icon(PakarIcons.wifiHigh),
+              ),
             OutlinedButton.icon(
               onPressed: busy || connecting ? null : scan,
               icon: const Icon(PakarIcons.arrowClockwise),
@@ -744,15 +760,20 @@ class _DevicesPageState extends State<DevicesPage> {
                     vertical: 8,
                   ),
                   leading: entry.peer.application?.icon != null
-                      ? SizedBox(width: 40, height: 40, child: StableApplicationIcon(
-                          key: ValueKey(entry.identityKey),
-                          bytes: entry.peer.application!.icon!,
-                          fallback: _discoveryFallbackArtwork))
+                      ? SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: StableApplicationIcon(
+                            key: ValueKey(entry.identityKey),
+                            bytes: entry.peer.application!.icon!,
+                            fallback: _discoveryFallbackArtwork,
+                          ),
+                        )
                       : Icon(
-                    entry.saved?.location == DeviceLocation.remote
-                        ? PakarIcons.cloud
-                        : PakarIcons.circuitry,
-                  ),
+                          entry.saved?.location == DeviceLocation.remote
+                              ? PakarIcons.cloud
+                              : PakarIcons.circuitry,
+                        ),
                   title: Text(
                     entry.name,
                     maxLines: 1,
@@ -853,10 +874,38 @@ class _DevicesPageState extends State<DevicesPage> {
                   trailing: PopupMenuButton<String>(
                     enabled: !connecting,
                     tooltip: 'Device actions',
-                    onSelected: (value) => value == 'forget'
+                    onSelected: (value) => value == 'wifi'
+                        ? showHostWifi(
+                            context,
+                            scope: entry.identityKey,
+                            knownNetworks:
+                                entry.peer.boardId.isNotEmpty &&
+                                    entry.peer.boardId ==
+                                        widget
+                                            .api
+                                            ?.latestStatus
+                                            ?.json['board_id']
+                                ? HostWifi.knownNetworks(
+                                    widget.api?.latestStatus?.json,
+                                  )
+                                : const [],
+                          )
+                        : value == 'forget'
                         ? forget(entry.saved!)
                         : edit(device: entry.saved, discovered: entry.peer),
                     itemBuilder: (_) => [
+                      if (method == ConnectionMethod.network &&
+                          HostWifi.supported)
+                        const PopupMenuItem(
+                          value: 'wifi',
+                          child: Row(
+                            children: [
+                              Icon(PakarIcons.wifiHigh, size: 18),
+                              SizedBox(width: 10),
+                              Text('Join Wi-Fi…'),
+                            ],
+                          ),
+                        ),
                       PopupMenuItem(
                         value: 'edit',
                         child: Row(
