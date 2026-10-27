@@ -19,7 +19,7 @@ pakar dependencies --check              # reads registry metadata; no pin edits
 pakar dependencies --apply              # explicitly edit only newer stable pins
 pakar dependencies --install            # explicitly install locked dependencies
 pakar artifacts                        # report existing bytes; no build
-pakar artifacts --write --require       # stable metadata/checksums for six images
+pakar artifacts --write --require       # stable metadata/checksums for release images
 pakar update --origin http://ledboard.local   # plan only
 pakar update --origin http://ledboard.local --run
 pakar scripts                          # inventory of existing utility wrappers
@@ -78,6 +78,9 @@ PATH is preferred to the legacy Windows fallback.
   Android jobs; centralized locked firmware pins; rich image-integrity summary;
   immutable draft release packages and existing attestations. Source checks do
   not certify a successful current GitHub run or physical peripherals.
+  The final summary lists actual run artifacts, byte counts and expiration.
+  `node tools/check-doc-links.mjs` checks maintained entry-guide links/headings;
+  `node tests/doc_links_test.mjs` verifies malformed/Unicode/fenced-link cases.
 - `update-dependencies.yml`: weekly/report-only by default. Draft pin-change PRs
   require repository variable `PAKAR_DEPENDENCY_PULL_REQUESTS=true`. A manual
   dispatch defaults `check_only=true`. No automatic merge, SDK install or flash.

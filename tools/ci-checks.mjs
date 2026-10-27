@@ -5,6 +5,8 @@ import {fileURLToPath} from 'node:url';
 import {createLogger} from './script-console.mjs';
 export const phases={
   "quality": [
+    ["node", "tests/doc_links_test.mjs"],
+    ["node", "tools/check-doc-links.mjs"],
     ["pwsh", "-File", "tools/test-user-files.ps1"],
     ["node", "tests/native_dependency_graph_test.mjs"],
     // Static source certificates must fail before expensive SDK/native builds.

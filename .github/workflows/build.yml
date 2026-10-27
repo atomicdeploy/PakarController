@@ -288,6 +288,9 @@ jobs:
     needs: [lint, tooling, quality, firmware, windows-desktop, android-preview, release]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     steps:
       - env:
           LINT: ${{ needs.lint.result }}
@@ -297,6 +300,7 @@ jobs:
           WINDOWS: ${{ needs.windows-desktop.result }}
           ANDROID: ${{ needs.android-preview.result }}
           RELEASE: ${{ needs.release.result }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           {
             echo '# PakarController build verification'; echo
@@ -310,5 +314,17 @@ jobs:
             echo "| Draft release | $RELEASE |"
             echo; echo '> CI does not prove physical operation or deployment.'
           } >> "$GITHUB_STEP_SUMMARY"
+          # Adapt Pealayer's real run-artifact summary; enumerate every page.
+          {
+            echo; echo '## Run artifacts'; echo
+            echo '| Artifact | Bytes | Expires |'; echo '|---|---:|---|'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if artifact_rows=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | "| `\(.name)` | \(.size_in_bytes) | \(.expires_at) |"'); then
+            if [[ -n "$artifact_rows" ]]; then printf '%s\n' "$artifact_rows" >> "$GITHUB_STEP_SUMMARY"; else
+              echo '| None produced by this run | — | — |' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo '| Inventory unavailable; inspect this run | — | — |' >> "$GITHUB_STEP_SUMMARY"
+          fi
           [[ "$LINT" == success && "$TOOLING" == success && "$QUALITY" == success && "$FIRMWARE" == success && "$WINDOWS" == success && "$ANDROID" == success ]]
           [[ "$RELEASE" == success || "$RELEASE" == skipped ]]

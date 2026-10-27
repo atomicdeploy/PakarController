@@ -10473,3 +10473,29 @@ Added a null-measurement guard and an empty-directory regression, verified in
 both Windows PowerShell 5.1 and PowerShell 7. Read errors still fail; no real
 cache, running app, release artifact or rollback was removed. The existing
 source/target/proof ledger was selectively rebound for this reviewed change.
+
+### Repository presentation and CI follow-through
+
+Compared the actual PCController README, repository-health workflow and complete
+repository-check/repository-policy scripts; Pealayer README, complete CI/CD and
+storage scripts; and PU850's Tool/README.md and complete tooling workflow at
+the pinned revisions recorded in the canonical ledger. No donor was modified.
+
+- Imported PCController's actual local-link parsing and Markdown heading/anchor
+  code into `tools/check-doc-links.mjs`. Seven maintained entry guides are
+  checked offline, with regression fixtures and an explicit coverage list.
+  HTML branding links, malformed encoding, repository escape and longer fenced
+  examples are handled. Full historical-document/privacy coverage remains open.
+- Added a task-oriented documentation hub and README getting-started/download
+  guidance. Corrected the old Android PR link, Snake description, two-versus-three
+  AVR profile wording and obsolete fixed firmware-artifact count.
+- Adapted Pealayer's actual run-artifact inventory into the final CI summary,
+  with pagination, bytes/expiry, empty/unavailable distinctions and read-only
+  Actions permission. Original failure gates remain mandatory.
+- Retained the existing PU-derived dispatcher, safe plan default, locked installs,
+  exact hash/backup/no-replay transfer rules and three-OS script matrix. Did not
+  copy the donor's forced clean or create redundant .NET/Go/C++ product clients.
+
+The complete local quality suite passed after the CI repair; focused documentation,
+governance and both PowerShell storage fixtures passed. Source/fixture evidence
+is not a green remote run, complete donor parity, package deployment or board proof.

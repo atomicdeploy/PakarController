@@ -2,6 +2,14 @@
 
 PakarController is integration code built from earlier AtomicDeploy projects.
 
+- `tools/check-doc-links.mjs` adapts `localLinkReference`, Markdown heading
+  normalization/anchor enumeration and local-link checking from PCController's
+  `.github/scripts/repository-check.mjs` and `repository-policy.mjs`, read at
+  `b0111ae0c80dc34149ea1044de7dd5488920301b`. Used under its MIT option; see
+  `docs/licenses/PCController-MIT.txt`. Pakar adds fenced-example handling for
+  link scanning, HTML branding links, repository boundaries and offline fixtures;
+  donor-specific privacy/license/required-path policies are not copied wholesale.
+
 - `firmware/esp/src/PortableShellCore.h` adapts command descriptors/lookup and
   VT100 formatting from `atomicdeploy/portable-shell` revision
   `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d` (requested branch

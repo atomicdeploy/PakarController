@@ -10820,7 +10820,7 @@
         {
           "path": "docs/SCRIPT-TOOLING.md",
           "anchor": "Actual PU850 source import",
-          "sha256": "9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909"
+          "sha256": "c245c9e419cddb2493d6b75b388d7f73d97ec8d69a08333d562670cbaeade3a8"
         },
         {
           "path": "tools/update-firmware.mjs",
@@ -10951,7 +10951,7 @@
         {
           "path": "docs/SCRIPT-TOOLING.md",
           "anchor": "Actual PU850 source import",
-          "sha256": "9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909"
+          "sha256": "c245c9e419cddb2493d6b75b388d7f73d97ec8d69a08333d562670cbaeade3a8"
         },
         {
           "path": "tools/update-firmware.mjs",
@@ -11022,7 +11022,7 @@
         {
           "path": "docs/SCRIPT-TOOLING.md",
           "anchor": "Actual PU850 source import",
-          "sha256": "9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909"
+          "sha256": "c245c9e419cddb2493d6b75b388d7f73d97ec8d69a08333d562670cbaeade3a8"
         },
         {
           "path": "tools/update-firmware.mjs",
@@ -11481,7 +11481,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498"
+          "sha256": "92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d"
         }
       ],
       "omissions": [
@@ -11901,7 +11901,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498"
+          "sha256": "92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -12294,7 +12294,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🔧 ESP32-S3 + AVR\"",
-          "sha256": "83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498"
+          "sha256": "92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -17727,7 +17727,7 @@
       "targets": [
         {
           "path": "README.md",
-          "sha256": "c97b6901dc78cbac665d27760bdb129d0dfe1705e51584bba5d6fa0cd5cf7e04",
+          "sha256": "6ef2bde812ca8aaf889f5ad1c8313ae6e4e5ac079b93424ef4be6e2cdd007da5",
           "anchor": "Connected boards. One contextual control workspace."
         },
         {
@@ -17770,7 +17770,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498",
+          "sha256": "92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -17780,7 +17780,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "91985edcf7cf94cba605f19ddd324992e6a4e8d8a9dad4f08399338dcee7e93b",
+          "sha256": "741d9d2dd3e47fb81d1310a707b141e210ea19622b81af78b6a7fa2f014050d2",
           "anchor": "export function runChecks"
         },
         {
@@ -25561,6 +25561,120 @@
       ],
       "remaining": [
         "Issue #30: see concrete donor omissions, client deployment and live LED acceptance gates in mini-apps/snake/README.md."
+      ]
+    },
+    {
+      "origin": "PCController",
+      "path": ".github/scripts/repository-check.mjs",
+      "sha256": "672c5cb926c46eb9f18232469c9ec9528b133eae52ecf0cb372ca443ca936560",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual localLinkReference and link/heading verification adapted to a dependency-free checker, including root/relative paths and explicit guide inventory."
+      ],
+      "targets": [
+        {
+          "path": "tools/check-doc-links.mjs",
+          "sha256": "e48b9de40ded0fe0a7f8d79eb46809038b6ddc886d903c4b7b577efb25e7227c",
+          "anchor": "export function checkGuides"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/doc_links_test.mjs",
+          "sha256": "5e1bcd27c5be81d051b20960cf6a8a1977ec7a6d8b248102c6e886776c9db4bc",
+          "anchor": "assert.deepEqual(checkGuides"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "Full-repository source/privacy/license/required-file scans",
+          "disposition": "pending",
+          "reason": "Donor product paths and dual-license assertions cannot replace Pakar ownership or preserved third-party source. Full maintained-doc expansion and privacy policy parity remain useful pending work."
+        }
+      ],
+      "remaining": [
+        "Expand maintained guide coverage and evaluate generic source/privacy policy without rewriting immutable donor history."
+      ],
+      "improvement": "Offline fixtures cover Unicode, malformed encoding, HTML branding links, fenced examples and path escape; no dependency install or remote crawl."
+    },
+    {
+      "origin": "PCController",
+      "path": ".github/scripts/repository-policy.mjs",
+      "sha256": "6a5d6ae8dba31f2fbac91b193f7448264db5626a9ff71e0767cf5af9fb787877",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Actual heading-label cleanup, Unicode slugs, fenced example exclusion, explicit anchors and duplicate suffix handling imported; longer fences and suffix collisions hardened."
+      ],
+      "targets": [
+        {
+          "path": "tools/check-doc-links.mjs",
+          "sha256": "e48b9de40ded0fe0a7f8d79eb46809038b6ddc886d903c4b7b577efb25e7227c",
+          "anchor": "export function checkGuides"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/doc_links_test.mjs",
+          "sha256": "5e1bcd27c5be81d051b20960cf6a8a1977ec7a6d8b248102c6e886776c9db4bc",
+          "anchor": "assert.deepEqual(checkGuides"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "privacyFindings, actionPinFindings, readOrdinaryTextFile and generated-path policy",
+          "disposition": "pending",
+          "reason": "Current Pakar governance already guards immutable Actions and its source contracts; donor-specific provenance allowlists would forbid user-requested donor evidence. Equivalent generic bounded privacy scanning is still pending."
+        }
+      ],
+      "remaining": [
+        "Expand maintained guide coverage and evaluate generic source/privacy policy without rewriting immutable donor history."
+      ],
+      "improvement": "Offline fixtures cover Unicode, malformed encoding, HTML branding links, fenced examples and path escape; no dependency install or remote crawl."
+    },
+    {
+      "origin": "PCController",
+      "path": "README.md",
+      "sha256": "862dd06b91efdfbc09f4d895e305ecec71d84637a7bf7d4d95d907bcd3b83566",
+      "source_read": "complete",
+      "verdict": "parity-gap",
+      "preserved": [
+        "Task-oriented quick start, distinct surfaces, engineering-download provenance, maintained guide hub and truthful source/physical verification boundary adapted to actual Pakar contracts."
+      ],
+      "targets": [
+        {
+          "path": "README.md",
+          "sha256": "6ef2bde812ca8aaf889f5ad1c8313ae6e4e5ac079b93424ef4be6e2cdd007da5",
+          "anchor": "## Get started"
+        },
+        {
+          "path": "docs/README.md",
+          "sha256": "ec19e28f41dec4d739f2094b74abf8d685069de0206bc8c815fc3be5c23b2efb",
+          "anchor": "## Operate and recover"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/doc_links_test.mjs",
+          "sha256": "5e1bcd27c5be81d051b20960cf6a8a1977ec7a6d8b248102c6e886776c9db4bc",
+          "anchor": "assert.deepEqual(checkGuides"
+        }
+      ],
+      "omissions": [
+        {
+          "code": "PCController hardware map, media/seat operations, Go/C ABI examples",
+          "disposition": "not-applicable",
+          "reason": "Different product hardware/runtime; copying would misdirect wiring or invent Pakar commands."
+        },
+        {
+          "code": "Complete operator walkthrough and supported cross-platform native package matrix",
+          "disposition": "pending",
+          "reason": "Pakar native packages and hardware acceptance do not match every donor target; preserve explicit platform limits rather than claim unsupported installers."
+        }
+      ],
+      "remaining": [
+        "Expand accepted operator walkthroughs as runtime and hardware gates are completed."
       ]
     }
   ]

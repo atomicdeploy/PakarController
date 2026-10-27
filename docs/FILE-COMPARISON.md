@@ -2,9 +2,9 @@
 
 Whole-repository superiority is **not established**. This report exposes retained code, scoped improvements, omissions and gaps; it does not turn missing reviews into exclusions.
 
-Routing: 1506 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
+Routing: 1475 paths have no specialist capability match. They remain visible through `consult-reuse.ps1 -Concern donor-audit` and issue #3; lack of a keyword match is NOT an exclusion. Every CSV row includes capability routing and owning issue links.
 
-Inventory: 4732 files; 426 complete source-file comparisons; 4306 pending comparisons; 306 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
+Inventory: 4732 files; 429 complete source-file comparisons; 4303 pending comparisons; 309 compared files with known parity gaps. Header/implementation pairs can describe the same gap. Missing sparse files remain pending.
 
 Every inventoried path, source revision/hash, target/proof file and line, omitted code, disposition and concrete reason is in `file-comparison.csv`. Hash-bound manual decisions are in `file-comparison-evidence.json`. Donor SHA-256 values bind original bytes; target/proof SHA-256 values bind UTF-8 without BOM with LF newlines. Anchors are recomputed into exact line numbers. Test-code presence is not test execution; execution receipts are in `FILE-COMPARISON-RECEIPTS.md`.
 
@@ -16,7 +16,7 @@ Every inventoried path, source revision/hash, target/proof file and line, omitte
 | ControllerBoardMini/Puzzles | 18 | 18 | 0 | 8 |
 | DRS-jSnake | 18 | 16 | 2 | 16 |
 | esp32WS2811 | 24 | 16 | 8 | 9 |
-| PCController | 1517 | 115 | 1402 | 103 |
+| PCController | 1517 | 118 | 1399 | 106 |
 | Pealayer | 639 | 65 | 574 | 46 |
 | portable-shell | 17 | 17 | 0 | 0 |
 | PU850-ESP | 109 | 109 | 0 | 96 |
@@ -881,6 +881,28 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 - Test-code evidence: `tests/esp32_ws2811_reuse_test.mjs:8 [UTF8-LF sha256=3420e0bed7ebeee3aa7aa8366ad6195bd59d052504e62fd6dd2e5b22ff0fa006; anchor=function driverContract(source)]`.
 - Scoped advantage: Retain modern IDF5 compact immutable DMA source and explicit failures/LOW/latch, one renderer and bounded memory instead of legacy driver globals, per-effect tasks, blocking delays or duplicate colour ownership.
 - Remaining: Current480-pixel waveform/RF/refill/optical acceptance remains open; source hashes/fixtures are not current hardware proof.
+
+### PCController: `.github/scripts/repository-check.mjs`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `672c5cb926c46eb9f18232469c9ec9528b133eae52ecf0cb372ca443ca936560`.
+
+- Target: `tools/check-doc-links.mjs:77 [UTF8-LF sha256=e48b9de40ded0fe0a7f8d79eb46809038b6ddc886d903c4b7b577efb25e7227c; anchor=export function checkGuides]`.
+- Retained: Actual localLinkReference and link/heading verification adapted to a dependency-free checker, including root/relative paths and explicit guide inventory.
+- Omitted/replaced code: `Full-repository source/privacy/license/required-file scans`. Disposition: **pending**. Reason: Donor product paths and dual-license assertions cannot replace Pakar ownership or preserved third-party source. Full maintained-doc expansion and privacy policy parity remain useful pending work.
+- Test-code evidence: `tests/doc_links_test.mjs:13 [UTF8-LF sha256=5e1bcd27c5be81d051b20960cf6a8a1977ec7a6d8b248102c6e886776c9db4bc; anchor=assert.deepEqual(checkGuides]`.
+- Scoped advantage: Offline fixtures cover Unicode, malformed encoding, HTML branding links, fenced examples and path escape; no dependency install or remote crawl.
+- Remaining: Expand maintained guide coverage and evaluate generic source/privacy policy without rewriting immutable donor history.
+
+### PCController: `.github/scripts/repository-policy.mjs`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `6a5d6ae8dba31f2fbac91b193f7448264db5626a9ff71e0767cf5af9fb787877`.
+
+- Target: `tools/check-doc-links.mjs:77 [UTF8-LF sha256=e48b9de40ded0fe0a7f8d79eb46809038b6ddc886d903c4b7b577efb25e7227c; anchor=export function checkGuides]`.
+- Retained: Actual heading-label cleanup, Unicode slugs, fenced example exclusion, explicit anchors and duplicate suffix handling imported; longer fences and suffix collisions hardened.
+- Omitted/replaced code: `privacyFindings, actionPinFindings, readOrdinaryTextFile and generated-path policy`. Disposition: **pending**. Reason: Current Pakar governance already guards immutable Actions and its source contracts; donor-specific provenance allowlists would forbid user-requested donor evidence. Equivalent generic bounded privacy scanning is still pending.
+- Test-code evidence: `tests/doc_links_test.mjs:13 [UTF8-LF sha256=5e1bcd27c5be81d051b20960cf6a8a1977ec7a6d8b248102c6e886776c9db4bc; anchor=assert.deepEqual(checkGuides]`.
+- Scoped advantage: Offline fixtures cover Unicode, malformed encoding, HTML branding links, fenced examples and path escape; no dependency install or remote crawl.
+- Remaining: Expand maintained guide coverage and evaluate generic source/privacy policy without rewriting immutable donor history.
 
 ### PCController: `docs/Shared-Production-Firmware.md`
 
@@ -2101,6 +2123,18 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Direct donor defaults, optional boot opcodes/menu-label/audio storage and broader hardware engines`. Disposition: **pending**. Reason: Donor-constrained flash tradeoffs are not Pakar measurements. These useful feature families need explicit profile/EEPROM and memory decisions; a 328P must not blindly enable every feature or inherit donor absent-hardware behavior.
 - Remaining: Issue #3/#6: source-level profile mapping followed by measured affected AVR flash/SRAM/stack and driver acceptance; no new compile or commissioning in this pass.
 
+### PCController: `README.md`
+
+Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `862dd06b91efdfbc09f4d895e305ecec71d84637a7bf7d4d95d907bcd3b83566`.
+
+- Target: `README.md:43 [UTF8-LF sha256=6ef2bde812ca8aaf889f5ad1c8313ae6e4e5ac079b93424ef4be6e2cdd007da5; anchor=## Get started]`.
+- Target: `docs/README.md:7 [UTF8-LF sha256=ec19e28f41dec4d739f2094b74abf8d685069de0206bc8c815fc3be5c23b2efb; anchor=## Operate and recover]`.
+- Retained: Task-oriented quick start, distinct surfaces, engineering-download provenance, maintained guide hub and truthful source/physical verification boundary adapted to actual Pakar contracts.
+- Omitted/replaced code: `PCController hardware map, media/seat operations, Go/C ABI examples`. Disposition: **not-applicable**. Reason: Different product hardware/runtime; copying would misdirect wiring or invent Pakar commands.
+- Omitted/replaced code: `Complete operator walkthrough and supported cross-platform native package matrix`. Disposition: **pending**. Reason: Pakar native packages and hardware acceptance do not match every donor target; preserve explicit platform limits rather than claim unsupported installers.
+- Test-code evidence: `tests/doc_links_test.mjs:13 [UTF8-LF sha256=5e1bcd27c5be81d051b20960cf6a8a1977ec7a6d8b248102c6e886776c9db4bc; anchor=assert.deepEqual(checkGuides]`.
+- Remaining: Expand accepted operator walkthroughs as runtime and hardware gates are completed.
+
 ### PCController: `Tools/Bootloader/Urboot-Custom/build.mjs`
 
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `5e5607d54af43ead28eddb747e48b6e2450dd45ef7c47202203c4f5cfc8991ab`.
@@ -3002,9 +3036,9 @@ Verdict: **scoped-improvement**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cd
 
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `bba9a295ee7b59e318f76e0b6f6a80f0aec631e249f7d8c798f6c92c0bb7fd8c`.
 
-- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498; anchor=name: "🚀 Build · Test · Release"]`.
+- Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:47 [UTF8-LF sha256=8ebd02ebcd5556bd70f97216faed6ea3c03ec8e92950514118e1b9901132e037; anchor=--test-threads=1]`.
-- Target: `tools/ci-checks.mjs:264 [UTF8-LF sha256=91985edcf7cf94cba605f19ddd324992e6a4e8d8a9dad4f08399338dcee7e93b; anchor=export function runChecks]`.
+- Target: `tools/ci-checks.mjs:266 [UTF8-LF sha256=741d9d2dd3e47fb81d1310a707b141e210ea19622b81af78b6a7fa2f014050d2; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:18 [UTF8-LF sha256=820cefc9698d46f95cf39b4cd667494a05cd03d119a1c54f9892b2a35d8b824b; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.
 - Retained: Release content is gated on all supported-target builds, created as an immutable draft prerelease, with the matched S3/AVR buffered pair and raw HTTPS update manifests. Explicit legacy packaging is preserved but the overflowing ESP8266 image is not promised as a release output. Untrusted PRs do not execute publishing code with a write token.
@@ -3119,7 +3153,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 Verdict: **scoped-improvement**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `4e78a6c486bfc7d78adc6d34552bddfd67c89997edb8d2bae0b46e70c705dcb6`.
 
-- Target: `README.md:7 [UTF8-LF sha256=c97b6901dc78cbac665d27760bdb129d0dfe1705e51584bba5d6fa0cd5cf7e04; anchor=Connected boards. One contextual control workspace.]`.
+- Target: `README.md:7 [UTF8-LF sha256=6ef2bde812ca8aaf889f5ad1c8313ae6e4e5ac079b93424ef4be6e2cdd007da5; anchor=Connected boards. One contextual control workspace.]`.
 - Target: `tools/generate-readme-artwork.mjs:1 [UTF8-LF sha256=2162d1ad3760618260eb9d659dfebb6651ad1e5f5b4eb2c37c12cde1ef7ff8d2; anchor=README uses the same bytes]`.
 - Retained: Pealayer's actual centered logo/title/tagline, badge row, visual preview, section navigation, architecture, build, docs, contribution and license structure adapted to Pakar.
 - Omitted/replaced code: `Media engine, NLE cue/timeline walkthroughs, playback APIs/shortcuts and libmpv installation sections`. Disposition: **not-applicable**. Reason: These describe Pealayer media business/runtime rather than Pakar board control. README links actual controller APIs, wiring and release/acceptance instead; no mpv is linked.
@@ -4356,7 +4390,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `49d608184ca52242cc845026d05384081669eec57007733f43ede09539c79cb6`.
 
-- Target: `.github/workflows/build.yml:104 [UTF8-LF sha256=83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498; anchor=name: "🔧 ESP32-S3 + AVR"]`.
+- Target: `.github/workflows/build.yml:104 [UTF8-LF sha256=92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d; anchor=name: "🔧 ESP32-S3 + AVR"]`.
 - Target: `tools/firmware-report.mjs:57 [UTF8-LF sha256=a374a5172a8e9d366e1bbe124311004e2f093ab648e94a54cd8c4a1ca18b4423; anchor=export function artifactMarkdown]`.
 - Retained: Adapt actual artifact size/checksum/download summary and staged build workflow mechanisms into existing Pealayer-derived build.yml plus firmware-report.mjs. Retain separate matched firmware outputs and draft-release provenance; no external progress image or rewritten timestamp header.
 - Omitted/replaced code: `Unconditional latest-success/first-binary auto-flash and donor-specific test/product packaging`. Disposition: **replaced**. Reason: Use exact successful main source/run/artifact identity and existing Pakar jobs. Automatic writes require an explicitly authorized runner/environment and repository opt-in.
@@ -4369,7 +4403,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `06b31df1731e5ab45fb0f1c714f95c46470cf1006f6c50150dc9a461d95a52d0`.
 
-- Target: `.github/workflows/build.yml:72 [UTF8-LF sha256=83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498; anchor=name: "🧰 Scripts · ${{ matrix.os }}"]`.
+- Target: `.github/workflows/build.yml:72 [UTF8-LF sha256=92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d; anchor=name: "🧰 Scripts · ${{ matrix.os }}"]`.
 - Target: `.github/actionlint.yaml:3 [UTF8-LF sha256=5b3c6b07ca38aaadb14a1d6eb2d35ac83b705f065901fdafba8210afc9be4960; anchor=pakar-deploy]`.
 - Retained: Adapt actual tooling verification intent into Windows/Linux/macOS fixture/plan matrix before product jobs. Use one Node/PowerShell owner with explicit Windows-only utility boundaries; no donor-client build/test execution is falsely certified.
 - Omitted/replaced code: `Unconditional latest-success/first-binary auto-flash and donor-specific test/product packaging`. Disposition: **replaced**. Reason: Use exact successful main source/run/artifact identity and existing Pakar jobs. Automatic writes require an explicitly authorized runner/environment and repository opt-in.
@@ -5314,7 +5348,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `0f40d6726756d86f30b82dac4fbe8fe11a5dc85ecba2cf8d68f5cb6771da0229`.
 
-- Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909; anchor=Actual PU850 source import]`.
+- Target: `docs/SCRIPT-TOOLING.md:97 [UTF8-LF sha256=c245c9e419cddb2493d6b75b388d7f73d97ec8d69a08333d562670cbaeade3a8; anchor=Actual PU850 source import]`.
 - Target: `tools/update-firmware.mjs:216 [UTF8-LF sha256=f1661663563a2dcd4eaed9d1a054cc986cf03d8e3b0806bc93d6bf07560ad068; anchor=export async function updateFirmware]`.
 - Retained: Read full .NET documented upload/download/watch/backup/timeouts and platform outputs. Map one-shot preflight/identity/postboot behavior to the existing updater; document remaining download/resume/watch and package gaps rather than substituting a second client.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
@@ -5582,7 +5616,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `92c5355d3cbb855acbb60352b9250926e94856905a7845ecaf541489db5bc2d7`.
 
-- Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909; anchor=Actual PU850 source import]`.
+- Target: `docs/SCRIPT-TOOLING.md:97 [UTF8-LF sha256=c245c9e419cddb2493d6b75b388d7f73d97ec8d69a08333d562670cbaeade3a8; anchor=Actual PU850 source import]`.
 - Target: `tools/update-firmware.mjs:216 [UTF8-LF sha256=f1661663563a2dcd4eaed9d1a054cc986cf03d8e3b0806bc93d6bf07560ad068; anchor=export async function updateFirmware]`.
 - Retained: Read full WinHTTP/puff/gzip/manifest, cached DNS, no-replay, atomic resume, auth and exit contracts. Retain host identity/no-replay/integrity concepts; clearly distinguish Windows cross-builds from actual Linux-native outputs.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
@@ -5754,7 +5788,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `d9142cd0128d3b963259c9eaaf5afc179c120d232f9d80d6e401591ecac6bb40`.
 
-- Target: `docs/SCRIPT-TOOLING.md:94 [UTF8-LF sha256=9920569e7027308d50babfb2fd7144e1b9580d699053e7279197eebac31bb909; anchor=Actual PU850 source import]`.
+- Target: `docs/SCRIPT-TOOLING.md:97 [UTF8-LF sha256=c245c9e419cddb2493d6b75b388d7f73d97ec8d69a08333d562670cbaeade3a8; anchor=Actual PU850 source import]`.
 - Target: `tools/update-firmware.mjs:216 [UTF8-LF sha256=f1661663563a2dcd4eaed9d1a054cc986cf03d8e3b0806bc93d6bf07560ad068; anchor=export async function updateFirmware]`.
 - Retained: Read full standard-library client, atomic verified download, backup/resume/watch, auth and multi-target build contract. Retain bounded verification and hostname caching intent in the existing updater; no claim that read-only export loops are a resumable CLI backup command.
 - Omitted/replaced code: `ASA gzip/two-record manifest, legacy plain-info fallback and exact ok! reply; verification bypass`. Disposition: **replaced**. Reason: Current Pakar S3 uses raw application validation and structured JSON/update endpoints with board/boot fences. Mandatory auth-off/new-boot/full-SHA checks must not be weakened to preserve an incompatible donor wire protocol.
@@ -5844,7 +5878,7 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. Original-byte SHA-256: `60754d1116254eeac6b10e626c2e2b4506e60ad3ecd0296ce59645d63858e540`.
 
 - Target: `tools/script-console.mjs:5 [UTF8-LF sha256=2243be58e4dce21a7592865121e94ebdb64f21286f3333358c8259bb2bdedafb; anchor=export const EXIT]`.
-- Target: `.github/workflows/build.yml:88 [UTF8-LF sha256=83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498; anchor=node tests/script_tooling_test.mjs]`.
+- Target: `.github/workflows/build.yml:88 [UTF8-LF sha256=92851769e12e3a86872755da7effc2b56b678c63b6165d6ba5904a38d0fb330d; anchor=node tests/script_tooling_test.mjs]`.
 - Retained: Retain explicit Node20.19 minimum and direct Node entrypoints, tests and help without an additional npm install. Shared logger/CLI use Node standard libraries; unavailable watch mode is recorded as a gap.
 - Omitted/replaced code: `New chalk/chokidar/readdirp npm installation for one-shot tools`. Disposition: **replaced**. Reason: Currently required console/argv behavior uses Node standard libraries and no file watcher is advertised. Preserve zero additional npm tree; advanced watcher parity remains explicit.
 - Test-code evidence: `tests/script_tooling_test.mjs:130 [UTF8-LF sha256=9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054; anchor=Script tooling:]`.
