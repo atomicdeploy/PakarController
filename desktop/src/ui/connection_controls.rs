@@ -71,9 +71,15 @@ pub struct State<'a> {
     pub method: Transport,
     pub enabled: bool,
     pub live: bool,
+    pub peer_known: bool,
     pub endpoint: &'a str,
     pub port: &'a str,
     pub identity_pending: bool,
+}
+
+pub fn phase_label(enabled: bool, live: bool, peer_known: bool) -> &'static str {
+    if live { "Connected" } else if !enabled { "Disconnected" }
+    else if peer_known { "Reconnecting…" } else { "Connecting…" }
 }
 
 pub struct Responses {
@@ -94,6 +100,8 @@ pub fn draw(
             ui.visuals().dark_mode,
             "green",
         )
+    } else if state.enabled {
+        ui.visuals().warn_fg_color
     } else {
         ui.visuals().text_color()
     };
@@ -107,13 +115,7 @@ pub fn draw(
         |ui| {
             dropdown::menu_ui(ui, owner, |ui| {
                 ui.set_min_width(240.0);
-                ui.strong(if state.live {
-                    "Connected"
-                } else if state.enabled {
-                    "Connecting…"
-                } else {
-                    "Disconnected"
-                });
+                ui.colored_label(color, super::i18n::text(phase_label(state.enabled, state.live, state.peer_known)));
                 ui.weak(match state.method {
                     Transport::WiFi => state.endpoint,
                     Transport::Serial if state.port.is_empty() => "No port selected",
@@ -161,14 +163,16 @@ pub fn draw(
         Transport::WiFi => !state.endpoint.trim().is_empty(),
         Transport::Serial => !state.port.trim().is_empty(),
     };
+    let waiting = state.enabled && !state.live;
+    let label = if waiting { phase_label(true, false, state.peer_known) }
+        else if state.enabled { "Disconnect" } else { "Connect" };
     let lifecycle = ui.add_enabled(
         !state.identity_pending && (state.enabled || endpoint_present),
-        egui::Button::new(if state.enabled {
-            "Disconnect"
-        } else {
-            "Connect"
-        }),
-    );
+        egui::Button::new(egui::RichText::new(format!("{}  {}",
+            if waiting { icons::ARROW_CLOCKWISE } else if state.enabled { icons::X } else { icons::PLUG },
+            super::i18n::text(label)))
+            .color(if waiting { ui.visuals().warn_fg_color } else { ui.visuals().text_color() })),
+    ).on_hover_text(if waiting { "Cancel reconnecting" } else { label });
     if lifecycle.clicked() {
         actions.push(Action::Lifecycle(!state.enabled));
     }
@@ -280,6 +284,7 @@ mod tests {
                                         method,
                                         enabled: false,
                                         live: false,
+                                        peer_known: false,
                                         endpoint: "http://ledboard.local",
                                         port: "COM7",
                                         identity_pending: busy,
@@ -389,6 +394,7 @@ mod tests {
                                     method: Transport::Serial,
                                     enabled,
                                     live: enabled,
+                                    peer_known: enabled,
                                     endpoint: "",
                                     port: "COM7",
                                     identity_pending: false,
@@ -421,5 +427,35 @@ mod tests {
             }]);
             assert_eq!(actions, vec![Action::Lifecycle(!enabled)]);
         }
+    }
+
+    #[test]
+    fn reconnecting_is_warning_colored_and_cancellable_not_connected() {
+        assert_eq!(phase_label(true, false, true), "Reconnecting…");
+        assert_eq!(phase_label(true, false, false), "Connecting…");
+        assert_eq!(phase_label(false, false, true), "Disconnected");
+        let ctx = egui::Context::default();
+        let mut actions = Vec::new();
+        let mut response = None;
+        let mut render = |events| {
+            let mut out = ctx.run_ui(egui::RawInput { events, ..Default::default() }, |ui| {
+                response = Some(draw(ui, State { method: Transport::WiFi, enabled: true, live: false,
+                    peer_known: true, endpoint: "http://keycontroller.local", port: "", identity_pending: false },
+                    || panic!("Network lifecycle must not scan USB"), &mut actions));
+            });
+            out.textures_delta.clear();
+            (response.as_ref().unwrap().lifecycle.rect, text(&out), out)
+        };
+        let (rect, labels, output) = render(vec![]);
+        assert!(labels.iter().any(|label| label.contains("Reconnecting…")));
+        assert!(!labels.iter().any(|label| label == "Disconnect"));
+        let warn = ctx.style_of(ctx.theme()).visuals.warn_fg_color;
+        assert!(output.shapes.iter().any(|shape| matches!(&shape.shape,
+            egui::epaint::Shape::Text(t) if t.galley.job.text.contains("Reconnecting…")
+                && t.galley.job.sections.iter().any(|section| section.format.color == warn))));
+        for pressed in [true, false] { render(vec![egui::Event::PointerMoved(rect.center()), egui::Event::PointerButton {
+            pos: rect.center(), button: egui::PointerButton::Primary, pressed, modifiers: egui::Modifiers::NONE
+        }]); }
+        assert_eq!(actions, vec![Action::Lifecycle(false)]);
     }
 }

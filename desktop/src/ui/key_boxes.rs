@@ -5,6 +5,7 @@
 //! e47f7739 (stable source rect), d71c88d6 (capture before drag promotion).
 //! This is a scoped reuse, not a claim of full Designer/timeline parity.
 use super::i18n::text;
+use super::{cell_table::Selection, dropdown::DropdownUiExt, icons};
 use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Vec2};
 
 const GRID: f32 = 16.0;
@@ -44,6 +45,57 @@ impl BoxView {
 pub struct Output {
     pub trigger: Option<u8>,
     pub layout_changed: bool,
+    pub selection_changed: bool,
+    pub editing: Option<bool>,
+    pub panel: Option<super::layout::Panel>,
+}
+
+// Adapt Pealayer layout.rs control_context_popup/draw_board_card_context_menu:
+// one card-owned popup, muted identity, grouped actions and capability gates.
+fn context_menu(ui: &mut egui::Ui, target: Option<u8>, selection: &mut Selection,
+    models: &[BoxView; 9], editing: bool, can_trigger: bool, out: &mut Output) {
+    super::cell_table::compact_menu(ui);
+    ui.strong(target.map_or_else(|| text("Boxes"), |key| format!("{} {key}", text("Box"))));
+    ui.weak(format!("{} selected", selection.ids.len()));
+    ui.separator();
+    if let Some(key) = target {
+        ui.add_enabled_ui(!editing && can_trigger && models[usize::from(key - 1)].enabled, |ui| {
+            if ui.dropdown_choice(false, format!("{}  {}", icons::HAND_TAP, text("Trigger box"))).clicked() {
+                out.trigger = Some(key);
+            }
+        });
+        ui.separator();
+    }
+    super::menu::submenu(ui, format!("{}  {}", icons::SELECTION_ALL, text("Selection")), |ui| {
+        if ui.add(egui::Button::new(format!("{}  {}", icons::SELECTION_ALL, text("Select all"))).shortcut_text("Ctrl+A")).clicked() {
+            selection.group(1..=9, false); ui.close();
+        }
+        if ui.button(format!("{}  {}", icons::CHECK, text("Select enabled"))).clicked() {
+            selection.group((1..=9).filter(|key| models[usize::from(*key - 1)].enabled), false); ui.close();
+        }
+        if ui.button(format!("{}  {}", icons::SELECTION_ALL, text("Invert selection"))).clicked() {
+            let ids: Vec<_> = (1..=9).filter(|key| !selection.ids.contains(key)).collect();
+            selection.group(ids, false); ui.close();
+        }
+        if ui.add_enabled(!selection.ids.is_empty(), egui::Button::new(format!("{}  {}", icons::X, text("Clear selection"))).shortcut_text("Esc")).clicked() {
+            selection.clear(); ui.close();
+        }
+    });
+    if ui.add_enabled(!selection.ids.is_empty(), egui::Button::new(format!("{}  {}", icons::COPY, text("Copy box IDs")))).clicked() {
+        ui.ctx().copy_text(super::cell_search::format_selection(&selection.ids)); ui.close();
+    }
+    ui.separator();
+    if ui.dropdown_choice(editing, format!("{}  {}", icons::DOTS_SIX_VERTICAL, text("Arrange boxes"))).clicked() {
+        out.editing = Some(!editing);
+    }
+    super::menu::submenu(ui, format!("{}  {}", icons::TABS, text("Panels")), |ui| {
+        for (panel, icon, label) in [
+            (super::layout::Panel::PixelDiagnostics, icons::TARGET, "Pixel diagnostics"),
+            (super::layout::Panel::EffectControls, icons::SPARKLE, "Output & effects"),
+        ] {
+            if ui.button(format!("{icon}  {}", text(label))).clicked() { out.panel = Some(panel); ui.close(); }
+        }
+    });
 }
 
 #[derive(Clone, Copy)]
@@ -282,8 +334,10 @@ pub fn show(
     board_id: &str,
     positions: &mut [[f32; 2]; 9],
     models: &[BoxView; 9],
+    selection: &mut Selection,
     editing: bool,
     can_trigger: bool,
+    trigger_on_click: bool,
     animate: bool,
 ) -> Output {
     // A horizontal ScrollArea gives its child unbounded width; size against the
@@ -292,14 +346,17 @@ pub fn show(
     egui::ScrollArea::horizontal()
         .id_salt(("key-box-scroll", board_id))
         .show(ui, |ui| {
-            let (canvas, _) =
-                ui.allocate_exact_size(egui::vec2(canvas_width, HEIGHT), egui::Sense::hover());
+            let (canvas, background) =
+                ui.allocate_exact_size(egui::vec2(canvas_width, HEIGHT), egui::Sense::click());
             ui.set_clip_rect(ui.clip_rect().intersect(canvas));
             let inner = canvas.shrink(16.0);
             let rects = layout_rects(inner, positions);
             let state_id = ui.make_persistent_id(("key-box-drag", board_id));
             let mut drag = ui.data_mut(|data| data.get_temp::<Drag>(state_id));
             let mut out = Output::default();
+            let previous_selection = selection.ids.clone();
+            let modifiers = ui.input(|input| input.modifiers);
+            let mut card_clicked = false;
             let current_frame = ui.ctx().cumulative_frame_nr();
             let released =
                 ui.input(|input| input.pointer.button_released(egui::PointerButton::Primary));
@@ -378,9 +435,10 @@ pub fn show(
                     },
                 );
                 response.widget_info(|| {
-                    egui::WidgetInfo::labeled(
+                    egui::WidgetInfo::selected(
                         egui::WidgetType::Button,
-                        editing || (can_trigger && models[index].enabled),
+                        ui.is_enabled(),
+                        selection.ids.contains(&key),
                         format!(
                             "{} {key}, {}, {} {}, {} {}",
                             text("Box"),
@@ -393,6 +451,18 @@ pub fn show(
                     )
                 });
                 focus[index] = response.has_focus();
+                if response.clicked() {
+                    selection.click(key, modifiers.command || modifiers.ctrl, modifiers.shift);
+                    response.request_focus();
+                    card_clicked = true;
+                }
+                if response.secondary_clicked() && !selection.ids.contains(&key) {
+                    selection.click(key, false, false);
+                }
+                let menu = egui::Popup::context_menu(&response).id(id.with("context"));
+                let shown = menu.show(|ui| super::dropdown::menu_ui(ui, id.with("context"), |ui|
+                    context_menu(ui, Some(key), selection, models, editing, can_trigger, &mut out)));
+                if shown.is_none() { super::dropdown::clear_menu(ui.ctx(), id.with("context")); }
                 hover[index] = if animate {
                     ui.ctx()
                         .animate_bool_with_time(id.with("hover"), response.hovered(), 0.12)
@@ -455,7 +525,8 @@ pub fn show(
                             }
                         }
                     }
-                } else if response.clicked() && can_trigger && models[index].enabled {
+                } else if response.clicked() && trigger_on_click && can_trigger && models[index].enabled
+                    && !modifiers.command && !modifiers.ctrl && !modifiers.shift {
                     out.trigger = Some(key);
                 }
                 response
@@ -508,7 +579,7 @@ pub fn show(
                         (index + 1) as u8,
                         &models[index],
                         hover[index],
-                        focus[index],
+                        focus[index] || selection.ids.contains(&((index + 1) as u8)),
                         editing,
                         false,
                     );
@@ -569,6 +640,24 @@ pub fn show(
                     data.remove::<Drag>(state_id);
                 }
             });
+            let over_card = pointer.is_some_and(|p| rects.iter().any(|rect| rect.contains(p)));
+            if background.clicked() && !over_card && !card_clicked && !modifiers.command && !modifiers.ctrl {
+                selection.clear();
+            }
+            if pointer.is_some_and(|p| canvas.contains(p))
+                && (!ui.ctx().egui_wants_keyboard_input() || focus.iter().any(|value| *value)) {
+                if ui.input_mut(|input| input.consume_key(egui::Modifiers::COMMAND, egui::Key::A)) {
+                    selection.group(1..=9, false);
+                }
+                if drag.is_none() && ui.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape)) {
+                    selection.clear();
+                }
+            }
+            if !over_card {
+                background.context_menu(|ui| super::dropdown::menu_ui(ui, state_id.with("context"), |ui|
+                    context_menu(ui, None, selection, models, editing, can_trigger, &mut out)));
+            }
+            out.selection_changed = previous_selection != selection.ids;
             out
         })
         .inner
@@ -577,6 +666,56 @@ pub fn show(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn box_clicks_reuse_selection_and_secondary_menu_never_actuates() {
+        let ctx = egui::Context::default();
+        let mut selection = Selection::default();
+        let mut positions = crate::native_workspace::default_key_positions();
+        let model = models(true);
+        let mut frame = |mut events: Vec<egui::Event>, modifiers| {
+            events.insert(0, egui::Event::ModifiersChanged(modifiers));
+            let mut result = Output::default();
+            let mut rects = [Rect::NOTHING; 9];
+            let mut rendered = ctx.run_ui(egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, egui::vec2(800.0, 600.0))),
+                events, focused: true, ..Default::default()
+            }, |ui| {
+                ui.set_width(720.0);
+                rects = layout_rects(Rect::from_min_size(ui.cursor().min, egui::vec2(720.0, HEIGHT)).shrink(16.0), &positions);
+                result = show(ui, "selection-fixture", &mut positions, &model, &mut selection, false, true, false, false);
+            });
+            rendered.textures_delta.clear();
+            let labels: Vec<_> = rendered.shapes.iter().filter_map(|shape| match &shape.shape {
+                egui::epaint::Shape::Text(text) => Some(text.galley.job.text.clone()), _ => None
+            }).collect();
+            assert!(result.trigger.is_none(), "Selection and menus are not game presses");
+            (rects, selection.cells(), labels)
+        };
+        let (rects, _, _) = frame(vec![], egui::Modifiers::NONE);
+        for (index, modifiers, expected) in [
+            (0, egui::Modifiers::NONE, vec![1]),
+            (2, egui::Modifiers::CTRL, vec![1, 3]),
+            (4, egui::Modifiers::SHIFT, vec![3, 4, 5]),
+            (3, egui::Modifiers::CTRL, vec![3, 5]),
+        ] {
+            let pos = rects[index].center();
+            for pressed in [true, false] {
+                let (_, ids, _) = frame(vec![egui::Event::PointerMoved(pos), egui::Event::PointerButton {
+                    pos, button: egui::PointerButton::Primary, pressed, modifiers
+                }], modifiers);
+                if !pressed { assert_eq!(ids, expected); }
+            }
+        }
+        let pos = rects[2].center();
+        for pressed in [true, false] {
+            frame(vec![egui::Event::PointerButton { pos, button: egui::PointerButton::Secondary, pressed, modifiers: egui::Modifiers::NONE }], egui::Modifiers::NONE);
+        }
+        let (_, ids, labels) = frame(vec![], egui::Modifiers::NONE);
+        assert_eq!(ids, vec![3, 5]);
+        assert!(labels.iter().any(|label| label.contains("Selection")), "Expected real context menu: {labels:?}");
+        assert!(labels.iter().any(|label| label.contains("Trigger box")));
+    }
 
     fn inner(width: f32) -> Rect {
         Rect::from_min_size(Pos2::ZERO, egui::vec2(width, HEIGHT)).shrink(16.0)
@@ -689,8 +828,10 @@ mod tests {
                     "fixture-board",
                     positions,
                     models,
+                    &mut Selection::default(),
                     editing,
                     allowed,
+                    true,
                     false,
                 );
                 bounds = Rect::from_min_size(origin, egui::vec2(720.0, HEIGHT));

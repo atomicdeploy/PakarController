@@ -10243,3 +10243,51 @@ are therefore pending. ASUS's saved ledcontroller Wi-Fi profile was temporarily
 set to manual to prevent roaming during keycontroller OTA; restore its automatic
 mode when ASUS is reachable. No ledcontroller update, reset or actuation occurred.
 Do not mark the entire portable-shell/production acceptance checklist complete.
+
+## 2026-10-27 native box selection and reconnect controls
+
+Owning issue #3 / PR #27. Searched Pealayer's custom context-menu call sites;
+scoped reread of layout.rs draw_board_card_context_menu, draw_control_context_menu
+and control_context_popup, effects_library.rs saved/empty menus, control_bar.rs
+shared overflow menus, icons.rs submenu, peer_browser.rs copy menu,
+media_inspector.rs copy menu, open_url.rs text-edit menu and dialog.rs numeric
+menu. Actual icons::submenu implementation is imported into ui/menu.rs. Box
+menus adapt card-owned popup, icon/label groups, muted subtitle, explicit actions
+and selected-target preservation using Pakar's already imported dropdown engine.
+Selection uses the existing cell_table::Selection rather than a second model.
+Per-board workspace snapshots retain selected IDs; click-to-trigger is an explicit
+session opt-in, never restored automatically. Existing individual-card grid drag
+retains its source/grab/drop behavior; multi-selection is not group movement.
+
+Not copied into box menus: media path/reveal, playback, cue/timeline/keyframe,
+numeric step-size and text edit actions have no corresponding box-card model.
+Generic toolbar/status/menu and rename/group customization remain useful broader
+parity work; this scoped review does not certify every donor menu or unread file.
+The inventory search is navigation evidence, not full source review.
+
+Connection lifecycle and status bar share Connected/Connecting/Reconnecting/
+Disconnected labels. Enabled but stale known peers display warning-orange
+Reconnecting with a cancel action; no deadline inflation, command replay or fake
+live status is introduced. Native UI suite: 164 passed, including interaction,
+right-click non-actuation, shared range/toggle selection, warning color and cancel.
+The initial compile caught egui 0.36 API changes; checked actual event/input and
+style APIs, corrected the new tests to ModifiersChanged/style_of and the keyboard
+guard to egui_wants_keyboard_input. Canonical cached build then passed.
+
+ASUS localhost:8022 repeatedly timed out during SSH banner exchange. No runtime
+logs could be inspected and no remote replacement occurred at this checkpoint;
+the reported ASUS application timeout is not yet diagnosed. No board, firmware,
+saved scene or production output was changed by this UI work.
+
+Five workspace persistence tests also passed. Release build and isolated 1200x800
+framebuffer inspection passed. Windows Computer Use capture failed with
+IGraphicsCaptureItemInterop.CreateForMonitor (0x80070057); its accessibility tree
+was available, but the one attempted right-click failed GetCursorPos with Access
+is denied (0x80070005). No alternate input injection was attempted. The existing
+verified-PID capture helper successfully used PrintWindow for fixture PID 15752;
+the image was inspected, but it is not an open-popup screenshot. Native egui
+event tests remain the context-menu interaction evidence. The accessibility tree
+also exposed obsolete game-authority gating on selectable boxes; this was changed
+to advertise their selected state independently from capability-gated triggering.
+The fixture was stopped, not a production process. Its synthetic device-name 404
+is a missing fixture response, not evidence of the ASUS timeout's root cause.

@@ -1739,6 +1739,7 @@ impl PakarControllerApp {
                             method: self.transport,
                             enabled: self.connection_enabled,
                             live: self.command_route().is_some(),
+                            peer_known: self.presentation_context().is_some(),
                             endpoint: &self.base,
                             port: &self.serial_port,
                             identity_pending: self.identity_pending,
@@ -3327,6 +3328,9 @@ impl PakarControllerApp {
                 });
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
+                    ui.checkbox(&mut self.key_trigger_on_click, "Trigger on click")
+                        .on_hover_text("Off: clicks only select. Ctrl-click toggles; Shift-click selects a range. Right-click for explicit actions.");
+                    ui.weak(format!("{} selected", self.key_selection.ids.len()));
                     if ui
                         .selectable_label(
                             self.key_layout_edit,
@@ -3389,11 +3393,17 @@ impl PakarControllerApp {
                     &s.board_id,
                     &mut self.key_positions,
                     &boxes,
+                    &mut self.key_selection,
                     self.key_layout_edit,
                     can_trigger,
+                    self.key_trigger_on_click,
                     self.config.animate_cells,
                 );
-                if result.layout_changed {
+                if let Some(editing) = result.editing { self.key_layout_edit = editing; }
+                if let Some(panel) = result.panel {
+                    if panel.available(self.presentation_context()) { self.reveal_panels.push(panel); }
+                }
+                if result.layout_changed || result.selection_changed {
                     self.save_workspace();
                 }
                 if let Some(key) = result.trigger {

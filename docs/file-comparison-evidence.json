@@ -1515,7 +1515,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn draw_table(",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
         }
       ],
       "proof": [
@@ -1552,7 +1552,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn table_scene_fits_small_dock_and_zooms_at_pointer()",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
         }
       ],
       "omissions": [
@@ -1683,7 +1683,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "egui::Scene::new()",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
         }
       ],
       "proof": [
@@ -7228,7 +7228,7 @@
       "targets": [
         {
           "path": "desktop/src/main.rs",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0",
           "anchor": "#![cfg_attr(windows, windows_subsystem = \"windows\")]"
         },
         {
@@ -7296,7 +7296,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0",
           "anchor": "cli_println!(\"{reply}\")"
         },
         {
@@ -8214,7 +8214,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "value[\"pixel_preview\"]"
         },
         {
@@ -9048,7 +9048,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "SerialCommand::Bridge(target",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605"
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0"
         }
       ],
       "omissions": [
@@ -13619,7 +13619,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "if authentication == Some(true)"
         },
         {
@@ -13646,7 +13646,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "for authentication in [None, Some(false), Some(true)]"
         }
       ],
@@ -13696,7 +13696,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "if authentication == Some(true)"
         },
         {
@@ -13723,7 +13723,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "for authentication in [None, Some(false), Some(true)]"
         }
       ],
@@ -15321,7 +15321,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0",
           "anchor": "fn scoped_http_request("
         },
         {
@@ -15465,7 +15465,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0",
           "anchor": "// The mapping response identifies its own producer."
         },
         {
@@ -15994,7 +15994,7 @@
           "path": "desktop/src/ui/cell_table.rs"
         },
         {
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "pub fn draw(",
           "path": "desktop/src/ui/connection_controls.rs"
         },
@@ -16009,7 +16009,7 @@
           "path": "desktop/src/ui/device_settings.rs"
         },
         {
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "super::dropdown::ComboBox",
           "path": "desktop/src/ui/shell.rs"
         },
@@ -16069,7 +16069,7 @@
           "path": "desktop/src/ui/dropdown.rs"
         },
         {
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "fn one_contextual_control_lazy_usb_scan_and_busy_guard()",
           "path": "desktop/src/ui/connection_controls.rs"
         },
@@ -16239,7 +16239,7 @@
           "path": "desktop/src/ui/preferences.rs"
         },
         {
-          "sha256": "21c1e90d6eb7057d4774f21a2b8524fb20411bceed3cb050db795477974d3de1",
+          "sha256": "0f06c9f2f84e5710fe5bbea7a83221c0c527e61ba52ab0b63ee032974ced6739",
           "anchor": "\"Recent colors\"",
           "path": "desktop/src/ui/i18n.rs"
         }
@@ -17502,7 +17502,7 @@
       "targets": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "21c1e90d6eb7057d4774f21a2b8524fb20411bceed3cb050db795477974d3de1",
+          "sha256": "0f06c9f2f84e5710fe5bbea7a83221c0c527e61ba52ab0b63ee032974ced6739",
           "anchor": "pub(crate) fn configure_ui_fonts"
         },
         {
@@ -17549,12 +17549,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "21c1e90d6eb7057d4774f21a2b8524fb20411bceed3cb050db795477974d3de1",
+          "sha256": "0f06c9f2f84e5710fe5bbea7a83221c0c527e61ba52ab0b63ee032974ced6739",
           "anchor": "fn contextual_persian_in_labels_and_monospace_inputs"
         },
         {
           "path": "desktop/src/ui/i18n.rs",
-          "sha256": "21c1e90d6eb7057d4774f21a2b8524fb20411bceed3cb050db795477974d3de1",
+          "sha256": "0f06c9f2f84e5710fe5bbea7a83221c0c527e61ba52ab0b63ee032974ced6739",
           "anchor": "fn changing_language_preserves_widget_fonts"
         },
         {
@@ -17982,37 +17982,37 @@
       "targets": [
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn item_menu("
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "impl<'de> Deserialize<'de> for Items"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn layout_plan("
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "pub struct Progress<'a>"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "fn save_status_bar_preferences("
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "let firmware_progress = self.firmware_observation().filter(|p| p.active);"
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "pub fn draw("
         },
         {
@@ -18075,62 +18075,62 @@
       "proof": [
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn rgb_requires_observed_output_and_does_not_double_dim"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_legacy_visibility_migrates_all_combinations_without_reviving_telemetry()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_order_normalizes_unknown_duplicate_and_malformed_entries()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_placement_menu_click_moves_group_and_saves_once_without_panicking()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_connection_and_rgb_require_current_route_not_cached_peer_or_websocket()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_measured_progress_distinguishes_unknown_zero_and_completion()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_progress_and_focus_use_visible_accent_with_actual_dark_app_palette()"
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0",
           "anchor": "fn status_bar_startup_message_respects_disconnected_and_selected_route()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_real_egui_slots_stay_single_row_in_narrow_rtl_and_scaled_views()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_telemetry_changes_preserve_slot_bounds_and_never_request_save()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_buttons_dispatch_click_and_keyboard_without_passive_actions()"
         },
         {
           "path": "desktop/src/ui/status_bar.rs",
-          "sha256": "4fa040b2b78c8699a6b2e7eb1ab603804e7441ca9ab2c2aa98321a698e5e1465",
+          "sha256": "1cca3d0a2080d33b1239ca22fa3f975c071c3a2c2c4f8cab8c1d87c136e744a9",
           "anchor": "fn status_overflow_retains_capability_gated_actions_and_arrow_keyboard_access()"
         },
         {
@@ -18155,7 +18155,7 @@
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "fn lifecycle_is_one_explicit_action_and_disconnect_retains_port()"
         }
       ]
@@ -18362,7 +18362,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "fn synchronize_context("
         },
         {
@@ -18791,17 +18791,17 @@
       "targets": [
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "fe951002f9cf6daff34dcce35ac05ab065aea58ae985553dfa435339f28baee4",
+          "sha256": "80c2a5130e97fd8dfe62206034a48347b691fe06bb65998049937afeee37f602",
           "anchor": "pub fn top_menu_button<R>("
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "menu::top_menu_button(ui, crate::ui::i18n::text(\"File\")"
         },
         {
           "path": "desktop/src/ui/connection_controls.rs",
-          "sha256": "2ac32145d994a83c2a2ce5857df5ba0b8968ecb6784170ab43fa2138f0af5917",
+          "sha256": "02bbb46d280c606868f0f18220cb092c0dca2e07f9b06aa31bee1e4f4625ec65",
           "anchor": "pub fn draw("
         },
         {
@@ -18859,12 +18859,12 @@
       "proof": [
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "fe951002f9cf6daff34dcce35ac05ab065aea58ae985553dfa435339f28baee4",
+          "sha256": "80c2a5130e97fd8dfe62206034a48347b691fe06bb65998049937afeee37f602",
           "anchor": "fn shortcuts_are_separate_muted_right_aligned_atoms_in_both_themes()"
         },
         {
           "path": "desktop/src/ui/menu.rs",
-          "sha256": "fe951002f9cf6daff34dcce35ac05ab065aea58ae985553dfa435339f28baee4",
+          "sha256": "80c2a5130e97fd8dfe62206034a48347b691fe06bb65998049937afeee37f602",
           "anchor": "fn sibling_hover_switches_only_an_already_open_menu_and_clears_closed_state()"
         },
         {
@@ -19304,7 +19304,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "crate::application_shortcuts::take_action"
         }
       ],
@@ -19810,7 +19810,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "value[\"messages\"]",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
         },
         {
           "path": "desktop/src/platform/notifications.rs",
@@ -19877,6 +19877,7 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
+        "2026-10-27 scoped submenu rereview: actual icons::submenu Phosphor right_text(CARET_RIGHT) and SubMenuButton implementation imported into desktop/src/ui/menu.rs and consumed by the key-box Selection and Panels menus. The existing complete-file receipt is not promoted to full application parity.",
         "Lamp-background checkpoint scoped rereview of actual searchable_workspace_icon_picker and shell workspace picker call: same presets, stable stored name, fallback, localized search and shared native picker remain. New IPC preference does not change icon behavior; only inspected shell consumer hash refreshed.",
         "Fully reread all1190 current donor lines through EOF. Production Phosphor vocabulary, stable names/kind fallback, searchable list/grid picker, UTF-8-safe match highlighting, bounded popups and disclosure/submenu helpers remain retained. New catalog/density/localized-title/fixed-header-slot behavior is separately pending, not certified by the prior eleven tests.",
         "Actual donor regression tests restored: eleven tests, including interactive egui-frame search/select/reopen, both themes and popup width.",
@@ -19890,8 +19891,18 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "icons::searchable_workspace_icon_picker"
+        },
+        {
+          "path": "desktop/src/ui/menu.rs",
+          "sha256": "80c2a5130e97fd8dfe62206034a48347b691fe06bb65998049937afeee37f602",
+          "anchor": "pub fn submenu("
+        },
+        {
+          "path": "desktop/src/ui/key_boxes.rs",
+          "sha256": "9b63490027a61b6e46fc9d73f643c75c774f60102dc81e175da7d3447ae9840a",
+          "anchor": "fn context_menu("
         }
       ],
       "omissions": [
@@ -19920,6 +19931,11 @@
           "path": "desktop/src/ui/icons.rs",
           "sha256": "cd5fe34a628b22220e9be47bf4de262e5e8eeec8e7c045f6dde76414c511a40b",
           "anchor": "fn pakar_workspace_editor_uses_the_actual_shared_searchable_picker()"
+        },
+        {
+          "path": "desktop/src/ui/key_boxes.rs",
+          "sha256": "9b63490027a61b6e46fc9d73f643c75c774f60102dc81e175da7d3447ae9840a",
+          "anchor": "fn box_clicks_reuse_selection_and_secondary_menu_never_actuates()"
         },
         {
           "path": "desktop/src/ui/icons.rs",
@@ -22517,7 +22533,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -22578,7 +22594,7 @@
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "value[\"tray_shell\"]"
         },
         {
@@ -22641,7 +22657,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0",
           "anchor": "fn serial_worker("
         },
         {
@@ -22678,7 +22694,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605",
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -22737,7 +22753,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "pub(super) fn draw_led_settings(",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
         }
       ],
       "omissions": [
@@ -23541,7 +23557,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "f46dea5ccf0c508dc439c20f9a133874af9cb7e788b2f67a10c4fdd4f940f605"
+          "sha256": "3b5d6a036cf4d9620522ae2d81a8ef5f78116a904517341004b37fcc18afc8e0"
         }
       ],
       "omissions": [
@@ -23754,12 +23770,12 @@
         },
         {
           "path": "desktop/src/native_workspace.rs",
-          "sha256": "5003829240d453d4917fa4e07dc74474b999a8d4bf9adcf661b36334b550da60",
+          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f",
           "anchor": "pub pixel_probe:"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "fn send_pixel_probe("
         },
         {
@@ -24056,12 +24072,12 @@
         },
         {
           "path": "desktop/src/native_workspace.rs",
-          "sha256": "5003829240d453d4917fa4e07dc74474b999a8d4bf9adcf661b36334b550da60",
+          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f",
           "anchor": "pub pixel_probe:"
         },
         {
           "path": "desktop/src/ui/shell.rs",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0",
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c",
           "anchor": "fn send_pixel_probe("
         },
         {
@@ -24271,7 +24287,7 @@
         {
           "path": "desktop/src/ui/shell.rs",
           "anchor": "fn synchronize_context",
-          "sha256": "18487c0bebc4e8099bbbad6dc1f8101d1f33df6cf2b733d166b97b4ebeeed8e0"
+          "sha256": "b5db466f565da4c76e4b32d592e7254a88d58a264576caf895f574fae1bdf36c"
         },
         {
           "path": "desktop/src/ui/layout.rs",
@@ -24281,7 +24297,7 @@
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "pub struct Store",
-          "sha256": "5003829240d453d4917fa4e07dc74474b999a8d4bf9adcf661b36334b550da60"
+          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f"
         },
         {
           "path": "desktop/src/config.rs",
@@ -24328,7 +24344,7 @@
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "fn workspace_roundtrip_preserves_unified_selection_drafts_and_scroll_without_authority",
-          "sha256": "5003829240d453d4917fa4e07dc74474b999a8d4bf9adcf661b36334b550da60"
+          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f"
         },
         {
           "path": "mobile/test/workspace_lifecycle_test.dart",
@@ -24397,14 +24413,14 @@
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "pub struct Snapshot",
-          "sha256": "5003829240d453d4917fa4e07dc74474b999a8d4bf9adcf661b36334b550da60"
+          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f"
         }
       ],
       "proof": [
         {
           "path": "desktop/src/native_workspace.rs",
           "anchor": "fn same_peer_reboot_restores_only_its_workspace_and_other_peers_cannot_inherit_it",
-          "sha256": "5003829240d453d4917fa4e07dc74474b999a8d4bf9adcf661b36334b550da60"
+          "sha256": "816a004de314663eae3228e1bd82bc4bb52d07da157e2bfa9e9f02a2e8e31a6f"
         }
       ],
       "omissions": [
