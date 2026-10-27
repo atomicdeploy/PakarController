@@ -2,6 +2,22 @@
 
 ## GitHub handoff consolidation and CI repair
 
+Actual GitHub54c0dbe passed native tests/package, Android analysis/tests/APK,
+all quality/tooling jobs and CodeQL. All three AVR profiles and all three S3
+variants also compiled, but the Linux host suite then failed because its
+LedWire-dependent scheduler command omitted BoardCore's GameRole include path.
+Consulted build-storage and the actual Bash/PowerShell protocol, pipeline and
+worker runners plus LedWire/GameRole. Added the same BoardCore include used by
+the working PowerShell runner to both affected Bash commands. Early tests now
+create their build directory and precede SDK compilation; no scenario is removed.
+Source governance checks the actual command paths/order. Also corrected the
+final canonical S3 command to explicitly include GPIO+RMT: absent inclusion flags
+intentionally produce no matrix driver and must not define the release image.
+The no-driver source option remains intact; optional quiet/Ethernet outputs are
+still replaced before upload. Actual Windows pipeline/worker fixtures and new
+governance guards verify the narrow test/profile change; fresh Linux execution
+and final-head CI remain required, not inferred from successful SDK compilation.
+
 Fresh49b1a9b CodeQL re-exposed two real report-file races (alerts9/10): derived
 unchangedWrite used exists-then-read, while artifact collection validated a path
 then reopened it. Consulted pu-tooling and reread the existing descriptor-based

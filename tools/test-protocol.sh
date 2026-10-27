@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+mkdir -p "$root/build"
 c++ -std=c++17 -Wall -Wextra -pedantic \
   -I "$root/libraries/BoardCore/src" \
   "$root/tests/protocol_test.cpp" -o "$root/build/protocol-test"
 "$root/build/protocol-test"
 c++ -std=c++17 -Wall -Wextra -Werror "$root/tests/semantic_panel_test.cpp" -o "$root/build/semantic-panel-test"
 "$root/build/semantic-panel-test"
-c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/firmware/esp/src" "$root/tests/led_scheduler_test.cpp" -o "$root/build/led-scheduler-test"
+c++ -std=c++17 -Wall -Wextra -Werror -pthread -I "$root/libraries/BoardCore/src" -I "$root/firmware/esp/src" "$root/tests/led_scheduler_test.cpp" -o "$root/build/led-scheduler-test"
 "$root/build/led-scheduler-test"
 # Match test-led-worker.ps1: scenario names are specific to the compiled backend.
 # Retain all DMA failure cases; do not send them to the default static worker.
@@ -20,7 +21,7 @@ for profile in static-bgr static-rgb dma-bgr dma-rgb static-bgr-calibrated dma-b
   if [[ "$profile" == dual* ]]; then worker_flags+=(-DPAKAR_S3_LED_GPIO_ENABLED=1 -DPAKAR_S3_LED_RMT_ENABLED=1); fi
   if [[ "$profile" == dual-pm ]]; then worker_flags+=(-DCONFIG_PM_ENABLE=1); fi
   c++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -pthread "${worker_flags[@]}" \
-    -I "$root/tests/led_worker_stubs" "$root/tests/led_worker_test.cpp" \
+    -I "$root/tests/led_worker_stubs" -I "$root/libraries/BoardCore/src" "$root/tests/led_worker_test.cpp" \
     "$root/firmware/esp32s3/src/LedOutput.cpp" -o "$root/build/led-worker-test"
   printf 'Actual worker wire profile: %s\n' "$profile"
   if [[ "$profile" == absent ]]; then worker_scenarios=(absent)

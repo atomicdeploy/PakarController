@@ -10399,7 +10399,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "7a2f09196ee216b7152d1740e168310cdb1aeb1c847e021c63ec38f3de9266f8"
+          "sha256": "83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498"
         }
       ],
       "omissions": [
@@ -10819,7 +10819,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "7a2f09196ee216b7152d1740e168310cdb1aeb1c847e021c63ec38f3de9266f8"
+          "sha256": "83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -11212,7 +11212,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🔧 ESP32-S3 + AVR\"",
-          "sha256": "7a2f09196ee216b7152d1740e168310cdb1aeb1c847e021c63ec38f3de9266f8"
+          "sha256": "83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -11652,7 +11652,7 @@
         {
           "path": "tools/test-protocol.sh",
           "anchor": "for upgrade_case in",
-          "sha256": "4f11775ba17559cb020c511c65f4da332614503e363acbf8db6c3ee2fcd9617b"
+          "sha256": "86efd5950787d82747f93766f59f7eb968a5adaf889a94d470ce891d60eecd7a"
         }
       ],
       "remaining": [
@@ -15363,7 +15363,7 @@
         },
         {
           "path": "tools/test-protocol.sh",
-          "sha256": "4f11775ba17559cb020c511c65f4da332614503e363acbf8db6c3ee2fcd9617b",
+          "sha256": "86efd5950787d82747f93766f59f7eb968a5adaf889a94d470ce891d60eecd7a",
           "anchor": "for display_flags"
         }
       ],
@@ -16671,7 +16671,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
+          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16682,7 +16682,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "7a2f09196ee216b7152d1740e168310cdb1aeb1c847e021c63ec38f3de9266f8",
+          "sha256": "83a9772a380f29a70886fad3b0462c3f17aa0c46f565d9feec32c57aba37c498",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -16743,7 +16743,7 @@
         },
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
+          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16776,7 +16776,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
+          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16809,7 +16809,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
+          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
           "anchor": "console.log('Repository governance"
         }
       ]
@@ -16842,7 +16842,7 @@
       "proof": [
         {
           "path": "tests/repository_governance_test.mjs",
-          "sha256": "bf329edac7ac2e8670345ee17374dd41782f115bd31ae9136177ef4cb4791baa",
+          "sha256": "d80b6e397c48ca8d5362e9a215814f1a6af97d4673a68fc806bc6765348c79ba",
           "anchor": "console.log('Repository governance"
         }
       ]

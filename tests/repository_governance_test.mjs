@@ -26,6 +26,18 @@ assert.match(firmwareJob,/name: "🔧 ESP32-S3 \+ AVR"/);
 for(const mode of ['polling','busy-wire','buffered'])assert(firmwareJob.includes(`bash build.sh ${mode} avr`));
 assert.doesNotMatch(firmwareJob,/build\/esp8266|bash build.sh (?:polling|busy-wire)\s*\n/,
   'Primary releases must not require the unfinished, resource-overflowing ESP8266 image');
+assert(firmwareJob.indexOf('bash tools/test-protocol.sh')<firmwareJob.indexOf('bash build.sh polling avr'),
+  'Host-contract setup must fail before expensive SDK compilation');
+const canonicalS3Command='bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi --s3-led-gpio --s3-led-rmt-dma';
+assert.equal(firmwareJob.split(canonicalS3Command).length-1,1,'Canonical S3 artifact must explicitly include both runtime LED drivers');
+assert(firmwareJob.indexOf(canonicalS3Command)>firmwareJob.indexOf('-S3Ethernet -Jobs 2'));
+assert(firmwareJob.indexOf(canonicalS3Command)<firmwareJob.indexOf('actions/upload-artifact@'));
+const hostProtocol=read('tools/test-protocol.sh');
+assert.match(hostProtocol,/mkdir -p "\$root\/build"/,'Early host tests must work on a fresh checkout');
+for(const target of ['led_scheduler_test.cpp','led_worker_test.cpp']){
+  const command=hostProtocol.split(/(?<=\n)(?=c\+\+|  c\+\+)/).find(command=>command.includes(target));
+  assert(command?.includes('-I "$root/libraries/BoardCore/src"'),`${target} requires actual GameRole headers`);
+}
 assert.match(firmwareJob,/actions\/setup-node@[a-f0-9]{40}[\s\S]*node-version: '24'/,
   'Firmware asset verification must use the same Node major as source quality');
 const quietSdkCommand='pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -PauseAvrLink -Jobs 2';

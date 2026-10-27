@@ -119,6 +119,9 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libssl-dev
+          # Fail host-contract setup before spending time on SDK compilation.
+          bash tools/test-protocol.sh
+          bash tools/test-pc-flags.sh
           # ESP8266 source/tooling is retained, but its full image currently
           # exceeds physical RAM/flash budgets and is not a release target.
           bash build.sh polling avr
@@ -130,9 +133,9 @@ jobs:
           # Exercise the optional native W5500/LLDP input-hook linkage before
           # restoring the generic image in that same canonical cache.
           pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -S3Ethernet -Jobs 2
-          bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi
-          bash tools/test-protocol.sh
-          bash tools/test-pc-flags.sh
+          # Explicit inclusion is essential: no backend flags intentionally
+          # builds a no-matrix image, which must not be the release artifact.
+          bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi --s3-led-gpio --s3-led-rmt-dma
           node tools/firmware-report.mjs --require --write
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
