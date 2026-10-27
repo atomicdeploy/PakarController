@@ -6,3 +6,6 @@
 *.bin binary
 *.apk binary
 *.zip binary
+# Immutable donor snapshot: retain its hash-verified original trailing whitespace.
+# Pakar adaptations and all other source remain subject to whitespace checks.
+third_party/portable-shell/upstream/** whitespace=-blank-at-eol,-blank-at-eof

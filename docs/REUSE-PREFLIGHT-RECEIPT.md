@@ -10291,3 +10291,18 @@ also exposed obsolete game-authority gating on selectable boxes; this was change
 to advertise their selected state independently from capability-gated triggering.
 The fixture was stopped, not a production process. Its synthetic device-name 404
 is a missing fixture response, not evidence of the ASUS timeout's root cause.
+
+Final box regression repeat: 9 passed after the accessibility correction. Source
+checkpoint 33b04470014c5665915e1295c2aa53db6a4f4335 built and staged through the
+canonical source-stability and package-probe guards. Candidate SHA256:
+1bec4c7c2aa6fe1ab28c7275a4371f443f5589906a5ef7158b385881fbbb289d.
+An initial ExpectedCommit invocation used the short hash and was correctly
+rejected by the exact-match guard; rerun used the full hash, without changing
+the guard. No remote installation is claimed. The direct ASUS saved hostname
+also failed DNS resolution; tunnel retry refused before authentication.
+
+PR CI exposed original trailing whitespace in the immutable portable-shell
+snapshot from the earlier integration. A path-specific whitespace attribute
+preserves donor trailing spaces/EOF lines; all Pakar adaptations retain normal
+checks. The 17-file original byte/hash test still passes. This is not an exception
+to code checks for the production shell or to the snapshot integrity guard.
