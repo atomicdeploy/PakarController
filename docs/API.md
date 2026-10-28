@@ -8,10 +8,11 @@ ESP32-S3 also exposes the same living command/state contract through a selected
 Bluetooth LE control transport. See [Bluetooth LE](BLUETOOTH.md) for its GATT
 attributes, exact advertised routes, ownership rules and explicit binary limits.
 
-Optional ESP32-S3 [native SSH and read-only SCP](SSH.md) reuse the device shell
+Optional ESP32-S3 [native SSH, SCP/SFTP and passive FTP](SSH.md) reuse the device shell
 and public file service. Build flags include them; the persistent listener stays
 disabled until explicitly enabled. `/api/ssh` reports configuration, actual
-listener state, host fingerprint and supported transfer directions.
+listener state, host fingerprint and supported transfer directions. `/api/ftp`
+configures the separately built, disabled-by-default plaintext service.
 
 Client self-updates, enrollment, remote operational telemetry and bounded client
 management use a separate configurable unversioned service. See

@@ -127,7 +127,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9"
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -318,7 +318,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9"
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
@@ -410,7 +410,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9"
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -465,7 +465,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9"
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         }
       ],
       "proof": [
@@ -507,7 +507,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9"
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -567,7 +567,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9"
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         },
         {
           "path": "firmware/esp/src/ShellTui.h",
@@ -629,7 +629,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9"
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -689,7 +689,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9"
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         }
       ],
       "proof": [
@@ -2346,7 +2346,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -2393,7 +2393,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -2943,7 +2943,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         },
         {
@@ -3057,7 +3057,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -3104,7 +3104,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -6283,7 +6283,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9",
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
           "anchor": "void serviceShellRemoteQuery()"
         },
         {
@@ -9750,7 +9750,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -9801,7 +9801,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -11265,7 +11265,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276"
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7"
         }
       ],
       "omissions": [
@@ -11588,7 +11588,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "e17fd06d3dceef89f7315433ddcc626fbb3b64fdb44acb544672f9aaced7c846"
+          "sha256": "2011a5c6db4cce2042b223c1724d4fc6481d140f7aaf68527bc0f8ccf79c363e"
         }
       ],
       "omissions": [
@@ -12008,7 +12008,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "e17fd06d3dceef89f7315433ddcc626fbb3b64fdb44acb544672f9aaced7c846"
+          "sha256": "2011a5c6db4cce2042b223c1724d4fc6481d140f7aaf68527bc0f8ccf79c363e"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -12401,7 +12401,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🔧 ESP32-S3 + AVR\"",
-          "sha256": "e17fd06d3dceef89f7315433ddcc626fbb3b64fdb44acb544672f9aaced7c846"
+          "sha256": "2011a5c6db4cce2042b223c1724d4fc6481d140f7aaf68527bc0f8ccf79c363e"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -13680,7 +13680,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -13731,7 +13731,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -17909,7 +17909,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "e17fd06d3dceef89f7315433ddcc626fbb3b64fdb44acb544672f9aaced7c846",
+          "sha256": "2011a5c6db4cce2042b223c1724d4fc6481d140f7aaf68527bc0f8ccf79c363e",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -20852,7 +20852,8 @@
         "2026-10-28 full Shell.cpp/.h reread: transport callbacks/session isolation reused by native SSH. Crypto worker/queues bridge the same loop-owned DeviceShellSession; separate SCP download adapter uses the existing public UserFileStore rather than direct raw filesystem access.",
         "ShellService every split NVT/CSI/SS3/numeric/direct escape/control/overflow branch; SendCursor/Multi/ShiftLeft/Right/FixCursor/Clear/New/Redraw",
         "CompStr/ExecutePrompt every command/descriptor branch; all string/number/hex/newline/insert helpers, NumberFromString/BroadcastLine and every LegacyShellSession overload",
-        "Exact function dispositions and generic remaining work: docs/PU850-PARITY.md Fresh runtime and shell section review, 2026-10-19."
+        "Exact function dispositions and generic remaining work: docs/PU850-PARITY.md Fresh runtime and shell section review, 2026-10-19.",
+        "2026-10-28 uploads: retain the actual PU callback/loop-owner separation; add bounded SCP sink, SFTP v3 subsystem and passive FTP over the existing transactional public store. PU has no equivalent SSH/SFTP server codec; use the pinned LibSSH bind/channel API plus IETF wire specifications, not an imported stub or raw settings filesystem. Default build and listener remain opt-in; real OpenSSH stdio tests and actual FTP socket-binding doubles are distinct from live board acceptance."
       ],
       "source_read": "complete",
       "verdict": "parity-gap",
@@ -20890,12 +20891,12 @@
         },
         {
           "path": "firmware/esp/src/SshShellBinding.h",
-          "sha256": "886a7b7384461835b863914073f9b2e4a12ebac5e7e2018907a0e66ccf4682b6",
+          "sha256": "cc8826e98ce85dddfa6e3ed4a34854124f477fdf658f410b2f97be99e875891e",
           "anchor": "void serviceSshShell()"
         },
         {
           "path": "firmware/esp32s3/src/SshTransport.h",
-          "sha256": "d5c03ff6159e87ebed3f9899218492d03c559f3a195d9bd7c8c1db8a93f0feec",
+          "sha256": "326288f1c74218a3dc68ed3f3561bcf7ca579eec97e771c7a8a6ffbbfe8b8301",
           "anchor": "class SshTransport {"
         },
         {
@@ -20907,6 +20908,41 @@
           "path": "firmware/esp/src/SshScpBinding.h",
           "sha256": "9acf2193fac080639fc5460273b16a3ebc5a1022fb4c95f67df8c0dab22d8e4a",
           "anchor": "void serviceSshScp()"
+        },
+        {
+          "path": "firmware/esp32s3/src/ScpUpload.h",
+          "sha256": "f1a8c0743f079973a4fdedee3ac4ad16b538e6a28253763280ecec6204a240b5",
+          "anchor": "class ScpUpload"
+        },
+        {
+          "path": "firmware/esp32s3/src/SftpSession.h",
+          "sha256": "ff44da0e5871e592909952eaa54b1f563dbb4ec88a867b280089c11709a081d6",
+          "anchor": "class SftpSession"
+        },
+        {
+          "path": "firmware/esp32s3/src/FtpSession.h",
+          "sha256": "0fe8968237417b2fb2a1fe40b0471bffb7c87d67c1114d5f16c04ba1c4f94dae",
+          "anchor": "class FtpSession"
+        },
+        {
+          "path": "firmware/esp/src/TransferFiles.h",
+          "sha256": "dea201ffe11e3516975ef7b2c7850aac74940514eb8c05ee7b521ff6698ba18d",
+          "anchor": "class TransferFiles"
+        },
+        {
+          "path": "firmware/esp/src/FileTransferBinding.h",
+          "sha256": "666f8822b937bcda527bbe9c121040e4ef2d32894e91057988450774f0d427b0",
+          "anchor": "serviceFileTransferCleanup"
+        },
+        {
+          "path": "firmware/esp/src/FtpBinding.h",
+          "sha256": "ee60fbc7b27399818c2d46c5c7401d1688c7e595d2a5fd9b52d458e65902adfc",
+          "anchor": "namespace DeviceFtp"
+        },
+        {
+          "path": "firmware/esp/src/SshUploadBinding.h",
+          "sha256": "563386de05c9b0190942e73c1eafdfa384d06438e69da5119834642cab357b77",
+          "anchor": "void resetSshTransfer"
         }
       ],
       "proof": [
@@ -20969,6 +21005,31 @@
           "path": "tests/scp_client_test.mjs",
           "sha256": "bec216abf19d74af291ecba65e496d689e8ccdeb4e4c12f0707fcea2389b6a1d",
           "anchor": "Real OpenSSH SCP client accepted"
+        },
+        {
+          "path": "tests/file_transfer_test.cpp",
+          "sha256": "b59d00420cac2a5eec4c863cfc5d60e1a93d4b1b041b8f90e1b01250a157dd8e",
+          "anchor": "int main("
+        },
+        {
+          "path": "tests/file_transfer_client_test.mjs",
+          "sha256": "254834d63c0db3ac14d83db5cdb16c1a6773a6a9df78f7d270c38bcdc0d67ede",
+          "anchor": "Real OpenSSH clients:"
+        },
+        {
+          "path": "tests/ftp_binding_test.cpp",
+          "sha256": "442d67f43bf96b8031b6966c89ac9f9edf98d66afda048179242c734de502b3b",
+          "anchor": "Actual FTP socket binding:"
+        },
+        {
+          "path": "tests/ftp_stubs/sys/socket.h",
+          "sha256": "a03b479d9c3b25a90b08c8580d4a54ced5415914bd3ce805ef43706efa7b7a45",
+          "anchor": "MSG_DONTWAIT"
+        },
+        {
+          "path": "tools/test-ssh.ps1",
+          "sha256": "c71f2dd61de2d59712f0ab8e8609219bfe3acf56c93700aea343b026da745798",
+          "anchor": "Actual FTP socket binding fixture"
         }
       ],
       "omissions": [
@@ -21001,7 +21062,7 @@
       "remaining": [
         "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
         "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.",
-        "Issue #33: optional native SSH shares DeviceShellSession/editor/TUI/dispatch; separately gated read-only SCP uses public-file hash/revision guards. Policy/NVS/transport-FS doubles and real OpenSSH client over stdio are not an encrypted board login. Final SDK evidence is recorded in the reuse receipt/GitHub; actual login, persistent identity, memory/TLS/LED coexistence, upload/SFTP support and authorized deployment remain open."
+        "Issue #33: native SSH plus gated transactional SCP/SFTP and passive FTP share the public-file store and maintenance lease. Policy/NVS/socket-FS doubles and real OpenSSH clients over stdio are not an encrypted board login. Exact footprint/SDK evidence belongs in the receipt and SSH.md; actual login, identity persistence, memory/TLS/LED coexistence and separately authorized live transfers/deployment remain open."
       ],
       "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
     },
@@ -21152,7 +21213,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9",
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21162,7 +21223,7 @@
         },
         {
           "path": "firmware/esp/src/ShellBuild.h",
-          "sha256": "e62b1175983658a41c4d2af05bc6b99ab0198529623fd757591257d38d13838c",
+          "sha256": "64e2f53b7c399cd564fc41f942af57433a9baf3e0362190e138bd5a6f0ce4ce5",
           "anchor": "PAKAR_TELNET_SESSIONS"
         }
       ],
@@ -21249,7 +21310,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9",
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21259,7 +21320,7 @@
         },
         {
           "path": "firmware/esp/src/ShellBuild.h",
-          "sha256": "e62b1175983658a41c4d2af05bc6b99ab0198529623fd757591257d38d13838c",
+          "sha256": "64e2f53b7c399cd564fc41f942af57433a9baf3e0362190e138bd5a6f0ce4ce5",
           "anchor": "PAKAR_TELNET_SESSIONS"
         }
       ],
@@ -21342,7 +21403,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9",
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
           "anchor": "bool shellSet("
         },
         {
@@ -21460,7 +21521,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9",
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
           "anchor": "bool shellSet("
         },
         {
@@ -21622,7 +21683,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "338af85718c908497b650c4181a4ea3feb139bea7459ca62be493b47086143c9",
+          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
           "anchor": "void closeDeviceShells()"
         },
         {
@@ -24007,7 +24068,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -24349,7 +24410,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
+          "sha256": "83593d793045279d5943f166c93f1faca9263d52725ed056f5963cadaecd59d7",
           "anchor": "CellChaseOnBoot"
         },
         {

@@ -18,6 +18,10 @@
 #endif
 #if PAKAR_SCP_ENABLED
 #include "ScpDownload.h"
+#include "ScpUpload.h"
+#endif
+#ifndef PAKAR_SFTP_ENABLED
+#define PAKAR_SFTP_ENABLED 0
 #endif
 
 namespace PakarS3 {
@@ -26,7 +30,7 @@ namespace PakarS3 {
 // deliberately do not import demo credentials, logging, WiFi setup or echo loop.
 class SshTransport {
  public:
-  enum Kind:uint8_t {Open,Input,Resize,Output,Close,FileRead};
+  enum Kind:uint8_t {Open,Input,Resize,Output,Close,FileRead,FileWrite,Sftp};
   struct Packet {uint32_t token=0,revision=0;uint16_t width=80,height=24;uint8_t kind=Input,size=0;uint8_t bytes[SshPolicy::packetBytes]{};};
   enum Error:uint8_t {None,Settings,Memory,HostKey,Bind,Transport};
   bool begin(){
@@ -124,7 +128,7 @@ class SshTransport {
     if(result!=SSH_OK||!current(c))return;
     bool authenticated=false,shell=false;unsigned failures=0;ssh_channel channel=nullptr;
     uint16_t width=80,height=24;started=millis();
-    char fileName[65]{};bool fileRead=false;
+    char fileName[65]{};uint8_t fileKind=Open;
     while(current(c)&&ssh_is_connected(session)&&!SshPolicy::expired(millis(),started,SshPolicy::loginMs)&&!shell){
       ssh_message message=ssh_message_get(session);
       if(!message){vTaskDelay(pdMS_TO_TICKS(5));continue;}
@@ -145,7 +149,14 @@ class SshTransport {
         else if(subtype==SSH_CHANNEL_REQUEST_SHELL){ssh_message_channel_request_reply_success(message);accepted=shell=true;}
 #if PAKAR_SCP_ENABLED
         else if(subtype==SSH_CHANNEL_REQUEST_EXEC&&ScpDownload::command(ssh_message_channel_request_command(message),fileName,sizeof(fileName))){
-          ssh_message_channel_request_reply_success(message);accepted=shell=fileRead=true;
+          ssh_message_channel_request_reply_success(message);accepted=shell=true;fileKind=FileRead;
+        }else if(subtype==SSH_CHANNEL_REQUEST_EXEC&&ScpUpload::command(ssh_message_channel_request_command(message),fileName,sizeof(fileName))){
+          ssh_message_channel_request_reply_success(message);accepted=shell=true;fileKind=FileWrite;
+        }
+#endif
+#if PAKAR_SFTP_ENABLED
+        else if(subtype==SSH_CHANNEL_REQUEST_SUBSYSTEM&&ssh_message_channel_request_subsystem(message)&&!strcmp(ssh_message_channel_request_subsystem(message),"sftp")){
+          ssh_message_channel_request_reply_success(message);accepted=shell=true;fileKind=Sftp;
         }
 #endif
       }
@@ -156,7 +167,7 @@ class SshTransport {
     if(shell&&current(c)&&nextToken_!=UINT32_MAX){
       const uint32_t token=++nextToken_;active_=token;closeToken_=0;finishToken_=0;
       Packet opening;opening.kind=Open;opening.token=token;opening.revision=c.revision;opening.width=width;opening.height=height;
-      if(fileRead){opening.kind=FileRead;opening.size=strlen(fileName);memcpy(opening.bytes,fileName,opening.size);}
+      if(fileKind!=Open){opening.kind=fileKind;opening.size=strlen(fileName);memcpy(opening.bytes,fileName,opening.size);}
       if(enqueue(opening))pump(session,channel,token);
       active_=0;
     }

@@ -26,6 +26,8 @@ param(
     [switch] $DisableTelnet,
     [switch] $S3Ssh,
     [switch] $S3Scp,
+    [switch] $S3Sftp,
+    [switch] $S3Ftp,
     [switch] $EnableUdpDiagnostics,
     [switch] $BoardSnake,
     [switch] $DisableNetworking,
@@ -56,6 +58,8 @@ if (-not $S3MicroSd -and ($S3SdClk -ne -1 -or $S3SdCmd -ne -1 -or $S3SdD0 -ne -1
 if ($InitializeFilesystem) { throw 'Commissioning auto-format builds are retired. Build normal firmware and use tools/initialize-device-filesystem.ps1 for explicit, erased-partition-only USB initialization.' }
 if($S3Ssh -and ($Target -ne 'esp32s3' -or $DisableNetworking)){throw 'Native SSH requires the networked ESP32-S3 target.'}
 if($S3Scp -and -not $S3Ssh){throw 'Native SCP requires the explicit -S3Ssh flag.'}
+if($S3Sftp -and -not $S3Ssh){throw 'Native SFTP requires the explicit -S3Ssh flag.'}
+if($S3Ftp -and ($Target -ne 'esp32s3' -or $DisableNetworking)){throw 'Native FTP requires the networked ESP32-S3 target.'}
 $recoveryBytes=$null
 if($AvrRecoveryImage){
     if($Target -ne 'esp32s3'){throw 'Bundled AVR recovery requires the ESP32-S3 target'}
@@ -264,6 +268,8 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         $ledProfile.Content += "#define PAKAR_PIXEL_CORRECTIONS $(if($PixelCorrections -eq 'enabled'){1}else{0})`n"
         $ledProfile.Content += "#define PAKAR_SSH_ENABLED $(if($S3Ssh){1}else{0})`n"
         $ledProfile.Content += "#define PAKAR_SCP_ENABLED $(if($S3Scp){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_SFTP_ENABLED $(if($S3Sftp){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_FTP_ENABLED $(if($S3Ftp){1}else{0})`n"
         if ($DeviceName) { $ledProfile.Content += "#ifndef PAKAR_INITIAL_NAME`n#define PAKAR_INITIAL_NAME $DeviceName`n#endif`n" }
         $ledProfile.Content += "#ifndef PAKAR_S3_LED_DATA`n#define PAKAR_S3_LED_DATA $S3LedDataPin`n#endif`n"
         $ledProfile.Content += "#ifndef PAKAR_S3_ISP_ELECTRICAL_VERIFIED`n#define PAKAR_S3_ISP_ELECTRICAL_VERIFIED $(if($S3IspElectricalVerified){1}else{0})`n#endif`n#ifndef PAKAR_INITIALIZE_FILESYSTEM`n#define PAKAR_INITIALIZE_FILESYSTEM $(if($InitializeFilesystem){1}else{0})`n#endif`n"

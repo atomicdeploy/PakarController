@@ -10909,3 +10909,41 @@ No live NTP/DHCP/Internet, SSID/RF, MQTT/remote WebSocket, USB device or tablet
 acceptance is claimed. ASUS access remains deferred by David; do not repeat
 access prompts or route around that boundary. CI's pre-existing AVR source
 mapping certificate failure is not resolved by these targeted checks.
+
+## 2026-10-28 — gated SCP/SFTP/FTP uploads (#33, #28, #27)
+
+Reconsulted ssh-transport, donor-audit (PU Shell.cpp) and user-files; read actual
+PU850 Shell.cpp/.h and Pealayer ServerFilePicker.tsx. Preserve the PU session /
+loop-owner callback boundary and the managed store's immutable-blob/index commit,
+not direct LittleFS access or a second settings/OTA writer. The pinned LibSSH
+port has no SFTP server implementation; the bounded subsystem implements the
+IETF SFTP-v3 wire subset itself on that existing authenticated SSH channel.
+FTP is passive-only and requires credentials; it is not TLS/FTPS. Both services
+are excluded from ordinary builds and require a persistent runtime opt-in when
+included. Existing HTTP/USB declared-hash uploads retain their stricter contract.
+
+Source/fixture evidence: tools/test-ssh.ps1 and tools/test-user-files.ps1 pass;
+real OpenSSH SCP clients upload binary/empty files and SFTP's default 32 KiB
+buffers complete a 65 KiB put/list/get byte roundtrip over stdio. Actual FTP
+binding doubles cover partial socket writes, same-IP data admission, binary
+STOR/RETR, explicit abort, connection reset, revocation, idle/passive timeouts,
+durable opt-in and deferred flash-fence cleanup. The existing actual shell
+service fixture passes for ESP32 and ESP8266. These are not ESP network tests.
+
+Two implementation failures were addressed, not bypassed: OpenSSH creation
+permissions differ from the fixed stored permissions (apply a safe creation
+policy, reject unsupported later chmod); including protocol headers inside the
+sketch owner created a shadow PakarS3 namespace (move them to ShellBuild's actual
+global include layer). All three canonical SDK builds then passed: ordinary
+2,387,744-byte image / 140,156-byte static RAM; FTP-only 2,401,440 / 144,748;
+SSH/SCP/SFTP/FTP 2,694,000 / 147,556. Full inclusion fits 80.60% of the OTA slot.
+SSH.md binds the exact profiles and three raw-image hashes. The ordinary,
+services-excluded artifact is restored in the same canonical cache; these are
+build observations, not runtime heap or live transfer acceptance. The failed
+namespace build is not accepted as a candidate. Resolving different dependency /
+include lists invalidated vendor objects; no clean or extra SDK cache was used.
+
+No board flash/reboot, output, Wi-Fi/cloud policy, tablet or Windows deployment
+is authorized or performed by this upload task. Encrypted ESP login/transfers,
+worst-case live heap, persistent identity and TLS/LED coexistence remain open.
+ASUS access is still deferred; no repeated access prompts or policy workarounds.

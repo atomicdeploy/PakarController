@@ -133,9 +133,9 @@ jobs:
           # Subsequent table builds restore the canonical release artifacts.
           pwsh -NoProfile -File tools/build-firmware.ps1 -Target avr -GameMode first-wins -LinkMode buffered -AvrRadio -Jobs 2
           pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -GameMode first-wins -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -S3Bluetooth disabled -Jobs 2
-          # Optional encrypted transport + read-only public SCP; later builds
+          # Optional encrypted transport + transactional SCP/SFTP and opt-in FTP; later builds
           # restore the default SSH-excluded artifact in the same SDK cache.
-          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -GameMode first-wins -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -S3Bluetooth disabled -S3Ssh -S3Scp -Jobs 2
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -GameMode first-wins -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -S3Bluetooth disabled -S3Ssh -S3Scp -S3Sftp -S3Ftp -Jobs 2
           bash build.sh polling avr
           bash build.sh busy-wire avr
           bash build.sh buffered avr

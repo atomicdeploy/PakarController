@@ -5,7 +5,7 @@ UserFileStore<FirmwarePlatform::Sha256> userFiles;
 #if PAKAR_MICROSD_ENABLED
 UserFileStore<FirmwarePlatform::Sha256> sdUserFiles;
 #endif
-String userFileRequest(JsonObjectConst body){
+String managedUserFileRequest(JsonObjectConst body,bool trustedStream){
   const String volume=body["volume"]|"littlefs",action=body["action"]|"";
   auto *store=&userFiles;
   if(volume!="littlefs"){
@@ -20,5 +20,6 @@ String userFileRequest(JsonObjectConst body){
   PakarS3::ScopedLedFlashPause pause;
   if(!pause)return F("{\"accepted\":false,\"error\":\"led_flash_guard_busy\"}");
 #endif
-  return store->request(action,body,millis(),accessConfig.securityRevision(),token);
+  return store->request(action,body,millis(),accessConfig.securityRevision(),token,trustedStream);
 }
+String userFileRequest(JsonObjectConst body){return managedUserFileRequest(body,false);}

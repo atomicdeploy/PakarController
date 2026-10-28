@@ -368,7 +368,17 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
   if(line.indexOf("://")>=0)historySafe=false;
   s.editor.remember(historySafe);s.editor.clear();executeDeviceShell(s,line);
 }
+bool ftpPortReserved(uint16_t port);
+#include "FileTransferBinding.h"
 #include "SshShellBinding.h"
+#include "FtpBinding.h"
+bool ftpPortReserved(uint16_t port){
+#if PAKAR_FTP_ENABLED
+  return port==DeviceFtp::settings.port||port==DeviceFtp::settings.passivePort;
+#else
+  (void)port;return false;
+#endif
+}
 void closeDeviceShells(){
   // Auth callbacks can run on AsyncTCP's task. Only the main loop destroys
   // editor/socket owners; input is independently fenced by accessRevision.
@@ -377,6 +387,9 @@ void closeDeviceShells(){
 void retireDeviceShells(){
 #if PAKAR_SSH_ENABLED
   deviceSsh.invalidate();sshShell.reset();sshShellToken=0;
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED
+  resetSshTransfer();
+#endif
 #if PAKAR_SCP_ENABLED
   sshScp=SshScpSession{};
 #endif
@@ -400,15 +413,29 @@ String shellStatusJson(){
 #else
   d["ssh"]["built"]=false;
 #endif
+#if PAKAR_FTP_ENABLED
+  JsonDocument ftp;deserializeJson(ftp,DeviceFtp::status());d["ftp"]=ftp.as<JsonVariantConst>();
+#else
+  d["ftp"]["built"]=false;
+#endif
   String json;serializeJson(d,json);return json;
 }
 void beginDeviceShells(){shellSettings.begin(LittleFS);shellRebindAt=millis();
+#if PAKAR_FTP_ENABLED
+  DeviceFtp::begin();
+#endif
 #if PAKAR_SSH_ENABLED
   deviceSsh.begin();
 #endif
 }
 void serviceDeviceShells(){
   const uint32_t now=millis();
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED || PAKAR_FTP_ENABLED
+  serviceFileTransferCleanup();
+#endif
+#if PAKAR_FTP_ENABLED
+  DeviceFtp::service();
+#endif
 #if PAKAR_REMOTE_QUERY_UDP_ENABLED
   serviceShellRemoteQuery();
 #endif
@@ -518,10 +545,13 @@ bool updateShellConfiguration(JsonObjectConst patch,String &result){
 #if PAKAR_SSH_ENABLED
   if(port==deviceSsh.port()){result=F("Telnet and SSH require distinct ports");return false;}
 #endif
-  if(!shellSettings.configure(enabled,port,color)){result=F("Invalid/reserved port or durable shell save failed");return false;}
+  if(ftpPortReserved(port)||!shellSettings.configure(enabled,port,color)){result=F("Invalid/reserved port or durable shell save failed");return false;}
   shellRebindAt=millis()+1000U;result=F("Shell settings saved; listener applies after response");return true;
 }
 void registerShellApi(){
+#if PAKAR_FTP_ENABLED
+  DeviceFtp::api();
+#endif
 #if PAKAR_SSH_ENABLED
   registerSshApi();
 #endif

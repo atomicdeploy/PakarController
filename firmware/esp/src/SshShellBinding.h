@@ -1,14 +1,22 @@
 #pragma once
 #if PAKAR_SSH_ENABLED
+#include "FileTransferBinding.h"
 #include "SshScpBinding.h"
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED
+#include "SshUploadBinding.h"
+#endif
 // Included beside the existing Telnet/USB owners, not on the crypto task.
 String sshStatusJson(){
   JsonDocument d;d["built"]=true;d["enabled"]=deviceSsh.enabled();d["port"]=deviceSsh.port();
   d["listening"]=deviceSsh.listening();d["sessions"]=deviceSsh.active()?1:0;d["session_limit"]=1;
   d["authentication_required"]=true;d["authentication"]="password";d["interactive_shell"]=true;
-  d["sftp"]=false;d["forwarding"]=false;d["exec"]=false;
-  d["scp_download"]=bool(PAKAR_SCP_ENABLED);d["scp_upload"]=false;d["ftp"]=false;
+  d["sftp"]=bool(PAKAR_SFTP_ENABLED);d["forwarding"]=false;d["exec"]=false;
+  d["scp_download"]=bool(PAKAR_SCP_ENABLED);d["scp_upload"]=bool(PAKAR_SCP_ENABLED);d["ftp"]=bool(PAKAR_FTP_ENABLED);
   if(PAKAR_SCP_ENABLED){d["scp_namespace"]="/user/";d["scp_max_file_bytes"]=128*1024;}
+  if(PAKAR_SFTP_ENABLED){d["sftp_namespace"]="/user/";d["sftp_max_file_bytes"]=128*1024;d["sftp_max_write_bytes"]=32768;}
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED
+  d["file_open"]=sshTransferFiles.opened();d["upload_active"]=sshTransferFiles.writing();d["transferred_bytes"]=sshTransferFiles.current().size;
+#endif
   char fingerprint[100];deviceSsh.fingerprint(fingerprint,sizeof(fingerprint));d["host_key_fingerprint"]=fingerprint;d["error"]=deviceSsh.error();
   String out;serializeJson(d,out);return out;
 }
@@ -22,12 +30,15 @@ bool updateSshConfiguration(JsonObjectConst patch,String &result){
     else if(key=="port"&&value.is<uint16_t>()&&value.as<uint16_t>())port=value.as<uint16_t>();
     else{result=F("Invalid or unknown SSH setting");return false;}
   }
-  if(!deviceSsh.configure(enabled,port,shellSettings.port())){result=F("Invalid/reserved port or durable SSH save failed");return false;}
+  if(ftpPortReserved(port)||!deviceSsh.configure(enabled,port,shellSettings.port())){result=F("Invalid/reserved port or durable SSH save failed");return false;}
   PakarConfiguration::changes().saved(PakarConfiguration::Shell);result=F("SSH settings saved; active SSH sessions retire on change");return true;
 }
 void serviceSshShell(){
   deviceSsh.service(accessConfig.ready()&&(NetworkPath::ready()||apStarted)&&!shellBusy(),accessConfig.securityRevision(),accessConfig.username(),accessConfig.password());
   const uint32_t active=deviceSsh.active(),revision=accessConfig.securityRevision();
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED
+  if(sshTransferToken&&!PakarS3::SshPolicy::admitted(sshTransferToken,active,sshTransferRevision,revision))resetSshTransfer();
+#endif
   if(sshShell&&(!PakarS3::SshPolicy::admitted(sshShellToken,active,sshShell->accessRevision,revision)||!accessConfig.ready())){sshShell.reset();sshShellToken=0;}
   static PakarS3::SshTransport::Packet packet;
   static bool pending=false;static unsigned offset=0;
@@ -40,6 +51,14 @@ void serviceSshShell(){
       sshShell.reset(new(std::nothrow) DeviceShellSession);sshShellToken=packet.token;
       if(!sshShell){deviceSsh.close(packet.token);pending=false;continue;}
       initializeDeviceShell(*sshShell,false,true);sshShell->parser.size(packet.width,packet.height);
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED
+    }else if(packet.kind==PakarS3::SshTransport::FileWrite||packet.kind==PakarS3::SshTransport::Sftp){
+      sshShell.reset();sshShellToken=0;resetSshTransfer();sshTransferToken=packet.token;sshTransferRevision=packet.revision;
+      if(!startSshTransfer(packet)){deviceSsh.close(packet.token);resetSshTransfer();}
+    }else if(sshTransferToken==packet.token&&packet.kind==PakarS3::SshTransport::Input){
+      while(offset<packet.size&&inputBudget&&inputSshTransfer(packet.bytes[offset])){++offset;--inputBudget;}
+      if(offset<packet.size)break;
+#endif
 #if PAKAR_SCP_ENABLED
     }else if(packet.kind==PakarS3::SshTransport::FileRead){
       sshShell.reset();sshShellToken=0;sshScp=SshScpSession{};
@@ -63,6 +82,9 @@ void serviceSshShell(){
   }
 #if PAKAR_SCP_ENABLED
   serviceSshScp();
+#endif
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED
+  serviceSshTransfer();
 #endif
   if(sshShell){auto&s=*sshShell;
     if(terminalInput&&s.tui.active()&&s.output.length()<4096U)shellTuiDraw(s);

@@ -38,3 +38,17 @@ if($LASTEXITCODE){throw 'Actual SCP/public file binding compilation failed'}
 & $taskBindingOutput
 if($LASTEXITCODE){throw 'Actual SCP/public file binding fixture failed'}
 Write-Host 'SSH policy and production transport API compile checks passed; no SSH handshake, target link or hardware acceptance implied.'
+& g++ -std=c++17 -DPAKAR_SCP_ENABLED=1 -DPAKAR_SFTP_ENABLED=1 -fsyntax-only -Wall -Wextra -Werror -Wno-misleading-indentation -Wno-deprecated-declarations '-I' (Join-Path $taskRoot 'tests/ssh_stubs') '-I' (Join-Path $taskRoot 'libraries/BoardCore/src') '-I' $LibSshPath (Join-Path $taskRoot 'tests/ssh_transport_api_test.cpp')
+if($LASTEXITCODE){throw 'SFTP-enabled SSH transport API compile failed'}
+$taskTransferOutput=Join-Path $taskRoot 'build/native/file_transfer_test.exe'
+& g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -Wno-misleading-indentation '-I' (Join-Path $taskRoot 'tests/file_stubs') '-I' (Join-Path $taskRoot 'tests/access_stubs') '-I' $taskJson '-I' (Join-Path $taskRoot 'libraries/BoardCore/src') '-I' (Join-Path $taskRoot 'firmware/esp/src') (Join-Path $taskRoot 'tests/file_transfer_test.cpp') -o $taskTransferOutput
+if($LASTEXITCODE){throw 'File transfer implementation fixture compilation failed'}
+& $taskTransferOutput
+if($LASTEXITCODE){throw 'File transfer implementation fixture failed'}
+Push-Location $taskRoot
+try { & node tests/file_transfer_client_test.mjs; if($LASTEXITCODE){throw 'Real OpenSSH upload compatibility failed'} } finally {Pop-Location}
+$taskFtpOutput=Join-Path $taskRoot 'build/native/ftp_binding_test.exe'
+& g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -Wno-misleading-indentation '-I' (Join-Path $taskRoot 'tests/file_stubs') '-I' (Join-Path $taskRoot 'tests/access_stubs') '-I' $taskJson '-I' (Join-Path $taskRoot 'libraries/BoardCore/src') '-I' (Join-Path $taskRoot 'firmware/esp/src') '-I' (Join-Path $taskRoot 'tests/ftp_stubs') '-I' (Join-Path $taskRoot 'tests/ssh_stubs') (Join-Path $taskRoot 'tests/ftp_binding_test.cpp') -o $taskFtpOutput
+if($LASTEXITCODE){throw 'Actual FTP socket binding fixture compilation failed'}
+& $taskFtpOutput
+if($LASTEXITCODE){throw 'Actual FTP socket binding fixture failed'}

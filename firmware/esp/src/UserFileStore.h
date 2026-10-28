@@ -26,7 +26,10 @@ template<class Digest> class UserFileStore {
     for(size_t i=0;i<64;++i)if(!((hash[i]>='0'&&hash[i]<='9')||(hash[i]>='a'&&hash[i]<='f')))return false;
     return true;
   }
-  String request(const String &action,JsonObjectConst body,uint32_t now,uint32_t security,uint32_t newToken){
+  // trustedStream is a C++ transport capability, NEVER a JSON/API option. SCP,
+  // SFTP and FTP cannot supply a digest before receiving the file. They still
+  // use the same readback-verified chunks and atomic index publication.
+  String request(const String &action,JsonObjectConst body,uint32_t now,uint32_t security,uint32_t newToken,bool trustedStream=false){
     service(now,security);
     if(!fs_)return error("volume_unavailable");
     JsonDocument index;const char *failure=load(index);if(failure)return error(failure);
@@ -53,7 +56,7 @@ template<class Digest> class UserFileStore {
     }
     if(action=="begin"){
       if(token_)return error("file_transfer_busy");
-      const String name=body["name"]|"",hash=body["sha256"]|"";
+      const String name=body["name"]|"",hash=trustedStream?"0000000000000000000000000000000000000000000000000000000000000000":body["sha256"]|"";
       if(!nameAllowed(name)||!hashAllowed(hash)||!body["size"].is<uint32_t>()||body["size"].as<uint32_t>()>maxBytes||
           !body["modified_ms"].is<uint64_t>()||body["modified_ms"].as<uint64_t>()>8640000000000000ULL||
           !body["revision"].is<uint32_t>()||body["revision"].as<uint32_t>()!=index["revision"].as<uint32_t>())return error("invalid_file_or_stale_index");
@@ -65,7 +68,7 @@ template<class Digest> class UserFileStore {
       if(!fs_->exists("/.user-files")&&!fs_->mkdir("/.user-files"))return error("storage_unavailable");
       auto file=fs_->open(stage(),"w");if(!file)return error("file_stage_failed");file.close();
       name_=name;hash_=hash;size_=body["size"];modified_=body["modified_ms"];revision_=body["revision"];
-      token_=newToken;security_=security;touched_=now;received_=0;committed_=false;digest_.begin();return progress();
+      token_=newToken;security_=security;touched_=now;received_=0;committed_=false;streaming_=trustedStream;digest_.begin();return progress();
     }
     if(!body["token"].is<uint32_t>()||!token_||body["token"].as<uint32_t>()!=token_)return error("transfer_expired_or_not_owned");
     touched_=now;
@@ -86,10 +89,11 @@ template<class Digest> class UserFileStore {
     }
     if(action=="commit"){
       if(committed_)return progress();
-      if(received_!=size_||digest_.hex()!=hash_)return error("file_integrity_mismatch");
+      if(streaming_){size_=received_;hash_=digest_.hex();if(body["modified_ms"].is<uint64_t>()&&body["modified_ms"].as<uint64_t>()<=8640000000000000ULL)modified_=body["modified_ms"];}
+      if(received_!=size_||!hashAllowed(hash_)||digest_.hex()!=hash_)return error("file_integrity_mismatch");
       if(index["revision"].as<uint32_t>()!=revision_||revision_==UINT32_MAX)return error("file_index_changed");
       // Unique immutable object: FAT and LittleFS need not replace an open file.
-      if(!blobPublished_){if(!fs_->rename(stage(),blob(hash_,token_).c_str()))return error("file_publish_failed");blobPublished_=true;}
+      if(!blobPublished_){if(fs_->exists(blob(hash_,token_).c_str())||!fs_->rename(stage(),blob(hash_,token_).c_str()))return error("file_publish_failed");blobPublished_=true;}
       auto row=find(index,name_);String oldHash=row["sha256"]|"";uint32_t oldObject=row["object"]|0U;
       if(row.isNull())row=index["files"].as<JsonArray>().add<JsonObject>();
       row["name"]=name_;row["size"]=size_;row["sha256"]=hash_;row["modified_ms"]=modified_;row["object"]=token_;
@@ -129,7 +133,7 @@ template<class Digest> class UserFileStore {
   }
  private:
   fs::FS *fs_=nullptr;Digest digest_;String name_,hash_;uint64_t modified_=0;
-  uint32_t token_=0,security_=0,touched_=0,size_=0,received_=0,revision_=0;bool committed_=false,blobPublished_=false;
+  uint32_t token_=0,security_=0,touched_=0,size_=0,received_=0,revision_=0;bool committed_=false,blobPublished_=false,streaming_=false;
   static const char *stage(){return "/.user-files/upload.pending";}
   static String blob(const String &hash,uint32_t object){char id[9];snprintf(id,sizeof(id),"%08lx",static_cast<unsigned long>(object));return String("/.user-files/")+hash+"."+id+".bin";}
   static int nibble(char c){return c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:-1;}
