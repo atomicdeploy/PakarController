@@ -541,6 +541,8 @@ pub struct Editor {
     pub close_confirmation: bool,
     pub ssids: Vec<String>,
     pub scan_pending: bool,
+    pub scan_retry_at: Option<std::time::Instant>,
+    pub scan_deadline: Option<std::time::Instant>,
     pub usb_request: Option<Network>,
     pub maintenance_confirmation: Option<crate::maintenance::Operation>,
     pub maintenance_pending: Option<u64>,
@@ -714,8 +716,20 @@ impl Editor {
             self.telemetry = Some(value);
             return Ok(());
         }
-        if path == "/api/wifi/scan" {
+        if matches!(path, "/api/wifi/scan" | "/api/wifi/scan?results=true") {
+            if value["running"] == true {
+                if self.scan_pending {
+                    self.scan_retry_at =
+                        Some(std::time::Instant::now() + std::time::Duration::from_millis(500));
+                }
+                return Ok(()); // Keep the previous visible list while scanning.
+            }
             self.scan_pending = false;
+            self.scan_retry_at = None;
+            self.scan_deadline = None;
+            if let Some(error) = value["error"].as_str() {
+                return Err(format!("Wi-Fi scan failed: {error}"));
+            }
             self.ssids = value["networks"]
                 .as_array()
                 .ok_or("Invalid Wi-Fi scan response")?
@@ -750,6 +764,23 @@ impl Editor {
             }
         }
         Ok(())
+    }
+    pub fn scan_poll_due(&mut self, now: std::time::Instant) -> bool {
+        if !self.scan_pending {
+            return false;
+        }
+        if self.scan_deadline.is_some_and(|deadline| now >= deadline) {
+            self.scan_pending = false;
+            self.scan_retry_at = None;
+            self.scan_deadline = None;
+            self.message = "Wi-Fi scan timed out; no scan was replayed".into();
+            return false;
+        }
+        if self.scan_retry_at.is_some_and(|due| now >= due) {
+            self.scan_retry_at = None; // At most one result read outstanding.
+            return true;
+        }
+        false
     }
     pub fn next_id(&mut self) -> u64 {
         self.serial = self.serial.wrapping_add(1);
@@ -825,6 +856,37 @@ pub fn usb_payloads(config: &Network, password: &str, open: bool) -> Result<Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn async_wifi_scan_preserves_list_yields_between_reads_and_never_restarts_scan() {
+        let now = std::time::Instant::now();
+        let mut editor = Editor::default();
+        editor.ssids = vec!["Previous".into()];
+        editor.scan_pending = true;
+        editor.scan_deadline = Some(now + std::time::Duration::from_secs(15));
+        editor
+            .observe(
+                "/api/wifi/scan",
+                serde_json::json!({"running":true,"networks":[]}),
+            )
+            .unwrap();
+        assert_eq!(editor.ssids, ["Previous"]);
+        assert!(!editor.scan_poll_due(now));
+        assert!(editor.scan_poll_due(now + std::time::Duration::from_secs(1)));
+        assert!(!editor.scan_poll_due(now + std::time::Duration::from_secs(2)));
+        editor
+            .observe(
+                "/api/wifi/scan?results=true",
+                serde_json::json!({"running":false,"networks":[{"ssid":"New"},{"ssid":"New"}]}),
+            )
+            .unwrap();
+        assert_eq!(editor.ssids, ["New"]);
+        assert!(!editor.scan_pending);
+        editor.scan_pending = true;
+        editor.scan_deadline = Some(now);
+        editor.scan_retry_at = Some(now);
+        assert!(!editor.scan_poll_due(now));
+        assert!(!editor.scan_pending && editor.scan_retry_at.is_none());
+    }
     #[test]
     fn ethernet_settings_require_actual_support_validate_addressing_and_confirm_readback() {
         let raw = serde_json::json!({"configured":true,"enabled":true,"lldp_enabled":true,"lldp_receive":false,

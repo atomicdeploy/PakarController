@@ -71,7 +71,10 @@ assert.match(dnsLock, /if\(!alreadyHeld\) LOCK_TCPIP_CORE\(\);\s+__real_dns_clea
 const networkPath=read('NetworkPath.h');
 const dnsRecovery=readFileSync(new URL('../firmware/esp32s3/src/DnsRecovery.h',import.meta.url),'utf8');
 function checkDnsPath(main,path,recovery) {
-  assert.match(main, /void configureNtp\(\) \{\s+NetworkPath::serviceDns\(millis\(\), !ntpConfigured\);/);
+  const ntp = main.slice(main.indexOf('void configureNtp() {'), main.indexOf('bool applyStreamPacket('));
+  const dns = ntp.indexOf('NetworkPath::serviceDns(millis(), !ntpConfigured);');
+  const configured = ntp.indexOf('if (!PAKAR_NETWORK_ENABLED || ntpConfigured) return;');
+  assert(dns >= 0 && configured > dns, 'DNS recovery runs before the configured-SNTP fast return, after any first-boot TCP/IP initialization');
   assert.match(main, /if\(remoteFirmware.needsDownloadConnection\(\)\)\s+NetworkPath::serviceDns\(millis\(\),true\)/);
   assert.match(path, /if \(state\(\).selected == Interface::Wifi\)\s+PakarS3::serviceDhcpDns\(now, networkConfig.dhcpEnabled\(\), immediate\)/);
   assert.match(path, /#if PAKAR_S3_ETHERNET_ENABLED && PAKAR_S3_DNS_GATEWAY_FALLBACK/);

@@ -160,7 +160,14 @@ int LedOutput::initializeDriver(Backend selected){
   // symbols. PSRAM/flash payloads are deliberately not an ISR fallback.
   rmt_tx_channel_config_t config{};config.gpio_num=static_cast<gpio_num_t>(PAKAR_S3_LED_DATA);
   config.clk_src=RMT_CLK_SRC_DEFAULT;config.resolution_hz=rmtResolutionHz;
-  config.mem_block_symbols=dmaRingSymbols;config.trans_queue_depth=1;config.intr_priority=3;
+  config.mem_block_symbols=dmaRingSymbols;config.trans_queue_depth=1;
+  // All RMT channels share the group's normal interrupt priority. The onboard
+  // status pixel is initialized through Arduino rmtInit (priority 0/default).
+  // A fixed priority 3 here conflicts with that live group and IDF rejects
+  // runtime switching with ESP_ERR_INVALID_ARG (258). Inherit its priority;
+  // the independent GDMA refill IRQ remains explicitly measured at level 3
+  // by LedDmaGuard, so this does not weaken the DMA timing/cache-safety gate.
+  config.intr_priority=0;
   config.flags.with_dma=true; // Required, never silently fall back to bit-bang/non-DMA.
   if(!error){
     error=newCacheSafeLedChannel(&config,&channel_);

@@ -137,6 +137,7 @@ pub struct Editor {
     pub open: bool,
 }
 pub enum Purpose {
+    Minigame(crate::minigame::UsbRequest),
     Groups,
     Frame { revision: u32, layout_revision: u32, at: Instant },
     Diagnostic { id: u64, probe: crate::pixel_diagnostic::Probe, off: bool, request_id: String, previous: DeviceStatus },

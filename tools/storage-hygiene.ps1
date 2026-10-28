@@ -14,10 +14,12 @@ function Get-DirectorySummary([string]$Path) {
     }
     $measurement = Get-ChildItem -LiteralPath $Path -File -Recurse -Force -ErrorAction Stop |
         Measure-Object -Property Length -Sum
-    $bytes = if ($measurement.Count) { $measurement.Sum } else { 0 }
+    # Windows PowerShell 5.1 emits no measurement at all for an empty pipeline.
+    $count = if ($null -eq $measurement) { 0 } else { $measurement.Count }
+    $bytes = if ($count) { $measurement.Sum } else { 0 }
     [pscustomobject]@{
         Path = $Path
-        Files = $measurement.Count
+        Files = $count
         GiB = [math]::Round($bytes / 1GB, 3)
         Exists = $true
     }
@@ -77,4 +79,4 @@ $taskOutputRoot = [IO.Path]::GetFullPath((Join-Path $taskRoot '../../outputs/Pak
 if ($taskCache.GiB -gt $CacheWarningGiB) {
     Write-Warning "Pakar Cargo output is $($taskCache.GiB) logical GiB; inspect profiles/owners before any explicitly authorized cleanup."
 }
-# No prune parameter: blocked cleanup must not be rerouted through this import.
+# Default invocation is read-only; blocked cleanup must never be rerouted here.

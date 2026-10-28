@@ -167,6 +167,15 @@ fn action_button_with_kind(
     let text = egui::RichText::new(format!("{icon}  {}", crate::ui::i18n::text(label)))
         .font(egui::TextStyle::Button.resolve(ui.style()));
     ui.scope(|ui| {
+        // Every action, not only primary actions, inherits one fixed frame.
+        // The donor fix forbids hover borders/expansion from changing geometry.
+        let radius = ui.visuals().widgets.inactive.corner_radius;
+        let widgets = &mut ui.style_mut().visuals.widgets;
+        for visuals in [&mut widgets.inactive, &mut widgets.hovered, &mut widgets.active, &mut widgets.open] {
+            visuals.bg_stroke.width = border_width;
+            visuals.corner_radius = radius;
+            visuals.expansion = 0.0;
+        }
         // Adapt Pealayer's contextual_transport_style: semantic ink/fill
         // belongs to the enabled action, including hover and press, while
         // disabled controls retain the host's actual disabled appearance.

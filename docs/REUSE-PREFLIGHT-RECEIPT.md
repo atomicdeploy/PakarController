@@ -1,5 +1,275 @@
 # Donor-first preflight receipt
 
+## Handoff review: independent presentation storage, 2026-10-28 (#26)
+
+Full source review found HostPresentationStore and StateAppearanceSettings both
+owned `/presentation.json` and `/presentation.pending`. The actual combined-store
+fixture reproduced the collision: a valid palette was treated as damaged host
+presentation storage, and a persistent host save could overwrite its bytes.
+Reconsulted games-streaming and pixel-group-layout; reread the actual PCController
+Project/SettingsStore.h/.cpp, including explicit EEPROM-region overlap assertions,
+validated load and unchanged-write ownership, plus both Pakar stores in full.
+
+Host layers now use distinct `/host-presentation.json` and staging paths, keeping
+the existing validated close/readback/rename implementation. There is no guessed
+migration or automatic write on load. The regression uses both actual production
+store types and verifies bidirectional independence through save, failed rename
+and reboot, including untouched palette staging, correction and scene bytes.
+This is source/fixture evidence only; no production filesystem was contacted.
+
+CI 40745265472 next exposed the passive-RX fixture's 10ms preflight race on Linux:
+the test could time out before START, then misleadingly report "Uncertain start
+retried" because its count was zero. Read the complete actual capture helper,
+shared serial-wire owner, RX/network fixtures and PU850's C++ integration test.
+Only the RX fixture changes: deterministic EOF after queued replies, a 1000ms
+preflight allowance, and exact failure-phase checks. One START/cleanup STOP and
+no repeated STOP assertions remain. The shared network fixture still exercises
+actual deadline expiry. Production serial timeouts and retry policy are unchanged.
+
+## Cold-start matrix Fire and runtime direction, 2026-10-28 (issue #26)
+
+Reconsulted led-benchmark, games-streaming and the PCController AddressableLeds
+donor-audit rows. Reread both complete AddressableLeds sources at b0111ae0;
+stage/compose/show ownership stays in the existing renderer. No AVR transport,
+pin timing, alternate framebuffer sender or blocking delay is copied.
+Read the installed FastLED3.10.6 Fire2012.ino and FireMatrix.h completely:
+original-byte SHA256 respectively
+14eb8ece1707c8bd472d64df6b49d0b24e52cc42a20229f9172000535f858cec and
+994200db3111be15424bb04a57f3e9125402fb5b86f624f63f3f98dddf12b622.
+Retained Fire2012's cool/diffuse/ignite/HeatColor structure; adapted lateral
+diffusion and full-base ignition to the real staggered20x8 half-cell geometry.
+FireMatrix's matrix-coordinate separation informs orientation; its100x100
+buffers, compiler UI, palettes and Perlin dependencies are not imported.
+The donor MIT notice is retained in docs/licenses/FastLED-MIT.txt.
+
+Found two regressions: retained heat on explicit re-selection, and the grouped
+static service guard freezing Fire after its first frame. Fire now publishes
+a cold frame on every explicit selection, then advances on a rollover-safe
+16ms simulation clock with bounded catch-up, independently of output cadence.
+Both existing GPIO/RMT paths receive the same full mapped frame. Semantic cell
+states, custom group lengths and correction rules are not rewritten. The table
+heat field uses160 bytes rather than the old480-byte cable heat buffer.
+
+The existing validated presentation patch/store owns fire_rotation in degrees.
+It persists independently of the unchanged binary scene record; omitted fields
+keep their values, old palettes default to0, and failed saves do not apply.
+Web, Flutter and Rust expose only observed table support, send partial patches
+through their existing command owners, and adopt confirmed live readback.
+0/180 cover opposite sides;90/270 provide the other matrix orientations.
+Reading status or opening a panel does not select or restart Fire.
+
+Actual renderer/scene/queue/stress fixtures pass. New simulation/settings tests
+cover cold replay, all rotations, full-width ignition, cadence/rollover,
+transactional failure, no-op saves and unrelated scene/correction preservation.
+Table/key-role and variable-group renderer fixtures pass. Corrected a pre-existing
+route assertion: managed public-file writes already exist; private/raw settings
+remain gated. Web command/readback/mount/backend and single-source asset checks
+pass. Flutter analysis and3 focused widget tests pass;3 Rust appearance tests
+pass. The isolated Web preview was visually inspected and accepted180-degree
+memory-only readback. It is not a real board or optical acceptance.
+
+Final incremental ESP32-S3 table-selection SDK build passes in the canonical
+buffered cache: program2,325,955/3,342,336 bytes and static RAM138,436/327,680.
+The16MB/OPI candidate includes GPIO and RMT-DMA, RMT fresh-board default,
+GPIO48 status RGB, acknowledged ISP and optional Ethernet; BLE and optional
+SSH/SCP are excluded. Existing saved preferences still win over build defaults.
+build/esp32s3-buffered/esp32s3.ino.bin SHA256:
+4a1b345d687b805c3b2c515a56176eb96513233baae6c91eaaf7d12bc8e3906c.
+Full/onboard Web assets match revision889acc3167ad48184249846b114f6011d6ac35d8ad347fda83aa19762aed4a42
+(152,981 gzip bytes). Screenshot: build/ui-evidence/fire-rotation-20261028/web-direction.png.
+No board was flashed, reset, reconfigured or actuated for this task. Real cold
+ignition, rotation and smoothness on the480-pixel table remain an approved
+hardware test. The pre-existing PcControllerRuntime.h SOURCE-MAPPING.json
+certificate failure was reproduced and remains a separate CI acceptance gate.
+
+## Device terminal polish and Simon default, 2026-10-28 (issue #29 / #32)
+
+Reconsulted device-shell, terminal-ui, PU850 Shell.cpp donor-audit and
+games-streaming. Reread the actual PU850 Shell/Telnet/Commands sources at
+4311040, portable-shell command/VT100 sources at 67c5dcb8, and RayanLamp's
+contextual key/form ownership and terminal key-byte routing. Retained incremental
+input, scrubbing, bounded output, role gates and shared command owners. No Go
+runtime or blocking donor editor loop is imported onto the ESP.
+
+The concrete missing command was `beep`: it was absent from the catalogue and
+dispatch. The new finite Hz/ms parser feeds the existing buzzer/AVR owner. An
+actual-source fixture compiles both shell and AVR-route branches together and
+checks bytes, bounds, rejection and no replay. Muted descriptor-only suggestions
+use the existing editor; accepting them never executes. Help groups and wraps
+the existing catalogue. TUI uses readable labels and accepts additional CSI/SS3
+navigation, smaller viewports, in-place redraw and a 350 ms standalone-Escape
+delimiter on Telnet/framed USB. Full Unicode editing/RTL remains open.
+
+Canonical shell/property tests, production metadata/service fixtures, TCP/UDP
+loopback, actual tone dispatch and all/excluded-mode game fixtures pass. A changed
+message assertion initially failed; its abandoned Windows fixture process then
+locked the cache executable. After the automatic Stop-Process was denied, no
+alternate filename, kill utility or cleanup workaround was used. The process
+subsequently exited; the same canonical executable rebuilt and passed. The
+first tone fixture also exposed a missing direct ShellWire dependency, fixed
+with its existing bounded unsigned-number parser. No duplicated numeric parser.
+
+Simon defaults are one round with eight steps on new/default mode selection;
+saved records are not migrated or overwritten. ASUS SSH still refuses the
+current localhost:8022 connection. This pass has not flashed, rebooted, changed
+a saved scene, or sounded a production board. Installed terminal navigation,
+audio and human acceptance remain pending; source/loopback/build results do
+not replace them. The firmware cache is rebuilt with the unchanged keycontroller
+hardware profile, GPIO fallback and included runtime RMT, BLE/SSH disabled.
+
+
+## Host Wi-Fi join and management (issue #31)
+
+Read the complete actual PCController Android DiscoveryChannel.kt, verified
+original-byte SHA256 b4b829b34dfd99d1cadcd05b4d15b23e1277d6d8ffa82090f2abfd4843d48c5c.
+Its main-loop callback ownership and close-time cleanup inform HostWifiChannel;
+the donor contains no Wi-Fi join implementation. Android consent/network binding
+and Windows Native Wi-Fi profile calls are new OS adapters. Existing Pakar shared
+dialog/dropdown controls retain their fixed geometry. Re-read the touched device
+picker and native connection-modal sections; unrelated transport/authentication,
+workspace, firmware and document-picker behavior stays unchanged.
+
+The current Android documentation and Windows WlanConnect contract informed the
+implementation: OS save/request acceptance is not a verified peer connection.
+Source checks must not join networks or interrupt production routes. The first
+mobile analysis found five local style lints; those were fixed, not suppressed.
+No donor availability or capability failure was worked around. Hashes below are
+rebound only for explicitly reviewed changed consumers; hardware/installed OS
+consent/routing acceptance remains tracked separately in #31.
+
+## PU850 shell consistency follow-up (issue #29)
+
+Re-read actual PU850 4311040 LocalLib/Shell.cpp/.h, Telnet.cpp/.h,
+Commands.cpp/.h and RemoteCommand.cpp. The pasted 2a17b8c audit predates
+6a8d911's group revision, terminal negotiation and Game page changes. This
+follow-up uses current PixelGroupLayout::diagnosticRange rather than trusting
+the earlier capacity-only text parser: single pixels or exact current physical
+groups, explicit zero-based index/one-based group syntax, custom lengths and
+revision forwarding. Shared role gates cover help/completion/dispatch.
+
+CompStr identifier folding and upper/noupper input-display behavior are adapted
+without changing values, secret handling, history bytes or command arguments.
+The existing property owners now also expose station/AP flags and auto-switch;
+separate Cloud/Notifications TUI pages cover the current descriptor catalogue.
+Independent AP credential ownership, fallback-list forms, richer game override
+forms and Unicode input remain pending; no fake property adapters were added.
+
+RemoteCommand.cpp's listener/rebind/datagram/reply structure is adapted as an
+explicitly built public read-only diagnostic listener. Its function-pointer
+startup bug, truncated dispatch, broadcast hello, unauthenticated mutations and
+unconditional success are not copied. Requests are bounded, nonce-correlated,
+rate-limited and unicast; enabling authentication disables this public endpoint.
+This is not full UDP control parity. No production device has been contacted.
+
+The first test attempt correctly stopped at the donor hash gate after reviewed
+consumer changes. Only the changed, rereviewed consumer/proof hashes are refreshed;
+the gate is retained. Focused verification results are recorded on issue #29.
+
+Final source fixtures passed: canonical shell/Telnet/TUI/serial/access/service,
+live-topology pixel parser, UDP lifecycle and real loopback client, four property
+profiles and actual getter/TUI-catalogue coverage for both S3 roles. Comparison
+generation/check and whitespace checks passed. Final S3 first-wins SDK compile
+with UDP included uses 2,311,887 bytes program/125,732 bytes static RAM; image
+SHA256 `736d4c9f462730cd5cc7f186dd15ad59aac6ba2291ea43330049651b685d56e7`.
+Final table SDK compile with UDP excluded uses 2,309,735 bytes program/138,724
+bytes static RAM; image SHA256
+`4dba1664ea561719b25ba381071991b157d233ac34570a2f26a9ff6c3468670b`.
+Both profiles use buffered UART, 16MB/OPI, Ethernet, both LED backends and BLE
+disabled. Only the table carries its acknowledged ISP electrical build flag.
+The canonical cache holds the last table candidate; no duplicate release-cache
+copy, flash, reboot, network query to a board or settings change was performed.
+
+Previous-head GitHub run 40553395778 failed on a stale basic_cells_test assertion
+requiring direct request->send after the route moved to StaticAssetService.
+Reviewed the actual bounded SnapshotResponse, HTTP fixture and donor
+AsyncWebServer.cpp/.h; updated the assertion to require the current immutable
+GET/HEAD route, explicit asset length and validator. This keeps the guard rather
+than removing it. The basic-cell behavioral fixture passes. This is not a claim
+that the next complete GitHub run has passed. A route-hash preflight also rejected
+unnecessary entrypoint includes; dependencies now reside in the shell header,
+leaving application.ino and its unrelated route evidence unchanged. One local
+PowerShell report pipeline failed on formatting objects; generation was rerun
+through Out-Null without filtering the generator's internal formatting records.
+
+## Portable Shell integration (issue #29)
+
+Read all 17 tracked entries from the exact requested branch revision
+`67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`, including all code, tests, examples,
+build rules, license and documentation. The 16 regular source files are preserved
+verbatim under `third_party/portable-shell/upstream`; the CodeQL root symlink
+targets `.` and is recorded rather than recreated. Donor checkout was not changed.
+
+The compiled adaptation is `PortableShellCore.h`: PSCommand name/help catalogue,
+lookup and VT100 callback output used by the existing shell editor/service. Help,
+command aliases, completion and maintenance admission share that catalogue.
+Added real command/property Tab completion; `edit` opens the actual staged TUI.
+No second shell, raw serial interpreter, UDP execution listener or unchecked
+parameter pointer setter is installed. Preserved existing password/history
+scrubbing, Telnet negotiation, USB replay fencing/output ACKs, leases and partial
+write backpressure. Exact per-file omissions are in the existing comparison ledger.
+
+The first new fixture caught a missing help descriptor for `noupper`; fixed and
+rerun successfully. `tools/test-shell.ps1`, `tests/shell_metadata_test.mjs`,
+`tests/reuse_preflight_test.ps1`, the 17-file snapshot check, donor gate and
+comparison `-Check` passed. Final ESP32-S3 buffered build passed: 2,302,399 bytes
+of 3,342,336-byte application budget; static globals 138,724 bytes. These are
+compiler figures, not runtime heap or timing measurements. The profile retains
+16 MiB flash/OPI PSRAM, both LED backends, RMT default, BLE disabled and optional
+Ethernet. No AVR/client rebuild was needed for this ESP-shell-only change.
+Production firmware and live USB/Telnet sessions remain separate gates; no board
+was contacted, flashed, reset or actuated by this integration.
+
+Follow-up stub audit: existing production `handleShellFrame`/SerialChannel replaces
+the serial stub; `serviceDeviceShells` actually accepts bounded Telnet sessions;
+ShellTui/ShellTuiBinding implement editable, validated settings rather than the
+donor's print-and-spin editor. Completed the missing bundled TCP/stdin client in
+`tools/telnet-shell.mjs`. Local TCP fixtures verify fragmented IAC negotiation,
+success/rejection, refusal to send a batch command at a password prompt, timeout
+without replay, hidden interactive password input and terminal/raw-mode cleanup.
+The augmented shell suite and three-profile property tests pass. No client-to-real-
+board acceptance is inferred from the loopback server. Raw UDP command-shell
+exposure is deliberately not introduced; it needs a separately designed owner/
+authentication contract, not the donor's unconnected UDP send implementation.
+
+## Static file serving comparison (issue #28)
+
+Reread PU850-ESP `pu850-esp.ino` routes `/file/download`, `/`, and default
+headers (bounded route review, not a new full-file completion claim).
+PU's root sends text/plain; its catch-all LittleFS serving is commented out.
+Its device-file download supports HEAD/ranges/date metadata but uses shared
+PU transfer state and serial-pumping callback loops. Those loops are not copied
+into public flash-asset serving or the isolated managed-file namespace.
+
+Pakar now shares one static service across seven exact public asset routes:
+bounded ACK-safe flash snapshots, GET/HEAD, byte-derived strong ETags with weak
+If-None-Match matching, bodyless 304, revalidation, MIME/nosniff and explicit
+Accept-Encoding handling/Vary. Compressed-only page/font return 406 when gzip
+is explicitly unacceptable; the uncompressed /basic recovery page remains.
+Range downloads remain in ArtifactDownload/FirmwareTransfer, not misadvertised
+for the static shell. Generic private filesystem access stays prohibited.
+No claim of universally superior throughput, hardware acceptance, WebDAV or
+full PU parity follows from this source comparison. See focused test results
+and GitHub #28; HTTP semantics checked against RFC 9110 sections 8.8, 12.5.3,
+13.1.2 and 15.4.5.
+
+## Managed file workspace (issue #28)
+
+Read the actual complete Pealayer `ServerFilePicker.tsx` and `preferenceFiles.ts`;
+consulted the existing inventory, artifact read leases, shared USB maintenance
+owner, PixelGroupStore staging/readback, and PU850 `/file/download` metadata/range
+slice. Reused bounded listing/filter/explicit acceptance and stale-peer rejection
+in `assets/web/user-files.js`, rather than introducing React or arbitrary host
+filesystem paths. Existing firmware backup routes and private settings exports
+are unchanged. The new managed namespace uses immutable data and two checksummed
+catalogue generations, since FAT cannot assume LittleFS rename replacement.
+
+The first focused compile rejected misleading single-line condition indentation;
+split those statements and retained `-Werror`. No gate was disabled. Focused
+store/UI tests now cover bytes/dates, explicit overwrite, integrity, interrupted
+publication, private paths, late peers and generation fallback. New SDK compilation
+and physical SD/power-cut acceptance are separate. No board or installed app is
+contacted or changed. `docs/USER-FILES.md` states limits and no WebDAV claim.
+
 ## GitHub handoff consolidation and CI repair
 
 Completed code-bearing verification at c1d2dd17: Build 40508742014 passed every
@@ -10114,3 +10384,813 @@ Scoped checklist published at
 https://github.com/atomicdeploy/PakarController/issues/2#issuecomment-6401982849;
 the production issue remains open. Use this exact comment ID for any follow-up
 edit, not the CLI's ambiguous last-comment selection.
+
+## 2026-10-27 keycontroller live shell/client recovery
+
+Owning issue: #29; checkpoint branch/PR: `fix/client-controls-presentations` / #27.
+Reviewed existing `PanelInventory` (adapted PCController retained peer catalog),
+Pealayer `src/platform/interop.rs` named-pipe implementation, the imported
+`package-probe-windows.ps1` and guarded desktop replacement, and the PU telemetry
+route binding. Pealayer's client also uses a 64 KiB reply buffer; copying that
+unchanged cannot accommodate Pakar's expanded device snapshots. The native reply
+budget is now bounded at 1 MiB, with a complete error response on overflow.
+Replacement uses the hash-verified candidate's reader while retaining the exact
+running PID/path/session, old/new hashes, draft and pending-operation checks.
+
+Flutter Output navigation now follows acknowledged LED capability rather than
+table geometry. The first-wins Overview shortcut opens the existing game page;
+no Table page or command authority is fabricated for a keys board. ESP telemetry
+uses its existing compact board serializer inside the aggregate; the full detail
+endpoint is unchanged. This avoids increasing its 24 KiB contiguous allocation
+on a live board whose largest free internal block was approximately 31 KiB.
+
+Focused verification: Flutter analyze and five panel inventory/widget tests;
+four native instance tests including a 180 KiB reply and oversized rejection;
+filesystem telemetry and desktop replacement source guards; PU route/hash gates;
+canonical S3, APK and native release builds. These are not physical acceptance.
+
+Actual delivery on David-ASUS:
+
+- Keycontroller identity `esp32s3-b81f3fbb0684`: original firmware downloaded and
+  SHA256 verified before OTA. Saved six-box game settings matched after the first
+  update. Telnet passed two simultaneous sessions, command/property completion,
+  history recall, TUI enter/exit and heap reads without output/settings writes.
+- Follow-up telemetry fix boot `cf6232cf6458bee3ca872fa8c38c72d3` reported AVR online
+  and valid 20468-byte telemetry. Running MD5 `3e914ba8628330c9a0619f168646fcbe`;
+  candidate SHA256 `36c7b8808caa49cbadbab6801dbcfe00b26d15b76c60b50d06f8ccc55226f1cd`.
+  OTA transfer completed; automatic ASUS roaming to the other AP interrupted the
+  updater's verification. Its identity fence correctly stopped without replay.
+  Correct-board status/telemetry were then inspected after reassociation.
+- Tablet SM-X906B / `R52T60C6V9B`: replacement APK installation succeeded, SHA256
+  `094384268de7515c536f18dbaf058a69fc2e8729e8a37e5b16d4bda8b2ce442d`.
+- Rust replacement receipt confirmed old PID 27356 -> new PID 22304, preserved
+  settings/rollback, no error. New executable SHA256
+  `035fda0342f40663686dc2614ce45ce71c4e1a871eba6a7a0d7e45ae3f64c2e0`.
+
+Remaining at this checkpoint: tablet disconnected from ADB after install, then
+ASUS's SSH tunnel stopped completing its banner handshake. Final updated-screen
+inspection, both-board switching/control acceptance and final full-image readback
+are therefore pending. ASUS's saved ledcontroller Wi-Fi profile was temporarily
+set to manual to prevent roaming during keycontroller OTA; restore its automatic
+mode when ASUS is reachable. No ledcontroller update, reset or actuation occurred.
+Do not mark the entire portable-shell/production acceptance checklist complete.
+
+## 2026-10-27 native box selection and reconnect controls
+
+Owning issue #3 / PR #27. Searched Pealayer's custom context-menu call sites;
+scoped reread of layout.rs draw_board_card_context_menu, draw_control_context_menu
+and control_context_popup, effects_library.rs saved/empty menus, control_bar.rs
+shared overflow menus, icons.rs submenu, peer_browser.rs copy menu,
+media_inspector.rs copy menu, open_url.rs text-edit menu and dialog.rs numeric
+menu. Actual icons::submenu implementation is imported into ui/menu.rs. Box
+menus adapt card-owned popup, icon/label groups, muted subtitle, explicit actions
+and selected-target preservation using Pakar's already imported dropdown engine.
+Selection uses the existing cell_table::Selection rather than a second model.
+Per-board workspace snapshots retain selected IDs; click-to-trigger is an explicit
+session opt-in, never restored automatically. Existing individual-card grid drag
+retains its source/grab/drop behavior; multi-selection is not group movement.
+
+Not copied into box menus: media path/reveal, playback, cue/timeline/keyframe,
+numeric step-size and text edit actions have no corresponding box-card model.
+Generic toolbar/status/menu and rename/group customization remain useful broader
+parity work; this scoped review does not certify every donor menu or unread file.
+The inventory search is navigation evidence, not full source review.
+
+Connection lifecycle and status bar share Connected/Connecting/Reconnecting/
+Disconnected labels. Enabled but stale known peers display warning-orange
+Reconnecting with a cancel action; no deadline inflation, command replay or fake
+live status is introduced. Native UI suite: 164 passed, including interaction,
+right-click non-actuation, shared range/toggle selection, warning color and cancel.
+The initial compile caught egui 0.36 API changes; checked actual event/input and
+style APIs, corrected the new tests to ModifiersChanged/style_of and the keyboard
+guard to egui_wants_keyboard_input. Canonical cached build then passed.
+
+ASUS localhost:8022 repeatedly timed out during SSH banner exchange. No runtime
+logs could be inspected and no remote replacement occurred at this checkpoint;
+the reported ASUS application timeout is not yet diagnosed. No board, firmware,
+saved scene or production output was changed by this UI work.
+
+Five workspace persistence tests also passed. Release build and isolated 1200x800
+framebuffer inspection passed. Windows Computer Use capture failed with
+IGraphicsCaptureItemInterop.CreateForMonitor (0x80070057); its accessibility tree
+was available, but the one attempted right-click failed GetCursorPos with Access
+is denied (0x80070005). No alternate input injection was attempted. The existing
+verified-PID capture helper successfully used PrintWindow for fixture PID 15752;
+the image was inspected, but it is not an open-popup screenshot. Native egui
+event tests remain the context-menu interaction evidence. The accessibility tree
+also exposed obsolete game-authority gating on selectable boxes; this was changed
+to advertise their selected state independently from capability-gated triggering.
+The fixture was stopped, not a production process. Its synthetic device-name 404
+is a missing fixture response, not evidence of the ASUS timeout's root cause.
+
+Final box regression repeat: 9 passed after the accessibility correction. Source
+checkpoint 33b04470014c5665915e1295c2aa53db6a4f4335 built and staged through the
+canonical source-stability and package-probe guards. Candidate SHA256:
+1bec4c7c2aa6fe1ab28c7275a4371f443f5589906a5ef7158b385881fbbb289d.
+An initial ExpectedCommit invocation used the short hash and was correctly
+rejected by the exact-match guard; rerun used the full hash, without changing
+the guard. No remote installation is claimed. The direct ASUS saved hostname
+also failed DNS resolution; tunnel retry refused before authentication.
+
+PR CI exposed original trailing whitespace in the immutable portable-shell
+snapshot from the earlier integration. A path-specific whitespace attribute
+preserves donor trailing spaces/EOF lines; all Pakar adaptations retain normal
+checks. The 17-file original byte/hash test still passes. This is not an exception
+to code checks for the production shell or to the snapshot integrity guard.
+
+## Flutter keycontroller Game workspace, 2026-10-27
+
+Reconsulted device-context and the PCController peripheral-availability donor
+mapping, reading the actual TypeScript ready-and-advertised helper and Pakar's
+PeerContext, PanelInventory, command/observation pipeline and OutputPanel. Tests
+exposed the functional cause: knownFeatures omitted game-press and
+game-presentation, although their consumers required those capabilities. Both
+advertised capabilities now survive parsing; absent capabilities still grant no
+authority. Existing firmware HTTP/WS game-press handlers were inspected without
+contacting or changing a board.
+
+The existing boxes, reset, winner and configuration implementation is reused in
+a dedicated Game activity rather than duplicated. Output retains LED service and
+diagnostics. Overview routing, persisted activity and on-demand pixel subscription
+now follow Game. Tap sends the verified press; hold opens explicit actions without
+actuation. Pending, disconnected, programming, disabled-box and unavailable AVR
+conditions explain why no command was sent. A sheet cannot send after its board
+or boot changes. Workspace arrangement remains local and does not trigger keys.
+
+Regression coverage includes real Flutter tap/hold gestures, reset, denied
+conditions, duplicate-pending suppression, unconfirmed command reporting,
+peer-change fencing, navigation and retained output/arrangement behavior. These
+fixtures are not installed-tablet or physical game acceptance. The existing
+PU850 .gitattributes target was also reread after the prior immutable-donor
+whitespace commit; its stale target hash was refreshed without changing donor
+hashes, excluding unread code or bypassing the comparison gate.
+
+Canonical mobile analysis passed. Focused tests passed: output_panel 13,
+panel_inventory 5, peer_context 7. The first interaction run caught the missing
+capability admission; a later assertion was corrected to compare map values
+rather than Dart record/map identity. Final tests exercise the real gesture
+callbacks, not direct invocation alone. ASUS localhost:8022 refused its SSH
+handshake and local ADB listed no authorized device, so no tablet replacement
+or physical remote-button result is claimed.
+
+## Device terminal and contextual Game editor, 2026-10-27
+
+Reconsulted device-shell and actual PU850 LocalLib/Telnet.cpp, portable-shell
+src/portable_shell.c, include/portable_shell.h and src/vt100.c. The existing
+bounded parser/editor and callback terminal ownership are retained. NAWS and
+TTYPE now parse fragmented, escaped, bounded subnegotiation instead of discarding
+it; the Node client reports terminal type and resizes. BINARY is negotiated;
+unsupported options are refused. No full RFC1143 or CHARSET claim is made.
+
+The existing device-owned TUI gains UTF-8 frame styling, Terminal and role-gated
+Game pages, safe viewport edits, preserved resize drafts and explicit enabled-box
+press/reset commands. Game settings use the current shared router and flash
+persistence, not a second game engine. Terminal preferences are session-only.
+Capability/admission loss and undersized windows cannot dispatch actions. Help
+and completion hide unrelated role commands. Unicode text entry/RTL, arbitrary
+presentation-override editing and complete graphical-client parity remain open;
+UTF-8 framing is not evidence of these features.
+
+The first SDK compile exposed C++23 char8_t incompatibility in u8 literals while
+C++17 host tests passed. Actual donor VT100 uses char byte callbacks; the repair
+keeps that transport and emits explicit UTF-8 bytes. The canonical TUI fixture
+now compiles as C++23 to cover this boundary. No compiler flag workaround, cache
+clean or donor modification was used. The focused shell tests pass, including
+malformed/fragmented negotiation, client resize, authority/lease retirement,
+two-session service, game gates and resize drafts; metadata tests cover ordinary,
+ESP8266, S3 table and S3 first-wins profiles. Live terminal and physical game
+acceptance remain separate. No production board was contacted or changed.
+
+Final canonical S3 builds passed for both roles: table-selection uses 2,308,307
+bytes of program storage and 138,724 bytes static RAM; first-wins uses 2,309,583
+bytes and 125,604 bytes static RAM. Both use the 3,342,336-byte OTA slot, buffered
+UART, 16MB flash/OPI profile, both LED drivers, Ethernet and BLE-disabled build.
+Only the table profile carries its previously acknowledged ISP electrical flag;
+the generic key candidate does not grant ISP authority. The final key application
+file is 2,309,728 bytes, SHA256
+`8eeb6551973ec3a13cbc3423f456e372c66e74ed3beec3402a75486200d06370`.
+These are compile/package figures, not runtime free heap or target provisioning
+proof. Source and comparison checks passed; no CI completion/main merge or live
+deployment is claimed by this checkpoint.
+
+## GitHub reconciliation and script regression, 2026-10-27
+
+Fresh inventory found a clean feature branch, no stash, one worktree and one
+open PR (#27), not the historical 508-entry backlog. Build 40562666802 failed
+because portable-shell used the undefined status `reviewed`. Its thirteen such
+manual records now use `reviewed-open`; the four existing adapted records stay
+adapted. The generator never invents a review for the omitted CodeQL symlink;
+hash-bound evidence is applied to verified pinned blobs as well as local files.
+The ledger fixture now supplies its own DRS-jSnake root, avoiding an unavailable
+developer drive on CI. No unresolved import is promoted to completion.
+
+Read actual Pealayer `scripts/storage-hygiene.ps1` and its entire safety test.
+Pakar's imported `Get-DirectorySummary` still failed for an empty directory under
+Windows PowerShell 5.1: Measure-Object can emit no object, not merely a null Sum.
+Added a null-measurement guard and an empty-directory regression, verified in
+both Windows PowerShell 5.1 and PowerShell 7. Read errors still fail; no real
+cache, running app, release artifact or rollback was removed. The existing
+source/target/proof ledger was selectively rebound for this reviewed change.
+
+### Repository presentation and CI follow-through
+
+Compared the actual PCController README, repository-health workflow and complete
+repository-check/repository-policy scripts; Pealayer README, complete CI/CD and
+storage scripts; and PU850's Tool/README.md and complete tooling workflow at
+the pinned revisions recorded in the canonical ledger. No donor was modified.
+
+- Imported PCController's actual local-link parsing and Markdown heading/anchor
+  code into `tools/check-doc-links.mjs`. Seven maintained entry guides are
+  checked offline, with regression fixtures and an explicit coverage list.
+  HTML branding links, malformed encoding, repository escape and longer fenced
+  examples are handled. Full historical-document/privacy coverage remains open.
+- Added a task-oriented documentation hub and README getting-started/download
+  guidance. Corrected the old Android PR link, Snake description, two-versus-three
+  AVR profile wording and obsolete fixed firmware-artifact count.
+- Adapted Pealayer's actual run-artifact inventory into the final CI summary,
+  with pagination, bytes/expiry, empty/unavailable distinctions and read-only
+  Actions permission. Original failure gates remain mandatory.
+- Retained the existing PU-derived dispatcher, safe plan default, locked installs,
+  exact hash/backup/no-replay transfer rules and three-OS script matrix. Did not
+  copy the donor's forced clean or create redundant .NET/Go/C++ product clients.
+
+The complete local quality suite passed after the CI repair; focused documentation,
+governance and both PowerShell storage fixtures passed. Source/fixture evidence
+is not a green remote run, complete donor parity, package deployment or board proof.
+
+## Resource reporting checkpoint (2026-10-27)
+
+Consulted updates-telemetry and the exact PU850 build.sh donor mapping. Reviewed
+its actual binary-size/flash-percentage/build-info export and the existing adapted
+firmware-report.mjs. Retained that report's artifact hashing/unchanged-write
+implementation; the new resource-report.mjs uses actual partition slots rather
+than the donor's total-flash denominator, and AVR packaging/ELF rather than padded
+recovery-image length. Forced cleans, gzip renamed to .bin and timestamp rewrites
+remain excluded for the previously documented integrity/storage reasons.
+
+CI now retains JSON resource reports and compares the previous successful main
+report where its hardware profile matches. Numeric feature flags/version/FQBN
+are captured only by actual successful builds; arbitrary private defines are
+never exported. Live collection reuses deviceOrigin/deviceRequest and shared
+client headers from check-ethernet-live.mjs without its mutating test flow.
+MaintenanceRoutes.h and FilesystemTelemetry.h were inspected for exact fields,
+AVR freshness and cached filesystem age. CPU usage and wear remain unmeasured.
+Fixtures and existing-artifact parsing passed; live ASUS DNS lookup failed for
+ledcontroller.local. No current board usage or production change is claimed.
+
+## 2026-10-27 Web correction Reload focus recovery
+
+Consulted ui-shell and the exact donor-audit EffectGroupDialog.tsx route; reread
+the complete unchanged Pealayer source (8c90f7a8...) and existing shared dialog,
+correction/group reload owners and their regression tests. The native HTML
+dialog adaptation remains the sole dialog owner; no additional framework.
+
+Actual 1280x720 loopback preview exposed approval returning keyboard focus to
+the page background: Reload disabled its origin before dialog close could
+restore focus. Both editors now await their original peer-pinned read inside
+the existing asynchronous dialog action, enabling the trigger before close.
+Late dismissed/changed-peer approvals stay inert. Delayed-read regressions for
+both editors and existing shared-dialog tests pass. The first group test draft
+selected an already overridden group and made no edit; corrected the test to
+explicit group3 before testing the pending-read boundary.
+
+Actual correction browser check after rebuild: Reload restores focus; Escape
+preserves edits and restores Reload; Cancel is initial focus. Tab visits Reload,
+browser chrome, then Close without entering background page controls. Expanded
+Wire map, exact480 filter and saved filter across reload work; diagnostic cursor2
+produces rule Wire2/Raw2 and a black second slot in its local six-slot diagram.
+Test draft was discarded only in the isolated fixture. No board requests,
+firmware/app deployment, GPIO/color command or cloud change occurred.
+
+Full/onboard Web assets share revision
+fe7608229fd89223b505c64720d187ff1b68081b26228b5bd559c736c75f3b34,
+147889 gzip HTML bytes. Only Web assets rebuilt, using unchanged-write skipping.
+Screenshot: outputs/PakarController/staging/web-correction-discard-20261027.png
+under the task parent; current local preview remains localhost:63200.
+The nested map/rules scroll regions remain cramped when both are expanded at
+720px height; layout refinement and phone/tablet/RTL acceptance remain open.
+This is rendered fixture evidence, not production hardware acceptance.
+
+## Native SSH side-task, 2026-10-27 — issue #33
+
+Consulted device-shell and exact donor-audit PU Shell.cpp routing. Reread the
+pinned PU Shell.cpp/Shell.h/Telnet.cpp and the portable-shell command/VT100
+sources. SSH reuses DeviceShellSession, inputDeviceShell, the shared TUI,
+descriptor setters and owner commands; cryptography is not reimplemented.
+LibSSH-ESP32 5.10.0 uses libssh 0.11.5. Its public-domain samplesshd bind/auth/
+channel flow and key API were read; demo credentials, password logging, network
+setup, SPIFFS formatting and echo loop are deliberately not imported. See SSH.md.
+
+Arduino CLI's proxy HEAD request failed. Its existing exact-download cache was
+populated with curl's successful HTTPS GET only after the official registry
+SHA-256 matched; the normal pinned CLI install then completed. No proxy/security
+configuration was changed. The optional transport uses a worker, bounded queues,
+boot-local tokens/security revisions, persistent unique host key and mandatory
+SSH login, even when HTTP auth is disabled. USB/Telnet remain separate owners.
+
+Focused policy, actual settings-store-with-NVS-double and real-libssh-public-API
+declaration compilation checks pass. Existing actual shell service tests pass
+for S3/ESP8266, including the new preauthenticated transport initializer path.
+The first SSH-enabled descriptor fixture exposed its old fixed property count;
+the fixture now accounts explicitly for the two gated properties and checks
+their types/private flags. This is not an encrypted SSH session or target link.
+
+The canonical S3 build Plan first rejected the changed dependency-pin evidence;
+only reviewed SSH-affected target identities were rebound. It then stopped at
+the concurrently edited LedGrid.cpp donor binding (esp32WS2811 source mapping).
+That unrelated work and the shared application/build-profile additions are
+preserved, not overwritten or certified by this task. Full enabled/disabled
+target builds, OpenSSH login, host-key stability, memory/TLS/LED coexistence and
+device deployment remain pending. No production board was flashed or actuated.
+
+## Board-owned key minigames, 2026-10-28 — issue #32
+
+Read the complete ControllerBoardMini/Puzzles/Puzzles.ino donor and adapted its
+game phase, countdown and relay predicates into one allocation-free board engine.
+Blocking tones, fixed puzzle codes and nested timers were replaced by bounded
+ticks, typed configuration and the existing shared HostPresentation renderer.
+The reviewed source and exact target/proof hashes are in the Puzzles ledger row.
+Flutter reused PCController's actual effect-editor draft/section conventions;
+Rust reused Pealayer's dialog/setting/action controls, including narrow-row wrap;
+Web reused its EffectGroupDialog behavior within the single canonical entrypoint.
+PU tooling/workflow and Pealayer CI sources were read before adding focused game
+tests and paired AVR/S3 compilation to existing CI, not another build pipeline.
+
+The first S3 compile found an Arduino bit macro collision and a header included
+inside the sketch namespace. Renaming the helper and moving that include restored
+target compilation. Final review additionally fixed missing completing notes,
+remote-menu events masquerading as physical input, macro/menu output-ownership
+bypasses and stale queued presses after reset. AVR now carries an input epoch,
+clears prior outputs on a new epoch and preserves idempotent retries. The existing
+MacroRing cancellation/stop-request mechanism is reused without deleting saved
+recordings. A fixture caught the raw-event versus outer-opcode offset before
+deployment; the corrected encoder and nine-key burst/epoch tests pass.
+
+Focused evidence: both full and press-only native core tests, four integration
+guards, approved audio/PC-contract suite, Flutter analyzer and 22 tests, six Rust
+tests plus Check/Release, and canonical Web command/DOM tests pass. Flutter APK,
+Rust EXE and final paired ESP/AVR firmware candidates are built, not installed.
+Per-mode physical feedback remains tracked on issue #32. Concurrent SSH work is
+preserved independently. No production board or running app was modified.
+
+### Windows selected-device taskbar artwork — 2026-10-28
+
+The current winit Windows set_window_icon path updates ICON_SMALL only; its
+separate set_taskbar_icon owns ICON_BIG. Pakar's egui viewport update therefore
+changed the caption but left the taskbar on the executable icon. Read the entire
+current Pealayer src/platform/window_icons.rs (SHA256
+63bbaa244728a2fb4bd53ad5c35f7ff4b95790e70358d47c34ae704ea79d4a4e), its
+branding apply path, and the complete taskbar_preview::bitmap dependency function.
+Adapted the actual owned alpha HICON pair, window subclass, DPI refresh, disposal
+and both hidden-window tests into desktop/src/platform/windows_window_icons.rs.
+The existing synchronize_context peer-branding change now calls this root HWND
+path as well as retaining the egui/tray consumers. Stable AppUserModelID and
+pinned launcher artwork are not rewritten. No board changes are involved.
+
+tools/build-desktop.ps1 -Mode Test -TestFilter windows_window_icons -Jobs 8
+passed both real Win32 tests (both slots, DPI sizes, 32-bit bitmaps, replacement,
+destruction and borrowed-handle survival). node tests/branding_test.mjs passed.
+The initial build gate required rereview of shell.rs: its only change is the new
+native icon call; dropdown, table, menu and status functions/anchors are intact.
+Their existing exact target hashes and the GDI feature-only Cargo change were
+rebound without promoting unrelated donor behavior. The guarded Release build
+passed and tools/stage-desktop.ps1 -Probe verified/staged the candidate at the
+existing outputs/PakarController/staging/PakarController.exe location, SHA256
+1efe869b32ab3f6523f2ca3839723c0187e38448edd63bce6bdc6a7ae3291ff2.
+No installed/running app was replaced. Actual Explorer taskbar appearance remains
+acceptance after installation; the successful tests inspect the real Win32 slots.
+
+Global comparison-report regeneration currently stops on the concurrently stale
+ControllerBoardMini/Puzzles|Puzzles.ino proof tests/key_minigame_integration_test.mjs.
+This side fix does not certify or overwrite that unrelated review. Preserve the
+ongoing SSH/minigame work, reconcile its proof, then regenerate the shared reports
+before publishing. The new native-icon mapping lives in the same evidence ledger.
+
+## 2026-10-28 - Box interaction, menu geometry and connection toasts
+
+Scope is the native box menu/trigger, Arrange boxes control, per-board workspace
+preference and connection notifications. Read actual Pealayer 5b3d5c1 control
+geometry fix, layout.rs card-owned context-popup/action sections and existing
+shared dropdown/dialog helpers; layout.rs remains only a section review, not a
+new whole-file parity claim. Retain the inherited stroke width and explicit
+Button font; the Arrange toggle now paints a fixed inside border and fixed text
+origin. AGENTS.md now requires response/text-origin regression checks across
+states, palettes, density and fractional DPI, not static screenshots alone.
+
+Bound the box popup to 220 content pixels instead of inheriting the designer
+canvas. Persist Trigger on click per board/application workspace (old snapshots
+still default to selection-only). Both painted groups share the card's input
+target; blocked explicit clicks now report why nothing was sent. Legacy button
+presses use the common acknowledged action owner for USB/WS instead of a separate
+post call site. Connection OS toasts now carry the known ESP/AVR status without
+copying arbitrary peer responses, URLs or credentials into notifications.
+
+tools/build-desktop.ps1 -Mode Test -TestFilter key_boxes -Jobs 8 passed all 11
+tests, including both illumination/indicator click targets, exactly one command,
+blocked clicks, bounded popup width at 448/1200/2400-wide viewports, selection and
+drag non-actuation. node tests/key_game_web_test.mjs passed the existing Web
+main-box/read-only/pending/peer guards. Flutter's shared gameCommand route already
+handles tap plus a concrete blocking reason; no mobile source edits were made
+by this side fix.
+
+Further native geometry/notification/workspace tests and the final Release
+package are not yet verified: a subsequent guarded invocation stopped on the
+concurrently edited mobile/lib/table_workspace.dart target hash in the existing
+PCController session.go review. The mobile focused test wrapper reached analysis
+but stopped on five findings in concurrently edited key_box_designer.dart,
+minigame_panel.dart and table_workspace.dart, before running output_panel tests.
+Preserve those edits; their owner must finish/review them before rerunning the
+guarded checks. These results do not assert installed ASUS/Android or physical
+button/LED acceptance. No running app, board, scene or production setting was
+changed. The earlier staged executable does not include this later source fix.
+
+## Flutter keycontroller designer, 2026-10-28
+
+Read the complete unchanged PCController ActivityStrip at
+`f00ed672c1f72f1a66fb65cff1cfe0a89dea5f7b6222f154db00a7c52c2e1a82`.
+Reread Pealayer layout.rs hardware_channel_drag_handle, finish_hardware_channel_card,
+hardware_channel_drop_target and effect_library_card_header for fixed action
+gutters, grab-offset preservation and color-only hover. This is a scoped read,
+not a completed full-file comparison of that large donor. The shared
+KeyBoxDesigner uses the existing imported WorkspaceHeader/Badge/menu helpers,
+dual observed-RGB circular groups, local multi-selection and bounded group drag.
+It is shared by minigames and first-wins rather than replacing either command
+owner. Existing positions are retained; key selection joins the same per-board
+workspace snapshot. No new board setting or output command is sent on opening,
+selecting or arranging.
+
+Phone large-text layout and bottom-sheet checks initially exposed clipping;
+bounded Flexible text and a scrollable action sheet resolve those concrete
+failures. Analyzer now passes. Four designer tests, eight minigame tests and
+thirteen OutputPanel tests pass, including input ACK/release serialization,
+duplicate prevention, disabled reasons and stale-peer sheet rejection. The
+production-hold APK build passes; SHA256
+`e347a2c9f3d2e733d118c349ff48301185f1b363477ae4d0c817928b0b9841cd`.
+The existing donor ledger's affected mobile target/proof hashes are refreshed.
+Report generation encounters a separate stale Puzzles.ino reference to
+tests/key_minigame_integration_test.mjs; its owning review is not certified by
+this UI change. The SM-X906B installation is complete and its base.apk hash
+matches the candidate. Connected live and Arrange screens were captured and
+visually inspected; Arrange opened/closed without changing box positions or
+sending game commands. Wireless ADB responded. David's visual acceptance remains
+open; synthetic captures are renderer evidence only.
+
+## SSDP board icons and UPnP description, 2026-10-28
+
+Issues #19/#10, parent #2; existing PR #27. Consulted lan-link-discovery,
+network-cloud, donor-audit and build-storage. Reread complete PU850 SSDP.cpp/.h,
+SSDPDevice.cpp/.h and NetDiscovery.cpp/.h at 431104072952f694a35b3a83c19f13fbb098ca5b.
+Retained the bounded delayed/de-duplicated SSDP queue and interface owner.
+Adapted its actual streaming XML escaper into one shared description renderer;
+did not substitute the donor's experimental NetDiscovery loop. Compared the
+description against the UPnP 1.1 architecture and Basic:1 device template.
+
+The existing table/key/generic PNG masters now produce flash-resident binary
+HTTP assets, selected by board role with actual dimensions/depth/strong ETag.
+Public GET/HEAD /board-icon.png uses the existing ACK-safe static asset service.
+Description metadata is escaped and ordered; configId binds identity/artwork;
+relative icon/presentation paths replace URLBase so clients retain the LOCATION
+interface/port. No phantom SOAP/GENA service or router port mapping is advertised.
+The retained ESP8266 description shares rendering; its unfinished release build
+is not certified by this pass.
+
+tools/test-upnp.ps1 passes compiled actual-schema fixtures for all three roles,
+byte-for-byte PNG checks, XML parsing/order/config identity and relative URLs.
+WebAccess public GET/HEAD/denied-write fixtures and existing async HTTP short-write,
+HEAD/304/ETag/backpressure tests pass. Ethernet discovery integration and script
+tooling tests pass. CI quality now invokes the combined UPnP regression wrapper.
+SDK build initially caught Arduino's relocated-source include lookup; project-root
+includes correct that integration defect. Final SDK result is recorded on GitHub.
+
+A read-only gateway SSDP/IGD probe found no gateway IGD response; unrelated media
+renderer announcements were not treated as router acceptance. No router mutation,
+port mapping, board setting, firmware deployment or LED/audio command occurred.
+ASUS SSH refused access; actual board icon fetch/rendering, wire discovery and
+lifecycle/router interoperability remain open. This is not UPnP certification.
+The pre-existing CI failure at pc_contract_mapping_test (AVR target hash) is
+separate from this source checkpoint. Concurrent SSH/native/mobile work is left
+unstaged rather than folded into this change.
+
+## Native SSH and bounded SCP continuation, 2026-10-28
+
+Issue #33 and existing PR #27. Consulted device-shell, terminal-ui, network-cloud,
+donor-audit and build-storage. The initially attempted ssh-transport lookup had
+no route; added an explicit issue #33 route to the existing complete-read PU850
+Shell.cpp/.h records rather than bypassing consultation. Reread both complete
+actual files at 431104072952f694a35b3a83c19f13fbb098ca5b. Existing callback/session
+separation is reused by DeviceShellSession; crypto never executes game commands.
+Read the installed pinned LibSSH-ESP32 5.10.0 README and complete public-domain
+samplesshd-kbdint example; inspected actual bind/options/channel close behavior.
+External dependency/source/archive identity and license are recorded in SSH.md.
+No demonstration passwords, credential logging, network setup or formatting are
+imported. The broader library is LGPL, not relicensed by the sample's exception.
+
+Finished the inherited opt-in transport, persistent enable/port settings,
+per-board ECDSA host key/fingerprint, mandatory SSH password authentication,
+security-revision/token-fenced worker queues, shared loop-owned shell/TUI,
+bounded PTY resize and actual-only DNS-SD advertisement. Added separately gated
+SCP download for exact /user/ names through UserFileStore metadata/hash/chunk
+reads; no raw filesystem access or new plaintext FTP listener. Private settings,
+firmware partitions, uploads, SFTP, recursive copies and arbitrary exec remain
+unavailable/explicitly reported. Upload integrity/replacement and bidirectional
+SFTP are useful pending work, not fulfilled by the library's SCP client example.
+
+Found that pinned ssh_bind_set_blocking changes a struct flag, not its listen
+descriptor: explicit F_GETFL/F_SETFL/O_NONBLOCK prevents a select/accept race
+from stranding revocation. Fatal select errors retire the worker. Final exit
+status/close are drained with bounded socket progress before freeing the channel.
+
+Focused SSH policy/NVS tests, real-library API compilation with SCP included and
+excluded, SCP byte/backpressure/parser tests and actual SCP/public-store binding
+tests pass. The actual OpenSSH scp -O client accepted binary and zero-byte files
+over a stdio protocol fixture; Windows text-mode CRLF initially broke filename
+validation, fixed in the fixture by binary stdin/stdout (network source already
+emits correct LF/raw bytes). This is client compatibility, not an encrypted ESP
+session. Shell/TUI/property/discovery/lease/audio-dispatch regressions and script
+syntax/tooling tests pass. CI installs exact pinned headers, runs SSH tests and
+builds opt-in SSH/SCP before restoring its ordinary firmware artifact. An old
+ArduinoJson-specific workflow assertion was updated to validate the generalized
+exact-name/version install loop; no guard is disabled.
+
+Final ESP32 3.3.12 SDK build with SSH+SCP passes: program 2,657,491/3,342,336
+bytes; static RAM 129,204/327,680. Candidate SHA256
+ea17dba7e1c44afb157d48ee763df8fb76f8804dd0b03d0628fff679960126b7.
+The explicit enabled profile was rebuilt after the final socket-close fix.
+These are compile/static figures, not live crypto/heap or a clean signed release.
+Feature-excluded policy/shell fixtures pass; a final excluded SDK rebuild is not
+claimed by this continuation. Runtime listener remains disabled until configured.
+ASUS localhost:8022
+refused repeated read-only SSH probes. No production installation, reboot,
+configuration or actuation occurred. Real OpenSSH login, wrong-password handling,
+host-key persistence/reconnect, terminal resize and simultaneous API/UART/LED/TLS
+load remain live acceptance gates. The upstream hardware-SHA concurrency warning
+is retained; the SDK was not secretly reconfigured. The existing unrelated AVR
+contract-mapping CI failure remains outside this checkpoint.
+
+## 2026-10-28 ESP peer-relay resolution and bounded-memory checkpoint
+
+User incident: ledcontroller could not resolve keycontroller.local (7.32 s),
+opposite-direction status reads alternated between ~1.3 s success and failures.
+The historical internal minimum of 216 bytes is a warning, not a diagnosed cause.
+Owning acceptance: issues #7 and #2. Game-mode polish remains a separate queued
+request; no completion of that request is claimed here.
+
+Read AGENTS/preflight, bridge-repeater and network-cloud rows plus exact donor
+audit for PCController Tools/Controller/internal/lanresolver/resolver.go. Reread
+that complete actual resolver, resolver_test.go, hostbridge/peer_response.go and
+peer_response_test.go through EOF. Adapt reconnect-sticky successful addresses,
+original Host identity and strict malformed/uncertain command receipts. Retain
+board/boot/compatibility checks, one hop, restricted reads, command expiry and
+no mutation replay. No borrowed discovery record grants ownership.
+
+Source changes: bounded 900ms mDNS for .local (not router DNS), asynchronous
+TCPIP IPv4 DNS with safe object-owned late callbacks, four verified cached
+addresses and four explicitly saved routes. Saved hints are reverified after
+boot, not accepted as authority. Loop-owned staged/readback/rename saves are
+byte-idempotent; observations do not write flash. HTTP and fenced USB share
+the directory/route operations. Same-boot cached GET uses one HTTP request;
+commands still preflight and never retry after dispatch. One lazily allocated
+worker retains the existing 10240-byte stack instead of per-request allocation;
+eight SHA256 fingerprints replace retained raw request bodies. Filtered JSON,
+moved reply storage and mutex-scoped linked JsonString receipt serialization
+avoid unnecessary full-status copies. Admission checks current internal free
+memory and largest block, not PSRAM totals or the historical minimum.
+
+SDK source review found HTTPClient3.3.12 ignores addHeader(Host/User-Agent).
+PinnedClient now overrides only numeric TCP dialing while HTTPClient retains
+the logical hostname; dedicated setUserAgent sets product identity. The fixture
+implements the actual ignored-header behavior and asserts both dial and Host/UA.
+SDK NetworkManager.cpp, NetworkClient.h, HTTPClient.cpp and ESPmDNS.cpp were read
+at the affected functions; no SDK-wide patch or build-flag churn was introduced.
+
+Actual production PeerRelay/PeerRouteStore/PeerLanResolver host fixtures pass:
+failed-mDNS cached reads, cold saved-route identity verification, changed DHCP
+address, untrusted hints/private ranges/self rejection, stale boot/identity,
+auth and HTTP timeout without retargeting, lost/malformed command receipts and
+no replay, receipt/heap limits, 18KB escaped response preservation, late DNS
+callbacks and interrupted route publication. Read-only probe input/timing
+fixtures, host-presentation scheduling, BLE/offline guards, peer fencing and
+script/living-contract tests pass. The initial -Werror misleading-indentation
+failure was corrected; the first SDK attempt correctly stopped on stale PU
+route target hashes. Exact reviewed source/line bindings were refreshed, not
+the guard bypassed. The focused runner is registered in CI quality.
+
+ASUS localhost:8022 refused two read-only SSH probes during this turn. No board
+settings, scene, corrections, cloud state, LEDs, audio or firmware changed.
+Deployment requires the applicable explicit PBX DTMF authorization. Automatic
+peer discovery, continuous peer event subscriptions and fully selectable relayed
+Flutter/Rust/Web devices remain OPEN and continue to advertise false. Real
+bidirectional board latency, current-memory/stack measurements and long soak
+remain unverified; fixtures are not hardware acceptance.
+
+Final ordinary (SSH/SCP excluded) ESP32-S3 SDK build passed twice, including a
+last-source rebuild after the Host/UA correction: program 2,339,691/3,342,336
+bytes, static RAM 139,380/327,680. Raw candidate 2,339,840 bytes, SHA256
+ed86a0c1c01ff2a16f39a0afcd4b414a30db0a63dab050d3d8a1ce8ad0f3f703,
+at build/esp32s3-buffered/esp32s3.ino.bin. Table role, buffered UART, 16MB/OPI,
+both LED drivers with RMT default, acknowledged ISP, status RGB48, optional
+Ethernet and BLE excluded retain this existing candidate profile. No claim of
+matching the unreachable keycontroller's current hardware profile is made.
+Actual async HTTP actor/short-write/final-ACK and USB request/diagnostic receipt
+fixtures also passed. Existing AVR source-mapping CI mismatch remains unrelated
+and unresolved; no all-green CI or installed runtime claim.
+
+### Relay edge-case follow-up
+
+Source follow-up adds a different caller-observed IP as an identity-probe
+candidate after cached connect failure plus failed hostname lookup, never as
+POST retry authority. Preallocates form bytes once. The injected stack-allocation
+fixture proves a 31732-byte largest block becoming 21492 does not permanently
+lock out subsequent status reads; actual response allocation remains checked.
+SDK WString.cpp reread found empty assignment retains capacity, including empty
+move assignment. Explicit null assignment invokes its invalidate/free path for
+retired responses and completed command packets; queued response stays a JSON
+string, not null. Fixtures exercise that actual release branch.
+
+Final source SDK build passed: program 2,339,923/3,342,336 bytes, static RAM
+139,380/327,680. Raw candidate 2,340,064 bytes; SHA256
+f18721c3387951fdce2738e1fa166031c3cead60c868ecc5b79298c4b924107c.
+This supersedes the pre-edge-case ed86a0c1 candidate above, in the same canonical
+build path/profile. Actual relay fixtures and source/script/fence guards pass.
+Run 40714319535 confirms the existing AVR mapping mismatch is still the CI
+failure; no check bypass or broad unrelated code review is claimed. David said
+he will restore ASUS access after additional requests: no repeated access prompt,
+deployment, board actuation or new network configuration was attempted.
+
+## 2026-10-28 — configurable clock and advanced network observations (#7, #27)
+
+Scoped donor reread: PU850 sketch dormant NTPClient `/ntp/get` implementation
+1148–1180, plus complete Public.cpp, RemoteCommand.cpp and Shell.h. Retain the
+configuration/scan/command ownership intent; do not copy commented blocking
+`forceUpdate`, mutable calendar globals, UDP placeholders or blanket success.
+Actual pinned Arduino-ESP32 3.3.12 esp32-hal-time.c, ESP SNTP API, TLS client and
+ping_sock.h were consulted. New network I/O uses those real SDK implementations,
+the existing bounded resolver and one lazy worker, not a donor stub.
+
+NTP settings/DHCP fallback and HTTPS Date/public-IP lookup configuration share
+staged typed persistence and the existing local/USB/cloud command owner. UTC,
+effective NTP servers, successful observations, age and last diagnostic errors
+remain separate from saved settings. NTP is explicitly unauthenticated; HTTPS
+never uses an insecure clock-bootstrap workaround. DNS and finite ICMP are real
+SDK-backed jobs. Traceroute and IPv6 public-IP are explicitly unsupported.
+Network scans no longer block the HTTP/game owner; Web/Flutter poll results
+without resubmitting scans. No arbitrary acquired values can be imported as
+measured truth. Configuration export/import includes network_tools.
+
+Flutter now has an actual Advanced destination with separate board clock/tools,
+Wi-Fi/Ethernet, board remote connections and app bridge pages. It reuses the
+existing Workspace widgets and boot-fenced WS-first/USB API owners. Save sends
+only changed fields, verifies readback and preserves drafts during event refresh.
+Human-readable clock properties are included in the existing terminal/TUI.
+
+Verification: typed date/weekday/public-IPv4/hostname policy; actual settings
+store readback/unchanged suppression and write/rename failure preservation;
+cloud/network maintenance exclusion; USB API bounds/replay; terminal metadata,
+TUI/navigation, session lifecycle, tone routing and source peer/stack guards;
+canonical Web script/contracts and focused Flutter tests/analyzer passed.
+ESP32-S3 SDK build passed: 2,387,023/3,342,336 program bytes; static RAM
+140,156/327,680. Candidate is 2,387,168 bytes, SHA256
+ed8da2de86931261bfe9de4e922001513bf3155cf4b4bad4c23f05cd9e4a6673.
+Android production-hold candidate built, 64,385,613 bytes, SHA256
+f0a8bc68737a3705e37933bef13e003c68b3f26b636e57157322244d6cb511a3.
+APK came from the preserved mixed workspace, including pre-existing signal
+indicator edits; this scoped checkpoint does not claim ownership of those edits.
+
+Rust compatibility follow-up consumes asynchronous Wi-Fi scan receipts without
+clearing the previous SSID list or blocking the command worker. The existing
+peer-stamped Configuration event path schedules one result-only read at a time,
+500 ms apart, with a 15-second UI deadline. The focused native fixture passed for
+pending, completed/deduplicated results, single-read scheduling and timeout/no
+replay. This compiles the native test target, not a deployed Windows app.
+
+No production board, Wi-Fi configuration or cloud-enabled policy was changed.
+No live NTP/DHCP/Internet, SSID/RF, MQTT/remote WebSocket, USB device or tablet
+acceptance is claimed. ASUS access remains deferred by David; do not repeat
+access prompts or route around that boundary. CI's pre-existing AVR source
+mapping certificate failure is not resolved by these targeted checks.
+
+## 2026-10-28 — gated SCP/SFTP/FTP uploads (#33, #28, #27)
+
+Reconsulted ssh-transport, donor-audit (PU Shell.cpp) and user-files; read actual
+PU850 Shell.cpp/.h and Pealayer ServerFilePicker.tsx. Preserve the PU session /
+loop-owner callback boundary and the managed store's immutable-blob/index commit,
+not direct LittleFS access or a second settings/OTA writer. The pinned LibSSH
+port has no SFTP server implementation; the bounded subsystem implements the
+IETF SFTP-v3 wire subset itself on that existing authenticated SSH channel.
+FTP is passive-only and requires credentials; it is not TLS/FTPS. Both services
+are excluded from ordinary builds and require a persistent runtime opt-in when
+included. Existing HTTP/USB declared-hash uploads retain their stricter contract.
+
+Source/fixture evidence: tools/test-ssh.ps1 and tools/test-user-files.ps1 pass;
+real OpenSSH SCP clients upload binary/empty files and SFTP's default 32 KiB
+buffers complete a 65 KiB put/list/get byte roundtrip over stdio. Actual FTP
+binding doubles cover partial socket writes, same-IP data admission, binary
+STOR/RETR, explicit abort, connection reset, revocation, idle/passive timeouts,
+durable opt-in and deferred flash-fence cleanup. The existing actual shell
+service fixture passes for ESP32 and ESP8266. These are not ESP network tests.
+
+Two implementation failures were addressed, not bypassed: OpenSSH creation
+permissions differ from the fixed stored permissions (apply a safe creation
+policy, reject unsupported later chmod); including protocol headers inside the
+sketch owner created a shadow PakarS3 namespace (move them to ShellBuild's actual
+global include layer). All three canonical SDK builds then passed: ordinary
+2,387,744-byte image / 140,156-byte static RAM; FTP-only 2,401,440 / 144,748;
+SSH/SCP/SFTP/FTP 2,694,000 / 147,556. Full inclusion fits 80.60% of the OTA slot.
+SSH.md binds the exact profiles and three raw-image hashes. The ordinary,
+services-excluded artifact is restored in the same canonical cache; these are
+build observations, not runtime heap or live transfer acceptance. The failed
+namespace build is not accepted as a candidate. Resolving different dependency /
+include lists invalidated vendor objects; no clean or extra SDK cache was used.
+
+No board flash/reboot, output, Wi-Fi/cloud policy, tablet or Windows deployment
+is authorized or performed by this upload task. Encrypted ESP login/transfers,
+worst-case live heap, persistent identity and TLS/LED coexistence remain open.
+ASUS access is still deferred; no repeated access prompts or policy workarounds.
+
+## 2026-10-28 - GitHub handoff reconciliation (#27, #26, #11)
+
+User explicitly requested all remaining local work reviewed, published and merged.
+Inventory found one feature branch, no stash/second worktree, and pending native
+taskbar/notification, mobile signal-widget and related provenance changes. These
+were preserved and reviewed, including the complete Pealayer window_icons.rs,
+taskbar_preview bitmap dependency, and PCController workspace_chrome.dart.
+Both real Win32 icon fixtures and the rest of the 495 native tests pass. Flutter
+analysis passes; its four signal-widget tests initially exposed a 13-pixel menu
+overflow. Flexible labels fix that overflow, and the rerun passes all four cases.
+No installed app or production board was changed by this reconciliation.
+
+Fresh complete Pakar conversation enumeration found PR27 alone open, with three
+unresolved CodeQL threads. Read its body, every comment, review and thread,
+including outdated state. Two guide-checker path check/reopen findings are fixed
+using the actual descriptor ownership pattern from the fully reread PCController
+repository-policy.mjs; guide, linked-file and anchor bytes share their opened
+file, with finally-close and per-invocation snapshot reuse. Missing, empty,
+directory and malformed references still fail. The script-body syntax fixture
+now accepts upper-case SCRIPT tags, explicitly not an HTML sanitization API.
+
+Current-head CI40740222299 also failed the old AVR source certificate. Reread the
+complete current runtime header/implementation, donor MacroQueue.h/.cpp and
+FrontPanelModel.h, plus the epoch/macro/input/companion-loss tests. Rebind the four
+affected source-mapping records and actual anchors; do not modify firmware to
+satisfy stale certificates. All23 mappings and the full audio/PC contract suite
+pass. The quality run next exposed an obsolete update-presenter assertion; it
+now asserts both game-countdown coexistence AND update priority. The actual
+update lifecycle/OTA/AVR presenter fixtures pass. Only these reviewed test hashes
+are rebound in the existing donor ledger. No blanket parity completion claimed.
+
+Global reports are regenerated from the combined reviewed workspace, retaining
+the previously unpublished owner records: 430 comparisons,4302 pending,310 gaps.
+Complete remaining quality/CI and final PR diff review are pending at this
+checkpoint, not waived by the focused successes. Physical/device acceptance,
+unfinished ESP8266 support and the glib dependency issue remain separate.
+
+The next complete-quality pass exposed three older fixture assumptions, not
+firmware regressions: DNS recovery is now preceded by safe first-boot TCP/IP
+initialization; table extraction must find its end marker after its own start,
+not the earlier minigame output editor; static-group wording no longer assumes
+six LEDs when custom group sizes exist. Assertions now inspect those exact
+owners and retain their negative/readback checks. All three focused suites
+pass. CodeQL then requested forgiving closing-tag extraction; the minigame
+syntax fixture now uses the already-reviewed web_app_contract_test extraction,
+including upper-case and ignored closing attributes. No sanitizer is exposed.
+The complete final quality rerun remains separate, not implied by these tests.
+
+That full quality rerun subsequently passed, as did all495 native tests and the
+complete869-test Flutter suite (three explicit skips). Both analyzer and the
+corrected signal-popup tests pass. The updated CodeQL workflow/standalone check
+passes; its fourth forgiving-end-tag finding also auto-resolved after89b4a6f.
+All thread pages, including the new/outdated finding and replies, were read.
+
+Final source review found a real minigame configuration gap: next.save entered
+LittleFS without the common ScopedLedFlashPause. It now acquires that same LED
+flash owner before writing and returns led_flash_guard_busy without replacing
+live settings/game state on refusal. Existing Puzzles.ino configuration mapping
+is retained, not an added writer. The all-mode/press-only core and four actual
+integration fixtures pass; no physical LED improvement is inferred.
+
+CI40743454384 then failed before SDK compilation: ethernet_management_test.cpp
+included the shared CloudManagement::busy owner without its newly added
+artifactReaders observation. Read the actual shared header, the complete
+Ethernet fixture and existing cloud-management fixture. Add the same typed
+counter and a refusal/preserved-bytes test while a reader lease is held. Both
+Ethernet feature0/feature1 fixtures pass. Add the existing canonical wrapper to
+early quality so this mismatch fails before SDK/native/APK jobs. An initial new
+test compared against an older DHCP snapshot; it was corrected to capture the
+immediate pre-lease bytes, not weaken the refusal assertion. Guarded S3 build
+Plan,23 source mappings,50 route bindings and provenance generation pass.
+
+No user scene, correction values, board firmware, USB/UART, network, installed
+apps or credentials were changed. Source handoff is separate from deployment.
+
+The next exact-head CI40750230610 passed Windows (495 tests/package), Android,
+both S3 keycontroller configurations and the RF AVR build, then found a real
+table-role AVR compile error: boardKeyGesture referenced first-wins-only
+espGameOwned outside its feature guard. Read the complete current AVR sketch,
+the Puzzles/Timer Keys.h/.cpp and all three donors' Tasks.h/.cpp; retain their
+shared callback/scheduler contracts. Guard only the ESP-owned key-game branch.
+A fixture compiles the actual extracted callback with both role flags using
+the real KeyEvent header, and checks Down/Up, ninth input, menu/capture gating
+and exclusive game ownership. It first reproduced the missing symbol, then
+passed after the guard. No timeout, debounce, input order or task behavior changes.
+The first guarded SDK attempt correctly refused the stale AVR target hash;
+the same reviewed file bindings are refreshed before rerunning, not bypassed.

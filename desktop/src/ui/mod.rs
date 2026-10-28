@@ -3,6 +3,7 @@ pub mod cell_search;
 pub mod cell_table;
 pub mod color_picker;
 pub mod connection_controls;
+pub mod host_wifi;
 pub mod control_density;
 pub mod dialog;
 pub mod digits;

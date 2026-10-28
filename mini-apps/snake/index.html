@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10171e"><title>Snake · Pakar</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/style.css">
+<body><main>
+<header><div class="mark" aria-hidden="true">↝</div><div><h1>Snake</h1><p>Table playground</p></div><span id="phase" class="pill">Ready</span><button id="settingsToggle" aria-label="Game settings" aria-expanded="false">⚙</button></header>
+<section class="toolbar" aria-label="Game controls"><button id="start" class="primary">▶ Start</button><button id="pause" disabled>Ⅱ Pause</button><button id="restart" disabled>↻ Restart</button><button id="stop" disabled>■ Stop &amp; restore</button><label class="target"><input type="checkbox" id="board"> Present on LED table</label></section>
+<section class="metrics" aria-label="Sound"><label><input type="checkbox" id="appSound" checked> Tablet sound</label><label><input type="checkbox" id="boardSound" checked> Board sound</label><span id="restore" role="status"></span><span id="soundWarning" role="status"></span></section>
+<section class="metrics" aria-label="Score"><span>Score <strong id="score">0</strong></span><span>Length <strong id="length">3</strong></span><span id="connection">Host display</span></section>
+<div id="error" role="alert" hidden></div>
+<div class="playfield"><section class="arena" aria-label="Snake table"><canvas id="canvas" width="1200" height="320" tabindex="0" aria-label="Snake playground. Swipe to steer; arrow keys also work. Click tiles to edit a stopped map."></canvas></section>
+<nav class="pad" aria-label="Steering"><button data-direction="up" aria-label="Turn up">↑</button><button data-direction="left" aria-label="Turn left">←</button><span id="heading" aria-hidden="true">→</span><button data-direction="right" aria-label="Turn right">→</button><button data-direction="down" aria-label="Turn down">↓</button></nav></div>
+<section class="bottom"><label><input type="checkbox" id="showIds" checked> Cell numbers</label><span class="hint">Swipe to steer · Arrows / WASD · Space to pause</span></section>
+<section id="settings" class="settings" hidden><h2>Game &amp; map</h2><form id="configuration"><div class="fields">
+<label>Step interval <span><input id="interval" type="number" min="80" max="2000" value="250"> ms</span></label>
+<label>Growth per seed <input id="growth" type="number" min="1" max="8" value="3"></label>
+<label>Seeds <input id="seeds" type="number" min="1" max="8" value="1"></label>
+<label><input id="autoplay" type="checkbox"> Autoplay</label><label><input id="immortal" type="checkbox"> No game over</label>
+</div><div class="mapbar"><label>Paint tile <select id="tile"><option value="">Erase</option><option value="block">Obstacle</option><option value="detour1">↱ Mirror turn</option><option value="detour2">↰ Opposite mirror</option><option value="reverse">Reverse snake</option><option value="teleport">Portal (pair)</option><option value="switch">Obstacle switch</option><option value="potion">Stop autoplay</option></select></label><button type="button" id="edit">Edit map</button><button type="button" id="export">↓ Export</button><label class="file">↑ Import<input type="file" id="import" accept="application/json,.json"></label></div>
+<footer><span id="draft">Settings apply to the next round.</span><button type="submit" class="primary">✓ Apply</button></footer></form></section>
+<footer class="attribution"><span id="mode">Host-owned • wraparound</span></footer>
+</main><script type="module" src="/app.mjs"></script></body></html>

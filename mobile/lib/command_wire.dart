@@ -7,8 +7,17 @@ import 'command_failure.dart';
 import 'cell_assignments.dart';
 import 'game_settings_command.dart';
 import 'command_readback.dart';
+import 'minigame.dart';
 
 const commandNames = {
+  '/api/network/tools': 'configure-network-tools',
+  '/api/network/probe': 'network-probe',
+  minigameConfigure: 'minigame-configure',
+  minigameControl: 'minigame-control',
+  minigameInput: 'minigame-input',
+  '/api/audio': 'audio',
+  '/api/buzzer': 'buzzer',
+  '/api/outputs': 'outputs',
   '/api/led/presentation': 'state-presentation',
   '/api/led/preview': 'color-preview',
   '/api/game/press': 'game-press',
@@ -23,7 +32,19 @@ const commandNames = {
   '/api/brightness': 'brightness',
   '/api/led/output': 'led-output',
   '/api/led/diagnostic': 'pixel-diagnostic',
+  '/api/pixels/corrections/preview': 'pixel-corrections-preview',
 };
+
+// Receipt ownership is identity, not admission for a subsequent mutation. A
+// valid configure/start receipt can temporarily report ready=false during the
+// AVR input fence. Never turn that successful handoff into a disconnection.
+bool commandPeerMatches(DeviceStatus? actual, Object? board, Object? boot) =>
+    board is String &&
+    board.isNotEmpty &&
+    boot is String &&
+    boot.isNotEmpty &&
+    actual?.json['board_id'] == board &&
+    actual?.json['boot_id'] == boot;
 
 String commandPacket(
   DeviceStatus status,
@@ -45,6 +66,9 @@ String commandPacket(
   final gameSettings = path == '/api/game/settings'
       ? gameSettingsPatch(values)
       : null;
+  final miniFields = minigamePaths.contains(path)
+      ? status.peer.minigame!.command(path, values)
+      : null;
   return jsonEncode({
     'type': 'command',
     'request_id': id,
@@ -53,9 +77,16 @@ String commandPacket(
     'expires_at_ms': clock + 8000,
     'command': commandNames[path],
     ...?gameSettings,
-    if (gameSettings == null)
+    ...?miniFields,
+    if (gameSettings == null && miniFields == null)
       for (final item in values.entries)
-        item.key: path == '/api/led/presentation' && item.key == 'settings'
+        item.key:
+            path == '/api/pixels/corrections/preview' &&
+                item.key == 'configuration'
+            ? jsonDecode(item.value)
+            : (path == '/api/led/presentation' ||
+                      path == '/api/network/tools') &&
+                  item.key == 'settings'
             ? jsonDecode(item.value)
             : path == '/api/led/preview' &&
                   ['rgb', 'duration_ms'].contains(item.key)
@@ -64,7 +95,10 @@ String commandPacket(
             ? item.value == 'true'
             : path == '/api/cells/assignments' && item.key == 'assignments'
             ? CellAssignments.fromRows(jsonDecode(item.value)).wireAssignments
-            : item.key == 'id' ||
+            : (path == '/api/buzzer' &&
+                      ['frequency', 'duration_ms'].contains(item.key)) ||
+                  (path == '/api/outputs' && item.key == 'mask') ||
+                  item.key == 'id' ||
                   (path == '/api/game/press' && item.key == 'key') ||
                   (path == '/api/led/diagnostic' &&
                       [
@@ -102,7 +136,13 @@ DeviceStatus verifyCommandReply(
     );
   }
   if (reply['accepted'] != true) {
-    throw DeviceCommandRejected(error: reply['error']);
+    throw DeviceCommandRejected(error: reply['reason'] ?? reply['error']);
+  }
+  if (const ['/api/audio', '/api/buzzer', '/api/outputs'].contains(path) &&
+      reply['avr_acknowledged'] != true) {
+    throw const FormatException(
+      'AVR command acknowledgment missing; command was not retried',
+    );
   }
   if ((path == '/api/game/reset' || path == '/api/game/press') &&
       reply['avr_acknowledged'] != true) {
@@ -128,6 +168,10 @@ DeviceStatus verifyCommandReply(
     throw const FormatException('Same-board command readback unavailable');
   }
   final actual = DeviceStatus(json);
+  if (minigamePaths.contains(path) &&
+      !minigameReadbackMatches(json['minigame'], path, values)) {
+    throw const FormatException('Minigame readback differs; not retried');
+  }
   if (requireGameReadback &&
       path == '/api/game/settings' &&
       !commandReadbackMatches(actual, path, values)) {

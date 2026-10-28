@@ -4,6 +4,22 @@ $ErrorActionPreference='Stop'
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern network-cloud | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate | Out-Null
 $taskRoot=Split-Path -Parent $PSScriptRoot
+$taskObservation=Join-Path $taskRoot 'build/native/network_observation_test.exe'
+if(-not $Plan){
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskObservation) | Out-Null
+  & g++ -std=c++17 -Wall -Wextra -Werror (Join-Path $taskRoot 'tests/network_observation_test.cpp') -o $taskObservation
+  if($LASTEXITCODE){throw 'Network observation policy compilation failed'}
+  & $taskObservation
+  if($LASTEXITCODE){throw 'Network observation policy assertions failed'}
+  $taskSettings=Join-Path $taskRoot 'build/native/network_tools_settings_test.exe'
+  $taskJson=Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Arduino/libraries/ArduinoJson/src'
+  & g++ -std=c++17 -Wall -Wextra -Werror -I (Join-Path $taskRoot 'tests/peer_relay_stubs') -I $taskJson (Join-Path $taskRoot 'tests/network_tools_settings_test.cpp') -o $taskSettings
+  if($LASTEXITCODE){throw 'Network tools settings compilation failed'}
+  & $taskSettings
+  if($LASTEXITCODE){throw 'Network tools settings assertions failed'}
+  & node (Join-Path $taskRoot 'tests/network_tools_wiring_test.mjs')
+  if($LASTEXITCODE){throw 'Network tools integration wiring invariants failed'}
+}
 $taskOutput=Join-Path $taskRoot 'build/native/network_config_test.exe'
 $taskArguments=@('-std=c++17','-Wall','-Wextra','-Werror',
   '-I',(Join-Path $taskRoot 'tests/network_stubs'),

@@ -14,7 +14,7 @@ bool discoveryTxt(Responder &responder,const char *service,const char *protocol,
 }
 template<class Responder>
 bool startDiscoveryMdns(Responder &responder,const char *hostname,const char *appName,
-    const char *appId,const char *version,uint16_t streamPort,uint16_t shellPort=23) {
+    const char *appId,const char *version,uint16_t streamPort,uint16_t shellPort=23,uint16_t sshPort=0) {
   // SDK begin() can fail AFTER mdns_init succeeds (hostname allocation/set).
   // Always retire that partial owner before the existing bounded retry path.
   if(!responder.begin(hostname)){responder.end();return false;}
@@ -32,7 +32,8 @@ bool startDiscoveryMdns(Responder &responder,const char *hostname,const char *ap
     discoveryTxt(responder,"pakarcontroller","tcp","minimum_board",BoardCore::PeerCompatibility::minimumBoard) &&
     discoveryTxt(responder,"pakarcontroller","tcp","version_check",BoardCore::PeerCompatibility::enforced?"true":"false") &&
     responder.addService("pakar-stream","udp",streamPort) &&
-    (!shellPort||responder.addService("telnet","tcp",shellPort));
+    (!shellPort||responder.addService("telnet","tcp",shellPort)) &&
+    (!sshPort||responder.addService("ssh","tcp",sshPort));
   if(!complete)responder.end();
   return complete;
 }

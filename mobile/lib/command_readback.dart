@@ -7,6 +7,7 @@ import 'cell_assignments.dart';
 import 'game_settings_command.dart';
 import 'semantic_cells.dart';
 import 'led_backend.dart';
+import 'minigame.dart';
 
 /// Compare observed command state, never draft values or model defaults.
 /// A matching buffer/status is not physical LED/display/audio acceptance.
@@ -17,6 +18,10 @@ bool commandReadbackMatches(
 ) {
   final json = actual.json;
   switch (path) {
+    case minigameConfigure:
+    case minigameControl:
+    case minigameInput:
+      return minigameReadbackMatches(json['minigame'], path, values);
     case '/api/outputs':
       final requested = int.tryParse(values['mask'] ?? '');
       return requested != null && requested >= 0 && requested <= 255 &&

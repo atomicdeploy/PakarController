@@ -4,8 +4,9 @@ function Test-PakarDonorSnapshot {
     if($Row.availability -eq 'present'){return $true}
     if($Row.availability -ne 'pinned-blob' -or -not $Review){return $false}
     $blob=$Review.PSObject.Properties['source_blob']
-    return $Row.origin -eq 'PU850-ESP' -and $blob -and
-        $blob.Value.repository -eq 'atomicdeploy/pu850-esp' -and
+    $repositories=@{'PU850-ESP'='atomicdeploy/pu850-esp';'portable-shell'='atomicdeploy/portable-shell'}
+    return $repositories.ContainsKey($Row.origin) -and $blob -and
+        $blob.Value.repository -eq $repositories[$Row.origin] -and
         $Row.revision -match '^[a-f0-9]{40}$' -and $blob.Value.revision -eq $Row.revision -and
         $blob.Value.git_sha -match '^[a-f0-9]{40}$' -and $blob.Value.sha256 -eq $Row.sha256
 }

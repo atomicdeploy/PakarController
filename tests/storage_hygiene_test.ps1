@@ -11,6 +11,10 @@ Assert-Hygiene ($taskSummary.Exists -and $taskSummary.Files -eq $taskFiles.Count
 Assert-Hygiene ($taskSummary.GiB -eq [math]::Round(($taskFiles | Measure-Object Length -Sum).Sum / 1GB,3)) 'Logical byte sum'
 $taskMissing = Get-DirectorySummary (Join-Path $taskRoot 'tests/nonexistent-storage-fixture')
 Assert-Hygiene (-not $taskMissing.Exists -and $taskMissing.Files -eq 0 -and $taskMissing.GiB -eq 0) 'Missing directory stays honest'
+$taskEmptyPath = Join-Path $taskRoot 'build/tests/storage-hygiene/empty'
+New-Item -ItemType Directory -Path $taskEmptyPath -Force | Out-Null
+$taskEmpty = Get-DirectorySummary $taskEmptyPath
+Assert-Hygiene ($taskEmpty.Exists -and $taskEmpty.Files -eq 0 -and $taskEmpty.GiB -eq 0) 'Empty directory works under strict mode in Windows PowerShell and pwsh'
 $taskPalette = Join-Path $taskAssets 'palettes.json'
 Assert-Hygiene (Test-PakarFileContentEqual $taskPalette $taskPalette) 'Actual imported equal-content helper'
 Assert-Hygiene (-not (Test-PakarFileContentEqual $taskPalette (Join-Path $taskAssets 'appearance.js'))) 'Different file rejection'

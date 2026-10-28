@@ -66,6 +66,7 @@ Widget workspace(ExitApi api, GlobalKey<PixelCorrectionsPageState> key) =>
                                   key: key,
                                   api: api,
                                   active: index == 1,
+                                  livePreviewInitiallyEnabled: false,
                                   busyChanged: (value) =>
                                       update(() => locked = value),
                                 ),

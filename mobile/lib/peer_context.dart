@@ -5,6 +5,7 @@ import 'game_settings_command.dart';
 import 'board_artwork.dart';
 import 'application_artwork.dart';
 import 'led_backend.dart';
+import 'minigame.dart';
 
 /// Actual PCController peripheral-availability.ts ready AND advertised rule,
 /// adapted through Pakar's living capability manifest (capabilities.rs).
@@ -21,6 +22,7 @@ class PeerContext {
     this.application,
     this.ledOutput,
     this.role,
+    this.minigame,
   );
   static final unknown = PeerContext._(
     false,
@@ -33,6 +35,7 @@ class PeerContext {
     null,
     null,
     '',
+    null,
   );
   final bool known;
   final String kind, name, hostname;
@@ -42,6 +45,7 @@ class PeerContext {
   final PeerApplication? application;
   final LedOutputCapability? ledOutput;
   final String role;
+  final MiniGameSnapshot? minigame;
   bool get tableSelection =>
       table &&
       (role == 'table-selection' ||
@@ -133,6 +137,7 @@ class PeerContext {
           ? LedOutputCapability.parse(value['led_output'])
           : null,
       role,
+      keyGame ? MiniGameSnapshot.read(status['minigame']) : null,
     );
   }
 
@@ -142,6 +147,9 @@ class PeerContext {
   bool allows(String path, Map<String, String> values) {
     if (!known) return false;
     return switch (path) {
+      '/api/network/tools' || '/api/network/probe' => has('network-tools'),
+      minigameConfigure || minigameControl || minigameInput =>
+        has('command-ack') && minigame?.allows(path, values) == true,
       '/api/led/presentation' ||
       '/api/led/preview' => has('state-presentation') && has('leds'),
       '/api/cell' || '/api/cells/mapping' => tableSelection,
@@ -177,6 +185,11 @@ class PeerContext {
       '/api/brightness' || '/api/effect' => has('leds'),
       '/api/led/diagnostic' => has('leds') && has('pixel-diagnostic'),
       '/api/pixels/groups' => has('leds') && has('pixel-group-layout'),
+      '/api/pixels/corrections/preview' =>
+        has('pixel-corrections-preview') &&
+            has('pixel-corrections-preview-command') &&
+            values.length == 1 &&
+            values.containsKey('configuration'),
       '/api/device/name' => has('identity'),
       '/api/network' || '/api/cloud' => has('network'),
       _ => false, // Add an explicit contract before exposing a new mutation.
@@ -245,7 +258,10 @@ class LedOutputCapability {
 }
 
 const knownFeatures = {
+  'network-tools',
   'state-presentation',
+  'game-press',
+  'game-presentation',
   'key-settings',
   'game-melodies',
   'usb-key-settings',
@@ -255,10 +271,12 @@ const knownFeatures = {
   'usb-api',
   'status-rgb',
   'command-ack',
+  'avr-command-ack',
   'pixel-diagnostic',
   'pixel-diagnostic-effects',
   'pixel-diagnostic-overlay',
   'pixel-corrections-preview',
+  'pixel-corrections-preview-command',
   'pixel-group-layout',
   'pixel-correction-rule-toggle',
   'pixel-corrections',

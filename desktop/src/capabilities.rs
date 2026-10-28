@@ -268,8 +268,10 @@ impl Manifest {
         }
     }
     pub fn allows(&self, path: &str, form: &[(String, String)]) -> bool {
+        if crate::minigame::path(path) { return self.role == "first-wins" && self.has("command-ack"); }
         if path == crate::pixel_groups::PATH { return self.has(crate::pixel_groups::FEATURE); }
         if path == crate::pixel_corrections::PATH { return self.has("pixel-corrections"); }
+        if path == crate::pixel_corrections::PREVIEW_PATH { return self.has(crate::pixel_corrections::PREVIEW_FEATURE); }
         let feature = match path {
             "/api/led/presentation" | "/api/led/preview" => return self.has("leds") && self.has("state-presentation"),
             "/api/cells/assignments" => {

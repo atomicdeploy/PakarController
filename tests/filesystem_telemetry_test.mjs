@@ -17,6 +17,7 @@ function cachedTelemetry(source,sketch) {
   assert.doesNotMatch(sketch.slice(loop),/captureBootFilesystemTelemetry\(|refreshFilesystemTelemetry\(/,'No automatic runtime filesystem refresh');
 }
 cachedTelemetry(routes,main);
+assert.match(routes,/add\("board",buildStatusJson\(true\)\)/,'Aggregate telemetry must use the shared compact snapshot; full detail remains at /api/status');
 assert.throws(()=>cachedTelemetry(routes.replace('String buildTelemetryJson() {','String buildTelemetryJson() { LittleFS.usedBytes();'),main));
 assert.throws(()=>cachedTelemetry(routes,main.replace('captureBootFilesystemTelemetry(filesystemMounted);','')));
 // Never substitute diagnostic cache data into irreversible storage admission.

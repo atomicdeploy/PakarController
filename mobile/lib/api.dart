@@ -140,6 +140,11 @@ class PakarApi {
   int _configurationRevision = 0;
   final _configurationUpdates = StreamController<int>.broadcast(sync: true);
   Stream<int> get configurationUpdates => _configurationUpdates.stream;
+  final _networkObservations = StreamController<Map<String, dynamic>>.broadcast(
+    sync: true,
+  );
+  Stream<Map<String, dynamic>> get networkObservations =>
+      _networkObservations.stream;
   void Function()? onTransportRetired;
   void Function(Map<String, dynamic>)? onPeripheralEvent;
   void Function()? onPeripheralStreamLost;
@@ -241,6 +246,22 @@ class PakarApi {
       connectionMethod == ConnectionMethod.network;
   bool supportsRoute(String method, String path) {
     if (isUsb) {
+      if (_latestStatus?.peer.has('network-tools') == true &&
+          (method == 'GET'
+                  ? const {
+                      '/api/network/tools',
+                      '/api/time',
+                      '/api/wifi/scan',
+                      '/api/network',
+                    }
+                  : const {
+                      '/api/network/tools',
+                      '/api/network/probe',
+                      '/api/network',
+                    })
+              .contains(path)) {
+        return true;
+      }
       return method == 'GET'
           ? {'/api/status', '/api/cells/mapping'}.contains(path)
           : {
@@ -695,11 +716,33 @@ class PakarApi {
     String path,
     Map<String, String> values, {
     required bool Function() authorize,
+  }) => _fastCommand(path, values, authorize: authorize);
+
+  Future<DeviceStatus?> _fastCommand(
+    String path,
+    Map<String, String> values, {
+    required bool Function() authorize,
+    void Function(Map<String, dynamic>)? receipt,
   }) async {
     if (!commandNames.containsKey(path)) return null;
+    // Preserve the existing dedicated USB cue path. These new WS commands
+    // require the AVR-correlated envelope, not the table-only USB opcode switch.
+    if (isUsb &&
+        const ['/api/audio', '/api/buzzer', '/api/outputs'].contains(path)) {
+      return null;
+    }
     if (isUsb) return _usbCommand(path, values, authorize);
     var snapshot = _latestStatus;
-    if (snapshot?.peer.has('command-ack') != true) return null;
+    if (snapshot?.peer.has('command-ack') != true) {
+      if (path.startsWith('/api/minigame/')) {
+        throw const FormatException('Minigame command receipts unavailable');
+      }
+      return null;
+    }
+    if (const ['/api/audio', '/api/buzzer', '/api/outputs'].contains(path) &&
+        snapshot?.peer.has('avr-command-ack') != true) {
+      return null;
+    }
     if (path == '/api/game/reset' && snapshot?.peer.has('reset-ack') != true) {
       return null;
     }
@@ -752,6 +795,7 @@ class PakarApi {
       );
       _acceptIdentity(actual.json);
       _rememberStatus(actual);
+      receipt?.call(reply);
       return actual;
     }
     Completer<Map<String, dynamic>?>? pending;
@@ -862,6 +906,7 @@ class PakarApi {
       );
       _acceptIdentity(actual.json);
       _rememberStatus(actual);
+      receipt?.call(reply);
       return actual;
     } finally {
       if (pending != null) {
@@ -1400,6 +1445,24 @@ class PakarApi {
           authorize: () => owner == connectionRevision && connectionWanted,
         );
       }
+      if (path == '/api/pixels/corrections') {
+        final owner = connectionRevision;
+        return usb.pixelCorrectionsApi(
+          authorize: () => owner == connectionRevision && connectionWanted,
+        );
+      }
+      final uri = Uri.parse(path);
+      if (const {
+        '/api/network/tools',
+        '/api/time',
+        '/api/wifi/scan',
+        '/api/network',
+      }.contains(uri.path)) {
+        final owner = connectionRevision;
+        return usb.networkApi('GET', uri.path, {
+          if (uri.queryParameters['results'] == 'true') 'results': true,
+        }, authorize: () => owner == connectionRevision && connectionWanted);
+      }
       throw const FormatException(
         'This read is unavailable through USB; no network fallback attempted',
       );
@@ -1424,6 +1487,76 @@ class PakarApi {
   }
 
   Future<Map<String, dynamic>> getJson(String path) => _get(path);
+
+  /// Same boot-fenced USB API or correlated WS-first command, with the existing
+  /// user-configurable HTTP fallback. No independent network/command owner.
+  Future<Map<String, dynamic>> networkToolsWrite(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final owner = connectionRevision;
+    bool admitted() =>
+        owner == connectionRevision &&
+        connectionWanted &&
+        _latestStatus?.peer.has('network-tools') == true;
+    if (isUsb) {
+      await _ensureUsb();
+      final result = await usb.networkApi(
+        'POST',
+        path,
+        body,
+        authorize: admitted,
+      );
+      if (result['settings'] is Map && result['clock'] is Map) return result;
+      return usb.networkApi(
+        'GET',
+        '/api/network/tools',
+        const {},
+        authorize: admitted,
+      );
+    }
+    Map<String, dynamic>? receipt;
+    final actual = await _fastCommand(
+      path,
+      {
+        if (path == '/api/network/tools') 'settings': jsonEncode(body),
+        if (path == '/api/network/probe')
+        ...{
+          'kind': '${body['kind']}',
+          if (body.containsKey('target')) 'target': '${body['target']}',
+        },
+      },
+      authorize: admitted,
+      receipt: (value) => receipt = value,
+    );
+    if (actual == null || receipt?['network_tools'] is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Network operation receipt unavailable; inspect before retrying',
+      );
+    }
+    final result = receipt!['network_tools'] as Map<String, dynamic>;
+    if (path == '/api/network/probe') {
+      final job = result['job'];
+      if (job is! Map ||
+          job['kind'] != body['kind'] ||
+          const {'dns', 'ping'}.contains(body['kind']) &&
+              job['target'] != body['target']) {
+        throw const OperationUncertain(
+          'The current diagnostic belongs to another request; no probe was replayed',
+        );
+      }
+    }
+    if (path == '/api/network/tools') {
+      final saved = result['settings'];
+      if (saved is! Map ||
+          !body.entries.every((entry) => saved[entry.key] == entry.value)) {
+        throw const OperationUncertain(
+          'Saved network tools differ from the requested settings',
+        );
+      }
+    }
+    return result;
+  }
 
   /// Bounded single-dispatch maintenance transport. Even ISP probe uses this
   /// path: its GET resets AVR, so it must not be retried through discovery.
@@ -1607,6 +1740,36 @@ class PakarApi {
     return value;
   }
 
+  /// Same correlated WS/HTTP command owner as game actions. Older peers retain
+  /// their explicit single-dispatch HTTP lease endpoint; never retry a rejected
+  /// or uncertain preview through a different endpoint.
+  Future<Map<String, dynamic>> previewCorrections(
+    Map<String, dynamic> configuration, {
+    required bool Function() authorize,
+  }) async {
+    const path = '/api/pixels/corrections/preview';
+    final values = {'configuration': jsonEncode(configuration)};
+    if (!isUsb &&
+        freshStatus?.peer.has('pixel-corrections-preview-command') == true) {
+      Map<String, dynamic>? envelope;
+      final actual = await _fastCommand(
+        path,
+        values,
+        authorize: authorize,
+        receipt: (value) => envelope = value,
+      );
+      if (actual == null ||
+          envelope == null ||
+          envelope!['pixel_corrections_preview'] is! Map) {
+        throw const OperationUncertain(
+          'Correction preview receipt unavailable; no preview was replayed.',
+        );
+      }
+      return {'preview': envelope!['pixel_corrections_preview']};
+    }
+    return postJson(path, values, authorize: authorize);
+  }
+
   /// Single dispatch, form BODY (never secret-bearing URL parameters), and
   /// caller-owned capability check after any awaited identity verification.
   Future<Map<String, dynamic>> postJson(
@@ -1615,7 +1778,67 @@ class PakarApi {
     bool Function()? authorize,
   }) async {
     _requireNetwork();
+    if (isUsb && path == '/api/network') {
+      await _ensureUsb();
+      final owner = connectionRevision;
+      const booleans = {
+        'station_enabled',
+        'ap_enabled',
+        'dhcp',
+        'station_open',
+        'auto_switch',
+      };
+      return usb.networkApi(
+        'POST',
+        path,
+        {
+          for (final entry in values.entries)
+            entry.key:
+                booleans.contains(entry.key) &&
+                    const {'true', 'false'}.contains(entry.value)
+                ? entry.value == 'true'
+                : entry.value,
+        },
+        authorize: () =>
+            owner == connectionRevision &&
+            connectionWanted &&
+            authorize?.call() != false,
+      );
+    }
+    if (path.startsWith('/api/minigame/')) {
+      final actual = await fastCommand(
+        path,
+        values,
+        authorize: authorize ?? () => true,
+      );
+      if (actual == null) {
+        throw const FormatException('Minigame command receipt unavailable');
+      }
+      return {
+        'accepted': true,
+        'board_id': actual.json['board_id'],
+        'boot_id': actual.json['boot_id'],
+        'status': actual.json,
+      };
+    }
     if (isUsb) {
+      if (path == '/api/pixels/corrections' ||
+          path == '/api/pixels/corrections/preview') {
+        await _ensureUsb();
+        final owner = connectionRevision;
+        final configuration = jsonDecode(values['configuration'] ?? 'null');
+        if (configuration is! Map<String, dynamic>) {
+          throw const FormatException('Invalid pixel correction configuration');
+        }
+        return usb.pixelCorrectionsApi(
+          configuration: configuration,
+          preview: path.endsWith('/preview'),
+          authorize: () =>
+              owner == connectionRevision &&
+              connectionWanted &&
+              authorize?.call() != false,
+        );
+      }
       if (path == '/api/pixels/groups') {
         await _ensureUsb();
         final owner = connectionRevision;
@@ -1688,6 +1911,10 @@ class PakarApi {
     Map<String, String> values = const {},
   ]) async {
     _requireNetwork();
+    if (path.startsWith('/api/minigame/')) {
+      await postJson(path, values);
+      return;
+    }
     if (isUsb) {
       await _ensureUsb();
       if (freshStatus == null && !usb.busy) await status();
@@ -2101,6 +2328,16 @@ class PakarApi {
         }
         if (message is! String) continue;
         final value = jsonDecode(message);
+        if (value is Map<String, dynamic> &&
+            value['type'] == 'network-observation') {
+          if (value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot &&
+              _verifiedBoard != null &&
+              !_networkObservations.isClosed) {
+            _networkObservations.add(value);
+          }
+          continue;
+        }
         if (value is Map<String, dynamic> &&
             value['type'] == 'configuration-changed') {
           final changed = value['revision'];
@@ -2585,6 +2822,7 @@ class PakarApi {
     _configurationRefresh?.cancel();
     _configurationRefresh = null;
     unawaited(_configurationUpdates.close());
+    unawaited(_networkObservations.close());
     await bluetooth.close();
     await usb.close();
     _abortReads();

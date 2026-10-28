@@ -13,10 +13,12 @@
 #include <GameRole.h>
 #include <KeyPresentation.h>
 #include <StateAppearance.h>
+#include <MatrixFire.h>
 #include <CellBatch.h>
 #include <TableCellMapping.h>
 #include <PixelDiagnostic.h>
 #include <PixelGroupLayout.h>
+#include <HostPresentation.h>
 #include "UpgradeLifecycle.h"
 #ifndef PAKAR_PIXEL_CORRECTIONS
 #define PAKAR_PIXEL_CORRECTIONS 0
@@ -50,9 +52,15 @@ class LedGrid {
   static constexpr uint8_t kSectorsPerCell = PAKARCONTROLLER_SECTORS_PER_CELL;
   static constexpr uint16_t kPixels = kCells * kSectorsPerCell;
   using GroupLayout=BoardCore::PixelGroupLayout<kCells,kSectorsPerCell,kPixels>;
+  using Presentation=BoardCore::HostPresentation<kCells,kPixels>;
+  void setPresentation(Presentation *value){presentation_=value;dirty_=true;}
+  void setGamePresentation(Presentation::Layer *value){gameLayer_=value;dirty_=true;}
+  void setGamePresentationEpoch(uint32_t value){gamePresentationAt_=value;}
+  void presentationChanged(){dirty_=true;}
+  bool presentationReady()const{return !staging_&&!maintenanceActive_&&!diagnosticActive_&&!previewActive(millis());}
   const GroupLayout &groupLayout()const{return groupLayout_;}
   uint32_t publishedGroupRevision()const{return publishedGroups_.revision();}
-  bool canConfigureGroups()const{return !staging_&&!diagnosticActive_&&!previewActive(millis())&&!maintenanceActive_;}
+  bool canConfigureGroups()const{return !staging_&&!diagnosticActive_&&!previewActive(millis())&&!maintenanceActive_&&!(presentation_&&presentation_->active());}
   bool configureGroups(const GroupLayout &layout);
 #if PAKAR_PIXEL_CORRECTIONS
   void setCorrections(const BoardCore::PixelCorrections<kPixels> *mapping){corrections_=mapping;dirty_=true;}
@@ -142,6 +150,12 @@ class LedGrid {
   bool maintenancePresented()const;
 
  private:
+  void retirePresentation(){if(presentation_&&presentation_->retire())dirty_=true;}
+  bool presentationAnimated()const{return presentation_&&presentation_->needsFrame(millis(),lastFrameAt_);}
+  Presentation *presentation_=nullptr;
+  Presentation::Layer *gameLayer_=nullptr;
+  uint32_t gamePresentationAt_=0;
+  uint32_t publishedPresentationRevision_=0;
   const CRGB *corrected(const CRGB *raw) {
 #if PAKAR_PIXEL_CORRECTIONS
     if(corrections_){
@@ -193,7 +207,7 @@ class LedGrid {
   uint32_t transitionAt_[kCells] = {};
   bool transitioning_[kCells] = {};
   uint8_t transitionEffects_[kCells] = {};
-  uint8_t heat_[kPixels] = {};
+  BoardCore::MatrixFire<PAKAR_TABLE_SELECTION?20:1,PAKAR_TABLE_SELECTION?8:kPixels> fire_;
   uint8_t states_[kCells] = {};
   BoardCore::StateAppearance appearance_;
   BoardCore::CellBatch previewSelection_;

@@ -54,6 +54,7 @@ mod usb_api;
 mod platform;
 mod realtime;
 mod game_presentation;
+mod minigame;
 mod state_appearance;
 mod streaming;
 mod terminal_ui;
@@ -175,6 +176,8 @@ struct DeviceStatus {
     #[serde(default)]
     key_game: serde_json::Value,
     #[serde(default)]
+    minigame: serde_json::Value,
+    #[serde(default)]
     key_mask_applied: Option<bool>,
     #[serde(default)]
     game_audio_applied: bool,
@@ -260,6 +263,7 @@ enum HttpCommand {
     Status(Endpoint),
     Mapping(Endpoint, u64),
     Configuration(Endpoint, &'static str),
+    CorrectionPreview(Endpoint, pixel_corrections::PreviewRequest),
     BoardSilent(Endpoint, u64, board_silent::Change),
     Post(Endpoint, &'static str, Vec<(String, String)>),
     CellBatch(Endpoint, cell_batch::Correlation),
@@ -305,6 +309,7 @@ impl HttpCommand {
             Self::Maintenance(_, id, _) => Event::MaintenanceFinished(*id, Err(error)),
             Self::PixelReadback(_, id, ..) => Event::PixelReadbackFinished(*id, Err(error)),
             Self::Mapping(_, id) => Event::MappingFailed(*id, error),
+            Self::CorrectionPreview(_, request) => Event::CorrectionPreviewFinished(request.id, Err(error)),
             _ if self.diagnostic_source().is_some() => {
                 Event::DiagnosticFailure(self.diagnostic_source().unwrap(), error)
             }
@@ -327,6 +332,7 @@ impl HttpCommand {
             | Self::Mapping(endpoint, ..)
             | Self::BoardSilent(endpoint, ..)
             | Self::Configuration(endpoint, ..)
+            | Self::CorrectionPreview(endpoint, ..)
             | Self::AccessChange(endpoint, ..)
             | Self::NameChange(endpoint, ..)
             | Self::Settings(endpoint, ..)
@@ -350,6 +356,7 @@ impl HttpCommand {
             Self::Status(endpoint) => Self::Status(replace(endpoint)),
             Self::Mapping(endpoint, id) => Self::Mapping(replace(endpoint), *id),
             Self::Configuration(endpoint, path) => Self::Configuration(replace(endpoint), path),
+            Self::CorrectionPreview(endpoint, request) => Self::CorrectionPreview(replace(endpoint), request.clone()),
             Self::BoardSilent(endpoint, id, desired) => {
                 Self::BoardSilent(replace(endpoint), *id, *desired)
             }
@@ -473,6 +480,7 @@ enum Event {
     Mapping(u64, Vec<CellMapping>, Option<(String, String)>),
     MappingFailed(u64, String),
     Configuration(&'static str, serde_json::Value),
+    CorrectionPreviewFinished(u64, Result<pixel_corrections::Configuration, String>),
     Accepted(String),
     BoardSilentFinished(u64, Result<pc_contract::Settings, String>),
     CredentialsUpdated(Endpoint),
@@ -527,6 +535,7 @@ impl Event {
             | Self::MaintenanceFinished(_, Err(_))
             | Self::PixelModeFinished(_, Err(_))
             | Self::PixelReadbackFinished(_, Err(_))
+            | Self::CorrectionPreviewFinished(_, Err(_))
             | Self::PixelCommandFinished(_, Err(_)) => false,
             _ => true,
         }
@@ -576,6 +585,9 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
     if let HttpCommand::Scoped(scope, command) = command {
         return scoped_http_request(client, &scope, &command)
             .map(|result| Event::ForScope(scope, Box::new(result)));
+    }
+    if matches!(command, HttpCommand::CorrectionPreview(..)) {
+        return Err("Correction preview requires a scoped board owner".into());
     }
     let mapping_id = match &command {
         HttpCommand::Mapping(_, id) => *id,
@@ -764,6 +776,7 @@ fn http_request(client: &Client, command: HttpCommand) -> Result<Event, String> 
             (endpoint, request, 2_u8)
         }
         HttpCommand::Configuration(..)
+        | HttpCommand::CorrectionPreview(..)
         | HttpCommand::AccessChange(..)
         | HttpCommand::BoardSilent(..)
         | HttpCommand::NameChange(..) => unreachable!(),
@@ -901,6 +914,7 @@ fn scoped_http_request(
     if mutating {
         let allowed = before.capabilities.as_ref().is_some_and(|c| match command {
             HttpCommand::Post(_, path, form) => c.allows(path, form),
+            HttpCommand::CorrectionPreview(..) => c.has(pixel_corrections::PREVIEW_FEATURE),
             HttpCommand::CellBatch(_, correlation) => {
                 c.allows("/api/cells", &correlation.request.form())
             }
@@ -927,6 +941,12 @@ fn scoped_http_request(
         }
     }
     let pinned = scope.pin.as_ref().map(peer_http::Pin::client).transpose()?;
+    if let HttpCommand::CorrectionPreview(endpoint, request) = command {
+        let peer = scope.pin.as_ref().ok_or("Correction preview requires a board owner")?;
+        let client = pinned.as_ref().ok_or("Correction preview requires a fenced client")?;
+        let value = pixel_corrections::send_http_preview(client, endpoint, peer, request, || scope.admit())?;
+        return Ok(Event::CorrectionPreviewFinished(request.id, Ok(value)));
+    }
     if let HttpCommand::BoardSilent(endpoint, id, desired) = command {
         if !desired.allowed(&before) {
             return Err("Board settings are unavailable or programming safety is active".into());
@@ -3617,6 +3637,8 @@ struct PakarControllerApp {
     buzzer_frequency: u16,
     buzzer_duration: u16,
     key_layout_edit: bool,
+    key_selection: ui::cell_table::Selection,
+    key_trigger_on_click: bool,
     key_positions: [[f32; 2]; 9],
     output_mask: u8,
     device_name: Option<String>,
@@ -3808,6 +3830,8 @@ impl PakarControllerApp {
             buzzer_frequency: 1032,
             buzzer_duration: 100,
             key_layout_edit: false,
+            key_selection: Default::default(),
+            key_trigger_on_click: false,
             key_positions: native_workspace::default_key_positions(),
             output_mask: 0,
             device_name: None,
@@ -4734,6 +4758,9 @@ impl PakarControllerApp {
                     {
                         self.receive_configuration(path, value);
                     }
+                }
+                Event::CorrectionPreviewFinished(id, result) => {
+                    self.pixel_corrections.live.finish(id, result, Instant::now());
                 }
                 Event::MaintenanceFinished(id, result) => {
                     if self.device_settings.maintenance_pending == Some(id) {

@@ -7,7 +7,9 @@ const peer=readFileSync(new URL('../assets/web/peer-http.js',import.meta.url),'u
 const html=readFileSync(new URL('../assets/web/basic.html',import.meta.url),'utf8');
 const firmware=readFileSync(new URL('../firmware/esp/application.ino',import.meta.url),'utf8');
 assert.match(firmware,/server\.native\(\)\.on\(AsyncURIMatcher::exact\("\/basic"\)/,'Immutable page bypasses the hardware queue');
-assert.match(firmware,/request->send\(200, "text\/html; charset=utf-8",\s*reinterpret_cast<const uint8_t \*>\(kBasicUi\), sizeof\(kBasicUi\) - 1\)/,'Use bounded flash response, not ESP32 char* send_P heap overload');
+assert.match(firmware,/AsyncURIMatcher::exact\("\/basic"\), HTTP_GET\|HTTP_HEAD,[\s\S]*?serveStaticAsset\(request,"text\/html; charset=utf-8",kBasicUi,sizeof\(kBasicUi\)-1,kStaticBasicEtag\)/,'Basic page must use the shared bounded asset response with HEAD and its own validator');
+const assetService=readFileSync(new URL('../firmware/esp/src/StaticAssetService.h',import.meta.url),'utf8');
+assert.match(assetService,/new PakarHttpDetail::SnapshotResponse\(status,type,\s*status==200\?static_cast<const char\*>\(bytes\):nullptr,status==200\?length:0,\{\}\)/,'Shared response retains explicit byte length, not the char* send_P heap overload');
 const {createBasicCells,createPeerHttp}=vm.runInNewContext(peer+'\n'+js+'\n({createBasicCells,createPeerHttp})',{URLSearchParams,Headers,AbortController,setTimeout,clearTimeout,crypto:webcrypto});
 function fixture(){
   const status={version:'0.2.8',board_id:'esp32s3-aabbccddeeff',boot_id:'1'.repeat(32),http_peer_fencing:true,hostname:'ledboard',pixels:480,

@@ -46,6 +46,7 @@ CRGB LedGrid::colorFor(BoardCore::Protocol::CellState state) const {
 
 bool LedGrid::configureAppearance(const BoardCore::StateAppearance &value) {
   if(!value.valid())return false;
+  if(value.fireRotation!=appearance_.fireRotation)fire_.restart(value.fireRotation);
   appearance_=value;
   if(PAKAR_TABLE_SELECTION)for(uint8_t i=0;i<kCells;++i){
     current_[i]=target_[i]=colorFor(static_cast<BoardCore::Protocol::CellState>(states_[i]));
@@ -57,6 +58,7 @@ bool LedGrid::configureAppearance(const BoardCore::StateAppearance &value) {
 bool LedGrid::preview(const BoardCore::CellBatch &selection,uint32_t rgb,uint16_t durationMs) {
   if(!selection.count()||rgb>0xffffff||!durationMs||durationMs>10000||staging_||!outputEnabled_)return false;
   for(uint8_t id=kCells+1;id<=80;++id)if(selection.contains(id))return false;
+  retirePresentation();
   previewSelection_=selection;previewRgb_=rgb;previewAt_=millis();previewDuration_=durationMs;
   dirty_=true;return true;
 }
@@ -71,6 +73,7 @@ bool LedGrid::setCells(const BoardCore::CellBatch &selection,
                       BoardCore::Protocol::CellState state,BoardCore::Protocol::Effect effect) {
   if(!selection.count()||state>BoardCore::Protocol::kCellWon||effect>BoardCore::Protocol::kEffectPulse)return false;
   for(uint8_t id=1;id<=kCells;++id)if(selection.contains(id)&&!permits(id,state))return false;
+  retirePresentation();
   BoardCore::CellBatch continuing;
   // A repeated Fade to the same target must not restart its clock. Independent
   // clients may send the same intent with new request IDs; stretching a fade
@@ -118,6 +121,7 @@ bool LedGrid::setAssignments(const uint8_t *cells,const uint8_t *states,uint8_t 
     seen.add(cells[i]);
   }
   // One transaction, not80 pattern resets/AVR notices or output publications.
+  retirePresentation();
   staging_=false;stopPattern("cell-assignments");clearDiagnostic();
   for(uint8_t i=0;i<count;++i){
     const uint8_t index=cells[i]-1;states_[index]=states[i];
@@ -131,6 +135,7 @@ bool LedGrid::setAssignments(const uint8_t *cells,const uint8_t *states,uint8_t 
 
 bool LedGrid::fill(BoardCore::Protocol::CellState state) {
   for(uint8_t id=1;id<=kCells;++id)if(!permits(id,state))return false;
+  retirePresentation();
   clearDiagnostic();
   staging_ = false;
   changePattern(kPatternNone,"fill");
@@ -160,6 +165,7 @@ bool LedGrid::resetWhite() {
 void LedGrid::showWinner(uint8_t winner,bool restartPresentation) {
 #if PAKAR_FIRST_WINS_ENABLED
   if (winner < 1 || winner > 9) return;
+  retirePresentation();
   keyWinner_=winner;if(restartPresentation)keyWinnerAt_=millis();
   clearDiagnostic();
   staging_ = false;
@@ -189,7 +195,9 @@ void LedGrid::setRedLock(bool enabled) {
 }
 
 bool LedGrid::setPattern(Pattern pattern) {
+  if(pattern>kPatternCellChase)return false;
   if(redLock_&&pattern==kPatternCellChase)return false;
+  retirePresentation();
   keyWinner_=0;
   clearDiagnostic();
   if(panelObserver_)panelObserver_(3,pattern,0);
@@ -200,6 +208,7 @@ bool LedGrid::setPattern(Pattern pattern) {
   }
   staging_ = false;
   changePattern(pattern,"explicit-pattern");
+  if(pattern==kPatternFire)fire_.restart(appearance_.fireRotation);
   if(pattern==kPatternCellChase){
     chaseStep_=1;chaseFirstFrame_=true;chaseAt_=millis();renderChaseStep(chaseStep_);
   }
@@ -261,6 +270,8 @@ bool LedGrid::needsRender(uint32_t now) const {
   if (!outputEnabled_)return false;
   if (staging_) return static_cast<uint32_t>(now-stagingAt_)>=500U;
   if (!readyToShow(now)) return false;
+  if(gameLayer_&&gameLayer_->enabled)return true;
+  if(presentationAnimated())return true;
   if(diagnosticActive_ && diagnosticOptions_.animated() && !diagnosticOff_)return true;
   if(previewDuration_ && !previewActive(now))return true;
   if(PAKAR_TABLE_SELECTION && appearance_.enabled && !staticMode_ && pattern_==kPatternNone)return true;
@@ -268,7 +279,7 @@ bool LedGrid::needsRender(uint32_t now) const {
   if(pattern_==kPatternCellChase)return dirty_ ||
     (chaseStep_<kCells && static_cast<uint32_t>(now-chaseAt_)>=kChaseIntervalMs) ||
     static_cast<uint32_t>(now-lastFrameAt_)>=1000U;
-  if (dirty_ || pattern_ == kPatternRainbow ||
+  if (dirty_ || pattern_ == kPatternRainbow || pattern_ == kPatternFire ||
       (pattern_ == kPatternCellChase && chaseStep_<kCells && static_cast<uint32_t>(now-chaseAt_)>=kChaseIntervalMs) ||
       (!staticMode_ && pattern_ != kPatternNone && pattern_ != kPatternCellChase)) return true;
   // A strip can power up after the ESP's first frame, or miss that frame.
@@ -286,6 +297,7 @@ void LedGrid::service(uint32_t now) {
   if(previewDuration_ && !previewActive(now))cancelPreview();
   if(staging_){if(static_cast<uint32_t>(now-stagingAt_)<500U)return;staging_=false;dirty_=true;}
   if (!readyToShow(now)) return;
+  if(gameLayer_&&gameLayer_->enabled){showStaged();return;}
   if(PAKAR_FIRST_WINS_ENABLED && keyEffects_ && keyWinner_ && !staticMode_){
     renderKeyEffects(now);showStaged();return;
   }
@@ -297,12 +309,13 @@ void LedGrid::service(uint32_t now) {
       // Never skip cells after a delayed loop, and never replay catch-up frames.
       ++chaseStep_;chaseAt_=now;renderChaseStep(chaseStep_);dirty_=true;
     }
-    if(dirty_ || (diagnosticActive_ && diagnosticOptions_.animated()) || static_cast<uint32_t>(now-lastFrameAt_)>=1000U)showStaged();
+    if(dirty_ || presentationAnimated() || (diagnosticActive_ && diagnosticOptions_.animated()) || static_cast<uint32_t>(now-lastFrameAt_)>=1000U)showStaged();
     return;
   }
-  if (staticMode_ && !dirty_ && pattern_ != kPatternRainbow) {
-    // Resend the already-published complete buffer, never advance fire/fades.
-    if ((diagnosticActive_ && diagnosticOptions_.animated()) || static_cast<uint32_t>(now-lastFrameAt_)>=1000U) showStaged();
+  if (staticMode_ && !dirty_ && pattern_ != kPatternRainbow && pattern_ != kPatternFire) {
+    // Resend the already-published static scene. Explicit global animations
+    // still run; static mode only keeps the pixels within a group identical.
+    if (presentationAnimated() || (diagnosticActive_ && diagnosticOptions_.animated()) || static_cast<uint32_t>(now-lastFrameAt_)>=1000U) showStaged();
     return;
   }
   const bool refresh=static_cast<uint32_t>(now-lastFrameAt_)>=250U;
@@ -337,7 +350,7 @@ void LedGrid::service(uint32_t now) {
     }
   }
   if(PAKAR_TABLE_SELECTION && appearance_.enabled && !staticMode_){renderStateEffects(now);dirty_=true;}
-  if (dirty_ || refresh || (diagnosticActive_ && diagnosticOptions_.animated())) showStaged();
+  if (dirty_ || refresh || presentationAnimated() || (diagnosticActive_ && diagnosticOptions_.animated())) showStaged();
 }
 
 void LedGrid::renderStateEffects(uint32_t now) {
@@ -446,18 +459,18 @@ void LedGrid::renderPattern(uint32_t now) {
       break;
     }
     case kPatternFire:
-      for (uint16_t i = 0; i < kPixels; ++i) {
-        heat_[i] = qsub8(heat_[i], random8(0, 3));
+      fire_.advance(now);
+      for(uint8_t cell=0;cell<kCells;++cell){
+        const uint8_t physical=physicalCells_[cell];
+        if(!physical||physical>kCells)continue;
+        const uint16_t first=groupLayout_.start(physical),count=groupLayout_.count(physical);
+        // Same staggered 20 x 8 half-cell coordinates as table selection.
+        // Custom group counts and the user's physical permutation stay intact.
+        const uint16_t x=PAKAR_TABLE_SELECTION?2*(cell%10)+(cell/10)%2:0;
+        const uint16_t y=PAKAR_TABLE_SELECTION?cell/10:first;
+        for(uint16_t pixel=0;pixel<count;++pixel)
+          pixels_[first+pixel]=HeatColor(fire_.sample(x,PAKAR_TABLE_SELECTION?y:y+pixel));
       }
-      for (uint16_t i = kPixels - 1; i >= 2; --i) {
-        heat_[i] = static_cast<uint8_t>((heat_[i - 1] + heat_[i - 2] +
-                                         heat_[i - 2]) / 3);
-      }
-      if (random8() < 120) {
-        const uint8_t spark = random8(min<uint16_t>(7, kPixels));
-        heat_[spark] = qadd8(heat_[spark], random8(160, 255));
-      }
-      for (uint16_t i = 0; i < kPixels; ++i) pixels_[i] = HeatColor(heat_[i]);
       break;
     default:
       break;
@@ -546,6 +559,7 @@ bool LedGrid::diagnostic(uint16_t index,uint8_t count,uint32_t rgb,bool off,cons
   // Reject completely before touching an in-progress stream or renderer.
   if(!groupLayout_.diagnosticRange(index,count) ||
      rgb>0xffffffU || !options.valid() || !canStage(UINT64_MAX))return false;
+  if(options.enabled)retirePresentation();
   cancelPreview();
   if(!options.enabled){
     if(!diagnosticActive_)++diagnosticRevision_;
@@ -574,6 +588,7 @@ bool LedGrid::diagnostic(uint16_t index,uint8_t count,uint32_t rgb,bool off,cons
 bool LedGrid::stagePixels(uint16_t offset, const uint8_t *rgb, uint8_t count,uint64_t owner) {
   if (offset + count > kPixels || rgb == nullptr) return false;
   if(!canStage(owner))return false;
+  retirePresentation();
   cancelPreview();
   keyWinner_=0;
   if(owner!=UINT64_MAX)clearDiagnostic();
@@ -592,7 +607,9 @@ void LedGrid::showStaged() {
   if(staging_)::memcpy(pixels_,staged_,sizeof(pixels_));
   const bool diagnosing=diagnosticActive_ && !staging_ && !maintenanceActive_;
   const bool previewing=previewActive(millis()) && !staging_ && !maintenanceActive_ && !diagnosing;
-  if(diagnosing)::memcpy(staged_,pixels_,sizeof(pixels_));
+  const bool gamePresenting=gameLayer_&&gameLayer_->enabled&&!staging_&&!maintenanceActive_;
+  const bool presenting=(gamePresenting||(presentation_&&presentation_->active()))&&!staging_&&!maintenanceActive_;
+  if(diagnosing||presenting)::memcpy(staged_,pixels_,sizeof(pixels_));
   if(previewing){
     // Reuse the unowned staging workspace; never commit a preview to the base.
     ::memcpy(staged_,pixels_,sizeof(pixels_));
@@ -608,6 +625,8 @@ void LedGrid::showStaged() {
     const uint16_t first=groupLayout_.start(group);
     for(uint16_t sector=1;sector<groupLayout_.count(group);++sector)pixels_[first+sector]=pixels_[first];
   }
+  if(gamePresenting)Presentation::composeLayer(*gameLayer_,pixels_,groupLayout_,physicalCells_,millis()-gamePresentationAt_);
+  else if(presenting)presentation_->compose(pixels_,groupLayout_,physicalCells_,millis());
 #if PAKAR_FIRST_WINS_ENABLED
   // Clear disabled physical boxes on EVERY frame, including rainbow/stream.
   // Retain the black tail on wire so resizing cannot leave stale LEDs lit.
@@ -635,7 +654,8 @@ void LedGrid::showStaged() {
   }
 #endif
   ::memcpy(published_,pixels_,sizeof(published_));
-  if(previewing || diagnosing)::memcpy(pixels_,staged_,sizeof(pixels_));
+  if(previewing || diagnosing || presenting)::memcpy(pixels_,staged_,sizeof(pixels_));
+  publishedPresentationRevision_=presentation_?presentation_->revision:0;
   ::memcpy(publishedPhysical_,physicalCells_,sizeof(publishedPhysical_));
   publishedGroups_=groupLayout_;
   publishedBrightness_=brightness_;
@@ -646,6 +666,7 @@ void LedGrid::showStaged() {
 }
 
 void LedGrid::setOutputEnabled(bool enabled){
+  if(!enabled)retirePresentation();
   // Explicit Off always queues a complete black frame, even if our requested
   // state was already Off: WS2811 retains previously latched (possibly corrupt)
   // values until it receives a valid replacement frame.
@@ -735,6 +756,7 @@ String LedGrid::pixelFrameJson(bool compact) const {
   body += F(",\"brightness\":"); body += publishedBrightness_;
   body += F(",\"pending\":"); body += dirty_||staging_?F("true"):F("false");
   body += F(",\"group_layout_revision\":");body+=publishedGroups_.revision();
+  body += F(",\"presentation_revision\":");body+=publishedPresentationRevision_;
   body += F(",\"group_counts\":[");
   for(uint8_t group=1;group<=kCells;++group){if(group>1)body+=',';body+=publishedGroups_.count(group);}
   body += F("],\"group_starts\":[");

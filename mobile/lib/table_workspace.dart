@@ -61,6 +61,12 @@ class TableWorkspace extends ChangeNotifier {
         ? effect as String
         : 'immediate';
     final keyPositions = saved['key_positions'];
+    final selectedKeys = saved['key_selection'];
+    if (selectedKeys is List) {
+      _selectedKeys.addAll(
+        selectedKeys.whereType<int>().where((key) => key >= 1 && key <= 9),
+      );
+    }
     if (keyPositions is Map) {
       for (var key = 1; key <= 9; key++) {
         final raw = keyPositions['$key'];
@@ -183,6 +189,20 @@ class TableWorkspace extends ChangeNotifier {
   }
 
   final Map<int, Offset> _keyPositions = {};
+  final Set<int> _selectedKeys = {};
+  Set<int> get selectedKeys => Set.unmodifiable(_selectedKeys);
+  void selectKeys(Set<int> keys) {
+    final next = keys.where((key) => key >= 1 && key <= 9).toSet();
+    if (_selectedKeys.length == next.length &&
+        _selectedKeys.containsAll(next)) {
+      return;
+    }
+    _selectedKeys
+      ..clear()
+      ..addAll(next);
+    notifyListeners();
+  }
+
   Offset keyPosition(int key) => _keyPositions[key] ?? defaultKeyPosition(key);
   void moveKey(int key, Offset position) {
     if (key < 1 || key > 9 || !position.dx.isFinite || !position.dy.isFinite) {
@@ -219,6 +239,7 @@ class TableWorkspace extends ChangeNotifier {
       for (var key = 1; key <= 9; key++)
         '$key': [keyPosition(key).dx, keyPosition(key).dy],
     },
+    'key_selection': _selectedKeys.toList()..sort(),
     'vertical': vertical,
     'horizontal': horizontal,
     'viewport': {

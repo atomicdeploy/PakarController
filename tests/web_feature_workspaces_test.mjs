@@ -17,11 +17,12 @@ class Element{
 const layout=new Element('div'),listeners=new Map();
 const document={createElement:tag=>new Element(tag),querySelector:()=>layout,querySelectorAll:selector=>layout.querySelectorAll(selector),getElementById:id=>layout.querySelectorAll('*').find(n=>n.id===id)||null};
 const modalRequests=[];
-const context=vm.createContext({document,navigator:{},confirm:()=>{throw Error('Blocking browser confirm must not be used');},addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)});
+const context=vm.createContext({document,navigator:{},setTimeout,clearTimeout,confirm:()=>{throw Error('Blocking browser confirm must not be used');},addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)});
 context.WebUI={dialog(spec){let onClose,closed=false;const prompt={spec,element:{addEventListener(type,callback){assert.equal(type,'close');onClose=callback;}},close(){if(closed)return;closed=true;onClose?.();}};modalRequests.push(prompt);return prompt;}};
 const approveReload=async prompt=>{await prompt.spec.actions[1].action();prompt.close();};
 vm.runInContext(await readFile(new URL('../assets/web/pixel-groups.js',import.meta.url),'utf8'),context);
 vm.runInContext(source,context);const contracts=context.WebFeatureContracts;
+vm.runInContext(await readFile(new URL('../assets/web/correction-preview.js',import.meta.url),'utf8'),context);
 const configuration={revision:0,pixels:6,index_base:0,enabled:true,rules:[],sources:[0,1,2,3,4,5]};
 assert.equal(contracts.parseCorrections(configuration).pixels,6);
 const disabledRules={...configuration,rules:[{kind:'black',pixel:0,enabled:false},{kind:'shift',pixel:1,offset:1}]};
@@ -145,6 +146,23 @@ await promptButton('Reload').onclick();assert.equal(reads,noModalReads);assert.e
 assert(errors.at(-1).message.includes('confirmation is unavailable'));context.WebUI=sharedUi;
 const disposedReload=promptButton('Reload').onclick();promptWorkspace.dispose();await disposedReload;
 assert.equal(writes,1);assert.equal(layout.children.length,0);
+// Approval stays pending while Reload disables its trigger. Native dialog
+// close must run only after that trigger can receive restored keyboard focus.
+{
+ let releaseRead,readCount=0,finished=false;
+ state={board_id:'focus-reload',boot_id:'boot',pixel_corrections_revision:0};
+ const focusWorkspace=context.createFeatureWorkspaces({...options,api:()=>++readCount===1?Promise.resolve(structuredClone(configuration)):new Promise(resolve=>{releaseRead=resolve;})});
+ await new Promise(setImmediate);
+ const card=document.getElementById('pixelCorrectionsCard'),control=label=>card.querySelectorAll('button').find(b=>b.textContent===label);
+ await control('Add rule').onclick();const decision=control('Reload').onclick(),prompt=modalRequests.at(-1);
+ const approval=prompt.spec.actions[1].action().then(()=>{finished=true;});
+ await new Promise(setImmediate);
+ assert.equal(finished,false,'Reload dialog action must await the actual read');
+ assert.equal(control('Reload').disabled,true);
+ releaseRead(structuredClone(configuration));await approval;
+ assert.equal(control('Reload').disabled,false,'Trigger is enabled before dialog closes');
+ prompt.close();await decision;assert.equal(readCount,2,'Approval reads once, never after closing');focusWorkspace.dispose();
+}
 // Disabling, reordering and saving preserve each row's flag and still require
 // an explicit commit. A checkbox is not an empty numeric draft.
 const rowErrorsBefore=errors.length;
@@ -392,6 +410,18 @@ const groupDisconnect=groupButton('Reload').onclick();features.delete('pixel-gro
 features.add('pixel-group-layout');groupWorkspace.update();assert(groupDirty());
 context.WebUI={};const missingGroupReads=groupReads;await groupButton('Reload').onclick();assert.equal(groupReads,missingGroupReads);assert(groupDirty());assert(errors.at(-1).message.includes('Group confirmation is unavailable'));context.WebUI=sharedUi;
 const groupDispose=groupButton('Reload').onclick();groupWorkspace.dispose();await groupDispose;assert.equal(groupWrites,1);assert.equal(layout.children.length,0);
+{
+ let releaseRead,readCount=0,finished=false;
+ const focusGroups=context.createFeatureWorkspaces({...groupOptions,api:()=>++readCount===1?Promise.resolve(structuredClone(custom)):new Promise(resolve=>{releaseRead=resolve;})});
+ await new Promise(setImmediate);
+ const card=document.getElementById('pixelGroupsCard'),control=label=>card.querySelectorAll('button').find(b=>b.textContent===label);
+ card.querySelectorAll('input').find(n=>n.getAttribute('aria-label')==='Physical group').value='3';
+ await control('Customize group').onclick();const decision=control('Reload').onclick(),prompt=modalRequests.at(-1);
+ const approval=prompt.spec.actions[1].action().then(()=>{finished=true;});await new Promise(setImmediate);
+ assert.equal(finished,false,'Group Reload retains modal ownership until its read finishes');assert(control('Reload').disabled);
+ releaseRead(structuredClone(custom));await approval;assert.equal(control('Reload').disabled,false);
+ prompt.close();await decision;assert.equal(readCount,2);assert.equal(groupWrites,1);focusGroups.dispose();
+}
 // Invalid typed counts are drafts too; structural redraw/peer return must not
 // replace them with the last valid value and accidentally re-enable Save.
 state={...oldGroupState,boot_id:'typed-counts',pixel_groups:custom};groupSaved=custom;
@@ -454,6 +484,33 @@ const beforeInvalidCorrection=writes;await ownedButton('Save to board').onclick(
 await ownedButton('Increase pixel').onclick();assert.equal(ownedPixel().value,'2');
 await ownedButton('Save to board').onclick();assert.equal(writes,beforeInvalidCorrection+1);assert(lastPayload.rules.every(rule=>!Object.hasOwn(rule,'pixelDraft')&&!Object.hasOwn(rule,'offsetDraft')),'Only normalized correction fields enter the board contract');
 ownedCorrections.dispose();assert.equal(layout.children.length,0);
+// The real editor wires the shared RAM lease owner: opening is passive, first
+// edit previews by default, and only explicit Save changes persistent rules.
+{
+state={board_id:'preview',boot_id:'boot',pixel_corrections_revision:0};
+saved=structuredClone(configuration);features.clear();for(const f of ['identity','pixel-corrections','pixel-corrections-preview'])features.add(f);
+let live=false,activeSources=[...saved.sources],previewWrites=0,persistentWrites=0;
+const previewResponse=()=>({...saved,active_sources:activeSources,preview:{active:live,lease_id:live?7:0,base_revision:saved.revision,remaining_ms:live?10000:0}});
+const previewWorkspace=context.createFeatureWorkspaces({...options,
+ api:async()=>previewResponse(),
+ command:async(path,data)=>{const value=JSON.parse(data.configuration);
+  if(path.endsWith('/preview')){previewWrites++;live=!value.clear;
+   activeSources=live?Array.from(contracts.correctionSources(saved.pixels,value.enabled,value.rules)):[...saved.sources];
+   return previewResponse();}
+  assert.equal(path,'/api/pixels/corrections');assert.equal(live,false,'Release precedes durable save');persistentWrites++;
+  saved={...saved,...value,revision:saved.revision+1,sources:Array.from(contracts.correctionSources(saved.pixels,value.enabled,value.rules))};return saved;
+ }});
+await new Promise(setImmediate);
+const previewCard=document.getElementById('pixelCorrectionsCard'),previewButton=label=>previewCard.querySelectorAll('button').find(b=>b.textContent===label);
+assert.equal(previewWrites,0);assert.equal(persistentWrites,0);
+const previewToggle=previewCard.querySelectorAll('label').find(n=>n.children.some(c=>c.textContent==='Live preview')).children.find(n=>n.type==='checkbox');
+assert.equal(previewToggle.checked,true);
+await previewButton('Add rule').onclick();await new Promise(setImmediate);
+assert.equal(previewWrites,1);assert.equal(persistentWrites,0);assert.equal(live,true);
+await previewButton('Save to board').onclick();await new Promise(setImmediate);
+assert.equal(previewWrites,2);assert.equal(persistentWrites,1);assert.equal(live,false);
+previewWorkspace.dispose();
+}
 assert(!source.includes('new WebSocket'));assert(!source.includes('setInterval('));assert(!source.includes('innerHTML'));
 assert(!source.includes('/api/audio'),'Existing sound controls remain the only implementation');
 console.log('Unified Web feature workspaces: real DOM, correction revision/readback, typed 6/12-pixel diagnostics, live drafts, all-off/rainbow, peer-change rejection, capability gates and no duplicate transport/front panel passed.');

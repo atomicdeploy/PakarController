@@ -59,12 +59,14 @@ jobs:
         shell: pwsh
         run: |
           $taskPins = Get-Content tools/firmware-dependencies.json -Raw | ConvertFrom-Json
-          $taskJson = @($taskPins.libraries | Where-Object name -eq 'ArduinoJson')
-          if ($taskJson.Count -ne 1 -or $taskJson[0].version -notmatch '^\d+\.\d+\.\d+$') { throw 'Missing exact ArduinoJson pin' }
           arduino-cli lib update-index
           if ($LASTEXITCODE -ne 0) { throw 'Host-test library index failed' }
-          arduino-cli lib install ('ArduinoJson@' + $taskJson[0].version)
-          if ($LASTEXITCODE -ne 0) { throw 'Pinned host-test headers failed' }
+          foreach ($taskName in @('ArduinoJson','LibSSH-ESP32')) {
+            $taskLibrary = @($taskPins.libraries | Where-Object name -eq $taskName)
+            if ($taskLibrary.Count -ne 1 -or $taskLibrary[0].version -notmatch '^\d+\.\d+\.\d+$') { throw "Missing exact $taskName pin" }
+            arduino-cli lib install ($taskName + '@' + $taskLibrary[0].version)
+            if ($LASTEXITCODE -ne 0) { throw 'Pinned host-test headers failed' }
+          }
       - run: node tools/ci-checks.mjs quality
       - run: node tests/led_backend_integration_test.mjs
       - run: node tests/web_led_backend_test.mjs
@@ -105,6 +107,9 @@ jobs:
     needs: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -124,6 +129,13 @@ jobs:
           bash tools/test-pc-flags.sh
           # ESP8266 source/tooling is retained, but its full image currently
           # exceeds physical RAM/flash budgets and is not a release target.
+          # Board-owned key games need both ends compiled, not only host fixtures.
+          # Subsequent table builds restore the canonical release artifacts.
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target avr -GameMode first-wins -LinkMode buffered -AvrRadio -Jobs 2
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -GameMode first-wins -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -S3Bluetooth disabled -Jobs 2
+          # Optional encrypted transport + transactional SCP/SFTP and opt-in FTP; later builds
+          # restore the default SSH-excluded artifact in the same SDK cache.
+          pwsh -NoProfile -File tools/build-firmware.ps1 -Target esp32s3 -GameMode first-wins -LinkMode buffered -S3FlashMB 16 -S3Psram opi -S3LedGpio -S3LedRmtDma -S3Bluetooth disabled -S3Ssh -S3Scp -S3Sftp -S3Ftp -Jobs 2
           bash build.sh polling avr
           bash build.sh busy-wire avr
           bash build.sh buffered avr
@@ -137,6 +149,34 @@ jobs:
           # builds a no-matrix image, which must not be the release artifact.
           bash build.sh buffered esp32s3 --s3-flash-mb 16 --s3-psram opi --s3-led-gpio --s3-led-rmt-dma
           node tools/firmware-report.mjs --require --write
+      - name: Previous successful main resource baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if run=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty'); then
+            if [[ -n "$run" ]]; then
+              if ! gh run download "$run" --repo "$GITHUB_REPOSITORY" --name PakarController-resources --dir build/resource-baseline; then
+                echo 'No retained resource baseline available; absolute budgets still enforced.'
+              fi
+            fi
+          else
+            echo 'Baseline lookup unavailable; absolute budgets still enforced.'
+          fi
+      - name: Resource budgets and historical comparison
+        run: |
+          args=()
+          if [[ -f build/resource-baseline/resource-report.json ]]; then
+            args+=(--baseline build/resource-baseline/resource-report.json)
+          fi
+          node tools/resource-report.mjs --write "${args[@]}"
+      - name: Publish resource report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: PakarController-resources
+          path: build/resource-report.json
+          retention-days: 90
+          if-no-files-found: warn
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: PakarController-firmware
@@ -288,6 +328,9 @@ jobs:
     needs: [lint, tooling, quality, firmware, windows-desktop, android-preview, release]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     steps:
       - env:
           LINT: ${{ needs.lint.result }}
@@ -297,6 +340,7 @@ jobs:
           WINDOWS: ${{ needs.windows-desktop.result }}
           ANDROID: ${{ needs.android-preview.result }}
           RELEASE: ${{ needs.release.result }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           {
             echo '# PakarController build verification'; echo
@@ -310,5 +354,17 @@ jobs:
             echo "| Draft release | $RELEASE |"
             echo; echo '> CI does not prove physical operation or deployment.'
           } >> "$GITHUB_STEP_SUMMARY"
+          # Adapt Pealayer's real run-artifact summary; enumerate every page.
+          {
+            echo; echo '## Run artifacts'; echo
+            echo '| Artifact | Bytes | Expires |'; echo '|---|---:|---|'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if artifact_rows=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | "| \(.name) | \(.size_in_bytes) | \(.expires_at) |"'); then
+            if [[ -n "$artifact_rows" ]]; then printf '%s\n' "$artifact_rows" >> "$GITHUB_STEP_SUMMARY"; else
+              echo '| None produced by this run | — | — |' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo '| Inventory unavailable; inspect this run | — | — |' >> "$GITHUB_STEP_SUMMARY"
+          fi
           [[ "$LINT" == success && "$TOOLING" == success && "$QUALITY" == success && "$FIRMWARE" == success && "$WINDOWS" == success && "$ANDROID" == success ]]
           [[ "$RELEASE" == success || "$RELEASE" == skipped ]]

@@ -20,7 +20,9 @@ pub fn launch_command(args: &[String]) -> Command {
             .filter(|v| !v.starts_with("--"))
             .cloned()
     };
-    if args.iter().any(|v| v == "--wifi") {
+    if args.iter().any(|v| v == "--snake") {
+        Command::Snake
+    } else if args.iter().any(|v| v == "--wifi") {
         Command::UseWifi {
             endpoint: option("--endpoint"),
         }
@@ -470,7 +472,11 @@ impl PakarControllerApp {
         if path == pixel_corrections::PATH {
             self.pixel_corrections.pending = None;
             match serde_json::from_value::<pixel_corrections::Configuration>(value) {
-                Ok(value) if value.pixels > 0 && value.pixels <= 480 && value.rules.len() <= 32 => {
+                Ok(value) if value.validate().is_ok() => {
+                    if self.live_status().and_then(peer_http::Pin::from_status) != self.pixel_corrections.owner {
+                        self.pixel_corrections.message = "Correction readback belongs to a retired board".into();
+                        return;
+                    }
                     if self
                         .pixel_corrections
                         .expected
@@ -485,6 +491,7 @@ impl PakarControllerApp {
                     }
                     self.pixel_corrections.value = Some(value);
                     self.pixel_corrections.dirty = false;
+                    self.pixel_corrections.live.committed();
                     self.pixel_corrections.message = "Board configuration read back".into();
                 }
                 _ => self.pixel_corrections.message = "Invalid correction readback".into(),
@@ -754,6 +761,7 @@ impl PakarControllerApp {
             Command::NotificationTest => self.notification_test(),
             Command::Connect => self.show_connection = true,
             Command::About => self.show_about = true,
+            Command::Snake => ctx.open_url(egui::OpenUrl::new_tab("http://127.0.0.1:18490/snake")),
             Command::Workspaces => self.show_workspaces = true,
             Command::CellManager => {
                 if !self.has_table() {
@@ -1001,6 +1009,8 @@ impl PakarControllerApp {
             Panel::PixelDiagnostics => &["pixel-diagnostic"],
             Panel::PixelCorrections => &["pixel-corrections"],
             Panel::Keys => &["inputs", "outputs"],
+            Panel::Game | Panel::GameSettings => &["inputs", "outputs"],
+            Panel::Melodies => &["buzzer"],
             Panel::EffectControls => &["table", "leds", "inputs", "outputs"],
             Panel::FrontPanel => &["display", "text", "buzzer", "lcd"],
             Panel::Hardware => &["telemetry", "inputs", "outputs"],
@@ -1152,6 +1162,12 @@ impl PakarControllerApp {
             .map(|a| a.name.clone())
             .unwrap_or_else(|| "PakarController".into());
         if let Some(icon) = crate::branding::sync_peer(ctx, self.presentation_context()) {
+            #[cfg(windows)]
+            if let Some(desktop) = &self.windows_desktop {
+                if let Err(error) = desktop.set_icon(&icon) {
+                    self.record_event("Windows application artwork", &error);
+                }
+            }
             if let Some(tray) = &self.tray {
                 if let Err(error) = tray.set_application(&app_name, &icon) {
                     self.record_event("Application artwork", &error);
@@ -1201,6 +1217,8 @@ impl PakarControllerApp {
                 i.viewport().occluded.unwrap_or(false),
             )
         });
+        self.service_pixel_correction_preview(!minimized && !occluded && !self.exiting
+            && self.usb_ui_visible && ctx.input(|i|i.focused));
         let ui_demand = crate::usb_demand::visible_demand(
             self.usb_ui_demand,
             self.usb_ui_visible,
@@ -1732,6 +1750,7 @@ impl PakarControllerApp {
                             method: self.transport,
                             enabled: self.connection_enabled,
                             live: self.command_route().is_some(),
+                            peer_known: self.presentation_context().is_some(),
                             endpoint: &self.base,
                             port: &self.serial_port,
                             identity_pending: self.identity_pending,
@@ -1947,7 +1966,7 @@ impl PakarControllerApp {
                 crate::usb_demand::PIXELS
             }
             Panel::Keys | Panel::PixelDiagnostics => crate::usb_demand::PIXELS,
-            Panel::FrontPanel => crate::usb_demand::PANEL | crate::usb_demand::PERIPHERAL,
+            Panel::FrontPanel | Panel::Melodies => crate::usb_demand::PANEL | crate::usb_demand::PERIPHERAL,
             Panel::Events => crate::usb_demand::PANEL,
             _ => 0,
         };
@@ -1986,6 +2005,9 @@ impl PakarControllerApp {
                         });
                     }
                     Panel::Keys => self.draw_hardware(ui, true),
+                    Panel::Game => self.draw_game(ui),
+                    Panel::GameSettings => self.draw_game_settings(ui),
+                    Panel::Melodies => self.draw_melodies(ui),
                     Panel::EffectControls => self.draw_effects(ui),
                     Panel::FrontPanel => self.draw_front_panel(ui),
                     Panel::Hardware => self.draw_hardware(ui, false),
@@ -2168,6 +2190,21 @@ impl PakarControllerApp {
             Err("USB API peer retired; result not applied".into())
         } else {result};
         match purpose {
+            pixel_groups::Purpose::Minigame(request) => {
+                match result.and_then(|value|request.verify(value)) {
+                    Ok(observed) => {
+                        if let Some(status)=self.serial_status.as_mut() {
+                            if observed.command_clock_ms>=status.command_clock_ms {
+                                status.minigame=observed.minigame;
+                                status.command_clock_ms=observed.command_clock_ms;
+                                status.winner=observed.winner;
+                            }
+                        }
+                        self.message="Game command ACK and same-board readback verified over USB".into();
+                    },
+                    Err(error)=>self.message=error,
+                }
+            },
             pixel_groups::Purpose::Frame{revision,layout_revision,at}=> {
                 if let Ok(value)=result && let Some(status)=self.live_status() {
                     let peer=peer_http::Pin::from_status(status);
@@ -2255,11 +2292,13 @@ impl PakarControllerApp {
     fn draw_pixel_corrections(&mut self, ui: &mut egui::Ui) {
         let pin = self.live_status().and_then(peer_http::Pin::from_status);
         if pin != self.pixel_corrections.owner {
+            let preview_enabled = self.config.pixel_correction_live_preview;
             self.pixel_corrections = pixel_corrections::Editor {
                 tab: true,
                 owner: pin.clone(),
                 ..Default::default()
             };
+            self.pixel_corrections.live.enabled = preview_enabled;
         }
         if self.transport != Transport::WiFi || pin.is_none() {
             ui.weak("Correction configuration requires the board Wi-Fi connection.");
@@ -2273,7 +2312,8 @@ impl PakarControllerApp {
             self.pixel_corrections.pending = None;
             self.pixel_corrections.message="No correction receipt arrived. Read from board before retrying; no write replayed.".into();
         }
-        let busy = self.pixel_corrections.pending.is_some();
+        self.pixel_corrections.live.painted_at = Some(Instant::now());
+        let busy = self.pixel_corrections.pending.is_some() || self.pixel_corrections.live.pending.is_some();
         // Match Flutter: load once when this peer's editor opens. A failed or
         // uncertain read keeps its message and requires an explicit retry.
         let mut read = self.pixel_corrections.value.is_none()
@@ -2282,6 +2322,31 @@ impl PakarControllerApp {
         let mut save = false;
         let rule_toggle=self.live_status().and_then(|s|s.capabilities.as_ref())
             .is_some_and(|c|c.has("pixel-correction-rule-toggle"));
+        let preview_supported=self.live_status().and_then(|s|s.capabilities.as_ref())
+            .is_some_and(|c|c.has(pixel_corrections::PREVIEW_FEATURE));
+        let cursor=self.live_status().and_then(|status| {
+            let observed=pixel_diagnostic::Observation::read(status)?;
+            (observed.active && !observed.off && !observed.probe.group && self.pixel_diagnostic.pending.is_none())
+                .then_some(pixel_corrections::DiagnosticCursor{raw:observed.probe.index,revision:status.pixel_corrections_revision?})
+        });
+        if preview_supported {
+            let mut enabled=self.pixel_corrections.live.enabled;
+            if ui.checkbox(&mut enabled,ui::i18n::text("Live preview")).changed() {
+                self.pixel_corrections.live.toggle(enabled);
+                self.config.pixel_correction_live_preview=enabled;
+                // Explicit preference only: do not commit open Preferences
+                // drafts, a preview lease, or board configuration here.
+                if let Err(error)=config::AppConfig::load().and_then(|mut saved|{
+                    saved.pixel_correction_live_preview=enabled;saved.save()
+                }) {self.pixel_corrections.message=format!("Preview preference not saved: {error}");}
+            }
+            if self.pixel_corrections.live.observed.is_some() {
+                ui.weak("Temporary preview · Save makes it persistent");
+            }
+            if !self.pixel_corrections.live.error.is_empty() {
+                ui.colored_label(ui.visuals().warn_fg_color,&self.pixel_corrections.live.error);
+            }
+        }
         let changed = self
             .live_status()
             .and_then(|s| s.pixel_corrections_revision)
@@ -2340,11 +2405,19 @@ impl PakarControllerApp {
             });
             ui.add_space(8.0);
             if let Some(value) = self.pixel_corrections.value.as_mut() {
-                self.pixel_corrections.dirty |= super::panel_details::correction_rules(ui, value, rule_toggle);
+                let edited=super::panel_details::correction_rules(ui, value, rule_toggle,self.pixel_corrections.live.observed.as_ref(),cursor);
+                self.pixel_corrections.dirty |= edited;
+                if edited && preview_supported {self.pixel_corrections.live.edited(Instant::now());}
             }
         });
         ui.label(&self.pixel_corrections.message);
         if read {
+            self.pixel_corrections.live.stop();
+            if self.pixel_corrections.live.save_lease().is_some() {
+                self.pixel_corrections.reload_after_preview=true;
+                self.pixel_corrections.message="Stopping temporary preview before reloading…".into();
+                return;
+            }
             self.pixel_corrections.pending = Some(std::time::Instant::now());
             self.pixel_corrections.expected = None;
             self.pixel_corrections.message = "Reading board configuration…".into();
@@ -2354,9 +2427,9 @@ impl PakarControllerApp {
             ));
         }
         if save && let Some(value) = self.pixel_corrections.value.as_ref() {
-            match serde_json::to_string(
-                &serde_json::json!({"enabled":value.enabled,"revision":value.revision,"rules":value.rules}),
-            ) {
+            let mut saved=value.write_value();
+            if let Some(lease)=self.pixel_corrections.live.save_lease() {saved["lease_id"]=lease.into();}
+            match serde_json::to_string(&saved) {
                 Ok(json) => {
                     self.pixel_corrections.expected = Some(value.clone());
                     self.pixel_corrections.pending = Some(std::time::Instant::now());
@@ -2370,6 +2443,56 @@ impl PakarControllerApp {
                 Err(error) => self.pixel_corrections.message = error.to_string(),
             }
         }
+    }
+    fn service_pixel_correction_preview(&mut self, foreground:bool) {
+        let now=Instant::now();
+        let status=self.live_status().cloned();
+        let pin=status.as_ref().and_then(peer_http::Pin::from_status);
+        if pin.is_some() && pin!=self.pixel_corrections.owner {
+            let enabled=self.config.pixel_correction_live_preview;
+            self.pixel_corrections.live=pixel_corrections::LivePreview::default();
+            self.pixel_corrections.live.enabled=enabled;
+            return; // Never send old-owner cleanup to a newly connected board.
+        }
+        let allowed=foreground && self.http_writable() && pin.is_some()
+            && status.as_ref().and_then(|s|s.capabilities.as_ref()).is_some_and(|c|c.has(pixel_corrections::PREVIEW_FEATURE))
+            && self.pixel_corrections.live.painted_at.is_some_and(|at|now.saturating_duration_since(at)<Duration::from_millis(750));
+        let changed=status.as_ref().and_then(|s|s.pixel_corrections_revision)
+            .zip(self.pixel_corrections.value.as_ref().map(|v|v.revision)).is_some_and(|(live,draft)|live!=draft);
+        if !allowed || changed {self.pixel_corrections.live.stop();}
+        // Unknown/disconnected owners expire in firmware; no discovery or
+        // reconnection is allowed to redirect a preview mutation.
+        if pin.is_none() || !self.http_writable() || self.pixel_corrections.pending.is_some() {return;}
+        if self.pixel_corrections.reload_after_preview && self.pixel_corrections.live.pending.is_none()
+            && self.pixel_corrections.live.save_lease().is_none() {
+            self.pixel_corrections.reload_after_preview=false;
+            self.pixel_corrections.pending=Some(now);
+            self.pixel_corrections.expected=None;
+            self.pixel_corrections.message="Reading board configuration…".into();
+            if self.http_tx.send(HttpCommand::Configuration(self.endpoint(),pixel_corrections::PATH)).is_err() {
+                self.pixel_corrections.pending=None;
+                self.pixel_corrections.message="Configuration worker unavailable; nothing sent".into();
+            }
+            return;
+        }
+        let Some(value)=self.pixel_corrections.value.as_ref() else {return;};
+        let Some(request)=self.pixel_corrections.live.next(value,now) else {return;};
+        let status=status.unwrap();
+        // Choose one path before dispatch. An unavailable socket may use one
+        // HTTP request, but an uncertain WS send is never replayed over HTTP.
+        let result=if self.websocket_live && realtime::supported(&status,pixel_corrections::PREVIEW_PATH) {
+            realtime::Intent::new(self.endpoint(),&status,pixel_corrections::PREVIEW_PATH,
+                vec![("configuration".into(),request.payload().to_string())],self.http_tx.capture(),
+                self.connection_gate.stamp(Transport::WiFi,self.connection_gate.epoch()),None)
+                .and_then(|mut intent| {
+                    intent.correction_request=Some(request.clone());
+                    self.ws_tx.send(WsCommand::Control(intent)).map_err(|_|"Preview worker unavailable; nothing sent".to_owned())
+                })
+        } else {
+            self.http_tx.send(HttpCommand::CorrectionPreview(self.endpoint(),request.clone()))
+                .map_err(|_|"Preview worker unavailable; nothing sent".to_owned())
+        };
+        if let Err(error)=result {self.pixel_corrections.live.finish(request.id,Err(error),now);}
     }
     fn draw_pixel_diagnostic(&mut self, ui: &mut egui::Ui) {
         let Some(status) = self
@@ -2757,6 +2880,7 @@ impl PakarControllerApp {
             );
         }
         if modes.iter().any(|mode| mode.id == "first-wins") {
+          if !snapshot.as_ref().is_some_and(|s| crate::minigame::snapshot(s).is_some()) {
             ui.horizontal_wrapped(|ui| {
                 ui.add_enabled_ui(
                     snapshot
@@ -2776,6 +2900,7 @@ impl PakarControllerApp {
                 );
             });
             ui.add_space(10.0);
+          }
         }
         // Table owns semantic selection/actions and cell identity. Do not keep
         // a second hardcoded White/Red card that contradicts its saved palette.
@@ -3122,7 +3247,11 @@ impl PakarControllerApp {
                     );
                 });
             }
-            ui.add_space(10.0);
+        });
+    }
+    pub(super) fn draw_melodies(&mut self, ui: &mut egui::Ui) {
+        let snapshot = self.live_status().cloned();
+        ui.add_enabled_ui(self.panel_live(Panel::Melodies), |ui| {
             if self.presentation_has_feature("buzzer") {
                 dialog::section(ui, icons::MUSIC_NOTE, "Melodies", |ui| {
                     ui.add_enabled_ui(
@@ -3130,7 +3259,11 @@ impl PakarControllerApp {
                             .as_ref()
                             .is_some_and(|s| s.avr_online && !s.audio_cues.is_empty()),
                         |ui| {
-                            ui.horizontal_wrapped(|ui| {
+                            // Scoped choice buttons cannot wrap after they report their
+                            // minimum width. A measured row keeps every cue reachable.
+                            let cues: Vec<_> = audio::CUES.into_iter().filter(|(cue, _)| snapshot.as_ref().is_some_and(|s| s.audio_cues.iter().any(|v| v == cue))).collect();
+                            let labels: Vec<_> = cues.iter().map(|(_, name)| (icons::PLAY, *name)).collect();
+                            super::panel_details::action_row(ui, &labels, |ui| {
                                 for (cue, name) in audio::CUES {
                                     if !snapshot
                                         .as_ref()
@@ -3197,116 +3330,16 @@ impl PakarControllerApp {
             }
         });
     }
-    pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui, game_only: bool) {
-        let Some(s) = self.live_status().cloned() else {
-            ui.label(crate::ui::i18n::text("Hardware state unavailable"));
-            return;
-        };
-        let avr_acknowledged = ["display", "text", "buzzer", "inputs", "outputs", "settings"]
-            .iter()
-            .any(|feature| self.has_feature(feature));
-        if game_only
-            && s.capabilities
-                .as_ref()
-                .is_some_and(|c| c.role == "first-wins")
-        {
-            let mask = s.key_game["enabled_mask"].as_u64().unwrap_or(511) as u16;
-            dialog::section(ui, icons::HAND_TAP, "Keys", |ui| {
-                ui.horizontal_wrapped(|ui| {
-                    ui.strong(if s.winner == 0 {
-                        "Ready for first press".to_owned()
-                    } else {
-                        format!("Winner · Box {}", s.winner)
-                    });
-                    ui.add_enabled_ui(s.avr_online && !s.programming_latch, |ui| {
-                        if dialog::primary_action_button(
-                            ui,
-                            icons::ARROW_COUNTER_CLOCKWISE,
-                            "Reset to white",
-                        )
-                        .clicked()
-                        {
-                            // A round control, not a destructive settings operation: send
-                            // immediately through the selected ACK-tracked WS/USB owner.
-                            self.action("/api/game/reset", vec![], OP_RESET, vec![]);
-                        }
-                    });
-                });
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    if ui
-                        .selectable_label(
-                            self.key_layout_edit,
-                            format!("{}  Arrange boxes", icons::DOTS_SIX_VERTICAL),
-                        )
-                        .clicked()
-                    {
-                        self.key_layout_edit = !self.key_layout_edit;
-                    }
-                    if self.key_layout_edit
-                        && ui
-                            .button(format!(
-                                "{}  Reset positions",
-                                icons::ARROW_COUNTER_CLOCKWISE
-                            ))
-                            .clicked()
-                    {
-                        self.key_positions = crate::native_workspace::default_key_positions();
-                        self.save_workspace();
-                    }
-                });
-                let boxes = std::array::from_fn(|index| {
-                    let key = (index + 1) as u8;
-                    let (color_name, fallback) = if s.winner == key {
-                        ("win_rgb", 0x00ff00)
-                    } else if s.winner != 0 {
-                        ("lose_rgb", 0xff0000)
-                    } else {
-                        ("idle_rgb", 0xffffff)
-                    };
-                    let rgb = s.key_game[color_name].as_u64().unwrap_or(fallback) as u32;
-                    super::key_boxes::BoxView {
-                        enabled: mask & (1 << index) != 0,
-                        pressed: if key == 9 {
-                            s.input_9
-                        } else {
-                            s.active_inputs & (1 << index) != 0
-                        },
-                        winner: s.winner == key,
-                        round_active: s.winner != 0,
-                        color: egui::Color32::from_rgb(
-                            (rgb >> 16) as u8,
-                            (rgb >> 8) as u8,
-                            rgb as u8,
-                        ),
-                        groups: std::array::from_fn(|group| {
-                            self.table
-                                .pixel_sample
-                                .as_ref()
-                                .filter(|sample| sample.fresh())
-                                .filter(|sample| !pixel_groups::advertised(&s) || pixel_groups::for_status(&s)
-                                    .is_some_and(|layout|sample.frame.group_layout_revision==Some(layout.revision)))
-                                .and_then(|sample| sample.frame.key_group(key, group as u8))
-                        }),
-                    }
-                });
-                let can_trigger = super::effect_controls::game_press_available(&s);
-                let result = super::key_boxes::show(
-                    ui,
-                    &s.board_id,
-                    &mut self.key_positions,
-                    &boxes,
-                    self.key_layout_edit,
-                    can_trigger,
-                    self.config.animate_cells,
-                );
-                if result.layout_changed {
-                    self.save_workspace();
-                }
-                if let Some(key) = result.trigger {
-                    self.post("/api/game/press", vec![("key".into(), key.to_string())]);
-                }
+    pub(super) fn draw_game_settings(&mut self, ui: &mut egui::Ui) {
+        let Some(s) = self.live_status().cloned() else { return; };
+        let mask = s.key_game["enabled_mask"].as_u64().unwrap_or(511) as u16;
+        let minigame = crate::minigame::snapshot(&s).is_some();
+        let minigame_writable = self.minigame_writable(&s);
+        for request in crate::minigame::settings_controls(ui, &s, minigame_writable) {
+            if let Err(error) = self.send_minigame(request) { self.message = error; }
+        }
                 if self.has_feature("key-settings") {
+                  ui.add_enabled_ui(!minigame || minigame_writable, |ui| {
                     if self.has_feature("game-presentation")
                         && s.key_game["presentation"].is_object()
                     {
@@ -3321,7 +3354,7 @@ impl PakarControllerApp {
                             );
                         }
                     }
-                    ui.collapsing("Game settings", |ui| {
+                    dialog::section(ui, icons::GEAR, "Boxes & presentation", |ui| {
                         if self.has_feature("game-melodies") {
                             for (field, label) in [("winner_cue", "Winner melody"), ("reset_cue", "Reset melody")] {
                                 if let Some(current) = s.key_game[field].as_str() {
@@ -3436,6 +3469,186 @@ impl PakarControllerApp {
                             });
                         }
                     });
+                  });
+                }
+
+    }
+    fn minigame_writable(&self, s: &DeviceStatus) -> bool {
+        crate::realtime::supported(s, crate::minigame::CONTROL) && match self.command_route() {
+            Some(Transport::WiFi) => self.http_writable(),
+            Some(Transport::Serial) => self.pixel_api_reply.is_none() && self.has_feature("usb-api"),
+            None => false,
+        }
+    }
+    pub(super) fn draw_game(&mut self, ui: &mut egui::Ui) {
+        let Some(s) = self.live_status().cloned() else { return; };
+        for request in crate::minigame::controls(ui, &s, self.minigame_writable(&s)) {
+            if let Err(error) = self.send_minigame(request) { self.message = error; }
+        }
+        ui.horizontal_wrapped(|ui| {
+            if dialog::action_button(ui, icons::GEAR, "Game settings").clicked() { self.reveal_panels.push(Panel::GameSettings); }
+            if dialog::action_button(ui, icons::HAND_TAP, "Keys").clicked() { self.reveal_panels.push(Panel::Keys); }
+        });
+    }
+    fn send_minigame(&mut self, request: crate::minigame::Request) -> Result<(),String> {
+        match self.command_route() {
+            Some(Transport::WiFi)=>self.queue_realtime(request.path,request.form,None),
+            Some(Transport::Serial)=> {
+                let status=self.live_status().ok_or("Fresh USB game status unavailable")?;
+                let stamp=self.serial_admission().ok_or("USB game owner unavailable")?.stamp;
+                let (request,packet)=crate::minigame::UsbRequest::prepare(status,request,stamp)?;
+                self.begin_pixel_api(pixel_groups::Purpose::Minigame(request),"POST","/api/command",packet)
+            },
+            None=>Err("No selected live game transport".into()),
+        }
+    }
+    pub(super) fn draw_hardware(&mut self, ui: &mut egui::Ui, game_only: bool) {
+        let Some(s) = self.live_status().cloned() else {
+            ui.label(crate::ui::i18n::text("Hardware state unavailable"));
+            return;
+        };
+        let avr_acknowledged = ["display", "text", "buzzer", "inputs", "outputs", "settings"]
+            .iter()
+            .any(|feature| self.has_feature(feature));
+        if game_only
+            && s.capabilities
+                .as_ref()
+                .is_some_and(|c| c.role == "first-wins")
+        {
+            let mask = s.key_game["enabled_mask"].as_u64().unwrap_or(511) as u16;
+            let minigame = crate::minigame::snapshot(&s).is_some();
+            let minigame_writable = crate::realtime::supported(&s,crate::minigame::CONTROL)
+                && match self.command_route() {
+                    Some(Transport::WiFi)=>self.http_writable(),
+                    Some(Transport::Serial)=>self.pixel_api_reply.is_none() && self.has_feature("usb-api"),
+                    None=>false,
+                };
+            dialog::section(ui, icons::HAND_TAP, "Keys", |ui| {
+              if !minigame {
+                ui.horizontal_wrapped(|ui| {
+                    ui.strong(if s.winner == 0 {
+                        "Ready for first press".to_owned()
+                    } else {
+                        format!("Winner · Box {}", s.winner)
+                    });
+                    ui.add_enabled_ui(s.avr_online && !s.programming_latch, |ui| {
+                        if dialog::primary_action_button(
+                            ui,
+                            icons::ARROW_COUNTER_CLOCKWISE,
+                            "Reset to white",
+                        )
+                        .clicked()
+                        {
+                            // A round control, not a destructive settings operation: send
+                            // immediately through the selected ACK-tracked WS/USB owner.
+                            self.action("/api/game/reset", vec![], OP_RESET, vec![]);
+                        }
+                    });
+                });
+              }
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    if ui.checkbox(&mut self.key_trigger_on_click, "Trigger on click")
+                        .on_hover_text("Off: clicks only select. Ctrl-click toggles; Shift-click selects a range. Right-click for explicit actions.").changed() {
+                        self.save_workspace();
+                    }
+                    ui.weak(format!("{} selected", self.key_selection.ids.len()));
+                    if dialog::action_button(ui, icons::PLAY, "Game").clicked() { self.reveal_panels.push(Panel::Game); }
+                    if dialog::action_button(ui, icons::GEAR, "Settings").clicked() { self.reveal_panels.push(Panel::GameSettings); }
+                    if super::key_boxes::arrange_control(ui, self.key_layout_edit).clicked()
+                    {
+                        self.key_layout_edit = !self.key_layout_edit;
+                    }
+                    if self.key_layout_edit
+                        && ui
+                            .button(format!(
+                                "{}  Reset positions",
+                                icons::ARROW_COUNTER_CLOCKWISE
+                            ))
+                            .clicked()
+                    {
+                        self.key_positions = crate::native_workspace::default_key_positions();
+                        self.save_workspace();
+                    }
+                });
+                if minigame && self.key_trigger_on_click {
+                    crate::minigame::input_controls(ui, &s);
+                }
+                let boxes = std::array::from_fn(|index| {
+                    let key = (index + 1) as u8;
+                    let winner = if minigame {s.minigame["winner"].as_u64().unwrap_or(0) as u8} else {s.winner};
+                    let (color_name, fallback) = if winner == key {
+                        ("win_rgb", 0x00ff00)
+                    } else if winner != 0 {
+                        ("lose_rgb", 0xff0000)
+                    } else {
+                        ("idle_rgb", 0xffffff)
+                    };
+                    let rgb = s.key_game[color_name].as_u64().unwrap_or(fallback) as u32;
+                    super::key_boxes::BoxView {
+                        enabled: mask & (1 << index) != 0,
+                        pressed: if minigame {
+                            s.minigame["held_mask"].as_u64().unwrap_or(0) & (1 << index) != 0
+                        } else if key == 9 {
+                            s.input_9
+                        } else {
+                            s.active_inputs & (1 << index) != 0
+                        },
+                        winner: winner == key,
+                        round_active: winner != 0,
+                        color: egui::Color32::from_rgb(
+                            (rgb >> 16) as u8,
+                            (rgb >> 8) as u8,
+                            rgb as u8,
+                        ),
+                        groups: std::array::from_fn(|group| {
+                            self.table
+                                .pixel_sample
+                                .as_ref()
+                                .filter(|sample| sample.fresh())
+                                .filter(|sample| !pixel_groups::advertised(&s) || pixel_groups::for_status(&s)
+                                    .is_some_and(|layout|sample.frame.group_layout_revision==Some(layout.revision)))
+                                .and_then(|sample| sample.frame.key_group(key, group as u8))
+                        }),
+                    }
+                });
+                let can_trigger = if minigame {minigame_writable && crate::minigame::ready(&s)}
+                    else {super::effect_controls::game_press_available(&s)};
+                let result = super::key_boxes::show(
+                    ui,
+                    &s.board_id,
+                    &mut self.key_positions,
+                    &boxes,
+                    &mut self.key_selection,
+                    self.key_layout_edit,
+                    can_trigger,
+                    self.key_trigger_on_click,
+                    self.config.animate_cells,
+                );
+                if let Some(editing) = result.editing { self.key_layout_edit = editing; }
+                if let Some(panel) = result.panel {
+                    if panel.available(self.presentation_context()) { self.reveal_panels.push(panel); }
+                }
+                if result.layout_changed || result.selection_changed {
+                    self.save_workspace();
+                }
+                if let Some(key) = result.trigger {
+                    if minigame {
+                        let request=crate::minigame::input(key,&crate::minigame::input_action(ui,&s));
+                        if let Err(error)=self.send_minigame(request) {self.message=error;}
+                    } else {
+                        // Use the same immediate, ACK-tracked USB/WS owner as
+                        // other hardware actions, including serial timing/readback.
+                        self.action("/api/game/press", vec![("key".into(), key.to_string())], 0x68, vec![key]);
+                    }
+                }
+                if let Some(key) = result.blocked_trigger {
+                    let reason = if !s.avr_online { "AVR is offline" }
+                        else if s.programming_latch { "AVR programming is active" }
+                        else if s.key_mask_applied != Some(true) { "Enabled boxes have not been acknowledged by the AVR" }
+                        else if minigame { "The game is not ready for input" }
+                        else { "This board has not enabled remote button presses" };
+                    self.notify("Box not triggered", &format!("Box {key}: {reason}."), messaging::Severity::Warning);
                 }
             });
             ui.add_space(10.0);
@@ -3963,6 +4176,9 @@ impl PakarControllerApp {
                     ui.weak("Identity write in progress; connection changes are locked.");
                 } else if self.connection_enabled {
                     ui.weak("Disconnect before editing the endpoint or credentials.");
+                }
+                if method == Transport::WiFi {
+                    ui::host_wifi::draw(ui, !self.identity_pending);
                 }
                 ui.add_space(12.0);
                 dialog::action_row(ui, false, |ui| {

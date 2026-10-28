@@ -2,6 +2,30 @@
 // credentials, requested text, remote URLs or uploaded payloads in an error.
 String commandFailureMessage({Object? error, int? httpStatus}) {
   const reasons = <String, String>{
+    'input_not_accepted_in_current_phase':
+        'Wait for the input phase before pressing a box',
+    'minigame_avr_ownership_not_ready':
+        'The game is transferring input ownership; wait for Ready',
+    'game_already_started_or_unconfigured':
+        'The game is already running; pause, reset or stop it first',
+    'game_not_running': 'The round is not running',
+    'game_not_paused': 'The round is not paused',
+    'inactive_key': 'This box is not participating in the current game',
+    'key_already_held': 'Release this box before pressing it again',
+    'invalid_minigame_settings':
+        'One or more game settings are outside the allowed range',
+    'minigame_settings_not_saved': 'The board could not save the game settings',
+    'presentation_busy': 'Another presentation currently owns the LEDs',
+    'corrections_preview_owned': 'Another editor owns the correction preview',
+    'corrections_preview_expired':
+        'The correction preview expired; reopen it before editing',
+    'corrections_conflict': 'Saved corrections changed; reload before editing',
+    'invalid_corrections':
+        'The correction rules contain invalid addresses or values',
+    'invalid_preview_lease': 'The correction preview lease is invalid',
+    'invalid_preview_ttl':
+        'The correction preview duration is outside its safe limit',
+    'avr_outcome_unknown': 'The AVR did not acknowledge before the deadline; inspect its state before issuing another command',
     'capability_not_acknowledged':
         'This board has not acknowledged this feature',
     'unsupported_command': 'The board does not support this command',

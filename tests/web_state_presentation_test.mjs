@@ -36,6 +36,12 @@ function fixture(){
   assert.equal(f.renders.length,0);assert.equal(f.reads.length,0);assert.match(f.errors[0].message,/peer changed/);
 }
 {
+  const f=fixture();f.receipt({status:{state_presentation:{fire_rotation:180}}});
+  await f.run('saveStateAppearance({fire_rotation:180})');
+  assert.equal(f.sent.length,1);assert.deepEqual(JSON.parse(f.sent[0].data.settings),{fire_rotation:180});
+  assert.equal(f.reads.length,0);assert.equal(f.renders.length,1);assert.equal(f.errors.length,0);
+}
+{
   const f=fixture();await f.run('temporaryStateColor()');assert.equal(f.sent[0].path,'/api/led/preview');
   assert.deepEqual(JSON.parse(JSON.stringify(f.sent[0].data)),{ids:'1,7',rgb:0x112233,duration_ms:5000});
   assert.equal(f.renders.length,0,'A test color does not optimistically rewrite semantic state');

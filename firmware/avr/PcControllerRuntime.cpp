@@ -32,6 +32,26 @@ void PcControllerRuntime::begin(uint32_t now) {
 #endif
 }
 
+void PcControllerRuntime::gameOwner(bool enabled,uint16_t epoch) {
+  if (gameOwned_ == enabled && (!enabled || gameEpoch_ == epoch)) return;
+  if (enabled) {
+    // Retire the previous owner's scheduled work before granting the game.
+    // Consume its stop request now, never against a later game output level.
+    // A new round must clear the old game's levels even if its confirmation
+    // is lost. Retrying the same epoch returned above and cannot stop a round.
+    bool stop = running_ || (gameOwned_ && gameEpoch_ != epoch);
+#if PAKAR_PC_MACROS
+    if (ring_.cancel(false)) macroDirty_ = true;
+    stop = ring_.takeSafeStopRequest() || stop;
+#endif
+    if (stop) hardware_.safeStop();
+    running_ = false;
+  }
+  eventHead_ = eventCount_ = 0;
+  gameOwned_ = enabled;
+  gameEpoch_ = enabled ? epoch : 0;
+}
+
 bool PcControllerRuntime::reply(uint8_t opcode, uint8_t sequence, const uint8_t *payload,
                                 uint8_t length) {
   if (length > 47 || (length && !payload)) return false;
@@ -47,7 +67,8 @@ void PcControllerRuntime::result(uint8_t sequence, uint8_t request, P::Error err
 #if PAKAR_PC_MACROS
       ring_.cancel(false); macroDirty_ = true;
 #endif
-      hardware_.safeStop(); return;
+      if (!gameOwned_) hardware_.safeStop();
+      return;
     }
     auto &r = results_[(resultHead_ + resultCount_) & 7U];
     r.opcode = request; r.error = error; ++resultCount_; return;
@@ -290,6 +311,10 @@ bool PcControllerRuntime::macroStatus(uint8_t opcode, uint8_t sequence) {
 P::Error PcControllerRuntime::macro(uint8_t op, uint8_t sequence,
     const uint8_t *p, uint8_t n, uint32_t nowUs) {
 #if PAKAR_PC_MACROS
+  // Queries remain available, but no host macro may acquire or cancel the
+  // game's outputs. Recorded replay also bypasses dispatch(), so gate here.
+  if (gameOwned_ && !(op == PC::MacroStep && n && (p[0] == 2 || p[0] == 5)))
+    return P::kBusy;
   if (op == PC::MacroStart) {
     if (n != 4 || (p[1] & ~ControllerCore::MacroRing::KeepOutputsOnCancel)) return P::kBadPayload;
     if (ring_.active()) return P::kBusy;
@@ -348,11 +373,21 @@ void PcControllerRuntime::queueEvent(const uint8_t *p, uint8_t n) {
   }
   auto &event = events_[(eventHead_ + eventCount_) & 7U];
   event.length = n; memcpy(event.bytes, p, n); ++eventCount_;
+  if(gameOwned_&&n==5&&p[0]==1&&p[3]==0){
+    event.bytes[5]=uint8_t(gameEpoch_);event.bytes[6]=uint8_t(gameEpoch_>>8);event.length=7;
+  }
 }
 void PcControllerRuntime::key(uint8_t bit, KeyEvent gesture, uint8_t source,
                               uint32_t now, uint32_t nowUs) {
   (void)nowUs;
   lastKeyError_ = P::kNoError;
+#if PAKAR_PC_MENU
+  if (gameOwned_ && page_ == 1 && bit >= 2 && bit < 4 &&
+      keyEventRunsPrimaryAction(gesture)) {
+    lastKeyError_ = P::kBusy;
+    return;
+  }
+#endif
   if (connected_) eventCodec_.key(bit, static_cast<uint8_t>(gesture),
                                   static_cast<InputEventSource>(source), 0xFF);
   automationEvent(AutomationEventKind::Key,
@@ -510,7 +545,11 @@ bool PcControllerRuntime::automationAction(const AutomationRecord &r, void *cont
   auto &self = *static_cast<PcControllerRuntime *>(context);
   if (!self.automationSupported(r) || self.hardware_.snapshot().programming) return false;
   bool success = true;
-  if (r.actionKind == static_cast<uint8_t>(AutomationActionKind::SafeStop)) self.hardware_.safeStop();
+  if (r.actionKind == static_cast<uint8_t>(AutomationActionKind::SafeStop)) {
+    // A stored host/key rule is not the game owner's explicit safety stop.
+    if (self.gameOwned_) success = false;
+    else self.hardware_.safeStop();
+  }
   else if (r.actionKind == static_cast<uint8_t>(AutomationActionKind::Buzzer)) {
     uint8_t p[4]; put16(p, r.value); put16(p + 2, r.extra);
     success = self.hardware_.execute(PC::Buzzer, p, sizeof(p), self.actionNow_) == P::kNoError;
@@ -552,10 +591,10 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
 #if PAKAR_PC_MACROS
     const bool active = ring_.active();
     ring_.cancel(false);
-    if (active || running_) hardware_.safeStop();
+    if (!gameOwned_ && (active || running_)) hardware_.safeStop();
     ring_.takeSafeStopRequest();
 #else
-    if (running_) hardware_.safeStop();
+    if (!gameOwned_ && running_) hardware_.safeStop();
 #endif
     running_ = false;
     if (menuOwnedByHost_) menuActive_ = false;
@@ -568,7 +607,7 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
   }
 #if PAKAR_PC_MACROS
   if (s.programming && ring_.active()) { ring_.cancel(false); hardware_.safeStop(); macroDirty_ = true; }
-  if (!s.programming) {
+  if (!s.programming && !gameOwned_) {
     ring_.recordRelay(s.outputs, nowUs);
     ControllerCore::MacroRing::Command command;
     uint8_t p[48];
@@ -581,10 +620,12 @@ void PcControllerRuntime::service(uint32_t now, uint32_t nowUs) {
       if (!ring_.active() || ring_.completeStep(error == P::kNoError)) macroDirty_ = true;
     } else if (due == ControllerCore::MacroRing::Malformed) macroDirty_ = true;
   }
-  if (ring_.takeSafeStopRequest()) hardware_.safeStop();
+  if (ring_.takeSafeStopRequest() && !gameOwned_) hardware_.safeStop();
 #endif
   const bool companion=companionKnown_ && static_cast<uint32_t>(now-companionSeenAt_)<3000U;
+  if(gameOwned_&&!companion){hardware_.safeStop();gameOwner(false);}
   if ((!connected_ && !companion) || !hardware_.ready()) return;
+  if(gameOwned_&&eventCount_){drainOne();return;} // Input edges before optional mirrors.
   if (mirrorOne(nowUs)) return; // One bounded changed-state frame per loop.
   if (!connected_) return; // Companion lease never grants host automation/menu ownership.
   if (resultCount_ || eventCount_ || macroDirty_) { drainOne(); return; }
@@ -597,7 +638,7 @@ void PcControllerRuntime::drainOne(bool mirror) {
   // Polling builds have no unsolicited TX grant. A solicited status request
   // grants one bounded changed-only mirror/event frame after its own response.
   if (mirror && mirrorOne(micros())) return;
-  if (resultCount_) {
+  if (resultCount_ && !(gameOwned_ && eventCount_)) {
     const auto &r = results_[resultHead_];
     const uint8_t payload[] = {r.opcode, r.error};
     if (reply(r.error ? PC::ErrorResponse : PC::Ack, 0xFE, payload, sizeof(payload))) {

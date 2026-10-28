@@ -3,7 +3,7 @@
 
 namespace PakarConfiguration {
 enum Scope : uint16_t { Identity=1, Network=2, Cloud=4, Auth=8, Shell=16,
-  Ethernet=32, StatusRgb=64, Bluetooth=128, LedOutput=256 };
+  Ethernet=32, StatusRgb=64, Bluetooth=128, LedOutput=256, NetworkTools=512 };
 enum class Phase : uint8_t { Saved, Applied, Failed };
 inline const char *scopeName(uint16_t scope) {
   switch(scope) {
@@ -11,6 +11,7 @@ inline const char *scopeName(uint16_t scope) {
     case Auth:return "auth";case Shell:return "shell";case Ethernet:return "ethernet";
     case StatusRgb:return "status-rgb";case Bluetooth:return "bluetooth";
     case LedOutput:return "led-output";
+    case NetworkTools:return "network-tools";
   }
   return "";
 }
@@ -23,9 +24,9 @@ inline const char *phaseName(Phase phase) {
 class Journal {
  public:
   struct Event { uint32_t revision=0;uint16_t scopes=0;Phase phase=Phase::Saved; };
-  void saved(uint16_t scopes){pending_[0]|=scopes&511U;}
-  void applied(uint16_t scopes){pending_[1]|=scopes&511U;}
-  void failed(uint16_t scopes){pending_[2]|=scopes&511U;}
+  void saved(uint16_t scopes){pending_[0]|=scopes&1023U;}
+  void applied(uint16_t scopes){pending_[1]|=scopes&1023U;}
+  void failed(uint16_t scopes){pending_[2]|=scopes&1023U;}
   uint32_t revision()const{return revision_;}
   bool peek(Event &event)const {
     if(revision_==UINT32_MAX)return false; // Never wrap/reuse an event revision.

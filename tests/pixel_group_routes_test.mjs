@@ -21,12 +21,14 @@ assert(binding.includes('grid.groupLayout()'));
 assert(binding.includes('d["count"]=action.count'));
 assert(binding.includes('d["group_layout_revision"]=action.groupLayoutRevision'));
 assert(!binding.includes('action.group?6:1'),'Device TUI uses the same revision-fenced physical spans');
-// General file access is a read-only /user namespace, not an alternate settings
+// Managed public-file writes are supported, but are not an alternate settings
 // writer. Both durable and staged topology paths remain behind validated APIs.
 const userPath=usb.slice(usb.indexOf('bool maintenanceUserPath('),usb.indexOf('String maintenanceApi('));
 assert(userPath.includes('!path.startsWith("/user/")'));
 assert(userPath.includes('path.indexOf("..")<0'));
-assert(usb.includes('reply["file_write"]=false'));
+assert(usb.includes('reply["file_write"]=true'));
+assert(usb.includes('reply["private_file_access"]=false'));
+assert(usb.includes('if(method=="POST"&&path=="/api/storage/files")return userFileRequest(body)'));
 assert(usb.includes('if(!maintenanceUserPath(filename))return maintenanceApiError("protected_or_invalid_path")'));
 const artifacts=read('firmware/esp/src/ArtifactDownload.h');
 assert(!artifacts.includes('pixel-groups'));

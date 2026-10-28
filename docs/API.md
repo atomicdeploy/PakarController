@@ -1,8 +1,18 @@
 # HTTP and streaming API
 
+Host mini-apps use [host-owned presentation](HOST-PRESENTATION.md) for logical or
+physical group colors/effects, durable layers, expiring overlays and atomic
+frame fallback through the same HTTP, WebSocket, MQTT and USB command contract.
+
 ESP32-S3 also exposes the same living command/state contract through a selected
 Bluetooth LE control transport. See [Bluetooth LE](BLUETOOTH.md) for its GATT
 attributes, exact advertised routes, ownership rules and explicit binary limits.
+
+Optional ESP32-S3 [native SSH, SCP/SFTP and passive FTP](SSH.md) reuse the device shell
+and public file service. Build flags include them; the persistent listener stays
+disabled until explicitly enabled. `/api/ssh` reports configuration, actual
+listener state, host fingerprint and supported transfer directions. `/api/ftp`
+configures the separately built, disabled-by-default plaintext service.
 
 Client self-updates, enrollment, remote operational telemetry and bounded client
 management use a separate configurable unversioned service. See
@@ -20,6 +30,9 @@ from `/api/auth/info` and do not ask for credentials when it is false. Enable
 **Require authentication** in Device access to protect HTTP routes and `/ws`
 with browser sessions or explicit Basic credentials. `/`, `/description.xml`
 and `/api/auth/info` are public reads; `/login` accepts a form POST.
+Discovery clients can also GET/HEAD `/board-icon.png` without signing in;
+`/description.xml` advertises the matching table/key PNG and presentation URL.
+See [UPnP discovery](UPNP.md) for metadata, interface behavior and verification.
 Local HTTP and Telnet are not encrypted; never expose them directly to the Internet.
 The recovery AP Wi-Fi password is independent of the device login.
 See `ACCESS.md` for persistence, CLI/TUI, native editor and physical USB recovery.
@@ -284,6 +297,7 @@ mirroring is not muted by this physical-board preference.
 | POST | `/api/snake/direction` | form `value=up|right|down|left`; opposite turns are rejected |
 | POST | `/api/brightness` | form `value=1..255` |
 | POST | `/api/effect` | form `value=none|rainbow|fire|cell-chase`; chase visits logical80 down to1,750ms each, once, on white |
+| POST | `/api/led/presentation` | partial `settings` JSON, e.g. `{"fire_rotation":180}`; table rotation accepts0,90,180,270 degrees, saved per board and returned in `state_presentation` |
 | POST | `/api/scene/save` | explicitly flush the current semantic scene;200 `saved:true` confirms verified commit,503 requires inspection of status, never an automatic replay |
 | POST | `/api/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
 | POST | `/api/audio` | form `cue` from peer-acknowledged `audio_cues`, including `attention` and donor welcome variations; 202 means queued, not playback completion |
@@ -303,6 +317,17 @@ mirroring is not muted by this physical-board preference.
 | GET, POST | `/api/avr/contracts` | capability/contract inspection or queued PCController operation; RESET is decimal `opcode=53&payload_hex=00` |
 | GET, DELETE | `/api/avr/contracts/result` | inspect or explicitly consume the correlated terminal receipt; never replay an uncertain reset/write |
 | GET, POST | `/update` | authenticated async ESP self-OTA form/upload; optional file `MD5` preceding the firmware file |
+
+Fire is an explicit global animation in both static-grouped and effects output
+modes. Selecting `fire` again restarts from a cold/black frame. On table builds
+its two-dimensional heat field follows the staggered logical layout, then the
+saved logical-to-physical mapping, custom group lengths and pixel corrections.
+`fire_rotation` rotates the flame direction (0° up,90° right,180° down,270° left),
+not cell identities. This preference lives in `/presentation.json`; existing
+palettes default to0°. Changing direction restarts Fire only if it is active;
+reading status never restarts it. Group colors/states and correction tables are
+not rewritten. The same `state-presentation` command/settings object is available
+through the existing WebSocket, MQTT and encapsulated USB API command paths.
 
 UDP port 7890 accepts bounded `PKAR` chunks **without authentication**;
 use only on a trusted LAN. The authenticated WebSocket is preferred.
@@ -450,12 +475,14 @@ the API; blank omitted password/token fields preserve the stored value.
 Cloud `display` also accepts the same text scheduling fields above or
 `{"command":"display","release":true}`. An omitted repeat means one-shot.
 
-The password-authenticated Telnet shell on TCP 23 exposes `status`, `mode`,
+The Telnet shell (default TCP 23) exposes `status`, `mode`,
 `cell`, `cells`, `brightness`, `effect`, `display`, `audio`, and `reset`. It uses the
-same validation and state transitions as cloud JSON commands. The password is
-the HTTP development password; the service is advertised through mDNS as
-`_telnet._tcp`. USB serial remains a framed machine interface rather than a
-text shell, so Telnet cannot interfere with the simultaneous desktop link.
+same validation and state transitions as cloud JSON commands. Authentication
+follows the saved access policy; when enabled, the shell requires its password.
+The service is advertised through mDNS as `_telnet._tcp`. USB provides the same
+text shell encapsulated in a boot-bound COBS channel, alongside the normal
+machine protocol. It never switches the AVR UART into raw text mode.
+See [terminal commands and TUI](TERMINAL-UI.md) and `tools/device-shell.ps1`.
 Telnet supports `display stop` and
 `display text <once|loop|interval> <speed_ms> <hold_ms> <pause_seconds> <scroll 0|1> <TEXT>`.
 Atomic selection example: `cells 1-80 red fade`; melody example: `audio welcome`
@@ -634,7 +661,7 @@ application relay, not NAT, a Wi-Fi extender or a completed mesh.
 
 `POST /api/peers/request` accepts JSON: `request_id` (32 lowercase hex digits),
 `hostname`, destination `board_id`, `boot_id`, `method`, `path`, and optional
-`packet`. Only approved read paths and `POST /api/command` are forwarded. For
+`packet`, and an optional private IPv4 `address` hint. Only approved read paths and `POST /api/command` are forwarded. For
 public `GET /api/peer/info` only, boot_id may be empty to learn the current boot
 of an explicitly identified board. Other calls require that observed boot.
 Commands carry the original JSON packet string with the same request ID,
@@ -647,14 +674,137 @@ clients receive `peer-relay-result` completion notifications. USB maintenance
 API envelopes can use these same request/result routes. Large downstream JSON
 may exceed the existing USB API response limit; no binary USB relay is claimed.
 
-One background job and one hop are allowed. Unexpired IDs cannot be evicted;
-retired results are never resubmitted automatically. DNS resolves a configured
-hostname, the resulting private LAN IP is pinned, and destination board/boot
-headers and identity are checked. No credentials are forwarded; authenticated
+One background job and one hop are allowed. One lazily allocated worker is
+reused; eight receipt fingerprints retain SHA256, not full request bodies.
+Unexpired IDs cannot be evicted; retired results are never resubmitted
+automatically. `.local` uses bounded mDNS directly (900 ms), not router DNS;
+unicast resolution has the same caller deadline and safe late-callback storage.
+A destination's identity-verified address is reused until connect failure,
+then bounded hostname recovery is attempted. Host headers retain the configured
+hostname. An operator-supplied address is only a dial hint: the downstream
+identity must be verified before any command. After a cached connection fails,
+a different supplied hint can recover a DHCP change even when mDNS is unavailable;
+it receives a fresh identity probe before the requested read or command.
+Cached same-boot GETs need one
+HTTP read, not a redundant identity preflight; POST commands still preflight.
+Identity/auth/HTTP errors never redirect a command and POST is never replayed.
+No credentials are forwarded; authenticated
 destinations reject access normally. This LAN HTTP identity check does not
 provide cryptographic peer authentication. Raw files, firmware writes, general
 URLs and recursive relay endpoints are not admitted.
 
-Pending: persistent trust/routes and discovery, continuous peer events,
+`GET /api/peers` includes saved/observed routes, verification age/boot, current
+internal free/largest-block memory and the separately labeled historical minimum.
+Old low-water marks are not attributed to a cause or presented as current failure.
+Explicit `POST /api/peers/routes` JSON `{ "action": "save", "board_id": "...",
+"hostname": "keycontroller.local" }` saves only a route verified this boot.
+`action: "remove"` removes that saved route and its RAM hint. Four routes fit in
+`/peer-routes.json`; stage/readback/rename publishes changes, and identical saves
+don't write flash. No observed/discovered address is persisted automatically.
+Saved addresses are reverified after reboot; boot IDs are never persisted as
+authority. These routes also work through the fenced USB maintenance API.
+No settings/scene/correction values are rewritten by a route change.
+
+Result receipts include `elapsed_ms`, `resolution_ms`, `http_ms`, `route_source`,
+`address`, and `command_dispatched`. These measure the relay job, not optical
+output or the separate observer/admission/polling latency. The read-only probe
+`node tools/check-peer-relay.mjs --origin http://ledcontroller.local
+--target-hostname keycontroller.local --target-board TARGET_BOARD_ID
+--target-address 192.168.1.201 --samples 3` records both timing scopes without
+LED commands or route persistence. Use the currently observed target address,
+not the example address blindly.
+
+Pending: automatic discovery, continuous peer events and a fully selectable
+relayed device/transport in Flutter/Rust/Web. The endpoint deliberately keeps
+`discovery` and `event_subscription` false until implemented. Also pending:
 BLE-central/ESP-NOW/USB-host adapters, remote TLS peers, and resumable verified
 file/firmware transfer. Existing direct OTA remains the update owner.
+
+## Clock and network observation tools
+
+ESP32 builds with networking advertise `network-tools`. There is one owner for
+these settings and observations across HTTP, local WebSocket, MQTT, remote
+WebSocket and the boot-fenced USB API. Configuration is persisted separately in
+`/network-tools.json`; runtime observations are never written to flash or
+accepted as client-provided public-IP/DNS/ping results.
+
+| Operation | HTTP / USB API | Shared command |
+| --- | --- | --- |
+| Configuration + actual UTC, effective NTP servers, public IP, last probe | `GET /api/network/tools` | `network-tools` |
+| Save a typed partial configuration | `POST /api/network/tools` | `configure-network-tools`, `settings: {...}` |
+| Start a bounded diagnostic | `POST /api/network/probe` | `network-probe`, `kind`, optional `target` |
+| Read actual UTC | `GET /api/time` | clock in `network-tools` |
+| Set UTC explicitly | `POST /api/time`, integer `utc_epoch` | `set-clock`, integer `utc_epoch` |
+| Request asynchronous SSID scan | `GET /api/wifi/scan` | `wifi-scan` |
+| Read scan results without restarting | `GET /api/wifi/scan?results=true` | `wifi-scan-results` |
+| Select/connect/save a station profile | `POST /api/network` | `configure-network`, `settings: {...}` |
+
+HTTP tools configuration is form-encoded `settings=<JSON object>`. USB bodies
+are the typed object directly, not the HTTP form wrapper. USB scan result reads
+use `body: {"results":true}`. Configuration export/import includes the
+`network_tools` section (only configuration, never acquired values). Existing
+station/network, cloud and Ethernet export/import behavior is retained.
+
+Settings: `ntp_enabled` (true), `ntp_dhcp` (true), `ntp_server`
+(`pool.ntp.org`), `http_date_url` (`https://example.com/`),
+`http_date_automatic` (false), `public_ip_url` (`https://api.ipify.org/`),
+`public_ip_automatic` (false), `refresh_seconds` (3600, range 60–86400).
+URLs must use HTTPS with a hostname, without credentials, fragments, custom
+ports or controls. Lookup services are public, unauthenticated endpoints; do not
+put secrets in their URLs. Automatic third-party HTTP lookups are opt-in.
+
+SNTP is configured before interface DHCP starts, so DHCP option 42 can supply
+servers without an address-change callback replacing them with hard-coded
+ones. `ntp_server` remains the fallback; disable `ntp_dhcp` to force it. Changing
+the DHCP policy affects the next DHCP lease; saving does not disconnect Wi-Fi.
+`effective_ntp_servers` reports SDK observations rather than inferring that a
+DHCP server was used. NTP is not authenticated (no NTS). UTC includes its source,
+uptime and last-set uptime. Local clock setting also permits offline bootstrap.
+
+Probe kinds: `dns` (IPv4 A; hostname or literal), `ping` (three ICMP requests),
+`http-date` and `public-ip` (use their saved URLs). One job is admitted at a time,
+with a maintenance lease; a background worker performs I/O, never the game loop.
+DNS is bounded to 900 ms. ICMP uses 700 ms per reply and a 200 ms interval.
+HTTPS uses a pinned resolved public IPv4 address, the original TLS hostname/SNI,
+the SDK CA bundle, an absolute read deadline, no redirects or insecure fallback,
+and a `PakarController/<version>` user agent. Public-IP bodies are limited to 64
+bytes with a known Content-Length and must contain one valid public IPv4 address.
+IPv6 public-IP lookup and traceroute are not implemented or advertised.
+
+HTTP `Date` must be exact IMF-fixdate with a real date, matching weekday, UTC,
+no stale cache Age, and agreement within five minutes of the current clock.
+HTTPS requires an initialized clock for certificate verification: it does not
+bypass TLS to bootstrap an unset clock. It independently checks NTP time; with
+NTP disabled it can maintain a previously initialized clock. Failed observations
+retain the last successful public-IP sample with its age, not a fabricated
+current value. A failed ping does not prove the target is offline (ICMP can be
+filtered). DNS and ping do not prove Internet availability either.
+
+Completion emits peer-bound `network-observation` events; settings and SNTP
+changes emit `configuration-changed` with scope `network-tools`. Full operational
+telemetry contains both `network_tools.settings` and actual `clock`, `observed`,
+`job` snapshots. MQTT and remote WebSocket commands use the normal board/boot,
+request-ID, UTC expiry and replay guards; diagnostics do not bypass these guards.
+They remain disabled on instances where cloud features are disabled.
+
+Flutter: **⋮ → Advanced → Clock & network tools**. Wi-Fi, board outbound
+connections and the app bridge are separate Advanced destinations. The tools
+page preserves unsaved edits, verifies saved readback, listens for WebSocket
+events, and uses bounded read-only result polling for USB/HTTP-only sessions.
+Opening it never starts a probe or applies settings.
+Rust's Wi-Fi editor also consumes asynchronous scan results, preserving its
+previous list until completion. Result-only reads are scheduled 500 ms apart
+with a 15-second deadline; the command worker never sleeps for a scan.
+
+Telnet/framed serial: `clock`, `dns example.com`, `ping 192.168.4.1`,
+`public-ip`, `http-date`. `clock` reads completion results. Typed properties use
+the same owner, e.g. `set clock.ntp_server pool.ntp.org`,
+`set clock.ntp_dhcp false`, `set network.public_ip_automatic true`,
+`set network.observation_seconds 3600`, `set clock.epoch 1793190896`.
+Existing `network scan` / `network scan-results` and `network.ssid`/password
+properties select station networks. No alternate raw UDP command authority is
+introduced. `tools/invoke-usb-api.ps1` carries these API requests on the existing
+COBS/CRC USB transport without opening Wi-Fi or resetting the device.
+
+Source/fixture and SDK build evidence is not live NTP/DHCP, Internet, RF scanning,
+MQTT or board acceptance; those remain separately verified deployment gates.

@@ -121,7 +121,10 @@ const workflow=read('.github/workflows/build.yml');assert.match(workflow,/os: \[
 const quality=workflow.split('  quality:')[1].split('  tooling:')[0];
 assert.match(quality,/setup-arduino-cli@[a-f0-9]{40}/);
 assert.match(quality,/Get-Content tools\/firmware-dependencies\.json/);
-assert.match(quality,/arduino-cli lib install \('ArduinoJson@' \+ \$taskJson\[0\]\.version\)/);
+assert.match(quality,/foreach \(\$taskName in @\('ArduinoJson','LibSSH-ESP32'\)\)/);
+assert.match(quality,/Where-Object name -eq \$taskName/);
+assert.match(quality,/\$taskLibrary\.Count -ne 1/);
+assert.match(quality,/arduino-cli lib install \(\$taskName \+ '@' \+ \$taskLibrary\[0\]\.version\)/);
 assert(quality.indexOf('arduino-cli lib install')<quality.indexOf('node tools/ci-checks.mjs quality'));
 assert.doesNotMatch(quality,/core install/); // Header-only native fixtures need no board SDK.
 for(const name of ['build','update-dependencies','upload'])for(const action of read(`.github/workflows/${name}.yml`).matchAll(/uses: ([^\s#]+)/g))assert.match(action[1],/@[a-f0-9]{40}$/);

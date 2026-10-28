@@ -10,6 +10,9 @@ pub enum Panel {
     PixelDiagnostics,
     PixelCorrections,
     Keys,
+    Game,
+    GameSettings,
+    Melodies,
     EffectControls,
     FrontPanel,
     Hardware,
@@ -18,11 +21,14 @@ pub enum Panel {
     Events,
 }
 impl Panel {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 13] = [
         Self::Table,
         Self::PixelDiagnostics,
         Self::PixelCorrections,
         Self::Keys,
+        Self::Game,
+        Self::GameSettings,
+        Self::Melodies,
         Self::EffectControls,
         Self::FrontPanel,
         Self::Hardware,
@@ -36,6 +42,9 @@ impl Panel {
             Self::PixelDiagnostics => "Pixel diagnostics",
             Self::PixelCorrections => "Pixel corrections",
             Self::Keys => "Keys",
+            Self::Game => "Game",
+            Self::GameSettings => "Game settings",
+            Self::Melodies => "Melodies",
             Self::EffectControls => "Effect controls",
             Self::FrontPanel => "Front panel",
             Self::Hardware => "Hardware monitor",
@@ -51,6 +60,9 @@ impl Panel {
             Self::PixelDiagnostics => MAGNIFYING_GLASS,
             Self::PixelCorrections => SLIDERS_HORIZONTAL,
             Self::Keys => HAND_TAP,
+            Self::Game => PLAY,
+            Self::GameSettings => GEAR,
+            Self::Melodies => MUSIC_NOTE,
             Self::EffectControls => SLIDERS_HORIZONTAL,
             Self::FrontPanel => GAUGE,
             Self::Hardware => CIRCUITRY,
@@ -77,6 +89,8 @@ impl Panel {
             Self::PixelDiagnostics => c.has("pixel-diagnostic"),
             Self::PixelCorrections => c.has("pixel-corrections"),
             Self::Keys => c.role == "first-wins" && c.has("inputs") && c.has("outputs"),
+            Self::Game | Self::GameSettings => c.role == "first-wins" && c.has("inputs") && c.has("outputs"),
+            Self::Melodies => c.has("buzzer"),
             Self::EffectControls => c.has("leds") || c.modes().next().is_some(),
             Self::FrontPanel => {
                 c.has("display") || c.has("text") || c.has("buzzer") || c.has("lcd")
@@ -94,10 +108,10 @@ pub fn create_initial_layout() -> DockState<Panel> {
     let [center, right] = dock.main_surface_mut().split_right(
         NodeIndex::root(),
         0.72,
-        vec![Panel::EffectControls, Panel::PixelDiagnostics, Panel::PixelCorrections, Panel::Network],
+        vec![Panel::Game, Panel::GameSettings, Panel::EffectControls, Panel::PixelDiagnostics, Panel::PixelCorrections, Panel::Network],
     );
     dock.main_surface_mut()
-        .split_below(right, 0.48, vec![Panel::FrontPanel, Panel::Hardware]);
+        .split_below(right, 0.48, vec![Panel::FrontPanel, Panel::Melodies, Panel::Hardware]);
     dock.main_surface_mut()
         .split_below(center, 0.80, vec![Panel::Events, Panel::Streaming]);
     sanitize_dock_rects(&mut dock);
@@ -181,9 +195,9 @@ pub fn restore_canonical(dock: &mut DockState<Panel>, panel: Panel) {
         }
     }
     let siblings: &[Panel] = match panel {
-        Panel::FrontPanel | Panel::Hardware => &[Panel::FrontPanel, Panel::Hardware],
+        Panel::FrontPanel | Panel::Melodies | Panel::Hardware => &[Panel::FrontPanel, Panel::Melodies, Panel::Hardware],
         Panel::Events | Panel::Streaming => &[Panel::Events, Panel::Streaming],
-        Panel::Network | Panel::EffectControls | Panel::PixelDiagnostics | Panel::PixelCorrections => &[Panel::EffectControls, Panel::PixelDiagnostics, Panel::PixelCorrections, Panel::Network],
+        Panel::Game | Panel::GameSettings | Panel::Network | Panel::EffectControls | Panel::PixelDiagnostics | Panel::PixelCorrections => &[Panel::Game, Panel::GameSettings, Panel::EffectControls, Panel::PixelDiagnostics, Panel::PixelCorrections, Panel::Network],
         _ => &[],
     };
     if let Some(path) = siblings.iter().find_map(|p| dock.find_tab(p)) {
@@ -203,11 +217,11 @@ pub fn restore_canonical(dock: &mut DockState<Panel>, panel: Panel) {
                     dock.main_surface_mut()
                         .split_left(path.node, 0.72, vec![panel]);
                 }
-                Panel::EffectControls | Panel::PixelDiagnostics | Panel::PixelCorrections => {
+                Panel::Game | Panel::GameSettings | Panel::EffectControls | Panel::PixelDiagnostics | Panel::PixelCorrections => {
                     dock.main_surface_mut()
                         .split_right(path.node, 0.72, vec![panel]);
                 }
-                Panel::FrontPanel | Panel::Hardware => {
+                Panel::FrontPanel | Panel::Melodies | Panel::Hardware => {
                     let anchor = dock.find_tab(&Panel::EffectControls).unwrap_or(path);
                     if anchor.surface == egui_dock::SurfaceIndex::main() {
                         dock.main_surface_mut()

@@ -587,9 +587,16 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
   }
 
   Future<void> scan() => runWrite('network', () async {
-    final value = await widget.api.getJson('/api/wifi/scan');
+    var value = await widget.api.getJson('/api/wifi/scan');
+    for (var attempt = 0; value['running'] == true && attempt < 30; attempt++) {
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      check('network');
+      value = await widget.api.getJson('/api/wifi/scan?results=true');
+    }
     check('network');
-    if (value['networks'] is! List) {
+    if (value['running'] == true ||
+        value['error'] != null ||
+        value['networks'] is! List) {
       throw const FormatException('Wi-Fi scan unavailable');
     }
     ssids =

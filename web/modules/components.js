@@ -5,12 +5,14 @@
 (() => {
   'use strict';
   const paths = {
+    folder:'M3 6V4h7l2 3h9v13H3zM3 8h18',
     controls:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
     table:'M3 4h18v16H3zM3 9h18M3 14h18M9 4v16M15 4v16',
     mapping:'M3 4h6v6H3zM13 4h8v6h-8zM3 14h10v6H3zM17 14h4v6h-4z',
     diagnostics:'M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15m5.3 12.8L21 21M7 10.5h7m-3.5-3.5v7',
     search:'M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15m5.3 12.8L21 21',
     effects:'m12 3 2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z',
+    fire:'M13 2c1 5-4 6-3 10-2-1-3-3-3-4-4 4-4 9-1 12 4 4 12 1 12-5 0-4-2-7-5-13zM12 14c-3 2-3 6 0 7 3-1 3-4 0-7z',
     hardware:'M6 6h12v12H6zM9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4',
     settings:'M9 3h6l.7 3 2.5 1.5 3-.9 3 5.2-2.3 2.1v2.9l2.3 2.1-3 5.2-3-.9-2.5 1.5-.7 3H9l-.7-3-2.5-1.5-3 .9-3-5.2 2.3-2.1v-2.9L-.2 9.8l3-5.2 3 .9L8.3 4z',
     sliders:'M4 5h16M4 12h16M4 19h16M8 3v4m8 3v4M10 17v4',
@@ -124,7 +126,7 @@
     openMenu?.();const panel=node('div','web-menu');panel.setAttribute('role','menu');panel.setAttribute('aria-label',label);const previous=document.activeElement;
     const close=(restore=true)=>{panel.remove();document.removeEventListener('pointerdown',outside,true);document.removeEventListener('keydown',keys,true);window.removeEventListener('resize',resize);if(restore&&previous?.isConnected)previous.focus();anchor?.setAttribute?.('aria-expanded','false');if(openMenu===close)openMenu=null;};
     const run=item=>{close();return item.action?.();};
-    for(const item of items){if(item.separator){panel.append(node('div','web-menu-separator'));continue;}if(item.heading){panel.append(node('div','web-menu-label',item.heading));continue;}const b=button(item.label,()=>run(item),{className:'web-menu-item',disabled:item.disabled});b.replaceChildren(icon(item.checked?'check':item.icon||'controls'),node('span','',item.label),node('span','shortcut',item.shortcut||''));b.setAttribute('role',typeof item.checked==='boolean'?'menuitemcheckbox':'menuitem');if(typeof item.checked==='boolean')b.setAttribute('aria-checked',String(item.checked));if(item.danger)b.dataset.danger='true';panel.append(b);}
+    for(const item of items){if(item.separator){panel.append(node('div','web-menu-separator'));continue;}if(item.heading){panel.append(node('div','web-menu-label',item.heading));continue;}const b=button(item.label,()=>run(item),{className:'web-menu-item',disabled:item.disabled});const copy=node('span',item.description?'menu-copy':'',item.label);if(item.description)copy.append(node('small','',item.description));b.replaceChildren(icon(item.icon||'controls'),copy,node('span','shortcut',typeof item.checked==='boolean'?(item.checked?'✓':''):item.shortcut||''));b.setAttribute('role',typeof item.checked==='boolean'?'menuitemcheckbox':'menuitem');if(typeof item.checked==='boolean')b.setAttribute('aria-checked',String(item.checked));if(item.danger)b.dataset.danger='true';panel.append(b);}
     const outside=e=>{if(!panel.contains(e.target)&&!anchor?.contains?.(e.target))close(false);};
     const keys=e=>{const list=[...panel.querySelectorAll('button:not(:disabled)')],i=list.indexOf(document.activeElement);if(e.key==='Escape'){e.preventDefault();close();}else if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?list.length-1:(i+(e.key==='ArrowDown'?1:-1)+list.length)%list.length;list[next]?.focus();}else if(e.key==='Tab')close(false);};
     const resize=()=>close(false);document.body.append(panel);const r=anchor?.getBoundingClientRect?.()||{left:16,bottom:16};const pr=panel.getBoundingClientRect();panel.style.left=Math.max(8,Math.min(r.left,innerWidth-pr.width-8))+'px';panel.style.top=Math.max(8,Math.min(r.bottom+6,innerHeight-pr.height-8))+'px';anchor?.setAttribute?.('aria-expanded','true');document.addEventListener('pointerdown',outside,true);document.addEventListener('keydown',keys,true);window.addEventListener('resize',resize);panel.querySelector('button:not(:disabled)')?.focus();openMenu=close;return {element:panel,close};

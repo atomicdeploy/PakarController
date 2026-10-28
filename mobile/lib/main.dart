@@ -17,11 +17,13 @@ import 'board_sound_preferences.dart';
 import 'winner_notice.dart';
 import 'models.dart';
 import 'command_readback.dart';
+import 'command_wire.dart' show commandPeerMatches;
 import 'table_layout.dart';
 import 'table_workspace.dart';
 import 'table_viewport.dart';
 import 'connection_preferences.dart';
 import 'header_controls.dart';
+import 'signal_indicator.dart';
 import 'automatic_board_connection.dart';
 import 'discovery.dart';
 import 'device_registry.dart';
@@ -34,7 +36,7 @@ import 'workspace_activity_strip.dart';
 import 'application_artwork.dart';
 import 'device_settings_page.dart';
 import 'devices_page.dart';
-import 'bridge_page.dart';
+import 'advanced_page.dart';
 import 'firmware_page.dart';
 import 'firmware_progress.dart';
 import 'firmware_automation.dart';
@@ -338,6 +340,7 @@ class _ControlShellState extends State<ControlShell>
             [
               'overview',
               'table',
+              'game',
               'output',
               'front-panel',
               'hardware',
@@ -855,7 +858,7 @@ class _ControlShellState extends State<ControlShell>
           (mirror.segmentsEnabled || mirror.buzzerEnabled),
       pixels:
           (page == 'table' && activeWorkspace?.showIndicators == true) ||
-          (page == 'output' && presented?.peer.role == 'first-wins'),
+          (page == 'game' && presented?.peer.role == 'first-wins'),
     );
   }
 
@@ -1054,6 +1057,8 @@ class _ControlShellState extends State<ControlShell>
     bool propagateFailure = false,
   }) async {
     final attempt = ++commandAttempt;
+    final intentBoard = status?.json['board_id'];
+    final intentBoot = status?.json['boot_id'];
     if (commandPending) {
       setState(
         () => commandFailure =
@@ -1087,8 +1092,8 @@ class _ControlShellState extends State<ControlShell>
         authorize: () =>
             mounted &&
             owner == api.connectionRevision &&
-            peer == status?.hostname &&
-            status?.peer.allows(path, values) == true,
+            api.connectionWanted &&
+            commandPeerMatches(status, intentBoard, intentBoot),
       );
       late final DeviceStatus actual;
       if (fast != null) {
@@ -1126,7 +1131,7 @@ class _ControlShellState extends State<ControlShell>
           !api.connectionWanted ||
           owner != api.connectionRevision ||
           peer != actual.hostname ||
-          !actual.peer.allows(path, values)) {
+          !commandPeerMatches(actual, intentBoard, intentBoot)) {
         throw const StaleConnection();
       }
       _observe(actual);
@@ -1174,7 +1179,11 @@ class _ControlShellState extends State<ControlShell>
               : SupportIncident.commandRejected,
         );
         if (attempt == commandAttempt) {
-          setState(() => commandFailure = error.toString());
+          setState(
+            () => commandFailure = error is FormatException
+                ? error.message.toString()
+                : error.toString(),
+          );
         }
         if (error is StaleConnection) {
           _revoke(error.toString());
@@ -1397,6 +1406,8 @@ class _ControlShellState extends State<ControlShell>
                                 final intent = await showPixelCorrectionMenu(
                                   context,
                                   pixel,
+                                  api: api,
+                                  authorize: current,
                                 );
                                 if (intent == null || !current()) return;
                                 update(() => correctionIntent = intent);
@@ -1457,7 +1468,8 @@ class _ControlShellState extends State<ControlShell>
       ('overview', 'Overview', PakarIcons.broadcast),
       if (panelInventory.tableSelection)
         ('table', 'Table', PakarIcons.gridFour),
-      if (panelInventory.has('table')) ('output', 'Output', PakarIcons.gauge),
+      if (panelInventory.game) ('game', 'Game', PakarIcons.play),
+      if (panelInventory.output) ('output', 'Output', PakarIcons.gauge),
       if (panelInventory.frontPanel)
         ('front-panel', 'Front panel', PakarIcons.gauge),
       if (panelInventory.known &&
@@ -1543,12 +1555,16 @@ class _ControlShellState extends State<ControlShell>
                   api.connectionWanted &&
                   owner == api.connectionRevision,
             ),
-            'output' => OutputPanel(
-              key: ValueKey('output:${panelInventory.ownerKey}'),
+            'output' || 'game' => OutputPanel(
+              key: ValueKey('$page:${panelInventory.ownerKey}'),
+              section: page == 'game'
+                  ? OutputPanelSection.game
+                  : OutputPanelSection.output,
               status: presented,
               connected: status != null && foreground,
               workspace: workspaces[workspaceBoard],
               command: scoped,
+              statusUpdates: api.statusUpdates,
               verifiedCommand: (path, values) => _command(
                 owner,
                 hostname,
@@ -1786,14 +1802,19 @@ class _ControlShellState extends State<ControlShell>
                         child: Scaffold(
                           appBar: AppBar(
                             title: Text(
-                              target == 'bridge'
-                                  ? 'Advanced bridge'
+                              target == 'advanced'
+                                  ? 'Advanced'
                                   : 'Firmware',
                             ),
                             automaticallyImplyLeading: !locked,
                           ),
-                          body: target == 'bridge'
-                              ? BridgePage(api: api, observed: () => status)
+                          body: target == 'advanced'
+                              ? AdvancedPage(api: api, observed: () => status,
+                                  openSettings: (section) {
+                                    workspaces[workspaceBoard]?.settings.page = section;
+                                    Navigator.of(context).pop();
+                                    _navigate('device-settings');
+                                  })
                               : FirmwarePage(
                                   api: api,
                                   authorized: (feature) =>
@@ -1852,9 +1873,9 @@ class _ControlShellState extends State<ControlShell>
                     pixelCorrectionIcon,
                   ),
                 workspaceMenuItem(
-                  'bridge',
-                  'Advanced MQTT / bridge…',
-                  PakarIcons.link,
+                  'advanced',
+                  'Advanced…',
+                  Icons.tune,
                 ),
                 const PopupMenuDivider(),
                 workspaceMenuItem(
@@ -1969,7 +1990,7 @@ class BoardOverview extends StatelessWidget {
                 icon: PakarIcons.play,
                 title: 'Game controls',
                 subtitle: 'Boxes, winner and reset',
-                onTap: navigate == null ? null : () => navigate!('output'),
+                onTap: navigate == null ? null : () => navigate!('game'),
               ),
             if (peer.has('buzzer') || peer.has('display'))
               WorkspaceActionCard(
@@ -2237,7 +2258,7 @@ class _TablePageState extends State<TablePage> {
       setState(() {
         applying = false;
         batchMessage = applied
-            ? '${ids.length} cell states read back after one board-side update; physical output not verified.'
+            ? '${ids.length} cells updated'
             : failure ?? 'The command did not return a verified result. Nothing was retried.';
       });
     }
@@ -2416,6 +2437,7 @@ class _TablePageState extends State<TablePage> {
                           status: status!,
                           command: widget.verifiedCommand!,
                           readStatus: widget.readStatus!,
+                          statusUpdates: widget.statusUpdates,
                           ids: selection.isEmpty
                               ? '1-80'
                               : selection.toList().join(','),
@@ -4242,9 +4264,6 @@ class StatusBar extends StatelessWidget {
             if (status!.json['station_connected'] == true &&
                 status!.stationIp.isNotEmpty)
               status!.stationIp,
-            if (status!.json['station_connected'] == true &&
-                status!.rssi != null)
-              '${status!.rssi} dBm',
           ].join(' · ');
     // Keep the donor workspace chrome's 48px touch target, not 48px plus
     // another 16px of footer padding. Safe insets belong to the workspace.
@@ -4324,6 +4343,9 @@ class StatusBar extends StatelessWidget {
                 ),
               ),
             ],
+            if (status?.json['station_connected'] == true &&
+                status?.rssi != null)
+              SignalIndicator(rssi: status!.rssi!, onConnection: onConnection),
             if (commandFailed)
               SizedBox.square(
                 dimension: 48,

@@ -2,6 +2,10 @@
 function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()=>Date.now(),random=()=>crypto.getRandomValues(new Uint8Array(16))}){
   const names={'/api/cells':'cells','/api/cell':'cell','/api/game/press':'game-press','/api/game/reset':'reset','/api/game/settings':'game-settings','/api/effect':'effect','/api/mode':'mode','/api/brightness':'brightness','/api/led/output':'led-output','/api/cells/lock':'cell-lock','/api/cells/assignments':'cell-assignments','/api/led/diagnostic':'pixel-diagnostic','/api/led/presentation':'state-presentation','/api/led/preview':'color-preview'};
   const pending=new Map();
+  names['/api/pixels/corrections/preview']='pixel-corrections-preview';
+  names['/api/presentation']='presentation';
+  names['/api/audio']='audio';names['/api/buzzer']='buzzer';names['/api/outputs']='outputs';
+  for(const action of ['configure','control','input'])names['/api/minigame/'+action]='minigame-'+action;
   function receive(reply){const p=pending.get(reply?.request_id);if(!p)return false;if(reply.type!=='command-result'||reply.board_id!==p.board||reply.boot_id!==p.boot)return false;p.reply=reply;p.resolve(reply);return true}
   const integer=(value,key,min=0,max=Number.MAX_SAFE_INTEGER)=>{
     if(typeof value==='string'&&!/^(?:0|[1-9]\d*)$/.test(value))throw Error('Invalid '+key);
@@ -17,6 +21,41 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
   };
   function typedValues(path,values){
     const result={...values};
+    if(path==='/api/minigame/configure'){
+      const settings=structured(result.settings,'minigame settings');
+      const limits={limit_ms:[0,86400000],warning_ms:[0,86400000],urgent_ms:[0,86400000],penalty_ms:[0,86400000],window_ms:[100,60000],show_ms:[100,10000],gap_ms:[50,5000],feedback_ms:[50,5000],intro_ms:[100,10000],preview_ms:[0,10000],mismatch_ms:[600,10000],rounds:[1,32],sequence_length:[1,32],palette_size:[2,9],fixed_target:[0,9]};
+      for(const key of Object.keys(settings))if(!Object.hasOwn(limits,key)&&!['mode','hard','intro_enabled','color_arpeggio','toggle_kind','outputs'].includes(key))throw Error('Unknown minigame setting');
+      for(const [key,[min,max]] of Object.entries(limits))if(key in settings)settings[key]=integer(settings[key],key,min,max);
+      for(const key of ['hard','intro_enabled','color_arpeggio'])if(key in settings)settings[key]=boolean(settings[key],key);
+      if('mode' in settings&&!snapshot().minigame?.available_modes?.some(mode=>mode.id===settings.mode))throw Error('Unavailable minigame');
+      if('toggle_kind' in settings&&!['toggle','latch','press'].includes(settings.toggle_kind))throw Error('Invalid toggle behavior');
+      if('outputs' in settings){
+        const rows=structured(settings.outputs,'minigame outputs',true);
+        if(rows.length!==8)throw Error('Expected eight output mappings');
+        settings.outputs=rows.map(row=>{
+          const sources=['disabled','active','success','failure','held','latched','winner','lost'];
+          if(!sources.includes(row?.source))throw Error('Invalid output source');
+          const key=integer(row.key,'output key',0,9);
+          if((sources.indexOf(row.source)<4)!==(key===0))throw Error('Invalid output key');
+          return {source:row.source,key};
+        });
+      }
+      result.settings=settings;
+    }
+    if(path==='/api/minigame/control'&&!['start','pause','resume','reset','stop'].includes(result.action))throw Error('Invalid minigame action');
+    if(path==='/api/minigame/input'){
+      result.key=integer(result.key,'key',1,9);
+      if(!['tap','down','up'].includes(result.action))throw Error('Invalid minigame input');
+    }
+    if(path==='/api/pixels/corrections/preview')result.configuration=structured(result.configuration,'correction preview');
+    if(path==='/api/presentation')return structured(result.presentation,'host presentation');
+    if(path==='/api/audio'&&(typeof result.cue!=='string'||!/^[a-z0-9][a-z0-9-]{0,39}$/.test(result.cue)))throw Error('Invalid melody');
+    if(path==='/api/buzzer'){
+      result.frequency=integer(result.frequency,'frequency',0,20000);
+      if(result.frequency>0&&result.frequency<20)throw Error('Invalid frequency');
+      result.duration_ms=integer(result.duration_ms,'duration_ms',1,65535);
+    }
+    if(path==='/api/outputs')result.mask=integer(result.mask,'mask',0,255);
     for(const key of ['id','key','index','count','rgb','group_layout_revision'])if(key in result)result[key]=integer(result[key],key);
     if(path==='/api/brightness')result.value=integer(result.value,'brightness',0,255);
     for(const key of ['enabled','off'])if(key in result)result[key]=boolean(result[key],key);
@@ -51,6 +90,10 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
   }
   async function send(path,values){
     const observed=snapshot();if(!names[path]||!valid()||!Number.isSafeInteger(observed.command_clock_ms)||observed.command_clock_ms<0||observed.command_clock_ms>Number.MAX_SAFE_INTEGER-8000)return null;
+    if(path.startsWith('/api/minigame/')&&observed.minigame?.ready!==true)return null;
+    const miniRevision=observed.minigame?.revision??0;
+    const avr=['/api/audio','/api/buzzer','/api/outputs'].includes(path);
+    if(avr&&(!observed.avr_online||!observed.capabilities?.acknowledged_features?.includes('avr-command-ack')))return null;
     // Capture immutable identity values, not a mutable snapshot object.
     const s={board_id:observed.board_id,boot_id:observed.boot_id,command_clock_ms:observed.command_clock_ms};
     const request_id=Array.from(random(),x=>x.toString(16).padStart(2,'0')).join('');
@@ -77,8 +120,17 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
       }
       if(!same()||reply?.type!=='command-result'||reply.request_id!==request_id||reply.board_id!==s.board_id||reply.boot_id!==s.boot_id)throw Error('Uncorrelated command receipt; inspect device state');
       if(reply.accepted!==true)throw Error(reply.error||'Command rejected');
+      if(avr&&reply.avr_acknowledged!==true)throw Error('AVR did not acknowledge the command');
       if((path==='/api/game/reset'||path==='/api/game/press')&&reply.avr_acknowledged!==true)throw Error('AVR did not acknowledge the command');
       if(reply.status?.board_id!==s.board_id||reply.status?.boot_id!==s.boot_id)throw Error('Command readback missing');
+      if(path.startsWith('/api/minigame/')){
+        const actual=reply.status.minigame;
+        if(!actual||!Number.isSafeInteger(actual.revision)||actual.revision<miniRevision)throw Error('Minigame readback missing or stale');
+        if(path==='/api/minigame/configure')for(const [key,value] of Object.entries(packet.settings)){
+          const read=actual.settings?.[key],matches=key==='outputs'?Array.isArray(read)&&read.length===value.length&&value.every((rule,i)=>read[i]?.source===rule.source&&read[i]?.key===rule.key):read===value;
+          if(!matches)throw Error('Minigame settings readback differs');
+        }
+      }
       return reply;
     }finally{clearTimeout(timer);clearTimeout(deadlineTimer);httpController?.abort();pending.delete(request_id)}
   }

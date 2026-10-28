@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "PortableShellCore.h"
 
 // Adapted from atomicdeploy/pu850-esp 4311040 LocalLib/Telnet.cpp and
 // Shell.cpp: the IAC/subnegotiation state machine, NVT CR coalescing,
@@ -44,11 +45,25 @@ inline size_t terminalText(char* out, size_t capacity, const char* text,
 
 class TelnetParser {
  public:
-  void reset() { state_ = Data; negotiation_ = 0; echo_ = sga_ = peerSga_ = false; }
+  void reset() {
+    state_=Data;negotiation_=0;echo_=sga_=peerSga_=binary_=peerBinary_=false;
+    naws_=type_=nawsPending_=typePending_=false;subSize_=0;subOverflow_=false;
+    columns_=80;rows_=24;strcpy(terminal_,"unknown");
+  }
+  uint16_t columns()const{return columns_;}
+  uint16_t rows()const{return rows_;}
+  const char* terminal()const{return terminal_;}
+  bool ansi()const{return strcmp(terminal_,"dumb")&&strcmp(terminal_,"DUMB");}
+  bool size(uint16_t columns,uint16_t rows){
+    if(columns<40||columns>240||rows<16||rows>100)return false;
+    columns_=columns;rows_=rows;return true;
+  }
   template <typename Write> void greet(Write write) {
     reset();
     send(write, Will, Echo); send(write, Will, Sga); send(write, Do, Sga);
     echo_ = sga_ = peerSga_ = true;
+    send(write,Do,Naws);send(write,Do,Type);nawsPending_=typePending_=true;
+    send(write,Will,Binary);send(write,Do,Binary);binary_=peerBinary_=true;
   }
   template <typename Write, typename Input>
   void feed(uint8_t ch, Write write, Input input) {
@@ -60,36 +75,65 @@ class TelnetParser {
         if (ch == Iac) { state_ = Data; input(ch); }
         else if (ch == Do || ch == Dont || ch == Will || ch == Wont) {
           negotiation_ = ch; state_ = Option;
-        } else if (ch == Sb) state_ = Sub;
+        } else if (ch == Sb) {state_=Sub;subSize_=0;subOverflow_=false;}
         else state_ = Data; // Ignore NOP, GA and other simple commands.
         break;
       case Option: negotiate(ch, write); state_ = Data; break;
-      case Sub: if (ch == Iac) state_ = SubIac; break;
-      case SubIac: state_ = ch == Se ? Data : Sub; break;
+      case Sub: if (ch == Iac) state_ = SubIac; else append(ch); break;
+      case SubIac:
+        if(ch==Se){subnegotiation();state_=Data;}
+        else {if(ch==Iac)append(ch);else subOverflow_=true;state_=Sub;}
+        break;
     }
   }
  private:
   enum State : uint8_t { Data, Command, Option, Sub, SubIac };
   enum : uint8_t { Se = 240, Sb = 250, Will = 251, Wont = 252,
-                   Do = 253, Dont = 254, Iac = 255, Echo = 1, Sga = 3 };
+                   Do = 253, Dont = 254, Iac = 255, Binary=0, Echo = 1, Sga = 3, Type=24, Naws=31 };
+  void append(uint8_t ch){if(subSize_<sizeof(sub_))sub_[subSize_++]=ch;else subOverflow_=true;}
+  void subnegotiation(){
+    if(subOverflow_||!subSize_)return;
+    if(sub_[0]==Naws&&naws_&&subSize_==5){
+      const uint16_t w=uint16_t(sub_[1])<<8|sub_[2],h=uint16_t(sub_[3])<<8|sub_[4];
+      // NAWS zero means unspecified. Retain the last useful dimension; cap
+      // layout independently so a hostile terminal cannot enlarge allocations.
+      if(w)columns_=w>240?240:w;
+      if(h)rows_=h>100?100:h;
+    }else if(sub_[0]==Type&&type_&&subSize_>2&&sub_[1]==0&&subSize_<=34){
+      for(uint8_t i=2;i<subSize_;++i)if(sub_[i]<32||sub_[i]>126)return;
+      memcpy(terminal_,sub_+2,subSize_-2);terminal_[subSize_-2]=0;
+    }
+  }
   template <typename Write> static void send(Write write, uint8_t command, uint8_t option) {
     const uint8_t bytes[] = {Iac, command, option}; write(bytes, sizeof(bytes));
   }
   template <typename Write> void negotiate(uint8_t option, Write write) {
     if (negotiation_ == Do || negotiation_ == Dont) {
-      bool* enabled = option == Echo ? &echo_ : option == Sga ? &sga_ : nullptr;
+      bool* enabled = option == Echo ? &echo_ : option == Sga ? &sga_ : option==Binary?&binary_:nullptr;
       if (!enabled) { if (negotiation_ == Do) send(write, Wont, option); return; }
       const bool accept = negotiation_ == Do;
       if (*enabled != accept) { send(write, accept ? Will : Wont, option); *enabled = accept; }
     } else if (negotiation_ == Will || negotiation_ == Wont) {
-      if (option != Sga) { if (negotiation_ == Will) send(write, Dont, option); return; }
+      if(option==Naws||option==Type){
+        bool &enabled=option==Naws?naws_:type_,&pending=option==Naws?nawsPending_:typePending_;
+        const bool accept=negotiation_==Will;
+        if(enabled!=accept){if(!pending)send(write,accept?Do:Dont,option);enabled=accept;
+          if(accept&&option==Type){const uint8_t request[]={Iac,Sb,Type,1,Iac,Se};write(request,sizeof(request));}}
+        pending=false;return;
+      }
+      if (option != Sga && option!=Binary) { if (negotiation_ == Will) send(write, Dont, option); return; }
       const bool accept = negotiation_ == Will;
-      if (peerSga_ != accept) { send(write, accept ? Do : Dont, option); peerSga_ = accept; }
+      bool &enabled=option==Binary?peerBinary_:peerSga_;
+      if (enabled != accept) { send(write, accept ? Do :Dont, option); enabled=accept; }
     }
   }
   State state_ = Data;
   uint8_t negotiation_ = 0;
   bool echo_ = false, sga_ = false, peerSga_ = false;
+  bool binary_=false,peerBinary_=false;
+  bool naws_=false,type_=false,nawsPending_=false,typePending_=false,subOverflow_=false;
+  uint8_t sub_[64]{},subSize_=0;
+  uint16_t columns_=80,rows_=24;char terminal_[33]="unknown";
 };
 
 class LineEditor {
@@ -97,20 +141,66 @@ class LineEditor {
   // Full bounded HTTPS endpoint (383), SHA-256 and target fit without truncation.
   static constexpr size_t kCapacity = 512;
   static constexpr size_t kHistory = 8;
-  enum Event : uint8_t { None, Submit, Cancel, TooLong, Close };
+  enum Event : uint8_t { None, Submit, Cancel, TooLong, Close, Complete };
   ~LineEditor() { reset(); } // Disconnect/destruction never leaves partial secrets in freed storage.
   const char* line() const { return command_; }
   size_t cursor() const { return cursor_; }
   size_t historySize() const { return historyCount_; }
-  void reset() { clear(); clearHistory(); crPending_ = false; echo_ = false; }
+  // Suggestions contain descriptor names only, never history or argument values.
+  // They remain outside command_ until explicitly accepted with Right/End/Tab.
+  template<class Candidate,class Write>
+  void suggest(size_t start,size_t count,Candidate candidate,Write write) {
+    if(!echo_||!ansi_||overflow_||escape_||cursor_!=strlen(command_)||start>=cursor_)return;
+    eraseSuggestion(write);
+    const size_t typed=cursor_-start;
+    for(size_t i=0;i<count;++i){
+      const char* name=candidate(i);
+      if(!name||!namePrefix(name,command_+start,typed)||strlen(name)<=typed)continue;
+      const size_t size=strlen(name)-typed;
+      if(size>=sizeof(suggestion_)||cursor_+size+1>kCapacity)return;
+      memcpy(suggestion_,name+typed,size+1);
+      emit(write,"\x1b[90m");emitInput(write,suggestion_);emit(write,"\x1b[0m");cursorBack(write,size);return;
+    }
+  }
+  // Completion never executes, records history, or operates on password input.
+  // Only an end-of-line token may be replaced; text to the right stays untouched.
+  template<class Candidate,class Write>
+  void complete(size_t start,size_t count,Candidate candidate,Write write) {
+    if(!echo_ || overflow_ || escape_ || cursor_!=strlen(command_) || start>cursor_)return;
+    eraseSuggestion(write);
+    const size_t typed=cursor_-start;
+    const char* first=nullptr;size_t matches=0,common=0;
+    for(size_t i=0;i<count;++i){
+      const char* name=candidate(i);
+      if(!name || !namePrefix(name,command_+start,typed))continue;
+      if(!matches){first=name;common=strlen(name);}
+      else{size_t n=0;while(n<common && name[n] && name[n]==first[n])++n;common=n;}
+      ++matches;
+    }
+    if(!matches){bell(write);return;}
+    const size_t extra=matches==1?1:0;
+    if(start+common+extra>kCapacity){bell(write);return;}
+    if(common>typed || matches==1){
+      memcpy(command_+start,first,common);cursor_=start+common;
+      if(extra)command_[cursor_++]=' ';
+      command_[cursor_]=0;historyOffset_=0;redraw(write);return;
+    }
+    emit(write,"\r\n");
+    for(size_t i=0;i<count;++i){const char* name=candidate(i);
+      if(name && namePrefix(name,command_+start,typed)){emit(write,name);emit(write,"  ");}}
+    emit(write,"\r\n");redraw(write);
+  }
+  void reset() { clear(); clearHistory(); crPending_ = false; echo_ = upper_ = false; }
   void clear() {
     // Scrub password bytes after authentication, disconnect or cancellation.
     volatile char* p = command_;
     for (size_t i = 0; i < sizeof(command_); ++i) p[i] = 0;
     scrub(draft_,sizeof(draft_));draftCursor_=historyOffset_=0;
+    scrub(suggestion_,sizeof(suggestion_));
     cursor_ = 0; escape_ = attribute_ = escapeBytes_ = 0; overflow_ = false;
   }
   void setEcho(bool enabled) { echo_ = enabled; }
+  void setUpper(bool enabled) { upper_ = enabled; }
   void setPrompt(const char* label, bool ansi=true) {
     terminalText(prompt_,sizeof(prompt_),label,128);ansi_=ansi;
   }
@@ -141,12 +231,13 @@ class LineEditor {
   }
   template <typename Write> void prompt(Write write) const {
     if(!echo_)return;
-    if(ansi_){emit(write,"\x1b[1;36m");}emit(write,prompt_);emit(write,"> ");
+    if(ansi_){emit(write,"\x1b[1;32m");}emit(write,prompt_);emit(write,"> ");
     if(ansi_)emit(write,"\x1b[0m");
   }
   template <typename Write> void redraw(Write write) const {
     if(!echo_)return;
-    emit(write,ansi_?"\r\x1b[2K":"\r");prompt(write);emit(write,command_);
+    Terminal::clearLine(write,ansi_);prompt(write);emitInput(write,command_);
+    if(ansi_&&suggestion_[0]){emit(write,"\x1b[90m");emitInput(write,suggestion_);emit(write,"\x1b[0m");cursorBack(write,strlen(suggestion_));}
     cursorBack(write,strlen(command_)-cursor_);
   }
   template <typename Write> void redrawEvent(const char* text, Write write) const {
@@ -155,6 +246,8 @@ class LineEditor {
     emit(write,safe);emit(write,"\r\n");if(echo_)redraw(write);
   }
   template <typename Write> Event feed(uint8_t ch, Write write) {
+    // Do not erase at ESC: fragmented arrows must still be able to accept it.
+    if(!escape_&&ch!=27)eraseSuggestion(write);
     if (crPending_ && (ch == '\n' || ch == 0)) { crPending_ = false; return None; }
     if (ch == '\r' || ch == '\n') {
       crPending_ = ch == '\r'; emit(write, "\r\n");
@@ -165,6 +258,7 @@ class LineEditor {
     if (overflow_) return None; // Never execute a silently truncated command.
     if (escape_) { escape(ch, write); return None; }
     if (ch == 27) { escape_ = 1; return None; }
+    if (ch == '\t') return echo_ ? Complete : None;
     if(ch==1 || ch==5){move(ch==1?'H':'F',write);return None;}
     if(ch==21 || ch==23) {
       size_t target=cursor_;
@@ -179,7 +273,7 @@ class LineEditor {
       return None;
     }
     if (ch == 12) {
-      if (echo_) { emit(write, ansi_?"\x1b[H\x1b[2J":"\r\n"); redraw(write); }
+      if (echo_) { Terminal::clear(write,ansi_); redraw(write); }
       return None;
     }
     if (ch == 8 || ch == 127) {
@@ -192,7 +286,7 @@ class LineEditor {
     // Donor ShellShiftRight/ShellShiftLeft, with a fixed extra NUL slot.
     for (size_t i = kCapacity; i > cursor_; --i) command_[i] = command_[i - 1];
     command_[cursor_++] = static_cast<char>(ch);
-    if (echo_) { const char text[] = {static_cast<char>(ch), 0}; emit(write, text); fixCursor(write, false); }
+    if (echo_) { const char text[] = {static_cast<char>(ch), 0}; emitInput(write, text); fixCursor(write, false); }
     return None;
   }
  private:
@@ -217,18 +311,21 @@ class LineEditor {
   template <typename Write> static void emit(Write write, const char* text) {
     write(reinterpret_cast<const uint8_t*>(text), strlen(text));
   }
+  template <typename Write> void emitInput(Write write,const char* text) const {
+    if(!upper_){emit(write,text);return;}
+    for(;*text;++text){const uint8_t c=*text>='a'&&*text<='z'?*text-('a'-'A'):*text;write(&c,1);}
+  }
   template <typename Write> void bell(Write write) { if (echo_) emit(write, "\a"); }
   template <typename Write> void cursorBack(Write write,size_t count) const {
     if(!echo_||!count)return;
-    if(ansi_){char text[20];snprintf(text,sizeof(text),"\x1b[%uD",static_cast<unsigned>(count));emit(write,text);}
-    else while(count--)emit(write,"\b");
+    Terminal::cursorLeft(write,count,ansi_);
   }
   void shiftLeft() { for (size_t i = cursor_; i < kCapacity; ++i) command_[i] = command_[i + 1]; }
   template <typename Write> void fixCursor(Write write, bool clearAfter) {
     const size_t length = strlen(command_);
     if (cursor_ != length) {
-      if(ansi_){emit(write, "\x1b[s"); emit(write, command_ + cursor_);emit(write, "\x1b[K\x1b[u");}
-      else {emit(write,command_+cursor_);if(clearAfter)emit(write," ");cursorBack(write,length-cursor_+(clearAfter?1:0));}
+      if(ansi_){emit(write, "\x1b[s"); emitInput(write, command_ + cursor_);emit(write, "\x1b[K\x1b[u");}
+      else {emitInput(write,command_+cursor_);if(clearAfter)emit(write," ");cursorBack(write,length-cursor_+(clearAfter?1:0));}
     } else if (clearAfter) {if(ansi_)emit(write, "\x1b[K");else emit(write," \b");}
   }
   template <typename Write> void history(bool older,Write write) {
@@ -246,12 +343,18 @@ class LineEditor {
   }
   template <typename Write> void move(uint8_t direction, Write write) {
     const size_t length = strlen(command_);
+    if((direction=='C'||direction=='F')&&cursor_==length&&suggestion_[0]){
+      const size_t size=strlen(suggestion_);
+      memcpy(command_+cursor_,suggestion_,size);cursor_+=size;command_[cursor_++]=' ';command_[cursor_]=0;
+      emitInput(write,suggestion_);emit(write," ");scrub(suggestion_,sizeof(suggestion_));historyOffset_=0;return;
+    }
+    eraseSuggestion(write);
     if (direction == 'D') {
       if (cursor_ == 0) { bell(write); return; }
       --cursor_; cursorBack(write,1);
     } else if (direction == 'C') {
       if (cursor_ == length) { bell(write); return; }
-      if(echo_){if(ansi_)emit(write,"\x1b[C");else{const char c[]={command_[cursor_],0};emit(write,c);}}++cursor_;
+      if(echo_){if(ansi_)emit(write,"\x1b[C");else{const char c[]={command_[cursor_],0};emitInput(write,c);}}++cursor_;
     } else if (direction == 'H' || direction == 'F') {
       const size_t target = direction == 'H' ? 0 : length;
       while (cursor_ != target) move(cursor_ > target ? 'D' : 'C', write);
@@ -270,6 +373,7 @@ class LineEditor {
     if (escape_ == 3) {
       if (ch == '~') {
         if (attribute_ == '3') {
+          eraseSuggestion(write);
           if (cursor_ < strlen(command_)) { shiftLeft(); if (echo_) fixCursor(write, true); }
           else bell(write);
         } else if (attribute_ == '1' || attribute_ == '4' || attribute_=='7' || attribute_=='8') move(attribute_ == '1'||attribute_=='7' ? 'H' : 'F', write);
@@ -279,12 +383,18 @@ class LineEditor {
     } else move(ch, write);
     escape_ = attribute_ = escapeBytes_=0;
   }
+  template<class Write> void eraseSuggestion(Write write){
+    if(!suggestion_[0])return;
+    if(echo_&&ansi_)emit(write,"\x1b[K");
+    scrub(suggestion_,sizeof(suggestion_));
+  }
   char command_[kCapacity + 1] = {};
   char history_[kHistory][kCapacity+1] = {},draft_[kCapacity+1]={};
   char prompt_[49]="pakar";
+  char suggestion_[80]{};
   size_t historyNext_=0,historyCount_=0,historyOffset_=0,draftCursor_=0;
   size_t cursor_ = 0;
   uint8_t escape_ = 0, attribute_ = 0,escapeBytes_=0;
-  bool echo_ = false, crPending_ = false, overflow_ = false,ansi_=true;
+  bool echo_ = false, crPending_ = false, overflow_ = false,ansi_=true,upper_=false;
 };
 } // namespace PakarShell

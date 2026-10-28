@@ -9,14 +9,19 @@ foreach($taskFunction in $taskAst.FindAll({param($node)$node -is [Management.Aut
     . ([ScriptBlock]::Create($taskFunction.Extent.Text))
 }
 function Assert([bool]$Condition,[string]$Message){if(-not $Condition){throw $Message}}
-function Must-Fail([scriptblock]$Action,[string]$Reason){
-    $failed=$false;try{& $Action}catch{$failed=$true}
+function Must-Fail([scriptblock]$Action,[string]$Reason,[string]$Expected=''){
+    $failed=$false;try{& $Action}catch{
+        $failed=$true
+        if($Expected){Assert ($_.Exception.Message -match $Expected) "Wrong failure phase: $($_.Exception.Message)"}
+    }
     Assert $failed $Reason
 }
 class AvrRxFixturePort {
     [Collections.Generic.Queue[int]]$Input=[Collections.Generic.Queue[int]]::new()
     [Collections.Generic.List[byte[]]]$Writes=[Collections.Generic.List[byte[]]]::new()
-    [int]ReadByte(){if(-not $this.Input.Count){throw [TimeoutException]::new()};return $this.Input.Dequeue()}
+    # Empty input is deterministic transport loss, not a CPU-speed benchmark.
+    # The shared wire fixture separately exercises real deadline expiry.
+    [int]ReadByte(){if(-not $this.Input.Count){return -1};return $this.Input.Dequeue()}
     [void]Write([byte[]]$Bytes,[int]$Offset,[int]$Length){
         [byte[]]$copy=[byte[]]::new($Length);[Array]::Copy($Bytes,$Offset,$copy,0,$Length)
         $this.Writes.Add($copy)
@@ -84,7 +89,7 @@ Assert ($port.Writes.Count -eq 10) '128-byte capture did not use exactly four bo
 $port=[AvrRxFixturePort]::new()
 Queue-Reply $port 0x81 1 ([byte[]]@(0,2,0,0x20,80,9,0,2,7))
 [byte[]]$status=[byte[]]::new(42);$status[41]=1;Queue-Reply $port 0x90 2 $status
-Must-Fail {Invoke-PakarAvrRxCapture $port 38400 100 10 {param($ms)}} 'Ordinary AVR link was not required paused'
+Must-Fail {Invoke-PakarAvrRxCapture $port 38400 100 1000 {param($ms)}} 'Ordinary AVR link was not required paused'
 Assert ($port.Writes.Count -eq 2) 'Capture mutation occurred before pause ACK'
 # Unknown/old status is not a paused acknowledgement either.
 $status=[byte[]]::new(47);$status[2]=0x90;$status[4]=41
@@ -94,7 +99,7 @@ $port=[AvrRxFixturePort]::new()
 Queue-Reply $port 0x81 1 ([byte[]]@(0,2,0,0x20,80,9,0,2,7))
 [byte[]]$status=[byte[]]::new(42);Queue-Reply $port 0x90 2 $status
 Queue-Reply $port 0xb4 3 (Snapshot-Payload 0 $false 0 255)
-Must-Fail {Invoke-PakarAvrRxCapture $port 38400 100 10 {param($ms)} 3>$null} 'Missing start acknowledgement accepted'
+Must-Fail {Invoke-PakarAvrRxCapture $port 38400 100 1000 {param($ms)} 3>$null} 'Missing start acknowledgement accepted' 'USB connection closed'
 $writes=@(Decode-Writes $port)
 Assert (@($writes | Where-Object {$_.Opcode -eq 0x5b -and $_.Action -eq 1}).Count -eq 1) 'Uncertain start retried'
 Assert (@($writes | Where-Object {$_.Opcode -eq 0x5b -and $_.Action -eq 2}).Count -eq 1) 'Cleanup stop missing or retried'
@@ -105,7 +110,7 @@ Queue-Reply $port 0x81 1 ([byte[]]@(0,2,0,0x20,80,9,0,2,7))
 Queue-Reply $port 0xb4 3 (Snapshot-Payload 0 $false 0 255)
 Queue-Reply $port 0xb4 4 (Snapshot-Payload 1 $true)
 Queue-Reply $port 0xb4 5 (Snapshot-Payload 0 $true)
-Must-Fail {Invoke-PakarAvrRxCapture $port 38400 100 10 {param($ms)}} 'Lost stop acknowledgement accepted'
+Must-Fail {Invoke-PakarAvrRxCapture $port 38400 100 1000 {param($ms)}} 'Lost stop acknowledgement accepted' 'USB connection closed'
 $writes=@(Decode-Writes $port)
 Assert (@($writes | Where-Object {$_.Opcode -eq 0x5b -and $_.Action -eq 2}).Count -eq 1) 'Uncertain explicit stop was retried'
 foreach($oe in @(1,255)){
@@ -114,7 +119,7 @@ foreach($oe in @(1,255)){
     [byte[]]$status=[byte[]]::new(42);Queue-Reply $port 0x90 2 $status
     [byte[]]$unsafe=Snapshot-Payload 0 $false 0 255;$unsafe[26]=$oe
     Queue-Reply $port 0xb4 3 $unsafe
-    Must-Fail {Invoke-PakarAvrRxCapture $port 38400 100 10 {param($ms)}} 'Unsafe/unknown RESET output ownership allowed capture'
+    Must-Fail {Invoke-PakarAvrRxCapture $port 38400 100 1000 {param($ms)}} 'Unsafe/unknown RESET output ownership allowed capture'
     Assert ($port.Writes.Count -eq 3) 'Capture started before RESET ownership acknowledgement'
 }
 # Snapshot length, action, error, counter and pad bounds stay strict.

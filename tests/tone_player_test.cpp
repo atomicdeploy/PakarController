@@ -1,6 +1,7 @@
 #include "TonePlayer.h"
 #include "BootMelody.h"
 #include "AudioCues.h"
+#include "FlashToneSequence.h"
 #include <avr/interrupt.h>
 #include <assert.h>
 #include <stdio.h>
@@ -72,6 +73,36 @@ int main() {
   player.streamStatus(status);assert(status[5]==4); // Underrun stays silent.
   chunk[3]=2;assert(player.stream(chunk,sizeof(chunk))==6);
   player.stop();
+  // The complete flash timeline runs without any further network packets.
+  uint8_t flash[]={6,3,0,0,0,120,0,100,0,4,144,1};
+  assert(player.stream(flash,sizeof(flash))==0);
+  assert(player.isBusy());player.update(0);assert(player.activeFrequencyHz()==1047);
+  player.streamStatus(status);assert(status[5]==2&&status[4]==0);
+  assert(player.stream(flash,sizeof(flash))==6); // No restart on duplicate.
+  assert(!player.enqueue(2000,20)); // Cannot overwrite timeline storage.
+  player.update(119);assert(player.activeFrequencyHz()==1047);
+  player.update(120);assert(player.activeFrequencyHz()==0);
+  player.update(220);assert(player.activeFrequencyHz()==1319);
+  player.update(450);assert(player.activeFrequencyHz()==1568);
+  player.update(670);assert(player.activeFrequencyHz()==2093);
+  player.update(1059);assert(player.activeFrequencyHz()==2093);
+  player.update(1060);assert(player.activeFrequencyHz()==0&&player.isBusy());
+  player.update(1160);assert(!player.isBusy());
+  player.streamStatus(status);assert(status[5]==3);
+  flash[1]=4;flash[5]=0;assert(player.stream(flash,sizeof(flash))==3);
+  flash[5]=120;assert(player.stream(flash,sizeof(flash))==0);
+  player.setMuted(true);player.update(50);assert((TCCR1B & (_BV(CS10)|_BV(CS11)|_BV(CS12)))==0);
+  player.stop();assert(!player.isBusy());player.setMuted(false);
+  uint8_t finite[]={7,5,0,0,0,11,2,55,0,142,2,55,0,16,3,100,0};
+  assert(player.stream(finite,sizeof(finite))==0);
+  player.update(100);assert(player.activeFrequencyHz()==523);
+  assert(player.stream(finite,sizeof(finite))==6); // No audible duplicate replay.
+  finite[1]=6;finite[7]=0;assert(player.stream(finite,sizeof(finite))==3);
+  player.update(155);assert(player.activeFrequencyHz()==654); // Invalid replacement left timeline intact.
+  player.update(210);assert(player.activeFrequencyHz()==784);
+  player.update(310);assert(!player.isBusy());
+  finite[7]=55;assert(player.stream(finite,sizeof(finite))==0);
+  player.stop();assert(!player.isBusy());
   using namespace BoardCore::Protocol;
   const uint16_t durations[kCueCount] = {530,450,410,300,1080,450,400,600,100,5750,300,300,520,590,240};
   CueTimeline timelines[kCueCount];

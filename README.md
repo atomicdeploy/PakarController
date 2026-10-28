@@ -11,9 +11,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-10b981.svg)](LICENSE)
 [![Rust · egui](https://img.shields.io/badge/Desktop-Rust%20%7C%20egui-f59e0b?logo=rust)](desktop)
 [![ESP + AVR](https://img.shields.io/badge/Firmware-ESP32--S3%20%2B%20ATmega328P-06b6d4)](firmware)
-[![Android preview](https://img.shields.io/badge/Android-preview-8b5cf6?logo=android)](https://github.com/atomicdeploy/PakarController/pull/1)
+[![Android preview](https://img.shields.io/badge/Android-preview-8b5cf6?logo=android)](mobile/README.md)
 
-[Overview](#overview) · [Architecture](#architecture) · [Build](#build) · [CI/CD](#continuous-integration--delivery) · [Roadmap](https://github.com/atomicdeploy/PakarController/issues/2)
+[Overview](#overview) · [Get started](#get-started) · [Architecture](#architecture) · [Build](#build) · [Guides](docs/README.md) · [Roadmap](https://github.com/atomicdeploy/PakarController/issues/2)
 
 </div>
 
@@ -39,6 +39,24 @@ or `-GameMode first-wins`. The table role provides a persistent red-to-white
 lock and atomic cell-color imports. Rust and Flutter support genuine Excel,
 CSV and JSON documents; the embedded Web UI supports CSV and JSON.
 See [board roles, lock semantics and assignment APIs](docs/CELL-ASSIGNMENTS.md).
+
+## Get started
+
+| Your task | Start here |
+|---|---|
+| Control a provisioned board | Open its configured hostname in a browser, or select it in the Rust/Android Devices view. Check the returned board identity before issuing commands. |
+| Connect by USB, without Wi-Fi | Select **USB** and its actual enumerated port in the desktop app. Only one upstream connection is active; sharing is a separate opt-in. |
+| Join a board's access point | Use **Host Wi-Fi** in the client. OS approval and network credentials are separate from API authentication. [Platform behavior](docs/HOST-WIFI.md). |
+| Build on a new workstation | Run `pakar.cmd doctor` (or `bash pakar.sh doctor`), then follow [Build](#build). Default plans do not flash or install anything. |
+| Develop or hand off work | Use the [documentation hub](docs/README.md), [contribution guide](CONTRIBUTING.md), and [current GitHub PRs](https://github.com/atomicdeploy/PakarController/pulls). |
+
+### Downloads and verification
+
+Engineering packages are attached to successful [Build workflow runs](https://github.com/atomicdeploy/PakarController/actions/workflows/build.yml).
+Select the intended commit, not just the newest timestamp. Firmware, Windows and
+Android outputs are separate artifacts; release packaging adds SHA-256 manifests
+and provenance. A successful build is not a deployment or a stable-release claim.
+See [release policy and verification](docs/REPOSITORY-GOVERNANCE.md).
 
 <details>
 <summary><b>Web device-settings preview</b> — actual embedded UI, simulated device state</summary>
@@ -229,7 +247,9 @@ Logical IDs retain their 10×8 indexing, but the current visual table has 20
 interleaved columns and four rows: `1,11,2,12,...,10,20`. The first column is
 `1,21,41,61`; the next is `11,31,51,71`, half a cell lower. Cell1 is not offset
 downward. Each table cell has six LEDs; physical strip order is a separate
-editable permutation. Snake is currently compiled out, not a selectable game.
+editable permutation. The optional board-owned Snake engine is excluded by
+default; the removable host mini-app is documented separately and remains hidden
+from normal board menus. See [host mini-app installation](mini-apps/snake/README.md).
 The interactive terminal now has contextual pages, shared Find/selection,
 explicit bulk white/red/off actions and the shared CLI command palette.
 See [terminal controls and remaining acceptance](docs/TERMINAL-UI.md).
@@ -238,13 +258,15 @@ Staggered graphics, richer editors and full TUI parity remain open in issue #2.
 ## Continuous integration & delivery
 
 The [CI/CD pipeline](.github/workflows/build.yml) checks generated interface,
-branding and donor-evidence contracts, tests both UART build variants, builds
+branding and donor-evidence contracts, tests all three AVR link profiles, builds
 the Windows client and analyzes/tests/builds the Android preview. It stops at
 the first failed command. Timeouts, superseded-run cancellation and short artifact
 retention bound wasted work. The tooling matrix checks shared CLI fixtures and
 guarded command plans on Windows/Linux/macOS; these are not native package or
 hardware acceptance. [CodeQL](.github/workflows/codeql.yml) scans Actions
 and JavaScript; it does not claim Rust, AVR C++ or physical hardware coverage.
+Maintained entry guides also have a dependency-free local-link and heading check,
+adapted from PCController. It runs offline and does not crawl external websites.
 
 The expanded pipeline supports version tags and explicit owner dispatch for **draft prereleases**, with
 Windows and two-board firmware packages, Android preview, SHA-256 checksums,
@@ -260,6 +282,7 @@ does not certify that a current GitHub run passed or a device was updated.
 
 | Start here | Purpose |
 |---|---|
+| [Documentation hub](docs/README.md) | Task-oriented reading order, tooling and verification boundaries |
 | [Hardware](docs/HARDWARE.md) | Pin mapping and wiring |
 | [API](docs/API.md) | Device transport and commands |
 | [Bluetooth LE](docs/BLUETOOTH.md) | S3 offline Android control, identity, settings and transport limits |

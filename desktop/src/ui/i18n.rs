@@ -511,6 +511,10 @@ pub fn tr(language: AppLanguage, english: &str) -> String {
         }
         "Connect" => "اتصال",
         "Connecting…" => "در حال اتصال…",
+        "Reconnecting…" => "در حال اتصال دوباره…",
+        "Trigger box" => "فعال‌سازی جعبه",
+        "Copy box IDs" => "کپی شمارهٔ جعبه‌ها",
+        "Select enabled" => "انتخاب فعال‌ها",
         "Disconnect" => "قطع اتصال",
         "Hardware Disconnected" => "سخت‌افزار قطع است",
         "Read-only: firmware must advertise board/boot identity and HTTP fencing" => {

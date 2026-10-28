@@ -7,6 +7,8 @@ param(
     [ValidateSet('both', 'avr', 'esp8266', 'esp32s3')] [string] $Target = 'both',
     [ValidateSet('table-selection','first-wins')] [string] $GameMode = 'table-selection',
     [ValidateRange(1, 511)] [int] $InitialKeyMask = 511,
+    [ValidateSet('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle')]
+    [string[]] $KeyMiniGames = @('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle'),
     [ValidateSet('auto','enabled','disabled')] [string] $AvrAutomations = 'auto',
     [switch] $AvrRadio,
     [switch] $AvrLedDiagnostic,
@@ -22,6 +24,12 @@ param(
     [ValidateRange(1,4)] [int] $ShellSessions = 2,
     [switch] $DisableSerialShell,
     [switch] $DisableTelnet,
+    [switch] $S3Ssh,
+    [switch] $S3Scp,
+    [switch] $S3Sftp,
+    [switch] $S3Ftp,
+    [switch] $EnableUdpDiagnostics,
+    [switch] $BoardSnake,
     [switch] $DisableNetworking,
     [ValidateSet('enabled','disabled')] [string] $PixelCorrections = 'enabled',
     [switch] $DisablePeerVersionChecks,
@@ -32,13 +40,26 @@ param(
     [switch] $CellChaseOnBoot,
     [switch] $S3IspElectricalVerified,
     [switch] $S3Ethernet,
+    [switch] $S3MicroSd,
+    [ValidateSet(-1,1,2,39,40,41,42)] [int] $S3SdClk = -1,
+    [ValidateSet(-1,1,2,39,40,41,42)] [int] $S3SdCmd = -1,
+    [ValidateSet(-1,1,2,39,40,41,42)] [int] $S3SdD0 = -1,
     [switch] $VerboseBuild,
     [switch] $Clean,
     [switch] $Plan
 )
 
 $ErrorActionPreference = 'Stop'
+if($PSBoundParameters.ContainsKey('KeyMiniGames') -and ($Target -ne 'esp32s3' -or $GameMode -ne 'first-wins')){throw 'Key mini-game inclusion flags require the ESP32-S3 keycontroller role.'}
+if($GameMode -eq 'first-wins' -and -not $KeyMiniGames.Count){throw 'Include at least one key minigame.'}
+if($BoardSnake -and ($Target -ne 'esp32s3' -or $GameMode -ne 'table-selection')) { throw 'Board Snake is opt-in for ESP32-S3 table builds only.' }
+if ($S3MicroSd -and ($Target -ne 'esp32s3' -or $S3SdClk -eq -1 -or $S3SdCmd -eq -1 -or $S3SdD0 -eq -1 -or @(@($S3SdClk,$S3SdCmd,$S3SdD0) | Select-Object -Unique).Count -ne 3)) { throw 'microSD requires ESP32-S3 and three explicit, distinct reviewed SD_MMC pins.' }
+if (-not $S3MicroSd -and ($S3SdClk -ne -1 -or $S3SdCmd -ne -1 -or $S3SdD0 -ne -1)) { throw 'SD pins require the explicit -S3MicroSd opt-in.' }
 if ($InitializeFilesystem) { throw 'Commissioning auto-format builds are retired. Build normal firmware and use tools/initialize-device-filesystem.ps1 for explicit, erased-partition-only USB initialization.' }
+if($S3Ssh -and ($Target -ne 'esp32s3' -or $DisableNetworking)){throw 'Native SSH requires the networked ESP32-S3 target.'}
+if($S3Scp -and -not $S3Ssh){throw 'Native SCP requires the explicit -S3Ssh flag.'}
+if($S3Sftp -and -not $S3Ssh){throw 'Native SFTP requires the explicit -S3Ssh flag.'}
+if($S3Ftp -and ($Target -ne 'esp32s3' -or $DisableNetworking)){throw 'Native FTP requires the networked ESP32-S3 target.'}
 $recoveryBytes=$null
 if($AvrRecoveryImage){
     if($Target -ne 'esp32s3'){throw 'Bundled AVR recovery requires the ESP32-S3 target'}
@@ -52,7 +73,8 @@ if($AvrRecoveryImage){
 }
 if ($AvrRadio -and $Target -notin @('avr','both')) { throw 'AVR radio requires an AVR build target.' }
 if ($AvrLedDiagnostic -and ($Target -ne 'avr' -or $AvrRadio)) { throw 'D6 diagnostic requires an AVR-only build with RF disabled.' }
-if(($PSBoundParameters.ContainsKey('ShellSessions') -or $DisableSerialShell -or $DisableTelnet) -and $Target -ne 'esp32s3'){throw 'Shell build switches currently use the S3 application-only profile; other targets retain macro defaults.'}
+if(($PSBoundParameters.ContainsKey('ShellSessions') -or $DisableSerialShell -or $DisableTelnet -or $EnableUdpDiagnostics) -and $Target -ne 'esp32s3'){throw 'Shell build switches currently use the S3 application-only profile; other targets retain macro defaults.'}
+if($EnableUdpDiagnostics -and $DisableNetworking){throw 'UDP diagnostics require networking.'}
 . (Join-Path $PSScriptRoot 'script-runtime.ps1')
 if ($Target -eq 'esp32s3' -and -not $PSBoundParameters.ContainsKey('LinkMode') -and -not $env:PAKAR_LINK_MODE) { $LinkMode = 'buffered' }
 if ($Target -eq 'esp32s3' -and $LinkMode -ne 'buffered') { throw 'ESP32-S3 UART integration requires the explicit paired buffered profile.' }
@@ -93,6 +115,7 @@ if ($Target -eq 'esp32s3') {
 }
 if ($Target -ne 'avr') {
     & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-shell -Gate | Out-Null
+    if($EnableUdpDiagnostics){& (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern udp-diagnostic-query -Gate | Out-Null}
     # Route evidence is a separate reviewed artifact from the file ledger.
     # Fail before compiling/flashing if a changed sketch has stale route hashes.
     & node (Join-Path $PSScriptRoot '../tests/pu_routes_test.mjs') | ForEach-Object { Write-Host $_ }
@@ -229,12 +252,24 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
             Content = "#pragma once`n#ifndef PAKAR_GAME_MODE`n#define PAKAR_GAME_MODE $gameModeCode`n#endif`n#ifndef PAKAR_INITIAL_KEY_MASK`n#define PAKAR_INITIAL_KEY_MASK $InitialKeyMask`n#endif`n#define PAKAR_S3_LED_GPIO_ENABLED $(if ($S3LedGpio) { 1 } else { 0 })`n#define PAKAR_S3_LED_RMT_ENABLED $(if ($S3LedRmtDma) { 1 } else { 0 })`n#define PAKAR_S3_LED_DEFAULT_BACKEND $s3LedDefaultCode`n#ifndef PAKAR_S3_BLE_ENABLED`n#define PAKAR_S3_BLE_ENABLED $(if ($S3Bluetooth -eq 'disabled') { 0 } else { 1 })`n#endif`n#define PAKAR_TELNET_SESSIONS $ShellSessions`n#define PAKAR_SERIAL_SHELL_ENABLED $(if ($DisableSerialShell) { 0 } else { 1 })`n#define PAKAR_TELNET_ENABLED $(if ($DisableTelnet) { 0 } else { 1 })`n"
         }
         $ledProfile.Content += "#define PAKAR_NETWORK_ENABLED $(if($DisableNetworking){0}else{1})`n"
+        $ledProfile.Content += "#define PAKAR_REMOTE_QUERY_UDP_ENABLED $(if($EnableUdpDiagnostics){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_BOARD_SNAKE $(if($BoardSnake){1}else{0})`n"
+        foreach($miniMode in @('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle')){
+            $miniFlag=$miniMode.Replace('-','_').ToUpperInvariant()
+            $ledProfile.Content += "#define PAKAR_GAME_$miniFlag $(if($GameMode -eq 'first-wins' -and $miniMode -in $KeyMiniGames){1}else{0})`n"
+        }
+        $ledProfile.Content += "#define PAKAR_MICROSD_ENABLED $(if($S3MicroSd){1}else{0})`n"
+        if($S3MicroSd){$ledProfile.Content += "#define PAKAR_SD_CLK $S3SdClk`n#define PAKAR_SD_CMD $S3SdCmd`n#define PAKAR_SD_D0 $S3SdD0`n"}
         $ledProfile.Content += "#define PAKAR_AVR_RECOVERY_IMAGE_AVAILABLE $(if($recoveryBytes){1}else{0})`n"
         if($recoveryBytes){
             $recoveryHash=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($recoveryBytes)).ToLowerInvariant()
             $ledProfile.Content += "namespace PakarAvrRecovery { static const unsigned char image[32768]={"+($recoveryBytes -join ',')+"}; static const char sha256[]=`"$recoveryHash`"; }`n"
         }
         $ledProfile.Content += "#define PAKAR_PIXEL_CORRECTIONS $(if($PixelCorrections -eq 'enabled'){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_SSH_ENABLED $(if($S3Ssh){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_SCP_ENABLED $(if($S3Scp){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_SFTP_ENABLED $(if($S3Sftp){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_FTP_ENABLED $(if($S3Ftp){1}else{0})`n"
         if ($DeviceName) { $ledProfile.Content += "#ifndef PAKAR_INITIAL_NAME`n#define PAKAR_INITIAL_NAME $DeviceName`n#endif`n" }
         $ledProfile.Content += "#ifndef PAKAR_S3_LED_DATA`n#define PAKAR_S3_LED_DATA $S3LedDataPin`n#endif`n"
         $ledProfile.Content += "#ifndef PAKAR_S3_ISP_ELECTRICAL_VERIFIED`n#define PAKAR_S3_ISP_ELECTRICAL_VERIFIED $(if($S3IspElectricalVerified){1}else{0})`n#endif`n#ifndef PAKAR_INITIALIZE_FILESYSTEM`n#define PAKAR_INITIALIZE_FILESYSTEM $(if($InitializeFilesystem){1}else{0})`n#endif`n"
@@ -259,6 +294,17 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         }
         Write-PakarStep "Firmware $board · $LinkMode · reusable cache (CLI may invalidate source/options); no automatic flash"
         Invoke-PakarNative -WorkingDirectory $projectRoot -FilePath $cli -Arguments $arguments
+        # Preserve only public numeric feature flags, never arbitrary compiler
+        # defines (which may contain names, paths or credentials).
+        $resourceFlags = [ordered]@{}
+        foreach ($match in [regex]::Matches($flags, '-D(PAKAR_[A-Z0-9_]+)=(-?\d+)(?=\s|$)')) {
+            $resourceFlags[$match.Groups[1].Value] = [int]$match.Groups[2].Value
+        }
+        if ($ledProfile) {
+            foreach ($match in [regex]::Matches($ledProfile.Content, '(?m)^#define (PAKAR_[A-Z0-9_]+) (-?\d+)\s*$')) {
+                $resourceFlags[$match.Groups[1].Value] = [int]$match.Groups[2].Value
+            }
+        }
     } finally {
         if ($ledProfileLease) { $ledProfileLease.Dispose() }
     }
@@ -269,6 +315,15 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         if ((Get-Item -LiteralPath $mergedImage).Length -ne 32768) {
             throw 'Merged AVR application plus Urboot image is not exactly 32768 bytes'
         }
+    }
+    $resourceArtifact = if ($board -eq 'avr') { Join-Path $output 'avr.ino.with_bootloader.bin' } else { Join-Path $output "$board.ino.bin" }
+    $resourceVersion = [regex]::Match([IO.File]::ReadAllText((Join-Path $projectRoot 'libraries/BoardCore/src/BuildInfo.h')), 'kVersion\[\] = "([^"]+)"').Groups[1].Value
+    $resourceMetadata = [ordered]@{ fqbn=$fqbn; version=$resourceVersion; numeric_feature_flags=$resourceFlags;
+        artifact_sha256=(Get-FileHash -LiteralPath $resourceArtifact -Algorithm SHA256).Hash.ToLowerInvariant() }
+    $resourceMetadataPath = Join-Path $output 'resource-build.json'
+    $resourceText = ($resourceMetadata | ConvertTo-Json -Depth 4) + "`n"
+    if (-not (Test-Path -LiteralPath $resourceMetadataPath) -or [IO.File]::ReadAllText($resourceMetadataPath) -cne $resourceText) {
+        [IO.File]::WriteAllText($resourceMetadataPath,$resourceText,[Text.UTF8Encoding]::new($false))
     }
 }
 if (-not $Plan) { Write-Host "Requested firmware builds passed in $LinkMode mode." }

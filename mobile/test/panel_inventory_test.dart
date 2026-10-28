@@ -40,6 +40,50 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({});
   });
 
+  testWidgets('First-wins shortcut opens Game without inventing a Table', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final fixture = peerFixture(
+      kind: 'keys',
+      hostname: 'keycontroller',
+      title: 'Pakar Keys',
+      application: 'pakar-keys',
+      features: const ['leds', 'inputs', 'outputs', 'key-settings'],
+    );
+    final keys = DeviceStatus({
+      ...fixture.json,
+      'mode': 'first-wins',
+      'capabilities': {
+        ...fixture.json['capabilities'] as Map,
+        'role': 'first-wins',
+        'keys': {'count': 9, 'groups_per_key': 2, 'pixels_per_group': 12},
+      },
+    });
+    final inventory = PanelInventory()..observe(keys);
+    expect(inventory.output, true);
+    expect(inventory.game, true);
+    expect(inventory.tableSelection, false);
+    expect(inventory.has('table'), false);
+    final api = LifecycleApi()
+      ..healthyWs = true
+      ..observed = keys;
+    await tester.pumpWidget(PakarControllerApp(api: api));
+    await tester.pumpAndSettle();
+    expect(find.text('Game controls'), findsOneWidget);
+    await tester.tap(find.text('Game controls'));
+    await tester.pumpAndSettle();
+    expect(find.text('Game controls'), findsNothing);
+    expect(find.text('Game'), findsWidgets);
+    expect(find.byKey(const ValueKey('key-layout-canvas')), findsOneWidget);
+    expect(find.byType(TablePage), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
   test('Retained panel identity is presentation only, never a fresh capability ACK', () {
     final inventory = PanelInventory()..observe(observation());
     final retainedOwner = inventory.ownerKey;

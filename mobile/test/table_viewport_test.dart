@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/table_viewport.dart';
 
+import 'dart:math' as math;
+
 void main() {
   testWidgets('Phone retains its compact explicit zoom controls', (
     tester,
@@ -80,10 +82,17 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pump();
       expect(view.zoom, greaterThan(1));
-      expect(
-        (tester.getRect(last).center - fitted.center).distance,
-        lessThan(1),
-      );
+      // Preserve the focal point until the no-empty-margin boundary clamps it.
+      // At wide fit the table is height-limited, so anchoring the far-right
+      // cell exactly would expose blank space beyond the table's right edge.
+      final fit = math.min(width / 960, 304 / 228);
+      final limit = math.max(0.0, (960 * fit * view.zoom - width) / 2);
+      final anchor = fitted.center.dx - width / 2;
+      final expectedX =
+          width / 2 +
+          anchor * view.zoom +
+          (anchor * (1 - view.zoom)).clamp(-limit, limit);
+      expect(tester.getRect(last).center.dx, closeTo(expectedX, 1));
       await tester.tap(last);
       expect(taps, 2);
       await tester.tap(find.text('Fit'));
@@ -176,10 +185,8 @@ void main() {
       final detector = tester.widget<RawGestureDetector>(
         find.byKey(const Key('table-viewport-gestures')),
       );
-      final factory =
-          detector.gestures[ScaleGestureRecognizer]!
-              as GestureRecognizerFactoryWithHandlers<ScaleGestureRecognizer>;
-      final recognizer = factory.constructor();
+      final factory = detector.gestures.values.single;
+      final recognizer = factory.constructor() as ScaleGestureRecognizer;
       factory.initializer(recognizer);
       final center = tester
           .getSize(find.byKey(const Key('table-viewport-gestures')))
@@ -212,8 +219,11 @@ void main() {
         ),
       );
       expect(view.zoom, closeTo(.8, .000001));
-      expect(view.pan.dx, closeTo(20, .000001));
-      expect(view.pan.dy, closeTo(20, .000001));
+      expect(
+        view.pan,
+        Offset.zero,
+        reason: 'A table smaller than its viewport is centered, never lost',
+      );
       recognizer.onEnd!(ScaleEndDetails());
       final pan = view.pan;
       recognizer.onUpdate!(
@@ -271,6 +281,96 @@ void main() {
       expect(view.zoom, zoom);
       await tester.pumpWidget(const SizedBox());
       view.dispose();
+    },
+  );
+  testWidgets(
+    'Nested page preserves holds and owns two-finger zoom with bounded snap',
+    (tester) async {
+      final view = TableViewportController();
+      final scroll = ScrollController();
+      var holds = 0, taps = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              controller: scroll,
+              child: Column(
+                children: [
+                  TableViewport(
+                    controller: view,
+                    child: GestureDetector(
+                      onTap: () => taps++,
+                      onLongPress: () => holds++,
+                      child: const ColoredBox(color: Colors.blue),
+                    ),
+                  ),
+                  const SizedBox(height: 1500),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      final center = tester.getCenter(
+        find.byKey(const Key('table-viewport-gestures')),
+      );
+      // Losing the arena to the enclosing page retires that pointer. A later
+      // single-finger hold must not be mistaken for a two-finger gesture.
+      await tester.dragFrom(center, const Offset(0, -60));
+      await tester.pumpAndSettle();
+      expect(scroll.offset, greaterThan(0));
+      scroll.jumpTo(0);
+      await tester.pump();
+      await tester.longPressAt(center);
+      expect(holds, 1);
+      expect(taps, 0);
+      final a = await tester.startGesture(
+        center - const Offset(70, 0),
+        pointer: 1,
+      );
+      final b = await tester.startGesture(
+        center + const Offset(70, 0),
+        pointer: 2,
+      );
+      await a.moveBy(const Offset(-90, -40));
+      await b.moveBy(const Offset(90, 40));
+      await tester.pump();
+      await a.moveBy(const Offset(-40, -30));
+      await b.moveBy(const Offset(40, 30));
+      await tester.pump();
+      await a.up();
+      await b.up();
+      await tester.pumpAndSettle();
+      expect(view.zoom, greaterThan(1));
+      expect(scroll.offset, 0);
+      expect(taps, 0);
+      await tester.dragFrom(center, const Offset(-2000, -2000));
+      await tester.pumpAndSettle();
+      // For the default 800x600 viewport, fit = 2/3 (height-limited).
+      final viewport = tester.getSize(
+        find.byKey(const Key('table-viewport-gestures')),
+      );
+      final fit = (viewport.width / 960).clamp(0, viewport.height / 228);
+      expect(
+        view.pan.dx.abs(),
+        lessThanOrEqualTo(
+          (960 * fit * view.zoom - viewport.width).clamp(0, double.infinity) /
+                  2 +
+              .01,
+        ),
+      );
+      expect(
+        view.pan.dy.abs(),
+        lessThanOrEqualTo(
+          (228 * fit * view.zoom - viewport.height).clamp(0, double.infinity) /
+                  2 +
+              .01,
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      view.dispose();
+      scroll.dispose();
     },
   );
 }

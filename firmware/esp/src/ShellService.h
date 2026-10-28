@@ -11,6 +11,23 @@
 #ifndef PAKAR_TELNET_ENABLED
 #define PAKAR_TELNET_ENABLED 1
 #endif
+#ifndef PAKAR_REMOTE_QUERY_UDP_ENABLED
+#define PAKAR_REMOTE_QUERY_UDP_ENABLED 0
+#endif
+#if PAKAR_REMOTE_QUERY_UDP_ENABLED
+WiFiUDP shellQuerySocket;
+PakarShell::RemoteQuery shellRemoteQuery;
+void serviceShellRemoteQuery(){
+  // Rebind when either interface address changes, including W5500 selection.
+  const uint32_t primary=NetworkPath::ready()?uint32_t(NetworkPath::localIP()):0;
+  const uint32_t accessPoint=apStarted?uint32_t(WiFi.softAPIP()):0;
+  static uint32_t previousPrimary=0,previousAp=0,epoch=1;
+  if(primary!=previousPrimary||accessPoint!=previousAp){previousPrimary=primary;previousAp=accessPoint;if(!++epoch)epoch=1;}
+  shellRemoteQuery.service(shellQuerySocket,millis(),(primary||accessPoint)?epoch:0,accessConfig.ready()&&!accessConfig.enabled()&&shellSettings.enabled(),[](char* value,size_t capacity){
+    snprintf(value,capacity,"hostname=%s boot_id=%s version=%s uptime=%lu avr=%s",deviceIdentity.hostname(),pcBootId.c_str(),BoardCore::BuildInfo::kVersion,static_cast<unsigned long>(millis()/1000U),avrOnline?"online":"offline");
+  });
+}
+#endif
 static_assert(PAKAR_TELNET_SESSIONS>=1&&PAKAR_TELNET_SESSIONS<=4,"Shell session count outside1..4");
 struct DeviceShellSession : public Print {
   PakarShell::TelnetParser parser;
@@ -20,7 +37,7 @@ struct DeviceShellSession : public Print {
   String output;
   uint32_t lastInput=0,lastDrain=0,escapeAt=0;
   uint32_t accessRevision=0;
-  bool authenticated=false,closing=false,fault=false,color=true,watch=false,upper=false;
+  bool authenticated=false,closing=false,fault=false,color=true,watch=false,upper=false,unicode=true,alternateScreen=false;
   size_t write(uint8_t byte) override{return write(&byte,1);}
   size_t write(const uint8_t *bytes,size_t size) override {
     if(fault||output.length()+size>8192U){fault=true;return 0;}
@@ -31,6 +48,13 @@ struct DeviceShellSession : public Print {
   using Print::write;
 };
 std::unique_ptr<DeviceShellSession> telnetSessions[PAKAR_TELNET_SESSIONS],serialShell;
+#if PAKAR_SSH_ENABLED
+PakarS3::SshTransport deviceSsh;
+std::unique_ptr<DeviceShellSession> sshShell;
+uint32_t sshShellToken=0;
+uint16_t sshAnnouncedPort=0;
+bool updateSshConfiguration(JsonObjectConst patch,String &result);
+#endif
 WiFiClient shellPeers[PAKAR_TELNET_SESSIONS];
 PakarShell::SerialChannel shellChannel;
 uint32_t shellTokenCounter=0,shellRebindAt=0,lastShellObserve=0;
@@ -51,6 +75,7 @@ String shellGet(const ShellProperty &p){
   if(key=="firmware.hash")return ESP.getSketchMD5();
   if(key=="build.date")return F(__DATE__ " " __TIME__);
   if(key=="hostname")return deviceIdentity.hostname();if(key=="label")return deviceIdentity.displayName();
+  if(key=="clock.epoch")return String(static_cast<uint32_t>(time(nullptr)));
   if(key=="version")return BoardCore::BuildInfo::kVersion;if(key=="boot_id")return pcBootId;
   if(key=="uptime")return String(millis()/1000U);if(key=="heap")return String(ESP.getFreeHeap());
   if(key=="avr.online")return avrOnline?F("true"):F("false");
@@ -58,19 +83,41 @@ String shellGet(const ShellProperty &p){
   if(key=="firmware.phase")return PakarUpdate::name(otaProgress.snapshot().phase);
   if(key=="network.mode")return networkConfig.accessPointEnabled()?(networkConfig.stationEnabled()?F("both"):F("ap")):F("station");
   if(key=="network.ssid")return networkConfig.stationSsid();
+  if(key=="network.station_enabled")return networkConfig.stationEnabled()?F("true"):F("false");
+  if(key=="network.ap_enabled")return networkConfig.accessPointEnabled()?F("true"):F("false");
+  if(key=="network.auto_switch")return networkConfig.autoSwitch()?F("true"):F("false");
+  if(key=="network.ap_ssid")return String(deviceIdentity.hostname()).substring(0,32);
   if(key=="led.enabled")return grid.outputEnabled()?F("true"):F("false");
   if(key=="led.mode")return grid.staticMode()?F("static"):F("effects");
   if(key=="led.brightness")return String(grid.brightness());if(key=="led.effect")return grid.patternName();
   if(key=="shell.enabled")return shellSettings.enabled()?F("true"):F("false");
   if(key=="shell.port")return String(shellSettings.port());if(key=="shell.color")return shellSettings.color()?F("true"):F("false");
-  JsonDocument d;const String json=String(p.domain)=="driver"?grid.outputCapabilitiesJson():String(p.domain)=="network"?networkConfigurationJson():cloudConfigurationJson();
+#if PAKAR_SSH_ENABLED
+  if(key=="ssh.enabled")return deviceSsh.enabled()?F("true"):F("false");
+  if(key=="ssh.port")return String(deviceSsh.port());
+#endif
+  JsonDocument d;
+  if(String(p.domain)=="network-tools"){
+    networkToolsSettings.append(d.to<JsonObject>());
+    const auto value=d[p.field];if(value.is<bool>())return value.as<bool>()?F("true"):F("false");
+    if(value.is<const char*>())return value.as<String>();return String(value.as<uint32_t>());
+  }
+#if PAKAR_FIRST_WINS_ENABLED
+  if(String(p.domain)=="game"){
+    if(deserializeJson(d,keySettings.json()))return F("unknown");
+    const auto value=d[p.field];if(value.is<bool>())return value.as<bool>()?F("true"):F("false");
+    if(value.is<const char*>())return value.as<String>();return String(value.as<uint32_t>());
+  }
+#endif
+  const String json=String(p.domain)=="driver"?grid.outputCapabilitiesJson():String(p.domain)=="network"?networkConfigurationJson():cloudConfigurationJson();
   if(deserializeJson(d,json))return F("unknown");
   const auto v=d[p.field];if(v.is<bool>())return v.as<bool>()?F("true"):F("false");
   if(v.is<const char*>())return v.as<String>();if(v.is<uint32_t>())return String(v.as<uint32_t>());return F("unknown");
 }
 bool shellBusy(){return urbootBusy.get()||remoteFirmware.busy()||otaActive||otaRebootAt||avrUploadOwner||programmingLatched||cloudServices.ioActive();}
-bool shellSet(const String &key,const String &value,String &result){
-  ShellProperty property;if(!shellProperty(key.c_str(),property)||!property.writable){result=F("Unknown or read-only property");return false;}
+bool shellSet(const String &requestedKey,const String &value,String &result){
+  ShellProperty property;if(!shellProperty(requestedKey.c_str(),property)||!property.writable){result=F("Unknown or read-only property");return false;}
+  const String key(property.key);
   const auto *p=&property;
   if(shellBusy()){result=F("Maintenance active; nothing changed");return false;}
   uint32_t number=0;bool boolean=false;
@@ -78,10 +125,24 @@ bool shellSet(const String &key,const String &value,String &result){
     if(value!="true"&&value!="false"&&value!="on"&&value!="off"&&value!="1"&&value!="0"){result=F("Use true or false");return false;}
     boolean=value=="true"||value=="on"||value=="1";
   }
-  if(p->type=='n'&&!PakarShell::unsignedNumber(value.c_str(),65535,number)){result=F("Invalid bounded integer");return false;}
+  if(p->type=='n'&&!PakarShell::unsignedNumber(value.c_str(),UINT32_MAX,number)){result=F("Invalid bounded integer");return false;}
+#if PAKAR_SSH_ENABLED
+  if(String(p->domain)=="ssh"){
+    JsonDocument patch;if(p->type=='b')patch[p->field]=boolean;else patch[p->field]=number;
+    return updateSshConfiguration(patch.as<JsonObjectConst>(),result);
+  }
+#endif
   if(String(p->domain)=="shell"){
     JsonDocument patch;if(p->type=='b')patch[p->field]=boolean;else patch[p->field]=number;
     return updateShellConfiguration(patch.as<JsonObjectConst>(),result);
+  }
+  if(String(p->domain)=="network-tools"){
+    JsonDocument patch;
+    if(p->type=='b')patch[p->field]=boolean;else if(p->type=='n')patch[p->field]=number;else patch[p->field]=value;
+    return updateNetworkTools(patch.as<JsonObjectConst>(),result);
+  }
+  if(String(p->domain)=="clock"){
+    JsonDocument patch;patch["utc_epoch"]=number;return setBoardClock(patch["utc_epoch"],result);
   }
   JsonDocument d;
   if(String(p->domain)=="device"){
@@ -91,6 +152,9 @@ bool shellSet(const String &key,const String &value,String &result){
     if(key=="led.brightness"){d["command"]="brightness";d["value"]=number;}
     else if(key=="led.effect"){d["command"]="effect";d["value"]=value;}
     else {d["command"]="led-output";if(p->type=='b')d[p->field]=boolean;else d[p->field]=value;}
+  }else if(String(p->domain)=="game"){
+    d["command"]="game-settings";
+    if(p->type=='b')d[p->field]=boolean;else if(p->type=='n')d[p->field]=number;else d[p->field]=value;
   }else{
     d["command"]=String(p->domain)=="network"?"configure-network":"configure-cloud";
     auto settings=d["settings"].to<JsonObject>();
@@ -103,7 +167,7 @@ bool shellSet(const String &key,const String &value,String &result){
   String json;serializeJson(d,json);return handleCloudCommand(json,result);
 }
 void shellPrompt(DeviceShellSession &s){
-  s.editor.setPrompt(deviceIdentity.hostname(),s.color);
+  s.editor.setPrompt(deviceIdentity.hostname(),s.color&&s.parser.ansi());
   s.editor.prompt([&](const uint8_t *p,size_t n){s.write(p,n);});
 }
 void shellSafePrint(DeviceShellSession &s,const String &message){
@@ -122,9 +186,7 @@ void shellResult(DeviceShellSession &s,bool accepted,const String &message){
 void shellTuiDraw(DeviceShellSession &s,bool force=false);
 void shellTuiInput(DeviceShellSession &s,uint8_t ch,bool flushEscape=false);
 String shellWifiScanJson(){
-  JsonDocument d;const int count=WiFi.scanComplete();d["running"]=count==-1;d["complete"]=count>=0;
-  auto rows=d["networks"].to<JsonArray>();for(int i=0;i<count&&i<40;++i){auto row=rows.add<JsonObject>();row["ssid"]=WiFi.SSID(i);row["rssi"]=WiFi.RSSI(i);row["security"]=WiFi.encryptionType(i);}
-  String json;serializeJson(d,json);return json;
+  return wifiScanJson(false);
 }
 
 void executeDeviceShell(DeviceShellSession &s,String line){
@@ -132,31 +194,54 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   if(s.output.length()>1024U){shellResult(s,false,F("Terminal busy; drain output before another command"));shellPrompt(s);return;}
   const int space=line.indexOf(' ');String verb=space<0?line:line.substring(0,space);
   verb.toLowerCase();String args=space<0?String():line.substring(space+1);args.trim();
-  const bool query=verb=="help"||verb=="?"||verb=="get"||verb=="status"||verb=="info"||verb=="properties"||verb=="history"||(verb=="firmware"&&args=="status");
+  const auto *command=PakarShell::findCommand(verb.c_str());
+  if(!command||!PakarShell::commandAvailable(*command,PAKAR_FIRST_WINS_ENABLED)){shellResult(s,false,F("Unknown or unavailable command; use help"));shellPrompt(s);return;}
+  verb=command->canonical;
+  const bool query=command->readOnly||((verb=="firmware"||verb=="game")&&args=="status");
   if(shellBusy()&&!query){shellResult(s,false,F("Maintenance active; command not dispatched"));shellPrompt(s);return;}
   if(verb=="exit"||verb=="quit"){s.println(F("Goodbye."));s.closing=true;return;}
-  if(verb=="tui"){s.tui.begin(s.color);shellTuiDraw(s,true);return;}
+  if(verb=="tui"){s.alternateScreen=s.color&&s.parser.ansi();if(s.alternateScreen)s.print(F("\x1b[?1049h"));s.tui.begin(s.color&&s.parser.ansi());shellTuiDraw(s,true);return;}
   if(verb=="help"||verb=="?"){
-    s.println(F("tui | properties | get KEY | set KEY VALUE | status | info | telemetry"));
-    s.println(F("cell ID white|red|off [immediate|fade|pulse] | cells IDS STATE [EFFECT]"));
-    s.println(F("led-output on|off|static|effects | effect none|rainbow|fire|cell-chase | brightness1..255"));
-    s.println(F("pixel INDEX[0..479] [1|6] [RRGGBB] | pixel off | audio CUE | display VALUE | display stop"));
-    s.println(F("network scan | network scan-results | network reconnect | firmware status|fetch|apply|cancel ..."));
-    s.println(F("clear|cls | echo TEXT | hex NUMBER | upper|noupper | color on|off | watch on|off | history | exit"));
-    s.println(F("Editing: arrows/Home/End/Delete, Ctrl-A/E/U/W/L/C; Up/Down recall8 commands. TUI: Tab/Arrows/Enter/Esc."));
+    PakarShell::renderHelp([&](const uint8_t* p,size_t n){s.write(p,n);},PAKAR_FIRST_WINS_ENABLED,s.color&&s.parser.ansi(),s.unicode,s.parser.columns());
   }else if(verb=="properties"||verb=="get"){
     if(args.length()){
       ShellProperty property;if(shellProperty(args.c_str(),property)){shellSafePrint(s,shellGet(property));s.println();}else shellResult(s,false,F("Unknown property"));
     }else for(size_t index=0;index<shellPropertyCount;++index){const auto p=shellPropertyAt(index);s.print(p.writable?F("rw "):F("ro "));s.print(p.key);s.print(F(" = "));shellSafePrint(s,shellGet(p));s.println();}
+  }else if(verb=="terminal"){
+    if(args=="unicode on"||args=="unicode off")s.unicode=args.endsWith("on");
+    else if(args=="color on"||args=="color off")s.color=args.endsWith("on");
+    else if(args.startsWith("size ")){
+      const int split=args.indexOf(' ',5);uint32_t w=0,h=0;
+      if(split<0||!PakarShell::unsignedNumber(args.substring(5,split).c_str(),240,w)||
+         !PakarShell::unsignedNumber(args.substring(split+1).c_str(),100,h)||!s.parser.size(w,h)){
+        shellResult(s,false,F("Use terminal size 40..240 16..100"));shellPrompt(s);return;}
+    }else if(args.length()){shellResult(s,false,F("Use terminal, terminal unicode|color on|off, terminal size COLS ROWS"));shellPrompt(s);return;}
+    s.print(F("Terminal "));s.print(s.parser.terminal());s.print(F(" | "));s.print(s.parser.columns());s.print('x');s.print(s.parser.rows());
+    s.print(F(" | Unicode "));s.print(s.unicode?F("on"):F("off"));s.print(F(" | ANSI "));s.println(s.color&&s.parser.ansi()?F("on"):F("off"));
+  }else if(verb=="game"){
+    String result;JsonDocument d;bool valid=PAKAR_FIRST_WINS_ENABLED;
+    if(args=="status"){
+#if PAKAR_FIRST_WINS_ENABLED
+      s.print(F("Winner "));s.println(winner);s.println(keySettings.json());
+#else
+      shellResult(s,false,F("This board has no First-wins game"));
+#endif
+    }else{
+      if(args=="reset")d["command"]="reset";
+      else if(args.startsWith("press ")){uint32_t key=0;valid=valid&&PakarShell::unsignedNumber(args.substring(6).c_str(),9,key)&&key>0;d["command"]="game-press";d["key"]=key;}
+      else valid=false;
+      if(!valid)shellResult(s,false,F("Use game status|press 1..9|reset on a First-wins board"));
+      else{String json;serializeJson(d,json);const bool accepted=handleCloudCommand(json,result);shellResult(s,accepted,result);}
+    }
   }else if(verb=="set"){
     const int at=args.indexOf(' ');String result;
     if(at<1)shellResult(s,false,F("Use set KEY VALUE"));
     else{String value=args.substring(at+1);value.trim();if(value.length()>=2&&value[0]=='"'&&value[value.length()-1]=='"')value=value.substring(1,value.length()-1);
       shellResult(s,shellSet(args.substring(0,at),value,result),result);}
-  }else if(verb=="clear"||verb=="cls")s.print(F("\x1b[H\x1b[2J"));
-  else if(verb=="echo"){if(s.upper)args.toUpperCase();s.println(args);}
+  }else if(verb=="clear"||verb=="cls")PakarShell::Terminal::clear([&](const uint8_t *p,size_t n){s.write(p,n);},s.color);
+  else if(verb=="echo")s.println(args);
   else if(verb=="history")s.editor.printHistory([&](const uint8_t *p,size_t n){s.write(p,n);});
-  else if(verb=="upper"||verb=="noupper")s.upper=verb=="upper";
+  else if(verb=="upper"||verb=="noupper"){s.upper=verb=="upper";s.editor.setUpper(s.upper);}
   else if(verb=="color"||verb=="watch"){
     if(args!="on"&&args!="off")shellResult(s,false,F("Use on or off"));
     else{if(verb=="color")s.color=args=="on";else s.watch=args=="on";shellResult(s,true,F("Session setting changed"));}
@@ -175,6 +260,10 @@ void executeDeviceShell(DeviceShellSession &s,String line){
     s.println(grid.outputJson());
   }else if(verb=="info"||verb=="telemetry"||verb=="firmware"){
     String result;const bool ok=handleMaintenanceShell(verb+(args.length()?" "+args:String()),result);shellResult(s,ok,result);
+  }else if(verb=="clock"){
+    s.println(networkToolsJson());
+  }else if(verb=="dns"||verb=="ping"||verb=="public-ip"||verb=="http-date"){
+    String result;const bool accepted=submitNetworkProbe(verb,args,result);shellResult(s,accepted,result);
   }else if(verb=="network"){
     const auto code=args=="scan"?espPanelSettings.scan():args=="reconnect"?espPanelSettings.reconnect():kUnsupported;
     if(args=="scan-results")s.println(shellWifiScanJson());
@@ -196,6 +285,11 @@ void executeDeviceShell(DeviceShellSession &s,String line){
       else d["value"]=number;
     }else if(verb=="mode"||verb=="effect")d["value"]=args;
     else if(verb=="audio")d["cue"]=args;
+    else if(verb=="beep"){
+      PakarShell::ToneCommand tone;valid=PakarShell::toneCommand(args.c_str(),tone);
+      d["command"]="buzzer";d["frequency"]=tone.frequency;d["duration_ms"]=tone.duration;
+      if(!valid){shellResult(s,false,F("Use beep [20..12000 Hz [1..5000 ms]]"));shellPrompt(s);return;}
+    }
     else if(verb=="cell"||verb=="cells"){
       const int a=args.indexOf(' '),b=a<0?-1:args.indexOf(' ',a+1);
       if(a<1)valid=false;else{
@@ -204,28 +298,22 @@ void executeDeviceShell(DeviceShellSession &s,String line){
         d["state"]=b<0?args.substring(a+1):args.substring(a+1,b);d["effect"]=b<0?String("immediate"):args.substring(b+1);
       }
     }else if(verb=="pixel"){
-      d["command"]="pixel-diagnostic";d["off"]=args=="off";d["index"]=0;d["count"]=1;d["rgb"]=0xffffff;
-      if(args!="off"){
-        const int a=args.indexOf(' '),b=a<0?-1:args.indexOf(' ',a+1);uint32_t index=0,count=1;
-        const String position=a<0?args:args.substring(0,a);
-        valid=PakarShell::unsignedNumber(position.c_str(),479,index);
-        if(a>=0)valid=valid&&PakarShell::unsignedNumber((b<0?args.substring(a+1):args.substring(a+1,b)).c_str(),6,count)&&(count==1||count==6);
-        uint32_t rgb=0xffffff;if(b>=0){String hex=args.substring(b+1);valid=valid&&hex.length()==6;rgb=0;
-          for(size_t i=0;i<hex.length()&&valid;++i){const char c=hex[i];const int digit=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:c>='A'&&c<='F'?c-'A'+10:-1;if(digit<0)valid=false;else rgb=(rgb<<4)|digit;}}
-        d["index"]=index;d["count"]=count;d["rgb"]=rgb;
-      }
+      PakarShell::PixelCommand pixel;valid=PakarShell::pixelCommand(args.c_str(),grid.groupLayout(),pixel);
+      d["command"]="pixel-diagnostic";d["off"]=pixel.off;d["index"]=pixel.index;d["count"]=pixel.count;d["rgb"]=pixel.rgb;
+      d["group_layout_revision"]=pixel.revision;
+      if(!valid){shellResult(s,false,F("Use a zero-based pixel or an exact physical group: pixel group 1 FF0000. COUNT must be 1 or the full current group."));shellPrompt(s);return;}
     }else if(verb!="reset")valid=false;
     if(!valid)shellResult(s,false,F("Invalid command/arguments; use help"));
     else{String json;serializeJson(d,json);const bool ok=handleCloudCommand(json,result);shellResult(s,ok,result);}
   }
   if(!s.closing&&!s.tui.active())shellPrompt(s);
 }
-void initializeDeviceShell(DeviceShellSession &s,bool telnet){
+void initializeDeviceShell(DeviceShellSession &s,bool telnet,bool transportAuthenticated=false){
   s.accessRevision=accessConfig.securityRevision();
-  s.authenticated=accessConfig.ready()&&!accessConfig.enabled();s.color=shellSettings.color();s.lastInput=s.lastDrain=millis();
+  s.authenticated=accessConfig.ready()&&(transportAuthenticated||!accessConfig.enabled());s.color=shellSettings.color();s.lastInput=s.lastDrain=millis();
   if(telnet)s.parser.greet([&](const uint8_t *p,size_t n){s.write(p,n);});
-  if(s.color)s.print(F("\x1b[1;36m"));s.print(APP_NAME);s.print(F(" @ "));s.print(deviceIdentity.hostname());
-  if(s.color)s.print(F("\x1b[0m"));s.println(F("  |  help / tui"));
+  if(s.color)s.print(F("\x1b[1;32m"));s.print(APP_NAME);s.print(F(" @ "));s.print(deviceIdentity.hostname());
+  if(s.color)s.print(F("\x1b[0m"));s.println();
   s.editor.setEcho(s.authenticated);if(s.authenticated)shellPrompt(s);else s.print(F("Password: "));
 }
 void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
@@ -233,7 +321,38 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
   if(s.closing||s.fault)return;s.lastInput=millis();
   if(s.tui.active()){shellTuiInput(s,ch);s.escapeAt=millis();return;}
   const auto event=s.editor.feed(ch,[&](const uint8_t *p,size_t n){s.write(p,n);});
-  if(event==PakarShell::LineEditor::None)return;
+  if(event==PakarShell::LineEditor::None){
+    if(!s.authenticated)return;
+    const char* line=s.editor.line();const char* space=strchr(line,' ');
+    auto write=[&](const uint8_t* p,size_t n){s.write(p,n);};
+    if(!space)s.editor.suggest(0,PakarShell::commandCount,[](size_t i)->const char*{
+      const auto& command=PakarShell::commands[i];
+      return PakarShell::commandAvailable(command,PAKAR_FIRST_WINS_ENABLED)?command.name:nullptr;
+    },write);
+    else if(PakarShell::namePrefix(line,"get ",4)||PakarShell::namePrefix(line,"set ",4)||PakarShell::namePrefix(line,"properties ",11)){
+      const size_t start=space-line+1;
+      if(!strchr(line+start,' '))s.editor.suggest(start,shellPropertyCount,[&](size_t i){
+        const auto p=shellPropertyAt(i);return (PakarShell::namePrefix(line,"set ",4)&&!p.writable)?nullptr:p.key;
+      },write);
+    }
+    return;
+  }
+  if(event==PakarShell::LineEditor::Complete){
+    if(!s.authenticated)return;
+    auto write=[&](const uint8_t *p,size_t n){s.write(p,n);};
+    const char* line=s.editor.line();const char* space=strchr(line,' ');
+    if(!space)s.editor.complete(0,PakarShell::commandCount,[](size_t i)->const char*{
+      const auto& command=PakarShell::commands[i];
+      return PakarShell::commandAvailable(command,PAKAR_FIRST_WINS_ENABLED)?command.name:nullptr;
+    },write);
+    else if(PakarShell::namePrefix(line,"get ",4)||PakarShell::namePrefix(line,"set ",4)||PakarShell::namePrefix(line,"properties ",11)){
+      const size_t start=space-line+1;
+      if(!strchr(line+start,' '))s.editor.complete(start,shellPropertyCount,[&](size_t i){
+        const auto p=shellPropertyAt(i);return (PakarShell::namePrefix(line,"set ",4)&&!p.writable)?nullptr:p.key;
+      },write);
+    }
+    return;
+  }
   if(event==PakarShell::LineEditor::Close){s.closing=true;return;}
   if(event==PakarShell::LineEditor::Cancel||event==PakarShell::LineEditor::TooLong){
     if(event==PakarShell::LineEditor::TooLong)shellResult(s,false,F("Line too long; discarded"));s.editor.clear();
@@ -244,10 +363,21 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
     if(!valid){s.println(F("Authentication failed."));s.closing=true;return;}
     s.authenticated=true;s.editor.setEcho(true);shellPrompt(s);return;
   }
-  String line(s.editor.line());bool historySafe=true;
-  if(line.startsWith("set ")){const int at=line.indexOf(' ',4);ShellProperty property;historySafe=at>4&&shellProperty(line.substring(4,at).c_str(),property)&&!property.secret;}
+  String line(s.editor.line());line.trim();bool historySafe=true;
+  if(PakarShell::namePrefix(line.c_str(),"set ",4)){const int at=line.indexOf(' ',4);ShellProperty property;historySafe=at>4&&shellProperty(line.substring(4,at).c_str(),property)&&!property.secret;}
   if(line.indexOf("://")>=0)historySafe=false;
   s.editor.remember(historySafe);s.editor.clear();executeDeviceShell(s,line);
+}
+bool ftpPortReserved(uint16_t port);
+#include "FileTransferBinding.h"
+#include "SshShellBinding.h"
+#include "FtpBinding.h"
+bool ftpPortReserved(uint16_t port){
+#if PAKAR_FTP_ENABLED
+  return port==DeviceFtp::settings.port||port==DeviceFtp::settings.passivePort;
+#else
+  (void)port;return false;
+#endif
 }
 void closeDeviceShells(){
   // Auth callbacks can run on AsyncTCP's task. Only the main loop destroys
@@ -255,6 +385,15 @@ void closeDeviceShells(){
   shellCloseRequested=true;
 }
 void retireDeviceShells(){
+#if PAKAR_SSH_ENABLED
+  deviceSsh.invalidate();sshShell.reset();sshShellToken=0;
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED
+  resetSshTransfer();
+#endif
+#if PAKAR_SCP_ENABLED
+  sshScp=SshScpSession{};
+#endif
+#endif
   for(unsigned i=0;i<PAKAR_TELNET_SESSIONS;++i){shellPeers[i].stop();telnetSessions[i].reset();}
   serialShell.reset();shellChannel.close();
 }
@@ -264,15 +403,49 @@ String shellStatusJson(){
   JsonDocument d;d["enabled"]=bool(PAKAR_TELNET_ENABLED)&&shellSettings.enabled();d["port"]=shellSettings.port();
   d["listening"]=shellListening;d["sessions"]=shellConnectionCount();d["session_limit"]=PAKAR_TELNET_SESSIONS;
   d["color"]=shellSettings.color();d["history_limit"]=8;d["serial_encapsulated"]=bool(PAKAR_SERIAL_SHELL_ENABLED);
-  d["serial_open"]=shellChannel.active();d["tui"]=true;String json;serializeJson(d,json);return json;
+  d["udp_query_built"]=bool(PAKAR_REMOTE_QUERY_UDP_ENABLED);d["udp_query_read_only"]=true;
+#if PAKAR_REMOTE_QUERY_UDP_ENABLED
+  d["udp_query_listening"]=shellRemoteQuery.listening();d["udp_query_port"]=PakarShell::RemoteQuery::port;
+#endif
+  d["serial_open"]=shellChannel.active();d["tui"]=true;
+#if PAKAR_SSH_ENABLED
+  JsonDocument ssh;deserializeJson(ssh,sshStatusJson());d["ssh"]=ssh.as<JsonVariantConst>();
+#else
+  d["ssh"]["built"]=false;
+#endif
+#if PAKAR_FTP_ENABLED
+  JsonDocument ftp;deserializeJson(ftp,DeviceFtp::status());d["ftp"]=ftp.as<JsonVariantConst>();
+#else
+  d["ftp"]["built"]=false;
+#endif
+  String json;serializeJson(d,json);return json;
 }
-void beginDeviceShells(){shellSettings.begin(LittleFS);shellRebindAt=millis();}
+void beginDeviceShells(){shellSettings.begin(LittleFS);shellRebindAt=millis();
+#if PAKAR_FTP_ENABLED
+  DeviceFtp::begin();
+#endif
+#if PAKAR_SSH_ENABLED
+  deviceSsh.begin();
+#endif
+}
 void serviceDeviceShells(){
   const uint32_t now=millis();
+#if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED || PAKAR_FTP_ENABLED
+  serviceFileTransferCleanup();
+#endif
+#if PAKAR_FTP_ENABLED
+  DeviceFtp::service();
+#endif
+#if PAKAR_REMOTE_QUERY_UDP_ENABLED
+  serviceShellRemoteQuery();
+#endif
 #if defined(ARDUINO_ARCH_ESP32)
   if(shellCloseRequested.exchange(false))retireDeviceShells();
 #else
   if(shellCloseRequested){shellCloseRequested=false;retireDeviceShells();}
+#endif
+#if PAKAR_SSH_ENABLED
+  serviceSshShell();
 #endif
   if(shellRebindAt&&int32_t(now-shellRebindAt)>=0){
     shellRebindAt=0;retireDeviceShells();telnetServer.stop();shellListening=false;shellListeningPort=0;
@@ -323,7 +496,7 @@ void serviceDeviceShells(){
       s.parser.feed(uint8_t(byte),[&](const uint8_t *p,size_t n){s.write(p,n);},[&](uint8_t ch){inputDeviceShell(s,ch);});
       if(s.closing||s.fault)break;
     }
-    if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>60){shellTuiInput(s,0,true);terminalInput=true;}
+    if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>350){shellTuiInput(s,0,true);terminalInput=true;}
     if(terminalInput&&s.tui.active()&&s.output.length()<4096U)shellTuiDraw(s);
   }
   const uint32_t serialNow=millis();
@@ -333,16 +506,28 @@ void serviceDeviceShells(){
     String observed=String("event STA ")+(networkConfig.stationConnected()?"up":"down")+" AP "+(apStarted?"up":"down")+" AVR "+(avrOnline?"up":"down")+" update "+(remoteFirmware.busy()?String(remoteFirmware.phase()):String(PakarUpdate::name(otaProgress.snapshot().phase)));
     const auto progress=remoteFirmware.busy()?remoteFirmware.progress():otaProgress.snapshot();
     if(progress.known())observed+=" "+String(progress.percent())+"%";
+#if PAKAR_FIRST_WINS_ENABLED
+    observed+=" | winner "+String(winner)+" enabled_mask "+String(keySettings.enabledMask);
+#else
     unsigned red=0,off=0;for(uint8_t id=1;id<=80;++id){red+=grid.state(id)==kCellRed;off+=grid.state(id)==kCellOff;}
-    observed+=" | cells red "+String(red)+" off "+String(off)+" | output "+String(grid.outputEnabled()?"on":"off");
+    observed+=" | cells red "+String(red)+" off "+String(off);
+#endif
+    observed+=" | output "+String(grid.outputEnabled()?"on":"off");
     if(observed!=shellObserved){shellObserved=observed;
       for(auto &slot:telnetSessions)if(slot&&slot->authenticated&&slot->watch&&!slot->tui.active()&&slot->output.length()<1024U)
         slot->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){slot->write(p,n);});
       if(serialShell&&serialShell->authenticated&&serialShell->watch&&!serialShell->tui.active()&&serialShell->output.length()<1024U)
         serialShell->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){serialShell->write(p,n);});
+#if PAKAR_SSH_ENABLED
+      if(sshShell&&sshShell->watch&&!sshShell->tui.active()&&sshShell->output.length()<1024U)
+        sshShell->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){sshShell->write(p,n);});
+#endif
     }
     for(auto &slot:telnetSessions)if(slot&&slot->authenticated&&slot->tui.active()&&slot->output.length()<1024U)shellTuiDraw(*slot);
     if(serialShell&&serialShell->authenticated&&serialShell->tui.active()&&serialShell->output.length()<1024U)shellTuiDraw(*serialShell);
+#if PAKAR_SSH_ENABLED
+    if(sshShell&&sshShell->tui.active()&&sshShell->output.length()<1024U)shellTuiDraw(*sshShell);
+#endif
   }
 }
 bool updateShellConfiguration(JsonObjectConst patch,String &result){
@@ -357,10 +542,19 @@ bool updateShellConfiguration(JsonObjectConst patch,String &result){
       if(!value.is<uint16_t>()||!value.as<uint16_t>()){result=F("Invalid shell TCP port");return false;}port=value.as<uint16_t>();
     }else{result=F("Unknown shell setting");return false;}
   }
-  if(!shellSettings.configure(enabled,port,color)){result=F("Invalid/reserved port or durable shell save failed");return false;}
+#if PAKAR_SSH_ENABLED
+  if(port==deviceSsh.port()){result=F("Telnet and SSH require distinct ports");return false;}
+#endif
+  if(ftpPortReserved(port)||!shellSettings.configure(enabled,port,color)){result=F("Invalid/reserved port or durable shell save failed");return false;}
   shellRebindAt=millis()+1000U;result=F("Shell settings saved; listener applies after response");return true;
 }
 void registerShellApi(){
+#if PAKAR_FTP_ENABLED
+  DeviceFtp::api();
+#endif
+#if PAKAR_SSH_ENABLED
+  registerSshApi();
+#endif
   server.on("/api/shell",HTTP_GET,[](){if(authenticate())server.send(200,"application/json",shellStatusJson());});
   server.on("/api/shell",HTTP_POST,[](){
     if(!authenticate())return;
@@ -410,7 +604,7 @@ bool handleShellFrame(const BoardCore::Protocol::Frame &frame){
   const uint16_t ack=p[5]|uint16_t(p[6])<<8;size_t consumed=0;
   if(!s.serialOutput.acknowledge(ack,consumed)){hostLink.error(frame.sequence,frame.opcode,kUnsafe);return true;}
   if(consumed)s.output.remove(0,consumed);
-  if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>60)shellTuiInput(s,0,true);
+  if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>350)shellTuiInput(s,0,true);
   uint8_t response[48]={3};memcpy(response+1,&token,4);const uint16_t next=shellChannel.next();memcpy(response+5,&next,2);
   if(!s.serialOutput.stage(reinterpret_cast<const uint8_t*>(s.output.c_str()),s.output.length())){s.fault=true;s.closing=true;}
   response[7]=uint8_t(s.closing)|(s.fault?2:0);

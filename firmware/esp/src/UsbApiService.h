@@ -44,14 +44,25 @@ String maintenanceApi(const String &message,bool physicalUsb) {
     reply["filesystem_initialized_reboot_required"]=filesystemInitializationComplete;
     reply["firmware_bytes"]=runningImageSize();reply["firmware_md5"]=runningImageMd5();
     reply["usb_api"]=true;reply["usb_firmware_read"]=true;
-    reply["usb_firmware_upload"]=false;reply["file_write"]=false;reply["cloud_configuration_sync"]=false;
+    reply["usb_firmware_upload"]=false;reply["file_write"]=true;reply["cloud_configuration_sync"]=false;
+    reply["managed_files"]=true;reply["file_dates"]=true;reply["private_file_access"]=false;
+    reply["microsd_built"]=bool(PAKAR_MICROSD_ENABLED);
     return encodedJson(reply);
   }
   if(request["board_id"].as<String>()!=pcBoardId||request["boot_id"].as<String>()!=pcBootId)return maintenanceApiError("peer_changed");
+  if(method=="GET"&&path=="/api/network/tools")return networkToolsJson();
+  if(method=="GET"&&path=="/api/time")return clockJson();
+  if(method=="GET"&&path=="/api/wifi/scan")return wifiScanJson(body["results"]!=true);
+  if(method=="GET"&&path=="/api/network")return networkConfigurationJson();
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  if(method=="GET"&&path=="/api/peers")return peerRelay.directory();
   if(method=="GET"&&path=="/api/peers/result")return peerRelay.snapshot(body["request_id"]|"");
   if(method=="POST"&&path=="/api/peers/request") {
     String outgoing;serializeJson(body,outgoing);return submitPeerRelay(outgoing);
+  }
+  if(method=="POST"&&path=="/api/peers/routes"){
+    if(!maintenanceApiIdle())return maintenanceApiError("maintenance_busy");
+    String outgoing;serializeJson(body,outgoing);return peerRelay.saveRoute(outgoing);
   }
 #endif
   if(physicalUsb&&filesystemInitializationComplete&&method=="POST"&&path=="/api/filesystem/reboot"&&
@@ -62,6 +73,14 @@ String maintenanceApi(const String &message,bool physicalUsb) {
   }
   if(filesystemInitializationComplete)return maintenanceApiError("initialization_requires_reboot");
   if(!maintenanceApiIdle())return maintenanceApiError("maintenance_busy");
+  if(method=="POST"&&path=="/api/time"){
+    String result;if(!setBoardClock(body["utc_epoch"],result))return maintenanceApiError(result.c_str());return result;
+  }
+  if(method=="POST"&&(path=="/api/network/tools"||path=="/api/network/probe"||path=="/api/network")){
+    String result;const bool ok=path=="/api/network/tools"?updateNetworkTools(body,result):
+      path=="/api/network"?updateNetworkConfiguration(body,result):submitNetworkProbe(body["kind"]|"",body["target"]|"",result);
+    if(!ok)return maintenanceApiError(result.c_str());return result;
+  }
   if(method=="GET"&&path=="/api/led/output")return grid.outputJson();
   if(method=="POST"&&path=="/api/led/output"){
     if(body.size()!=1||!body["backend"].is<const char*>())return maintenanceApiError("backend_must_be_requested_separately");
@@ -112,10 +131,16 @@ String maintenanceApi(const String &message,bool physicalUsb) {
 #endif
   }
   if(!accessConfig.ready()&&!(physicalUsb&&method=="GET"&&path=="/firmware/download"))return maintenanceApiError("settings_unavailable");
+  if(method=="POST"&&path=="/api/storage/files")return userFileRequest(body);
   // HTTP was authenticated by its route. USB is physical authority, matching
   // existing USB network/access provisioning, not a network auth bypass.
   if(method=="POST"&&path=="/api/command") {
     String command;serializeJson(body,command);return commandReply(command,physicalUsb);
+  }
+  if(path=="/api/presentation"&&(method=="GET"||method=="POST")){
+    if(method=="GET")return presentationJson(true);
+    JsonDocument request;request.set(body);request["command"]="presentation";
+    String command;serializeJson(request,command);return commandReply(command,physicalUsb);
   }
   if(path=="/api/pixels/groups"&&(method=="GET"||method=="POST")){
     const char *error=method=="POST"?savePixelGroups(body):nullptr;
@@ -132,7 +157,7 @@ String maintenanceApi(const String &message,bool physicalUsb) {
     pixelCorrections.service(millis());
     const char *error=nullptr;
     if(method=="POST")error=path=="/api/pixels/corrections/preview"?
-      pixelCorrections.preview(body,millis()):pixelCorrections.save(body);
+      applyCorrectionPreview(body):pixelCorrections.save(body);
     grid.setCorrections(&pixelCorrections.mapping);
     keyObservationPending=true;
     return error?maintenanceApiError(error):pixelCorrections.json();
@@ -145,6 +170,8 @@ String maintenanceApi(const String &message,bool physicalUsb) {
     reply["pixel_groups"]=section.as<JsonObjectConst>();section.clear();
     if(deserializeJson(section,networkConfigurationJson()))return maintenanceApiError("configuration_read_failed");
     reply["network"]=section.as<JsonObjectConst>();
+    section.clear();networkToolsSettings.append(section.to<JsonObject>());
+    reply["network_tools"]=section.as<JsonObjectConst>();
     section.clear();if(deserializeJson(section,cloudConfigurationJson()))return maintenanceApiError("configuration_read_failed");
     reply["cloud"]=section.as<JsonObjectConst>();
     section.clear();if(deserializeJson(section,ethernetConfigurationJson()))return maintenanceApiError("configuration_read_failed");
@@ -160,6 +187,7 @@ String maintenanceApi(const String &message,bool physicalUsb) {
     const String section=body["section"]|"";const auto settings=body["settings"].as<JsonObjectConst>();
     String result;bool ok=false;
     if(section=="network")ok=updateNetworkConfiguration(settings,result);
+    else if(section=="network_tools")ok=updateNetworkTools(settings,result);
     else if(section=="pixel_groups"){
       const char *error=savePixelGroups(settings);ok=!error;result=error?String(error):pixelGroupsJson();
     }

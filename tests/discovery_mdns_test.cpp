@@ -41,6 +41,11 @@ int main() {
   assert(noShell.registrations==14);
   Responder moved;assert(PakarS3::startDiscoveryMdns(moved,"ledboard","PakarController","pakarcontroller","0.2.7",7777,2323));
   assert(moved.entries.back()=="telnet.tcp:2323");
+  Responder ssh;assert(PakarS3::startDiscoveryMdns(ssh,"keys","Pakar Keys","pakarcontroller","0.2.8",7777,23,22));
+  assert(ssh.entries.back()=="ssh.tcp:22"&&ssh.registrations==16);
+  Responder failedSsh;failedSsh.failAt=16;
+  assert(!PakarS3::startDiscoveryMdns(failedSsh,"keys","Pakar Keys","pakarcontroller","0.2.8",7777,23,22));
+  assert(!failedSsh.initialized&&failedSsh.entries.empty());
   Responder partial;partial.failBegin=true;
   assert(!start(partial)&&!partial.initialized&&partial.stops==1&&partial.registrations==0);
   partial.failBegin=false;assert(start(partial));

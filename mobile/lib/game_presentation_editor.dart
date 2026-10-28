@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import 'game_settings_command.dart';
+import 'color_picker.dart';
 
 /// Reuses PCController EffectEditor local JSON copy, keyed numeric drafts and
 /// validation-before-save; game fields replace its host sequence definition.
@@ -70,6 +71,21 @@ class _GamePresentationEditorState extends State<GamePresentationEditor> {
       }),
     ),
   );
+  Widget color(String name, String label, int value) => ListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(label),
+    subtitle: Text(rgbName(value)),
+    leading: Icon(Icons.circle, color: Color(0xff000000 | value)),
+    trailing: const Icon(Icons.palette_outlined),
+    onTap: () async {
+      final next = await showLedColorPicker(
+        context,
+        initial: value,
+        title: label,
+      );
+      if (next != null && mounted) setState(() => field(name, next));
+    },
+  );
   @override
   Widget build(BuildContext context) {
     final current = selected == 0 ? draft : group;
@@ -116,17 +132,11 @@ class _GamePresentationEditorState extends State<GamePresentationEditor> {
                   onChanged: (v) => setState(() => field('override_colors', v)),
                 ),
                 if (current['override_colors'] == true) ...[
-                  number(
-                    'win_rgb',
-                    'Winner color',
-                    current['win_rgb'],
-                    hex: true,
-                  ),
-                  number(
+                  color('win_rgb', 'Winner color', current['win_rgb'] as int),
+                  color(
                     'lose_rgb',
                     'Other box color',
-                    current['lose_rgb'],
-                    hex: true,
+                    current['lose_rgb'] as int,
                   ),
                 ],
                 for (final name in ['win_motion', 'lose_motion'])

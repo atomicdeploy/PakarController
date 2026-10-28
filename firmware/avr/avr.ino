@@ -42,6 +42,7 @@ uint8_t selectedCell = 1;
 uint8_t winner = 0;
 #if PAKAR_FIRST_WINS_ENABLED
 uint16_t enabledKeys = 0; // Fail closed until the ESP has supplied its saved mask.
+bool espGameOwned = false;
 uint8_t gameWinnerCue=kCueWinner, gameResetCue=kCueWelcome;
 #endif
 uint8_t stableInputs = 0;
@@ -97,7 +98,8 @@ class BoardHardware final : public PcControllerHardware {
       const uint16_t ms = p[2] | static_cast<uint16_t>(p[3]) << 8;
       if (!ms || (hz && (hz < 20 || hz > 20000))) return kBadPayload;
       buzzer.stop();
-      return buzzer.enqueue(hz, ms) ? kNoError : kBusy;
+      if(!buzzer.enqueue(hz,ms))return kBusy;
+      buzzer.update(millis());return kNoError;
     }
     if (opcode == ControllerProtocol::DisplayText) {
       if (n >= 4 && (p[0] == 1 || p[0] == 2)) return kHardwareUnavailable; // LCD absent.
@@ -107,7 +109,7 @@ class BoardHardware final : public PcControllerHardware {
     }
     if (opcode == kOutputMask) {
       if (n != 1) return kBadPayload;
-      shiftRegisters.setActiveOutputs(p[0]); markStateDirty(); return kNoError;
+      shiftRegisters.setActiveOutputs(p[0]);shiftRegisters.service();markStateDirty();return kNoError;
     }
     if (opcode == ControllerProtocol::Reset) {
       if (n != 1 || p[0] > 1) return kBadPayload;
@@ -234,6 +236,8 @@ void sendHello(uint8_t sequence = 0) {
       PAKAR_FIRST_WINS_ENABLED ? 1 : 0, // Optional cached round melodies in kKeyMask.
       PAKAR_FIRST_WINS_ENABLED ? 1 : 0, // Explicit remote first-wins press support.
       1, // Explicit buffered AVR audio stream support.
+      PAKAR_FIRST_WINS_ENABLED ? 1 : 0, // Raw key edges and ESP-owned game outputs.
+      3, // Audio features: bit0 flash timeline, bit1 atomic finite note batch.
   };
   link.send(kHelloResponse, sequence, payload, sizeof(payload));
 }
@@ -257,6 +261,8 @@ bool sendGameState(uint8_t sequence = 0) {
 #if PAKAR_FIRST_WINS_ENABLED
       static_cast<uint8_t>(enabledKeys), static_cast<uint8_t>(enabledKeys >> 8),
       gameWinnerCue, gameResetCue,
+      static_cast<uint8_t>(espGameOwned),
+      static_cast<uint8_t>(pcController.gameEpoch()),static_cast<uint8_t>(pcController.gameEpoch()>>8),
 #endif
   };
   return link.send(kGameState, sequence, payload, sizeof(payload));
@@ -311,7 +317,7 @@ void resetGame(bool playWelcome = true) {
 
 void chooseWinner(uint8_t button) {
 #if PAKAR_FIRST_WINS_ENABLED
-  if (mode != kModeFirstWins || winner != 0 || button < 1 || button > 9 ||
+  if (espGameOwned || mode != kModeFirstWins || winner != 0 || button < 1 || button > 9 ||
       !(enabledKeys & (1U << (button-1)))) return;
   winner = button;
   shiftRegisters.setActiveOutputs(button <= 8 ? _BV(button - 1) : 0);
@@ -449,6 +455,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         break;
       }
       shiftRegisters.setActiveOutputs(frame.payload[0]);
+      shiftRegisters.service(); // Latch before ACK; do not wait for the input-scan tick.
       markStateDirty();
       link.ack(frame.sequence, frame.opcode);
       break;
@@ -457,15 +464,20 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         link.error(frame.sequence, frame.opcode, kBadPayload);
         break;
       }
+      {
+      const uint16_t hz=frame.payload[0]|uint16_t(frame.payload[1])<<8;
+      const uint16_t ms=frame.payload[2]|uint16_t(frame.payload[3])<<8;
+      if(!ms||(hz&&(hz<20||hz>20000))){link.error(frame.sequence,frame.opcode,kBadPayload);break;}
       buzzer.stop();
-      buzzer.enqueue(
-          static_cast<uint16_t>(frame.payload[0] | frame.payload[1] << 8),
-          static_cast<uint16_t>(frame.payload[2] | frame.payload[3] << 8));
+      if(!buzzer.enqueue(hz,ms)){link.error(frame.sequence,frame.opcode,kBusy);break;}
+      buzzer.update(millis()); // Begin accepted note before UART response/network work.
       link.ack(frame.sequence, frame.opcode);
+      }
       break;
     case kAudioStream: {
       uint8_t response[8];
       response[0]=programmingLatch.active()?kUnsafe:buzzer.stream(frame.payload,frame.payloadLength);
+      if(response[0]==kNoError)buzzer.update(millis()); // Prefill remains silent; Start is immediate.
       buzzer.streamStatus(response+1);
       link.send(kAudioStreamResponse,frame.sequence,response,sizeof(response));
       break;
@@ -478,6 +490,7 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
         break;
       }
       playAudioCue(static_cast<AudioCue>(frame.payload[0]));
+      buzzer.update(millis());
       link.ack(frame.sequence, frame.opcode);
       break;
     case kDisplayText:
@@ -496,20 +509,26 @@ void handleFrame(const BoardCore::Protocol::Frame &frame, void *) {
       break;
 #if PAKAR_FIRST_WINS_ENABLED
     case kKeyMask:
-      if((frame.payloadLength!=2 && frame.payloadLength!=4) || frame.payload[1]>1 ||
+      if((frame.payloadLength!=2 && frame.payloadLength!=4 && frame.payloadLength!=7) || frame.payload[1]>1 ||
           !(frame.payload[0]|frame.payload[1])) {link.error(frame.sequence,frame.opcode,kBadPayload);break;}
-      if(frame.payloadLength==4 && ((frame.payload[2]>=kCueCount && frame.payload[2]!=255) ||
+      if(frame.payloadLength>=4 && ((frame.payload[2]>=kCueCount && frame.payload[2]!=255) ||
           (frame.payload[3]>=kCueCount && frame.payload[3]!=255))){link.error(frame.sequence,frame.opcode,kBadPayload);break;}
+      if(frame.payloadLength==7&&(frame.payload[4]>1||!(frame.payload[5]|frame.payload[6]))){link.error(frame.sequence,frame.opcode,kBadPayload);break;}
       {
         const uint16_t requested=frame.payload[0]|uint16_t(frame.payload[1])<<8;
-        if(frame.payloadLength==4){gameWinnerCue=frame.payload[2];gameResetCue=frame.payload[3];}
+        if(frame.payloadLength>=4){gameWinnerCue=frame.payload[2];gameResetCue=frame.payload[3];}
+        const bool requestedOwner=frame.payloadLength==7&&frame.payload[4];
+        const uint16_t epoch=requestedOwner?(frame.payload[5]|uint16_t(frame.payload[6])<<8):0;
+        pcController.gameOwner(requestedOwner,epoch);
+        if(requestedOwner)pcController.companionHeartbeat(millis());
         // A retry after a lost ACK must not reset an already armed/won round.
-        if(enabledKeys!=requested){enabledKeys=requested;resetGame(false);}
+        if(enabledKeys!=requested||espGameOwned!=requestedOwner){enabledKeys=requested;espGameOwned=requestedOwner;resetGame(false);}
         markStateDirty();link.ack(frame.sequence,frame.opcode);break;
       }
 #endif
     case kGamePress:
 #if PAKAR_FIRST_WINS_ENABLED
+      if(espGameOwned){link.error(frame.sequence,frame.opcode,kUnsupported);break;}
       if(frame.payloadLength!=1||frame.payload[0]<1||frame.payload[0]>9||
          !(enabledKeys&(1U<<(frame.payload[0]-1)))){link.error(frame.sequence,frame.opcode,kBadPayload);break;}
       if(winner&&winner!=frame.payload[0]){link.error(frame.sequence,frame.opcode,kBusy);break;}
@@ -552,6 +571,12 @@ void boardKeyGesture(uint8_t bit, KeyEvent event, void *) {
     } else stableInput9 = pressed;
     markStateDirty();
   }
+#if PAKAR_FIRST_WINS_ENABLED
+  if(espGameOwned){
+    if(event==KeyEvent::Down||event==KeyEvent::Up)pcController.gameInput(bit,event);
+    return;
+  }
+#endif
   pcController.key(bit, event, 0, millis(), micros());
   if (!pcController.menuActive() && !pcController.espMenuActive() &&
       !frontPanel.captured() && primary)
@@ -610,8 +635,8 @@ void setup() {
 }
 
 void loop() {
-  const uint32_t now = millis();
   link.service();
+  const uint32_t now = millis(); // A received command may already have started a timed note.
   if (!programmingLatch.active()) serviceInputs(now);
 #if PAKAR_UART_BUFFERED && PAKAR_FIRST_WINS_ENABLED
   // Publish the latched key/winner before display, RF and menu work.
@@ -629,6 +654,11 @@ void loop() {
                             pcController.settings().values().displayBrightness, now);
   if (tm1637Ack != display.detected()) { tm1637Ack = display.detected(); markStateDirty(); }
   pcController.service(now, micros());
+#if PAKAR_FIRST_WINS_ENABLED
+  if(espGameOwned&&!pcController.gameOwnerActive()){
+    espGameOwned=false;enabledKeys=0;resetGame(false); // Fresh handshake, no local fallback/replay.
+  }
+#endif
   boardHardware.showMenu(pcController.menuPage(), pcController.menuActive(), pcController.running());
   static uint8_t previousPanel[6] = {};
   const uint16_t panelMeta = frontPanel.capturedMeta();

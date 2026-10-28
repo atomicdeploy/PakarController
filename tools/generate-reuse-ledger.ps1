@@ -8,11 +8,12 @@ param(
     [string]$Pu850Root = (Join-Path $PSScriptRoot '..\..\repos\pu850-esp'),
     [string]$RayanLampRoot = 'C:\Users\David\Documents\Codex\2026-07-23\ba\outputs\RayanLamp',
     [string]$Esp32Ws2811Root = (Join-Path $PSScriptRoot '../../repos/esp32WS2811'),
+    [string]$DrsSnakeRoot = 'I:\HTML Projects\My Scripts\Test-Cat\JSNake',
     [string]$DecisionsPath,
     [string]$EvidencePath,
     [string]$ComparisonPath=(Join-Path $PSScriptRoot '../docs/file-comparison-evidence.json'),
     [string]$OutputPath,
-    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp','esp32WS2811')]
+    [ValidateSet('Pealayer','PCController','ControllerBoardMini/Puzzles','PuzzleBoard','ControllerBoardMini','PU850-ESP','RayanLamp','esp32WS2811','portable-shell','DRS-jSnake')]
     [string]$OnlyOrigin
 )
 
@@ -133,8 +134,33 @@ if ($OnlyOrigin) {
     foreach ($row in (Import-Csv -LiteralPath $OutputPath | Where-Object origin -ne $OnlyOrigin)) { $rows.Add($row) }
 }
 
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'DRS-jSnake') {
+    $snakeFiles=Get-ChildItem -LiteralPath $DrsSnakeRoot -Recurse -File | ForEach-Object { $_.FullName.Substring($DrsSnakeRoot.Length).TrimStart('\','/').Replace('\','/') }
+    Add-LedgerRows -Rows $rows -Origin 'DRS-jSnake' -Root $DrsSnakeRoot -Revision 'filesystem-snapshot' -RelativePaths $snakeFiles
+}
+
 if (-not $OnlyOrigin -or $OnlyOrigin -eq 'RayanLamp') {
     Add-LedgerRows -Rows $rows -Origin 'RayanLamp' -Root $RayanLampRoot -Revision 'filesystem-snapshot-no-git' -RelativePaths (Get-RayanLampFiles $RayanLampRoot)
+}
+
+if (-not $OnlyOrigin -or $OnlyOrigin -eq 'portable-shell') {
+    $portableRoot=Join-Path $PSScriptRoot '../third_party/portable-shell'
+    $portableSource=Get-Content -LiteralPath (Join-Path $portableRoot 'source.json') -Raw | ConvertFrom-Json
+    foreach($file in $portableSource.files){
+        if($file.snapshot){
+            $text=[IO.File]::ReadAllText((Join-Path $portableRoot $file.snapshot)).Replace("`r`n","`n")
+            $bytes=[Text.Encoding]::UTF8.GetBytes($text)
+            $digest=[Security.Cryptography.SHA256]::Create()
+            try{$hash=([BitConverter]::ToString($digest.ComputeHash($bytes))).Replace('-','').ToLowerInvariant()}finally{$digest.Dispose()}
+            if($hash -ne $file.sha256 -or $bytes.Length -ne $file.bytes){throw "Pinned portable-shell snapshot changed: $($file.path)"}
+        } elseif($file.path -ne '_codeql_detected_source_root'){throw 'Unexpected omitted portable-shell snapshot'}
+        $rows.Add([pscustomobject][ordered]@{
+            origin='portable-shell';revision=$portableSource.revision;path=$file.path;sha256=$file.sha256;bytes=$file.bytes;
+            category=(Get-Category -Origin 'portable-shell' -RelativePath $file.path);availability=$(if($file.snapshot){'present'}else{'pinned-blob'});
+            screening_signals='shell';review_status='screened';reuse_target='';
+            notes='Pinned branch read through EOF; immutable source snapshot (CodeQL marker recorded only). Manual dispositions in file-comparison-evidence.json.'
+        })
+    }
 }
 
 if (-not $OnlyOrigin -or $OnlyOrigin -eq 'Pealayer') {
@@ -209,7 +235,7 @@ if (Test-Path -LiteralPath $EvidencePath) {
     foreach ($row in $rows) {
         if ($OnlyOrigin -and $row.origin -ne $OnlyOrigin) { continue }
         $evidence = $evidenceIndex["$($row.origin)|$($row.path)"]
-        if ($null -eq $evidence -or $row.availability -ne 'present') { continue }
+        if ($null -eq $evidence -or $row.availability -notin @('present','pinned-blob')) { continue }
         if ($row.sha256 -ne $evidence.sha256) {
             $row.review_status = 'stale-review'
             $row.notes = "Source changed since manual review of $($evidence.sha256). Re-read required."

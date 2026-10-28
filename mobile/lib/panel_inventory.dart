@@ -14,6 +14,10 @@ class PanelInventory {
 
   bool has(String feature) => _features.contains(feature);
   Set<String> get features => Set.unmodifiable(_features);
+  // Output belongs to LED-capable boards, not exclusively to table geometry.
+  // Retention only preserves navigation; fresh capabilities still gate commands.
+  bool get output => known && has('leds');
+  bool get game => known && role == 'first-wins';
   bool get frontPanel =>
       has('display') || has('text') || has('buzzer') || has('lcd');
 

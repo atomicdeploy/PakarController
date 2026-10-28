@@ -96,13 +96,28 @@ assert(main.includes('body+=bleStatusJson()'));
 // Check actual service ownership, not their former adjacency to loop().
 function networkServicesGuarded(source){
   const loop=source.slice(source.indexOf('void loop() {'));
-  const block=/#if defined\(ARDUINO_ARCH_ESP32\) && PAKAR_NETWORK_ENABLED\r?\n([\s\S]*?)#endif/.exec(loop)?.[1]??'';
-  return ['serviceBle();','servicePeerRelay();'].every(call=>block.includes(call)&&loop.split(call).length===2);
+  const guards=[],seen=new Map(),calls=['serviceBle();','servicePeerRelay();'];
+  for(const line of loop.split(/\r?\n/)){
+    const enter=/^\s*#if\s+(.+)$/.exec(line);
+    if(enter){guards.push(enter[1].trim());continue;}
+    if(/^\s*#ifn?def\b/.test(line)){guards.push('unsupported');continue;}
+    if(/^\s*#(?:else|elif)\b/.test(line)){guards[guards.length-1]='alternate';continue;}
+    if(/^\s*#endif\b/.test(line)){guards.pop();continue;}
+    for(const call of calls)if(line.includes(call)){
+      seen.set(call,(seen.get(call)||0)+1);
+      const both='defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED';
+      const s3=guards.includes('defined(ARDUINO_ARCH_ESP32)')||guards.includes(both);
+      const network=guards.includes('PAKAR_NETWORK_ENABLED')||guards.includes(both);
+      if(!s3||!network)return false;
+    }
+  }
+  return calls.every(call=>seen.get(call)===1);
 }
 assert(networkServicesGuarded(main),'Offline builds exclude BLE and peer-relay service calls');
 const loopOnly=main.slice(main.indexOf('void loop() {'));
 assert(!networkServicesGuarded(loopOnly.replace('  serviceBle();','')),'Missing service remains a failure');
 assert(!networkServicesGuarded(loopOnly.replace('  serviceBle();','')+'\nserviceBle();'),'A service outside the guard remains a failure');
+assert(!networkServicesGuarded(loopOnly.replace('#if PAKAR_NETWORK_ENABLED\n  servicePeerRelay();','#if !PAKAR_NETWORK_ENABLED\n  servicePeerRelay();')),'Negated nested guard must fail');
 assert(urboot.includes('serviceBleReadOnly();'));
 assert(wire.includes('packetLimit(mtu)-kHeader'));
 assert(wire.includes('static_cast<uint32_t>(now-started_)>=60000U'));

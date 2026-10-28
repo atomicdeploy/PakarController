@@ -5,16 +5,20 @@ import 'package:flutter/material.dart';
 import 'game_presentation_editor.dart';
 import 'game_settings_command.dart';
 import 'state_appearance_page.dart';
+import 'color_picker.dart';
 
 import 'icons.dart';
 import 'models.dart';
-import 'key_pixel_preview.dart';
 import 'peer_context.dart';
 import 'pixel_diagnostic.dart';
 import 'table_workspace.dart';
 import 'workspace_widgets.dart';
 import 'led_backend.dart';
 import 'led_backend_control.dart';
+import 'minigame_panel.dart';
+import 'key_box_designer.dart';
+
+enum OutputPanelSection { output, game }
 
 /// Pealayer layout.rs: hardware_channel_drag_handle/drop_target and
 /// effect_library_card_header: stable keyed cards, a reserved action gutter,
@@ -30,6 +34,8 @@ class OutputPanel extends StatefulWidget {
     this.workspace,
     this.verifiedCommand,
     this.readStatus,
+    this.statusUpdates,
+    this.section = OutputPanelSection.output,
   });
   final DeviceStatus? status;
   final bool connected;
@@ -38,19 +44,22 @@ class OutputPanel extends StatefulWidget {
   final TableWorkspace? workspace;
   final Future<bool> Function(String, Map<String, String>)? verifiedCommand;
   final Future<DeviceStatus> Function()? readStatus;
+  final Stream<DeviceStatus>? statusUpdates;
+  final OutputPanelSection section;
   @override
   State<OutputPanel> createState() => _OutputPanelState();
 }
 
 class _OutputPanelState extends State<OutputPanel> {
   late final workspace = widget.workspace ?? TableWorkspace();
-  bool arranging = false, arrangingKeys = false, pending = false;
+  bool arranging = false, pending = false;
   final modes = <PeerMode>[];
   String? driver, outputMode;
   bool? outputEnabled;
   double? brightnessDraft;
   String? presentedOwner;
   bool hasSceneContent = false;
+  bool firstWins = false;
 
   void remember() {
     final peer = widget.status?.peer;
@@ -77,6 +86,7 @@ class _OutputPanelState extends State<OutputPanel> {
     outputMode = widget.status?.ledOutputMode ?? outputMode;
     outputEnabled = widget.status?.ledOutputEnabled ?? outputEnabled;
     if (peer?.known == true) {
+      firstWins = peer?.role == 'first-wins';
       hasSceneContent =
           peer?.role == 'first-wins' ||
           modes.length > 1 ||
@@ -106,6 +116,65 @@ class _OutputPanelState extends State<OutputPanel> {
 
   bool get ready => widget.connected && !pending;
   bool get ledsReady => ready && widget.status?.peer.has('leds') == true;
+
+  String? gameBlockedReason([int? key]) {
+    final status = widget.status;
+    if (!widget.connected || status == null) {
+      return 'Reconnect to control the game.';
+    }
+    if (pending) return 'A command is still pending.';
+    if (status.json['programming_latch'] == true) {
+      return 'AVR programming is active.';
+    }
+    if (!status.avrOnline) return 'The AVR is offline.';
+    if (status.json['key_mask_applied'] != true) {
+      return 'Waiting for AVR to apply enabled boxes.';
+    }
+    if (key != null && !keyEnabled(key)) {
+      return 'Box $key is disabled in Game settings.';
+    }
+    final path = key == null ? '/api/game/reset' : '/api/game/press';
+    if (!status.peer.allows(path, key == null ? const {} : {'key': '$key'})) {
+      return key == null
+          ? 'This board has not enabled game reset.'
+          : 'This board has not enabled remote button presses.';
+    }
+    return null;
+  }
+
+  void explain(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> gameCommand([int? key]) async {
+    final reason = gameBlockedReason(key);
+    if (reason != null) {
+      explain(reason);
+      return;
+    }
+    final path = key == null ? '/api/game/reset' : '/api/game/press';
+    final values = key == null ? <String, String>{} : {'key': '$key'};
+    setState(() => pending = true);
+    try {
+      if (widget.verifiedCommand != null) {
+        if (!await widget.verifiedCommand!(path, values)) {
+          explain(
+            'The board did not confirm the command. It was not replayed.',
+          );
+        }
+      } else {
+        await widget.command(path, values);
+      }
+    } catch (error) {
+      explain(error.toString());
+    } finally {
+      if (mounted) setState(() => pending = false);
+    }
+  }
+
   Future<void> send(
     String path, [
     Map<String, String> values = const {},
@@ -174,6 +243,7 @@ class _OutputPanelState extends State<OutputPanel> {
                             status: source,
                             command: widget.verifiedCommand!,
                             readStatus: widget.readStatus!,
+                            statusUpdates: widget.statusUpdates,
                             ids: '1-18',
                           ),
                         ),
@@ -379,6 +449,27 @@ class _OutputPanelState extends State<OutputPanel> {
                           labelText: entry.value,
                           prefixText: '#',
                           counterText: '',
+                          suffixIcon: IconButton(
+                            tooltip: 'Choose color',
+                            icon: const Icon(Icons.palette_outlined),
+                            onPressed: () async {
+                              final next = await showLedColorPicker(
+                                context,
+                                initial:
+                                    int.tryParse(
+                                      colors[entry.key]!.text,
+                                      radix: 16,
+                                    ) ??
+                                    0,
+                                title: entry.value,
+                              );
+                              if (next != null && context.mounted) {
+                                update(
+                                  () => colors[entry.key]!.text = rgbHex(next),
+                                );
+                              }
+                            },
+                          ),
                           errorText:
                               RegExp(r'^[0-9a-fA-F]{6}$')
                                   .hasMatch(colors[entry.key]!.text)
@@ -488,30 +579,13 @@ class _OutputPanelState extends State<OutputPanel> {
     return mask is int && mask & (1 << (key - 1)) != 0;
   }
 
-  Color keyColor(int key) {
-    final config = widget.status?.json['key_game'];
-    final winner = widget.status?.winner ?? 0;
-    final field = winner == 0
-        ? 'idle_rgb'
-        : winner == key
-        ? 'win_rgb'
-        : 'lose_rgb';
-    final fallback = winner == 0
-        ? 0xffffff
-        : winner == key
-        ? 0x00ff00
-        : 0xff0000;
-    final value = config is Map ? config[field] : null;
-    return Color(0xff000000 | (value is int ? value : fallback));
-  }
-
   Widget card(String id, int index) {
     final status = widget.status;
     final backend = status == null
         ? null
         : LedBackendState.fromStatus(status.json);
     final (title, icon) = switch (id) {
-      'scene' => ('Scene', PakarIcons.gridFour),
+      'scene' => (firstWins ? 'Boxes' : 'Scene', PakarIcons.gridFour),
       'output' => ('LED output', PakarIcons.gauge),
       _ => ('Pixel diagnostics', PakarIcons.circuitry),
     };
@@ -544,190 +618,16 @@ class _OutputPanelState extends State<OutputPanel> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-          if (status?.peer.role == 'first-wins')
-            Row(
-              children: [
-                FilterChip(
-                  avatar: const Icon(Icons.open_with, size: 18),
-                  label: const Text('Arrange boxes'),
-                  selected: arrangingKeys,
-                  onSelected: (value) => setState(() => arrangingKeys = value),
-                ),
-                const SizedBox(width: 8),
-                if (arrangingKeys)
-                  TextButton.icon(
-                    icon: const Icon(Icons.restart_alt),
-                    label: const Text('Reset positions'),
-                    onPressed: () => setState(workspace.resetKeyPositions),
-                  ),
-              ],
-            ),
-          if (status?.peer.role == 'first-wins')
-            LayoutBuilder(
-              builder: (context, bounds) {
-                const size = 88.0, height = 300.0;
-                final width = bounds.maxWidth.isFinite
-                    ? bounds.maxWidth
-                    : 360.0;
-                final maxX = width > size ? width - size : 0.0;
-                const maxY = height - size;
-                return Container(
-                  key: const ValueKey('key-layout-canvas'),
-                  height: height,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: arrangingKeys
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).dividerColor,
-                    ),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      for (var key = 1; key <= 9; key++)
-                        AnimatedPositioned(
-                          key: ValueKey('game-key-position-$key'),
-                          duration: arrangingKeys
-                              ? Duration.zero
-                              : const Duration(milliseconds: 160),
-                          curve: Curves.easeOutCubic,
-                          left: workspace.keyPosition(key).dx * maxX,
-                          top: workspace.keyPosition(key).dy * maxY,
-                          width: size,
-                          height: size,
-                          child: Semantics(
-                            label: 'Key $key',
-                            selected: status?.winner == key,
-                            child: GestureDetector(
-                              key: ValueKey('game-key-drag-$key'),
-                              behavior: HitTestBehavior.opaque,
-                              onTap:
-                                  !arrangingKeys &&
-                                      ready &&
-                                      keyEnabled(key) &&
-                                      status?.peer.has('game-press') == true &&
-                                      status?.avrOnline == true &&
-                                      status?.json['key_mask_applied'] == true
-                                  ? () =>
-                                        send('/api/game/press', {'key': '$key'})
-                                  : null,
-                              onPanUpdate: !arrangingKeys
-                                  ? null
-                                  : (details) {
-                                      final current = workspace.keyPosition(
-                                        key,
-                                      );
-                                      workspace.moveKey(
-                                        key,
-                                        Offset(
-                                          maxX == 0
-                                              ? 0
-                                              : current.dx +
-                                                    details.delta.dx / maxX,
-                                          current.dy + details.delta.dy / maxY,
-                                        ),
-                                      );
-                                      setState(() {});
-                                    },
-                              child: MouseRegion(
-                                cursor: arrangingKeys
-                                    ? SystemMouseCursors.move
-                                    : MouseCursor.defer,
-                                child: Opacity(
-                                  opacity: keyEnabled(key) ? 1 : 0.3,
-                                  child: AnimatedContainer(
-                                    key: ValueKey('game-key-$key'),
-                                    duration: const Duration(milliseconds: 120),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: Color.alphaBlend(
-                                        keyColor(key).withValues(alpha: 0.3),
-                                        Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainerHighest,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        width: arrangingKeys ? 2 : 3,
-                                        color: arrangingKeys
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .outlineVariant
-                                            : status?.peer.has('inputs') ==
-                                                      true &&
-                                                  (key <= 8
-                                                      ? ((status?.activeInputs ??
-                                                                    0) &
-                                                                (1 <<
-                                                                    (key -
-                                                                        1))) !=
-                                                            0
-                                                      : status?.json['input_9'] ==
-                                                            true)
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                            : Colors.transparent,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        if (arrangingKeys)
-                                          const Icon(
-                                            Icons.drag_indicator,
-                                            size: 16,
-                                          ),
-                                        Text(
-                                          '$key',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineSmall,
-                                        ),
-                                        for (var group = 0; group < 2; group++)
-                                          SizedBox(
-                                            height: 6,
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                for (final rgb
-                                                    in keyPixelGroup(
-                                                          status,
-                                                          key,
-                                                          group,
-                                                        ) ??
-                                                        const <int>[])
-                                                  Expanded(
-                                                    child: Container(
-                                                      height: 4,
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                            right: 1,
-                                                          ),
-                                                      color: Color(
-                                                        0xff000000 | rgb,
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                );
-              },
+          if (status?.peer.role == 'first-wins' && status != null)
+            KeyBoxDesigner(
+              status: status,
+              workspace: workspace,
+              enabled: gameBlockedReason() == null,
+              onTap: gameCommand,
+              onBlockedTap: gameCommand,
+              onReset: gameCommand,
+              openSettings: gameSettings,
+              blockedReason: gameBlockedReason(),
             ),
           if (modes.length > 1)
             Wrap(
@@ -753,14 +653,7 @@ class _OutputPanelState extends State<OutputPanel> {
               child: FilledButton.icon(
                 icon: const Icon(PakarIcons.arrowCounterClockwise),
                 label: const Text('Reset to white'),
-                onPressed:
-                    ready &&
-                        status?.peer.modes.any((m) => m.id == 'first-wins') ==
-                            true &&
-                        status?.avrOnline == true &&
-                        status?.json['key_mask_applied'] == true
-                    ? () => send('/api/game/reset')
-                    : null,
+                onPressed: () => gameCommand(),
               ),
             ),
           if (status?.peer.has('key-settings') == true &&
@@ -914,26 +807,49 @@ class _OutputPanelState extends State<OutputPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final visibleCards = workspace.outputCards
-        .where((id) => id != 'scene' || hasSceneContent)
-        .toList();
+    final game = widget.section == OutputPanelSection.game;
+    if (game &&
+        widget.status?.json['minigame'] != null &&
+        widget.verifiedCommand == null) {
+      return const Center(child: Text('Waiting for minigame readiness.'));
+    }
+    if (game &&
+        widget.status?.peer.minigame != null &&
+        widget.verifiedCommand != null) {
+      return MiniGamePanel(
+        key: ValueKey('minigame-${widget.status!.json['board_id']}'),
+        status: widget.status!,
+        connected: widget.connected,
+        command: widget.verifiedCommand!,
+        openBoxSettings: gameSettings,
+        workspace: workspace,
+      );
+    }
+    final visibleCards = game
+        ? [if (firstWins) 'scene']
+        : workspace.outputCards
+              .where((id) => id != 'scene' || (hasSceneContent && !firstWins))
+              .toList();
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1120),
         child: ReorderableListView.builder(
-          key: const PageStorageKey('output-panel-scroll'),
+          key: PageStorageKey(
+            game ? 'game-panel-scroll' : 'output-panel-scroll',
+          ),
           padding: const EdgeInsets.all(20),
           buildDefaultDragHandles: false,
           header: WorkspaceHeader(
-            title: 'Output',
-            icon: PakarIcons.gauge,
+            title: game ? 'Game' : 'Output',
+            icon: game ? PakarIcons.play : PakarIcons.gauge,
             actions: [
-              FilterChip(
-                label: const Text('Arrange panels'),
-                selected: arranging,
-                onSelected: (value) => setState(() => arranging = value),
-              ),
+              if (!game)
+                FilterChip(
+                  label: const Text('Arrange panels'),
+                  selected: arranging,
+                  onSelected: (value) => setState(() => arranging = value),
+                ),
             ],
           ),
           itemCount: visibleCards.length,

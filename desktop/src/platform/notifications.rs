@@ -139,11 +139,21 @@ pub fn private_text(request: &ToastRequest) -> (&'static str, &'static str) {
         ),
         Some("pakar.connection") => (
             "PakarController connection changed",
-            "The selected device connection changed. Open PakarController for its current status.",
+            // Only our typed connection observations may cross into an OS
+            // notification. Never substitute an untrusted peer/API message.
+            match request.message.as_str() {
+                "Fresh status from the selected device was lost." =>
+                    "Device disconnected. Fresh status is unavailable.",
+                "The ESP is reachable, but it reports the AVR offline." =>
+                    "ESP connected. AVR offline.",
+                "Fresh device status is available and the ESP reports the AVR online." =>
+                    "ESP connected. AVR online.",
+                _ => "Device connection status changed.",
+            },
         ),
         Some("pakar.maintenance") if request.severity == Severity::Success => (
             "PakarController maintenance completed",
-            "The requested maintenance operation completed. Open PakarController to inspect the result.",
+            "The requested maintenance operation completed.",
         ),
         Some("pakar.settings") if request.severity == Severity::Success => (
             "PakarController settings saved",
@@ -151,15 +161,15 @@ pub fn private_text(request: &ToastRequest) -> (&'static str, &'static str) {
         ),
         _ if request.severity == Severity::Error => (
             "PakarController operation failed",
-            "An operation did not complete. Open PakarController to inspect the error before retrying.",
+            "The requested operation failed.",
         ),
         _ if request.severity == Severity::Warning => (
             "PakarController needs attention",
-            "Open PakarController to inspect the warning.",
+            "The requested operation needs attention.",
         ),
         _ => (
             "PakarController",
-            "There is a new application message. Open PakarController for details.",
+            "Application status changed.",
         ),
     }
 }
@@ -326,6 +336,20 @@ mod tests {
             assert!(!format!("{title}{text}").contains("secret"));
             assert!(!text.contains("private-host"));
         }
+    }
+    #[test]
+    fn connection_toast_contains_the_observed_status_without_peer_text() {
+        for (message, expected) in [
+            ("Fresh status from the selected device was lost.", "Device disconnected. Fresh status is unavailable."),
+            ("The ESP is reachable, but it reports the AVR offline.", "ESP connected. AVR offline."),
+            ("Fresh device status is available and the ESP reports the AVR online.", "ESP connected. AVR online."),
+        ] {
+            let mut notice = request("pakar.connection", Severity::Warning);
+            notice.message = message.into();
+            assert_eq!(private_text(&notice).1, expected);
+        }
+        let unknown = request("pakar.connection", Severity::Warning);
+        assert_eq!(private_text(&unknown).1, "Device connection status changed.");
     }
     #[test]
     fn success_does_not_suppress_the_following_failure() {

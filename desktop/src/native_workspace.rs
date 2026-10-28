@@ -59,6 +59,8 @@ pub struct Snapshot {
     pub buzzer_frequency: u16,
     pub buzzer_duration: u16,
     pub key_positions: [[f32; 2]; 9],
+    pub key_selection: Vec<u8>,
+    pub key_trigger_on_click: bool,
     pub settings_page: usize,
     pub settings_search: String,
     pub pixel_probe: crate::pixel_diagnostic::Probe,
@@ -79,6 +81,8 @@ impl Default for Snapshot {
             buzzer_frequency: 1032,
             buzzer_duration: 100,
             key_positions: default_key_positions(),
+            key_selection: Vec::new(),
+            key_trigger_on_click: false,
             settings_page: 0,
             settings_search: String::new(),
             pixel_probe: Default::default(),
@@ -99,6 +103,9 @@ impl Snapshot {
         self.selection.retain(|id| (1..=80).contains(id));
         self.selection.sort_unstable();
         self.selection.dedup();
+        self.key_selection.retain(|id| (1..=9).contains(id));
+        self.key_selection.sort_unstable();
+        self.key_selection.dedup();
         self.selected_cell = self.selected_cell.clamp(1, 80);
         // Find is one input adapter for the same selection. Preserve an invalid
         // in-progress query, but never restore a second, conflicting highlight.
@@ -230,6 +237,8 @@ impl PakarControllerApp {
             buzzer_frequency: self.buzzer_frequency,
             buzzer_duration: self.buzzer_duration,
             key_positions: self.key_positions,
+            key_selection: self.key_selection.cells(),
+            key_trigger_on_click: self.key_trigger_on_click,
             settings_page: self.device_settings.page,
             settings_search: self.device_settings.search.clone(),
             pixel_probe: self.pixel_diagnostic.probe(),
@@ -316,6 +325,8 @@ impl PakarControllerApp {
         self.buzzer_frequency = snapshot.buzzer_frequency;
         self.buzzer_duration = snapshot.buzzer_duration;
         self.key_positions = snapshot.key_positions;
+        self.key_selection.group(snapshot.key_selection, false);
+        self.key_trigger_on_click = snapshot.key_trigger_on_click;
         self.device_settings.page = snapshot.settings_page;
         self.device_settings.search = snapshot.settings_search;
         self.pixel_diagnostic.set_probe(snapshot.pixel_probe);
@@ -424,6 +435,8 @@ mod tests {
         let identity = Identity::observed(&status("board-a", 'a', "table")).unwrap();
         let snapshot = Snapshot {
             selection: vec![3, 2, 1, 3],
+            key_selection: vec![9, 2, 2, 0, 80],
+            key_trigger_on_click: true,
             selected_cell: 2,
             find: "1,2,3".into(),
             pixel_probe: crate::pixel_diagnostic::Probe {
@@ -448,6 +461,9 @@ mod tests {
         let restored: Store = serde_json::from_slice(&bytes).unwrap();
         let value = restored.get(&identity).unwrap();
         assert_eq!(value.selection, vec![1, 2, 3]);
+        assert_eq!(value.key_selection, vec![2, 9]);
+        assert!(value.key_trigger_on_click);
+        assert!(!serde_json::from_str::<Snapshot>("{}").unwrap().key_trigger_on_click);
         assert_eq!(value.find, "1–3");
         assert_eq!(value.selected_cell, 2);
         assert_eq!(value.display_text, "Unsaved text");

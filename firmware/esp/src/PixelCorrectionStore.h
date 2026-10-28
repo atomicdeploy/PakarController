@@ -86,6 +86,7 @@ template <size_t Pixels> class PixelCorrectionStore {
     restore();return true;
   }
   uint32_t activeRevision()const{return activeRevision_;}
+  uint32_t previewLease()const{return previewActive_?leaseId_:0;}
   bool previewActive()const{return previewActive_;}
   String previewJson()const {
     JsonDocument doc;encodePreview(doc);String result;serializeJson(doc,result);return result;

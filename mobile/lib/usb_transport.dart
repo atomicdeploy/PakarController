@@ -821,6 +821,60 @@ class PakarUsbTransport {
     );
   });
 
+  Future<Map<String, dynamic>> networkApi(
+    String method,
+    String path,
+    Map<String, dynamic> body, {
+    required bool Function() authorize,
+  }) => _exclusive(() async {
+    if (!ready || !authorize() || !latest!.peer.has('network-tools')) {
+      throw const FormatException(
+        'Network tools are not advertised by this board',
+      );
+    }
+    const reads = {
+      '/api/network/tools',
+      '/api/time',
+      '/api/wifi/scan',
+      '/api/network',
+    };
+    const writes = {'/api/network/tools', '/api/network/probe', '/api/network'};
+    if (!(method == 'GET'
+            ? reads
+            : method == 'POST'
+            ? writes
+            : const <String>{})
+        .contains(path)) {
+      throw const FormatException('Unsupported USB network operation');
+    }
+    return _apiJson(method, path, body, authorize);
+  });
+
+  /// The common boot-fenced API transaction also carries correction settings.
+  /// Preview stays RAM-only; only the explicit non-preview POST persists.
+  Future<Map<String, dynamic>> pixelCorrectionsApi({
+    Map<String, dynamic>? configuration,
+    bool preview = false,
+    required bool Function() authorize,
+  }) => _exclusive(() async {
+    if (!ready ||
+        !authorize() ||
+        !latest!.peer.has('usb-api') ||
+        !latest!.peer.has('pixel-corrections') ||
+        (preview && !latest!.peer.has('pixel-corrections-preview')) ||
+        (preview && configuration == null)) {
+      throw const FormatException(
+        'USB pixel corrections are unavailable; nothing was sent',
+      );
+    }
+    return _apiJson(
+      configuration == null ? 'GET' : 'POST',
+      preview ? '/api/pixels/corrections/preview' : '/api/pixels/corrections',
+      configuration ?? const {},
+      authorize,
+    );
+  });
+
   Future<DeviceStatus> _advancedDiagnostic(
     PixelProbe probe,
     bool off,
@@ -935,6 +989,24 @@ class PakarUsbTransport {
       throw const FormatException('USB board not ready; nothing sent');
     }
     final before = latest!, features = before.peer;
+    if (path.startsWith('/api/minigame/')) {
+      if (!features.allows(path, values) || !features.has('usb-api')) {
+        throw const FormatException('USB minigame command unavailable');
+      }
+      final packet = commandPacket(before, path, values);
+      final reply = await _apiJson(
+        'POST',
+        '/api/command',
+        Map<String, dynamic>.from(jsonDecode(packet) as Map),
+        authorize,
+      );
+      final actual = verifyCommandReply(reply, packet, path, values);
+      if (!authorize()) {
+        throw const FormatException('USB minigame owner retired');
+      }
+      latest = actual;
+      return actual;
+    }
     const gamePaths = {
       '/api/game/settings',
       '/api/game/reset',

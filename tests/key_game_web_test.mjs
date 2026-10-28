@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
-const source=readFileSync(new URL('../firmware/esp/src/WebUi.h',import.meta.url),'utf8');
+const source=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
 const code=source.split('// BEGIN KEY GAME PRESS CONTROLS')[1].split('// END KEY GAME PRESS CONTROLS')[0];
 function fixture(){
   const calls=[];
@@ -50,7 +50,7 @@ for(const reject of [false,true]){
   const f=fixture();f.arm();f.context.peerHttp.writable=()=>false;f.run('syncKeyGameOwner()');
   assert.equal(f.run('keyGameControl.readOnly'),true,'Disconnect disarms');
 }
-assert(source.includes('indicator.onclick=()=>pressGameKey(key)'));
+assert(source.includes('if(!miniGameMomentary())pressGameKey(key)'));
 assert(!source.includes('data-test-press')&&!source.includes('data-test-key'),'No separate trigger controls');
 assert(source.includes('button:disabled{opacity:1;cursor:default}'),'Read-only retains live colors');
 console.log('Key game main-box press, read-only, peer and pending guards passed');

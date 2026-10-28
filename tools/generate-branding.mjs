@@ -3,6 +3,7 @@
 // to that same resolved icon. Pakar embeds it for the standalone ESP surface.
 import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+await import('./generate-board-icon-asset.mjs');
 const asset = (await readFile(new URL('../assets/branding/app-icon.png.base64', import.meta.url), 'utf8')).trim();
 assert.match(asset, /^[A-Za-z0-9+/]+={0,2}$/);
 const png = Buffer.from(asset, 'base64');

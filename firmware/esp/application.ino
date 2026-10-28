@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <GameRole.h>
+#if PAKAR_FIRST_WINS_ENABLED
+#include "src/KeyMiniGameSettings.h"
+#endif
 #include <RadioReception.h>
 #ifndef PAKAR_NETWORK_ENABLED
 #define PAKAR_NETWORK_ENABLED 1
@@ -53,6 +56,8 @@
 #include <time.h>
 #include "src/SystemPlatform.h"
 #include "src/FirmwarePlatform.h"
+#include "src/UserFileStore.h"
+#include "src/OptionalMicroSd.h"
 #include "src/UpdateProgress.h"
 #include "src/UpgradeLifecycle.h"
 #include "src/LocalOtaReceipt.h"
@@ -91,6 +96,7 @@
 #include "src/SceneStore.h"
 #include "src/LedBackendSettings.h"
 #include "src/PixelGroupStore.h"
+#include "src/HostPresentationStore.h"
 #include "src/UsbSnapshotProjection.h"
 #if PAKAR_PIXEL_CORRECTIONS
 #include "src/PixelCorrectionStore.h"
@@ -101,17 +107,26 @@
 #include "src/NetworkConfig.h"
 #include "src/NetworkPath.h"
 #include "src/PeerRelay.h"
+#include "src/NetworkToolsSettings.h"
+#include "src/NetworkTools.h"
+#if defined(ARDUINO_ARCH_ESP32)
+#include <esp_sntp.h>
+#endif
 #include "src/CommandValues.h"
 #if defined(ARDUINO_ARCH_ESP32)
 #include "src/EthernetConfig.h"
 #endif
 #include "src/DeviceIdentity.h"
 #include "src/ApplicationIdentity.h"
+#include "src/BoardIconAsset.h"
+#include "src/UpnpDescription.h"
 #include "src/BusyLine.h"
 #include "src/TelnetShell.h"
 #include "src/WebUiCompressed.h"
 #include "src/WebAppAssets.h"
 #include "src/BasicUi.h"
+#include "src/StaticAssetService.h"
+#include "src/StaticAssetValidators.h"
 #include "src/FontAssets.h"
 
 using namespace BoardCore::Protocol;
@@ -242,12 +257,26 @@ LedGrid grid;
 SceneStore<fs::FS> sceneStore;
 LedBackendSettings<fs::FS> ledBackendSettings;
 PixelGroupStore<LedGrid::GroupLayout> pixelGroups;
+HostPresentationStore<LedGrid::kCells,LedGrid::kPixels> hostPresentation;
 #if PAKAR_PIXEL_CORRECTIONS
 PixelCorrectionStore<LedGrid::kPixels> pixelCorrections;
 #endif
 #include "src/KeyGameSettings.h"
 #include "src/StateAppearanceSettings.h"
 KeyGameSettings keySettings;
+#if PAKAR_FIRST_WINS_ENABLED
+KeyMiniGameSettings miniSettings;
+BoardCore::KeyMiniGame miniGame;
+LedGrid::Presentation::Layer miniLayer;
+bool avrMiniGames=false,avrMiniOwned=false;
+uint16_t miniPhysicalHeld=0,miniRemoteHeld=0;
+uint16_t miniEpoch=1,avrMiniEpoch=0,miniEpochSent=0;
+bool miniResumeAfterFence=false;
+uint16_t miniFenceNote=0;
+uint32_t miniFenceAt=0;
+bool miniCommand(JsonObjectConst request,String &result);
+uint32_t miniRemoteAt[9]{};
+#endif
 StateAppearanceSettings stateAppearance;
 void syncStateAppearanceFromKeys(){
   auto &v=stateAppearance.value;
@@ -267,6 +296,9 @@ uint16_t keyMaskSentValue=0;
 bool avrGameMelodies=false,keyAudioApplied=false;
 bool avrRemotePress=false;
 bool avrAudioStream=false,audioStreamWaiting=false,audioStreamReceived=false;
+bool avrFlashAudio=false,avrAtomicAudio=false,gameAudioPending=false,gameAudioAck=false;
+uint8_t gameAudioSequence=0,gameAudioError=0;
+uint32_t gameAudioSentAt=0;
 uint8_t audioStreamSequence=0,audioStreamReply[8]={};
 uint8_t keyWinnerCueSent=kCueWinner,keyResetCueSent=kCueWelcome;
 uint8_t gameAudioPulse=255;
@@ -352,7 +384,17 @@ uint8_t physicalResetSequence=0;
 uint32_t physicalResetSentAt=0;
 #endif
 bool ntpConfigured = false;
+char ntpServerName[254]="pool.ntp.org"; // lwIP retains the configured name pointer.
+NetworkToolsSettings networkToolsSettings;
+#if defined(ARDUINO_ARCH_ESP32)
+NetworkTools networkTools;
+bool networkToolsLease=false;
+uint32_t nextDateLookup=0,nextPublicIpLookup=0;
+#endif
 bool ntpObserved = false;
+#if defined(ARDUINO_ARCH_ESP32)
+std::atomic<bool> ntpSyncPending{false};
+#endif
 uint32_t lastClockSetAt = 0;
 const char *clockSource = "unset";
 uint8_t avrTelemetry[46] = {};
@@ -374,11 +416,7 @@ String stagedAccessPassword;
 String stagedDeviceName;
 String stagedDisplayName;
 #if PAKAR_SNAKE_ENABLED
-uint8_t snakeBody[LedGrid::kCells] = {};
 uint8_t snakeLength = 0;
-uint8_t snakeFood = 0;
-uint8_t snakeDirection = 1;
-uint32_t lastSnakeAt = 0;
 bool snakeAlive = false;
 #else
 constexpr uint8_t snakeLength = 0;
@@ -433,6 +471,7 @@ void beginDeviceShells();
 void serviceDeviceShells();
 unsigned shellConnectionCount();
 uint16_t shellAdvertisedPort();
+uint16_t sshAdvertisedPort();
 String shellStatusJson();
 bool handleShellFrame(const BoardCore::Protocol::Frame &frame);
 bool handleUsbApiFrame(const BoardCore::Protocol::Frame &frame);
@@ -461,6 +500,9 @@ String ethernetStatusJson(bool compact);
 String lcdStatusJson();
 String buildUsbTableSnapshot(bool includePixels=false);
 String buildTelemetryJson();
+String clockJson();
+String networkToolsJson();
+void configureNtp();
 String avrVersionText();
 uint8_t resumeAvrApplication();
 bool recordClientReport(const String &report,const String &peer,const String &agent=String(),const String &version=String());
@@ -478,7 +520,7 @@ void serviceSnake(uint32_t now);
 void serviceDiscovery();
 void registerAsyncOta();
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
-               const uint8_t *payload = nullptr, uint8_t payloadLength = 0);
+               const uint8_t *payload = nullptr, uint8_t payloadLength = 0,bool gameOutput = false);
 String pcReceiptJson(const BoardCore::PcContractTransport::Receipt &receipt);
 void publishPcEvent(const String &event,bool displaySnapshot=false) {
 #if defined(ARDUINO_ARCH_ESP32)
@@ -497,6 +539,7 @@ void serviceAvrFor(uint32_t durationMs);
 void setAvrTransmitBlocked(bool blocked);
 EspFrontPanel espFrontPanel;
 bool wifiScanQueued = false;
+bool wifiScanReportPending=false;
 uint32_t lastEspPanelOfferAt = 0;
 class EspPanelSettings : public EspFrontPanel::Settings {
  public:
@@ -616,6 +659,34 @@ String pixelGroupsJson(){
   body+=F("\",\"boot_id\":\"");body+=pcBootId;body+=F("\"}");
   return body.length()==expected?body:String();
 }
+String presentationJson(bool full=false){
+  JsonDocument reply;if(deserializeJson(reply,hostPresentation.json(full)))return String();
+  reply["board_id"]=pcBoardId;reply["boot_id"]=pcBootId;
+  reply["group_layout_revision"]=grid.groupLayout().revision();
+  String result;serializeJson(reply,result);return result;
+}
+const char *applyHostPresentation(JsonObjectConst request){
+  if(!maintenanceApiIdle()||!grid.presentationReady())return "presentation_busy";
+  const char *error=nullptr;
+#if defined(ARDUINO_ARCH_ESP32)
+  if(grid.backendPending())return "presentation_busy";
+  // Only explicit durable changes enter the existing flash pause discipline.
+  if(request["lifetime"]=="persistent"){
+    PakarS3::ScopedLedFlashPause pause;if(!pause)return "led_flash_guard_busy";
+    error=hostPresentation.apply(request,grid.groupLayout(),millis());
+  }else
+#endif
+    error=hostPresentation.apply(request,grid.groupLayout(),millis());
+  grid.presentationChanged();keyObservationPending=true;
+  return error;
+}
+#if PAKAR_PIXEL_CORRECTIONS
+const char *applyCorrectionPreview(JsonObjectConst request){
+  if(!maintenanceApiIdle())return "maintenance_busy";
+  const char *error=pixelCorrections.preview(request,millis());
+  grid.setCorrections(&pixelCorrections.mapping);keyObservationPending=true;return error;
+}
+#endif
 String pixelFrameResponse(bool fenced=false,uint32_t expectedRevision=0){
   if(fenced&&grid.groupLayout().revision()!=expectedRevision)return F("{\"error\":\"pixel_group_layout_changed\"}");
   if(fenced&&grid.publishedGroupRevision()!=expectedRevision)return F("{\"error\":\"pixel_frame_layout_pending\"}");
@@ -1057,6 +1128,14 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       if(frame.payloadLength!=1||frame.payload[0]>1){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
       grid.setRedLock(frame.payload[0]);hostLink.ack(frame.sequence,frame.opcode);break;
     case kGameReset:
+#if PAKAR_FIRST_WINS_ENABLED
+      if(avrMiniOwned){
+        JsonDocument request;request["command"]="minigame-control";request["action"]="reset";String result;
+        if(miniCommand(request.as<JsonObjectConst>(),result))hostLink.ack(frame.sequence,frame.opcode);
+        else hostLink.error(frame.sequence,frame.opcode,kHardwareUnavailable);
+        break;
+      }
+#endif
       if(!avrOnline || !keyMaskApplied || programmingLatched ||
           !requestAndWaitForAck(kGameReset,nullptr,0,750)) {
         hostLink.error(frame.sequence,frame.opcode,kHardwareUnavailable);break;
@@ -1145,6 +1224,15 @@ void onHostFrame(const BoardCore::Protocol::Frame &frame, void *) {
       hostLink.ack(frame.sequence, frame.opcode);
       break;
     case kGamePress:
+#if PAKAR_FIRST_WINS_ENABLED
+      if(avrMiniOwned){
+        if(frame.payloadLength!=1){hostLink.error(frame.sequence,frame.opcode,kBadPayload);break;}
+        JsonDocument request;request["command"]="minigame-input";request["action"]="tap";request["key"]=frame.payload[0];String result;
+        if(miniCommand(request.as<JsonObjectConst>(),result))hostLink.ack(frame.sequence,frame.opcode);
+        else hostLink.error(frame.sequence,frame.opcode,kHardwareUnavailable);
+        break;
+      }
+#endif
       if(!PAKAR_FIRST_WINS_ENABLED||!avrOnline||!avrRemotePress||!keyMaskApplied||programmingLatched||
          frame.payloadLength!=1||!keySettings.enabled(frame.payload[0])){
         hostLink.error(frame.sequence,frame.opcode,kUnsafe);break;
@@ -1398,7 +1486,7 @@ void startDiscovery() {
 #if defined(ARDUINO_ARCH_ESP32)
   if (!NetworkPath::ready() && !apStarted) return;
   discoveryAddress = NetworkPath::ready() ? NetworkPath::localIP() : WiFi.softAPIP();
-  s3Discovery.begin(hostname.c_str(), deviceIdentity.displayName(), SystemPlatform::chipId(), kStreamPort,shellAdvertisedPort());
+  s3Discovery.begin(hostname.c_str(), deviceIdentity.displayName(), SystemPlatform::chipId(), kStreamPort,shellAdvertisedPort(),sshAdvertisedPort());
   mdnsStarted = s3Discovery.mdnsReady();
   ssdpStarted = s3Discovery.ssdpReady();
   netbiosStarted = s3Discovery.netbiosReady();
@@ -1480,7 +1568,7 @@ void applyEthernetConfig() {
   cloudServices.suspend();
   NetworkPath::setEthernetDhcp(ethernetConfig.dhcpEnabled());
   if(!ethernetConfig.enabled()) {
-    NetworkPath::ethernet().end();NetworkPath::service();ntpConfigured=false;
+    NetworkPath::ethernet().end();NetworkPath::service();
     PakarConfiguration::changes().applied(PakarConfiguration::Ethernet);return;
   }
   if(!NetworkPath::ethernet().ensureInitialized(hostname.c_str())) {
@@ -1492,7 +1580,7 @@ void applyEthernetConfig() {
     PakarConfiguration::changes().failed(PakarConfiguration::Ethernet);return;
   }
   NetworkPath::ethernet().setLldp(ethernetConfig.lldpEnabled(),ethernetConfig.lldpReceive());
-  NetworkPath::service();ntpConfigured=false;
+  configureNtp();NetworkPath::service();
   PakarConfiguration::changes().applied(PakarConfiguration::Ethernet);
 #endif
 }
@@ -1507,6 +1595,7 @@ void applyNetworkConfig() {
     closeDeviceShells();
   }
   stopDiscovery();
+  configureNtp();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
   NetworkPath::begin(hostname.c_str(),ethernetConfig.enabled());
@@ -1514,7 +1603,6 @@ void applyNetworkConfig() {
   NetworkPath::begin(hostname.c_str());
 #endif
   NetworkPath::service();
-  ntpConfigured = false;
   const uint16_t scopes=PakarConfiguration::Network|(renamed?PakarConfiguration::Identity:0);
   if(networkConfig.lastError()[0])PakarConfiguration::changes().failed(scopes);
   else PakarConfiguration::changes().applied(scopes);
@@ -1573,7 +1661,12 @@ String deviceNameJson(bool accepted) {
 }
 
 bool sendToAvr(uint8_t opcode, uint8_t requestSequence,
-               const uint8_t *payload, uint8_t payloadLength) {
+               const uint8_t *payload, uint8_t payloadLength,bool gameOutput) {
+#if PAKAR_FIRST_WINS_ENABLED
+  if(avrMiniOwned&&opcode==kOutputMask&&!gameOutput)return false;
+#else
+  (void)gameOutput;
+#endif
   if (!PAKAR_AVR_LINK_ENABLED || urbootRawOwned) return false;
 #if defined(ARDUINO_ARCH_ESP32)
   if (!avrUart.started()) return false;
@@ -1708,10 +1801,31 @@ bool requestAndWaitForAck(uint8_t opcode, const uint8_t *payload = nullptr,
   while (!awaitedReplySeen &&
          static_cast<uint32_t>(millis() - startedAt) < timeoutMs) {
     link.service();
-    delay(1);
-    yield();
+    if(!awaitedReplySeen){
+#if !defined(ARDUINO_ARCH_ESP32)
+      delay(1);
+#endif
+      yield();
+    }
   }
   return awaitedReplySeen && awaitedReplyOk;
+}
+bool submitAvrCommand(uint8_t opcode,const uint8_t *payload,uint8_t length,String &result){
+#if PAKAR_FIRST_WINS_ENABLED
+  if(avrMiniOwned&&opcode==kOutputMask){result=F("outputs_owned_by_minigame");return false;}
+#endif
+  if(!avrOnline){result=F("avr_unavailable");return false;}
+  if(!requestAndWaitForAck(opcode,payload,length,150)){
+    result=awaitedReplySeen?F("avr_command_rejected"):F("avr_outcome_unknown");return false;
+  }
+  result=F("avr_acknowledged");return true;
+}
+void sendAvrHttpCommand(uint8_t opcode,const uint8_t *payload,uint8_t length){
+  String result;const bool accepted=submitAvrCommand(opcode,payload,length,result);
+  JsonDocument reply;reply["accepted"]=accepted;reply["board_id"]=pcBoardId;reply["boot_id"]=pcBootId;
+  if(accepted){reply["state"]="acknowledged";reply["avr_acknowledged"]=true;reply["physical_verified"]=false;}
+  else {reply["error"]=result;if(result=="avr_outcome_unknown")reply["outcome"]="unknown";}
+  String body;serializeJson(reply,body);server.send(accepted?200:409,"application/json",body);
 }
 
 uint8_t resumeAvrApplication() {
@@ -2009,105 +2123,7 @@ bool authenticate() {
   return false;
 }
 
-#if PAKAR_SNAKE_ENABLED
-uint8_t snakeCell(uint8_t position) {
-  const uint8_t fromRight = position % 10U;
-  const uint8_t y = position / 10U;
-  return static_cast<uint8_t>(
-      fromRight * 8U + (fromRight % 2U == 0U ? 8U - y : y + 1U));
-}
-
-void renderSnake() {
-  grid.fill(kCellOff);
-  if (snakeFood < LedGrid::kCells) {
-    grid.setCell(snakeCell(snakeFood), kCellRed, kEffectImmediate);
-  }
-  for (uint8_t index = 0; index < snakeLength; ++index) {
-    grid.setCell(snakeCell(snakeBody[index]), kCellWhite, kEffectImmediate);
-  }
-}
-
-void placeSnakeFood() {
-  uint8_t candidate = static_cast<uint8_t>((snakeFood * 17U + 23U) % 80U);
-  for (uint8_t attempts = 0; attempts < 80; ++attempts) {
-    bool occupied = false;
-    for (uint8_t index = 0; index < snakeLength; ++index) {
-      if (snakeBody[index] == candidate) {
-        occupied = true;
-        break;
-      }
-    }
-    if (!occupied) {
-      snakeFood = candidate;
-      return;
-    }
-    candidate = static_cast<uint8_t>((candidate + 1U) % 80U);
-  }
-}
-
-void startSnake() {
-  snakeLength = 3;
-  snakeBody[0] = 44;
-  snakeBody[1] = 43;
-  snakeBody[2] = 42;
-  snakeFood = 7;
-  snakeDirection = 1;
-  snakeAlive = true;
-  lastSnakeAt = millis();
-  placeSnakeFood();
-  renderSnake();
-}
-
-bool setSnakeDirection(uint8_t direction) {
-  if (direction > 3 || (direction ^ 2U) == snakeDirection) return false;
-  snakeDirection = direction;
-  return true;
-}
-
-void serviceSnake(uint32_t now) {
-  if (mode != kModeSnake || !snakeAlive ||
-      static_cast<uint32_t>(now - lastSnakeAt) < 250U) {
-    return;
-  }
-  lastSnakeAt = now;
-  const int8_t x = static_cast<int8_t>(snakeBody[0] % 10U);
-  const int8_t y = static_cast<int8_t>(snakeBody[0] / 10U);
-  const int8_t nextX = x + (snakeDirection == 1 ? 1 : snakeDirection == 3 ? -1 : 0);
-  const int8_t nextY = y + (snakeDirection == 2 ? 1 : snakeDirection == 0 ? -1 : 0);
-  if (nextX < 0 || nextX >= 10 || nextY < 0 || nextY >= 8) {
-    snakeAlive = false;
-  }
-  const uint8_t next = static_cast<uint8_t>(nextY * 10 + nextX);
-  const bool eating = snakeAlive && next == snakeFood;
-  const uint8_t collisionLimit =
-      eating ? snakeLength : static_cast<uint8_t>(snakeLength - 1U);
-  for (uint8_t index = 0; snakeAlive && index < collisionLimit; ++index) {
-    if (snakeBody[index] == next) snakeAlive = false;
-  }
-  if (!snakeAlive) {
-    const uint8_t cue = kCueLost;
-    sendToAvr(kAudioCue, sequence++, &cue, 1);
-    grid.fill(kCellRed);
-    return;
-  }
-  if (eating && snakeLength < LedGrid::kCells) ++snakeLength;
-  for (uint8_t index = snakeLength - 1U; index > 0; --index) {
-    snakeBody[index] = snakeBody[index - 1U];
-  }
-  snakeBody[0] = next;
-  if (eating) {
-    const uint8_t cue = kCueIncrease;
-    sendToAvr(kAudioCue, sequence++, &cue, 1);
-    placeSnakeFood();
-  }
-  renderSnake();
-}
-
-#else
-void startSnake() {}
-bool setSnakeDirection(uint8_t) { return false; }
-void serviceSnake(uint32_t) {}
-#endif
+#include "src/SnakeService.h"
 
 const char *modeName() {
   switch (mode) {
@@ -2162,6 +2178,7 @@ uint64_t commandClock() {
   const uint32_t now=millis();if(now<previous)high+=1ULL<<32;previous=now;
   return high|now; // Queried every telemetry tick; old intents cannot revive at millis wrap.
 }
+#include "src/KeyMiniGameService.h"
 #include "src/SemanticPanelService.h"
 String buildStatusJson() { return buildStatusJson(false); }
 String buildStatusJson(bool compact) {
@@ -2178,6 +2195,7 @@ String buildStatusJson(bool compact) {
   body += F(",\"command_clock_ms\":"); body += commandTime;
   body += F(",\"configuration_revision\":");body+=PakarConfiguration::changes().revision();
   body += F(",\"pixel_groups\":");body+=pixelGroups.json(compact);
+  body += F(",\"presentation\":");body+=hostPresentation.json();
 #if PAKAR_PIXEL_CORRECTIONS
   body += F(",\"pixel_corrections_revision\":");body+=pixelCorrections.revision();
   body += F(",\"pixel_corrections_active_revision\":");body+=pixelCorrections.activeRevision();
@@ -2205,8 +2223,13 @@ String buildStatusJson(bool compact) {
   body += F("\",\"led_output\":");body+=grid.outputJson(compact);
 #if PAKAR_FIRST_WINS_ENABLED
   body += F(",\"key_game\":");body+=keySettings.json();
+  if(avrMiniGames){body+=F(",\"minigame\":");body+=miniJson();}
   body += F(",\"key_mask_applied\":");body+=(avrOnline&&keyMaskApplied)?F("true"):F("false");
   body += F(",\"game_audio_applied\":");body+=(avrOnline&&avrGameMelodies&&keyAudioApplied)?F("true"):F("false");
+  body += F(",\"game_audio\":{\"timeline_supported\":");body+=(avrOnline&&avrFlashAudio)?F("true"):F("false");
+  body += F(",\"pending\":");body+=gameAudioPending?F("true"):F("false");
+  body += F(",\"acknowledged\":");body+=gameAudioAck?F("true"):F("false");
+  body += F(",\"error_code\":");body+=gameAudioError;body+='}';
   body += F(",\"auto_reset_state\":\"");body+=gameAutoResetState;body+='"';
   body += F(",\"game_reset\":{\"avr_revision\":");body+=lastResetRevision;
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_GAME_RESET_PIN >= 0
@@ -2281,6 +2304,7 @@ String buildStatusJson(bool compact) {
   body += F(",\"mdns_url\":\"http://"); body += hostname; body += F(".local\"");
   body += F(",\"winner\":"); body += winner;
   body += F(",\"selected_cell\":"); body += selectedCell;
+  body += F(",\"snake\":"); body += boardSnakeJson();
   body += F(",\"snake_alive\":"); body += snakeAlive ? F("true") : F("false");
   body += F(",\"snake_length\":"); body += snakeLength;
   body += F(",\"red_lock\":"); body += grid.redLock() ? F("true") : F("false");
@@ -2398,20 +2422,33 @@ String buildStatusJson(bool compact) {
   body += F("\",\"hostname\":\""); body += deviceIdentity.hostname();
   body += F("\",\"application\":"); body += applicationIdentityJson();
   body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"pixel-diagnostic-effects\",\"pixel-diagnostic-overlay\",\"pixel-group-layout\",\"panel-events\",\"usb-demand\",\"usb-pixel-diagnostic\"");
-  body += F(",\"state-presentation\"");
+  body += F(",\"state-presentation\",\"host-presentation\"");
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  body += F(",\"network-tools\"");
+#endif
+#if PAKAR_SNAKE_ENABLED
+  body += F(",\"board-snake\"");
+#endif
+  body += F(",\"managed-files\"");
+#if PAKAR_MICROSD_ENABLED
+  body += F(",\"microsd-files\"");
+#endif
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
   body += F(",\"peer-relay-http\"");
 #endif
 #if PAKAR_PIXEL_CORRECTIONS
-  body += F(",\"pixel-corrections\",\"pixel-corrections-preview\",\"pixel-correction-rule-toggle\"");
+  body += F(",\"pixel-corrections\",\"pixel-corrections-preview\",\"pixel-correction-rule-toggle\",\"pixel-corrections-preview-command\"");
 #endif
 #if PAKAR_FIRST_WINS_ENABLED
   body += F(",\"key-settings\",\"usb-key-settings\",\"reset-ack\"");
   if(avrOnline&&avrGameMelodies)body += F(",\"game-melodies\"");
   body += F(",\"game-presentation\"");
+  if(avrMiniGames)body += F(",\"board-minigames\",\"minigame-configure\",\"minigame-control\",\"minigame-input\"");
   if(avrOnline&&avrRemotePress)body += F(",\"game-press\"");
 #endif
   if(avrOnline&&avrAudioStream)body += F(",\"audio-stream\"");
+  if(avrOnline&&avrFlashAudio)body += F(",\"audio-flash-timeline\"");
+  if(avrOnline)body += F(",\"avr-command-ack\"");
 #if PAKAR_TABLE_SELECTION
   body += F(",\"cell-assignments\",\"cell-lock\"");
 #endif
@@ -2498,7 +2535,7 @@ String configurationStateJson(const PakarConfiguration::Journal::Event *event) {
   if(event) {
     d["phase"]=PakarConfiguration::phaseName(event->phase);
     auto scopes=d["scopes"].to<JsonArray>();
-    for(uint16_t scope=1;scope<=256;scope<<=1)
+    for(uint16_t scope=1;scope<=512;scope<<=1)
       if(event->scopes&scope)scopes.add(PakarConfiguration::scopeName(scope));
   }
   auto addresses=d["addresses"].to<JsonArray>();
@@ -2613,9 +2650,24 @@ String buildUsbTableSnapshot(bool includePixels) {
 }
 
 void configureNtp() {
+#if defined(ARDUINO_ARCH_ESP32)
+  // The thread-safe SNTP wrappers need the TCP/IP mailbox even on first boot,
+  // before Wi-Fi has been started. Match configTime's SDK initialization order.
+  if(PAKAR_NETWORK_ENABLED&&!ntpConfigured&&esp_netif_init()!=ESP_OK)return;
+#endif
   NetworkPath::serviceDns(millis(), !ntpConfigured);
-  if (!NetworkPath::ready() || ntpConfigured) return;
-  configTime(0, 0, "pool.ntp.org", "time.cloudflare.com");
+  if (!PAKAR_NETWORK_ENABLED || ntpConfigured) return;
+#if defined(ARDUINO_ARCH_ESP32)
+  esp_sntp_stop();
+  esp_sntp_servermode_dhcp(networkToolsSettings.ntpEnabled&&networkToolsSettings.ntpDhcp);
+  if(!networkToolsSettings.ntpEnabled){esp_sntp_stop();ntpConfigured=true;return;}
+#else
+  if(!networkToolsSettings.ntpEnabled){ntpConfigured=true;return;}
+#endif
+  // Configure before DHCP starts; a DHCP NTP offer may then replace the
+  // fallback. Do not reset SNTP after every acquired address and erase it.
+  networkToolsSettings.ntpServer.toCharArray(ntpServerName,sizeof(ntpServerName));
+  configTime(0, 0, ntpServerName);
   ntpConfigured = true;
 }
 
@@ -2649,8 +2701,8 @@ String commandReply(const String &message,bool boundedDiagnostic) {
     const String id=PakarCommand::stringValue(object,"request_id");
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
-    const bool supported=command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
-        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell"||command=="cell-assignments"||command=="cell-lock"||command=="audio"||command=="buzzer";
+    const bool supported=command=="set-clock"||command=="network-tools"||command=="configure-network-tools"||command=="network-probe"||command=="wifi-scan"||command=="wifi-scan-results"||command=="configure-network"||command=="minigame-configure"||command=="minigame-control"||command=="minigame-input"||command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
+        command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell"||command=="cell-assignments"||command=="cell-lock"||command=="audio"||command=="buzzer"||command=="outputs";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
       reply["error"]="peer_changed";
@@ -2664,28 +2716,74 @@ String commandReply(const String &message,bool boundedDiagnostic) {
         String result;
         entry->accepted=!programmingLatched && !otaActive && !otaRebootAt && !avrUploadOwner &&
             !remoteFirmware.busy() && !networkApplyPending && !cloudApplyPending && handleCloudCommand(message,result);
+        if(!entry->accepted&&(command=="network-probe"||command=="configure-network-tools"||command=="configure-network"))reply["reason"]=result;
+        if(!entry->accepted&&(command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command.startsWith("minigame-")))reply["reason"]=result;
         if(!entry->accepted)entry->failure=result==F("red_cells_locked")?BoardCore::CommandReceipts::RedCellsLocked:
             result==F("invalid_cell_assignments")?BoardCore::CommandReceipts::InvalidCellAssignments:
-            result==F("unsupported_board_role")?BoardCore::CommandReceipts::UnsupportedBoardRole:BoardCore::CommandReceipts::NoFailure;
+            result==F("unsupported_board_role")?BoardCore::CommandReceipts::UnsupportedBoardRole:
+            result==F("avr_outcome_unknown")?BoardCore::CommandReceipts::AvrOutcomeUnknown:
+            result==F("avr_command_rejected")?BoardCore::CommandReceipts::AvrRejected:BoardCore::CommandReceipts::NoFailure;
         if(entry->accepted && command=="cells") {
           BoardCore::CellBatch cells;CellState state;Effect effect;
           if(parseCellsAction(request["ids"].as<String>(),request["state"].as<String>(),request["effect"].as<String>(),cells,state,effect))entry->count=cells.count();
         }
+        if(entry->accepted&&command=="presentation")entry->observe(hostPresentation.model.revision,hostPresentation.model.lease);
+#if PAKAR_PIXEL_CORRECTIONS
+        if(entry->accepted&&command=="pixel-corrections-preview")entry->observe(pixelCorrections.activeRevision(),pixelCorrections.previewLease());
+#endif
       }
       if(admission==BoardCore::CommandReceipts::Fresh || admission==BoardCore::CommandReceipts::Cached) {
         reply["accepted"]=entry->accepted;reply["count"]=entry->count;
         reply["cached"]=admission==BoardCore::CommandReceipts::Cached;
         if(entry->accepted && (command=="reset"||command=="game-press"))reply["avr_acknowledged"]=true;
-        // UART submission is not proof that the AVR has begun audible playback.
-        if(entry->accepted && (command=="audio" || command=="buzzer"))
-          reply["state"]="queued";
+        // AVR ACK confirms its command handler, not physical acoustics/voltage.
+        if(entry->accepted && (command=="audio" || command=="buzzer"||command=="outputs")){
+          reply["state"]="acknowledged";reply["avr_acknowledged"]=true;reply["physical_verified"]=false;
+          if(command=="outputs")reply["acknowledged_mask"]=request["mask"];
+        }
+        if(entry->failure==BoardCore::CommandReceipts::AvrOutcomeUnknown)reply["outcome"]="unknown";
         if(!entry->accepted){reply["error"]=BoardCore::CommandReceipts::failureCode(entry->failure);reply["message"]=BoardCore::CommandReceipts::failureMessage(entry->failure);}
+        bool observed=true;
+        if(entry->accepted&&admission==BoardCore::CommandReceipts::Cached){
+          if(command=="presentation"){
+            if(hostPresentation.model.service(millis())){grid.presentationChanged();keyObservationPending=true;}
+            observed=entry->observationMatches(hostPresentation.model.revision,hostPresentation.model.lease);
+          }
+#if PAKAR_PIXEL_CORRECTIONS
+          if(command=="pixel-corrections-preview"){
+            if(pixelCorrections.service(millis())){grid.setCorrections(&pixelCorrections.mapping);keyObservationPending=true;}
+            observed=entry->observationMatches(pixelCorrections.activeRevision(),pixelCorrections.previewLease());
+          }
+#endif
+        }
+        if(!observed){
+          // The original mutation succeeded, but current metadata belongs to a
+          // newer revision/expired lease. Never replay or fabricate its ACK.
+          reply["accepted"]=false;reply["original_accepted"]=true;reply["outcome"]="unknown";
+          reply["error"]="readback_required";reply["readback_required"]=true;
+          reply["observed_revision"]=entry->observedRevision;reply["observed_lease_id"]=entry->observedLease;
+        }
       } else reply["error"]=admission==BoardCore::CommandReceipts::Conflict?"request_id_conflict":
           admission==BoardCore::CommandReceipts::Full?"command_capacity":
           admission==BoardCore::CommandReceipts::Expired?"command_expired":"invalid_request_id";
     }
   }
-  const bool partial=boundedDiagnostic&&request["command"]=="pixel-diagnostic";
+  if(reply["accepted"]==true&&request["command"]=="presentation"){
+    JsonDocument details;if(!deserializeJson(details,presentationJson()))reply["presentation"]=details.as<JsonObjectConst>();
+  }
+  if(reply["accepted"]==true&&request["command"]=="snake"){
+    JsonDocument details;if(!deserializeJson(details,boardSnakeJson()))reply["snake"]=details.as<JsonObjectConst>();
+  }
+  if(reply["accepted"]==true&&(request["command"]=="set-clock"||request["command"]=="network-probe"||request["command"]=="configure-network-tools"||request["command"]=="network-tools")){
+    JsonDocument details;if(!deserializeJson(details,networkToolsJson()))reply["network_tools"]=details.as<JsonObjectConst>();
+  }
+#if PAKAR_PIXEL_CORRECTIONS
+  if(reply["accepted"]==true&&request["command"]=="pixel-corrections-preview"){
+    JsonDocument details;if(!deserializeJson(details,pixelCorrections.previewJson()))reply["pixel_corrections_preview"]=details.as<JsonObjectConst>();
+    reply["corrections_revision"]=pixelCorrections.revision();reply["corrections_active_revision"]=pixelCorrections.activeRevision();
+  }
+#endif
+  const bool partial=boundedDiagnostic&&(request["command"]=="pixel-diagnostic"||request["command"]=="presentation"||request["command"]=="pixel-corrections-preview");
   if(partial)reply["status_partial"]=true;
   String body;serializeJson(reply,body);
   if(reply["accepted"]==true) {
@@ -2931,6 +3029,7 @@ bool submitDisplayText(const String &text, long speed, long hold,
 }
 
 #include "src/CloudManagement.h"
+#include "src/NetworkToolsBinding.h"
 #include "src/EthernetManagement.h"
 #include "src/LcdManagement.h"
 
@@ -2984,6 +3083,19 @@ bool handleCloudCommand(const String &message, String &result) {
   }
   const JsonObjectConst commandRequest=commandDocument.as<JsonObjectConst>();
   const String command=PakarCommand::stringValue(commandRequest,"command");
+#if PAKAR_FIRST_WINS_ENABLED
+  if(command=="minigame-configure"||command=="minigame-control"||command=="minigame-input")return miniCommand(commandRequest,result);
+#endif
+  if(command=="presentation"){
+    const char *error=applyHostPresentation(commandRequest);result=error?String(error):presentationJson();return !error;
+  }
+#if PAKAR_PIXEL_CORRECTIONS
+  if(command=="pixel-corrections-preview"){
+    const auto settings=commandRequest["configuration"];
+    if(!settings.is<JsonObjectConst>()){result=F("invalid_corrections");return false;}
+    const char *error=applyCorrectionPreview(settings.as<JsonObjectConst>());result=error?String(error):pixelCorrections.previewJson();return !error;
+  }
+#endif
   if(command=="color-preview"){
     if(commandRequest["cancel"].is<bool>()&&commandRequest["cancel"].as<bool>()){
       grid.cancelPreview();result=F("preview cancelled");return true;
@@ -3004,7 +3116,7 @@ bool handleCloudCommand(const String &message, String &result) {
     KeyGameSettings keys=keySettings;
     // The key role has its own per-group controls. A shared palette patch must
     // not silently destroy those overrides or accept table-only motion.
-    if(next.value.diagonal || next.value.states[kCellIdle].motion!=BoardCore::KeyPresentation::Solid ||
+    if(next.value.fireRotation || next.value.diagonal || next.value.states[kCellIdle].motion!=BoardCore::KeyPresentation::Solid ||
        next.value.ringMs<400 || next.value.ringMs>3000){result=F("unsupported_key_presentation");return false;}
     keys.idleRgb=next.value.states[kCellIdle].rgb;keys.winRgb=next.value.states[kCellWon].rgb;keys.loseRgb=next.value.states[kCellLost].rgb;
     keys.extendedEffects=next.value.enabled;keys.chasePeriodMs=next.value.ringMs;
@@ -3024,6 +3136,10 @@ bool handleCloudCommand(const String &message, String &result) {
     result=F("state presentation saved");return true;
   }
   if(command=="game-press"){
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned){JsonDocument input;input["command"]="minigame-input";input["action"]="tap";input["key"]=commandRequest["key"];
+      return miniCommand(input.as<JsonObjectConst>(),result);}
+#endif
     const auto key=commandRequest["key"];
     if(!PAKAR_FIRST_WINS_ENABLED||!avrOnline||!avrRemotePress||!keyMaskApplied||programmingLatched||
        !key.is<uint8_t>()||!keySettings.enabled(key.as<uint8_t>())){result=F("game_press_unavailable");return false;}
@@ -3092,6 +3208,13 @@ bool handleCloudCommand(const String &message, String &result) {
 #endif
   }
   if(command=="shell-config"){result=shellStatusJson();return true;}
+  if(command=="network-tools"){result=networkToolsJson();return true;}
+  if(command=="set-clock")return setBoardClock(commandRequest["utc_epoch"],result);
+  if(command=="wifi-scan"){result=wifiScanJson(true);JsonDocument d;return !deserializeJson(d,result)&&d["accepted"]==true;}
+  if(command=="wifi-scan-results"){result=wifiScanJson(false);return true;}
+  if(command=="configure-network-tools")return updateNetworkTools(commandRequest["settings"].as<JsonObjectConst>(),result);
+  if(command=="network-probe")return submitNetworkProbe(commandRequest["kind"]|"",commandRequest["target"]|"",result);
+  if(command=="snake")return boardSnakeCommand(commandRequest,result);
   if(command=="configure-shell")return updateShellConfiguration(commandRequest["settings"].as<JsonObjectConst>(),result);
   if (command=="cloud-config" || command=="network-config" || command=="ethernet-config" ||
       command=="configure-cloud" || command=="configure-network" || command=="configure-ethernet" || command=="device-identity") {
@@ -3324,9 +3447,7 @@ bool handleCloudCommand(const String &message, String &result) {
       return false;
     }
     const uint8_t payload[] = {static_cast<uint8_t>(mask)};
-    sendToAvr(kOutputMask, sequence++, payload, sizeof(payload));
-    result = F("outputs updated");
-    return true;
+    return submitAvrCommand(kOutputMask,payload,sizeof(payload),result);
   }
   if (command == F("display")) {
     if (PakarCommand::booleanValue(commandRequest, "release")) {
@@ -3367,11 +3488,7 @@ bool handleCloudCommand(const String &message, String &result) {
         static_cast<uint8_t>(duration),
         static_cast<uint8_t>(duration >> 8),
     };
-    if (!sendToAvr(kBuzzer, sequence++, payload, sizeof(payload))) {
-      result = F("AVR link unavailable"); return false;
-    }
-    result = F("buzzer queued");
-    return true;
+    return submitAvrCommand(kBuzzer,payload,sizeof(payload),result);
   }
   if (command == F("audio")) {
     uint8_t cue = 0;
@@ -3379,11 +3496,7 @@ bool handleCloudCommand(const String &message, String &result) {
       result = F("unknown audio cue");
       return false;
     }
-    if (!sendToAvr(kAudioCue, sequence++, &cue, 1)) {
-      result = F("AVR link unavailable"); return false;
-    }
-    result = F("audio cue queued");
-    return true;
+    return submitAvrCommand(kAudioCue,&cue,1,result);
   }
   if (command == F("snake-direction")) {
     const String value = PakarCommand::stringValue(commandRequest, "value");
@@ -3401,6 +3514,9 @@ bool handleCloudCommand(const String &message, String &result) {
   if (command == F("reset")) {
     if(!avrOnline || !keyMaskApplied || programmingLatched){result=F("avr_not_ready");return false;}
     if(!requestAndWaitForAck(kGameReset)){result=F("avr_reset_not_acknowledged");return false;}
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned)miniReset(millis());
+#endif
     if(!grid.resetWhite()){result=F("red_cells_locked");return false;}
     winner = 0;
     grid.setOutputEnabled(true);
@@ -3424,6 +3540,9 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
   if(frame.opcode==kAudioStreamResponse&&audioStreamWaiting&&frame.sequence==audioStreamSequence){
     memcpy(audioStreamReply,frame.payload,8);audioStreamReceived=true;
   }
+  if(frame.opcode==kAudioStreamResponse&&gameAudioPending&&frame.sequence==gameAudioSequence){
+    gameAudioPending=false;gameAudioError=frame.payload[0];gameAudioAck=gameAudioError==0;
+  }
   avrRecoveryHelloPending=false;
   if (frame.opcode == kEspPanel && avrOnline && (avrCapabilities & kCapEspPanel)) {
     espFrontPanel.handle(frame, millis(), espPanelSettings, link); return;
@@ -3446,6 +3565,11 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     return;
   }
   if (frame.opcode == kPcContractResponse) {
+#if PAKAR_FIRST_WINS_ENABLED
+    if(miniReady()&&frame.sequence==0&&frame.payloadLength==8&&frame.payload[0]==ControllerProtocol::Event&&frame.payload[1]==1&&frame.payload[2]<9&&
+       frame.payload[4]==0&&(frame.payload[6]|uint16_t(frame.payload[7])<<8)==miniEpoch&&
+       (frame.payload[3]==5||frame.payload[3]==6))miniInput(frame.payload[2]+1,frame.payload[3]==5,true,millis());
+#endif
     auto *receipt = pcTransport.accept(frame, millis());
     if (receipt) {
       if (receipt->usb) {
@@ -3490,9 +3614,15 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       frame.payload[0]==kKeyMask && frame.payload[1]==kNoError &&
       keyMaskSentValue==keySettings.enabledMask){
     keyMaskApplied=true;
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniGames&&miniEpochSent!=miniEpoch)keyMaskApplied=false;
+#endif
     avrAdmissionRecovery.confirmed();
     keyAudioApplied=avrGameMelodies && keyWinnerCueSent==BoardCore::AudioCues::kSilent && keyResetCueSent==keySettings.resetCue;
     keyMaskPending=avrGameMelodies&&!keyAudioApplied;
+#if PAKAR_FIRST_WINS_ENABLED
+    keyMaskPending=keyMaskPending||(avrMiniGames&&!avrMiniOwned);
+#endif
   }
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_GAME_RESET_PIN >= 0
   if(physicalResetPending && frame.sequence==physicalResetSequence &&
@@ -3509,11 +3639,17 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     awaitedReplyOk = frame.opcode == kAck && frame.payload[1] == kNoError;
   }
   if (frame.opcode == kHelloResponse) {
+#if PAKAR_FIRST_WINS_ENABLED
+    avrMiniGames=frame.payloadLength>=20&&frame.payload[19]==1;
+    avrMiniOwned=false;avrMiniEpoch=0;miniPhysicalHeld=miniRemoteHeld=0;
+#endif
     keyMaskApplied=false;keyMaskPending=true;
     keyAudioApplied=false;keyMaskSentAt=0;
     avrGameMelodies=frame.payloadLength>=17 && frame.payload[16]==1;
     avrRemotePress=frame.payloadLength>=18 && frame.payload[17]==1;
     avrAudioStream=frame.payloadLength>=19 && frame.payload[18]==1;
+    avrFlashAudio=frame.payloadLength>=21 && (frame.payload[20]&1);
+    avrAtomicAudio=frame.payloadLength>=21 && (frame.payload[20]&2);
     avrTelemetryKnown = false;
     avrResetTelemetryKnown = false;
     avrVersionKnown = frame.payloadLength >= 9 &&
@@ -3542,12 +3678,14 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
 #if PAKAR_FIRST_WINS_ENABLED
     // The observed mask can settle a lost ACK without replaying a game action.
     if(gameRoleMatches && frame.payloadLength>=28) {
+      avrMiniOwned=avrMiniGames&&frame.payloadLength>=33&&frame.payload[30]==1;
+      avrMiniEpoch=frame.payloadLength>=33?(frame.payload[31]|uint16_t(frame.payload[32])<<8):0;
       const uint16_t observedMask=frame.payload[26]|uint16_t(frame.payload[27])<<8;
-      keyMaskApplied=observedMask==keySettings.enabledMask;
+      keyMaskApplied=observedMask==keySettings.enabledMask&&(!avrMiniGames||avrMiniEpoch==miniEpoch);
       if(keyMaskApplied)avrAdmissionRecovery.confirmed();
       keyAudioApplied=avrGameMelodies && frame.payloadLength>=30 &&
           frame.payload[28]==BoardCore::AudioCues::kSilent && frame.payload[29]==keySettings.resetCue;
-      keyMaskPending=!keyMaskApplied||(avrGameMelodies&&!keyAudioApplied);
+      keyMaskPending=!keyMaskApplied||(avrGameMelodies&&!keyAudioApplied)||(avrMiniGames&&!avrMiniOwned);
     }
 #endif
     const uint8_t previousWinner = winner;
@@ -3564,7 +3702,12 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     } else if (BoardCore::GameRole::accepts(frame.payload[0])) {
       mode = static_cast<GameMode>(frame.payload[0]);
       // A boot/default status is not a new first-wins input.
-      if (mode == kModeFirstWins && keyMaskApplied && keySettings.enabled(frame.payload[1])) winner = frame.payload[1];
+      if (mode == kModeFirstWins && keyMaskApplied && keySettings.enabled(frame.payload[1])) {
+#if PAKAR_FIRST_WINS_ENABLED
+        if(!avrMiniOwned)
+#endif
+          winner = frame.payload[1];
+      }
     }
     }
     if (frame.payloadLength >= 7) {
@@ -3597,6 +3740,10 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       const uint8_t currentResetRevision = frame.payload[12];
       if (gameStateInitialized && gameRoleMatches) {
         if (currentResetRevision != lastResetRevision) {
+#if PAKAR_FIRST_WINS_ENABLED
+          if(avrMiniOwned)miniReset(millis());
+          else {
+#endif
           winner = frame.payload[1];
           if (mode == kModeSnake) startSnake();
 #if PAKAR_FIRST_WINS_ENABLED
@@ -3607,6 +3754,9 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
                        lastResetRevision, winner)) grid.showWinner(winner);
 #endif
           else grid.resetWhite();
+#if PAKAR_FIRST_WINS_ENABLED
+          }
+#endif
         }
         if (PAKAR_TABLE_SELECTION && cellRevision != lastCellActionRevision &&
             actionEffect <= kEffectPulse && frame.payload[2] >= 1 &&
@@ -3635,7 +3785,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
       avrPanelMeta = frame.payload[24] | static_cast<uint16_t>(frame.payload[25]) << 8;
     }
 #if PAKAR_FIRST_WINS_ENABLED
-    if (gameRoleMatches && mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
+    if (!avrMiniOwned && gameRoleMatches && mode == kModeFirstWins && winner != 0 && winner != previousWinner) {
       grid.showWinner(winner);
       gameWinnerAt=millis();gameAutoResetArmed=true;gameAutoResetState="armed";
       gameAudioPulse=255;gameAudioStarted=false;
@@ -3877,7 +4027,15 @@ void registerApi() {
     if(authenticate())server.send(200,"application/json",peerRelay.snapshot(server.arg("request_id")));
   });
   server.on("/api/peers",HTTP_GET,[](){
-    if(authenticate())server.send(200,"application/json",F("{\"transports\":[\"http-lan\"],\"max_hops\":1,\"explicit_target\":true,\"automatic_retry\":false,\"discovery\":false,\"event_subscription\":false,\"firmware_transfer\":false,\"file_transfer\":false,\"persistent_routes\":false}"));
+    if(authenticate())server.send(200,"application/json",peerRelay.directory());
+  });
+  server.on("/api/peers/routes",HTTP_POST,[](){
+    if(!authenticate())return;
+    if(peerRelayLease||otaActive||otaRebootAt||remoteFirmware.busy()||urbootBusy.get()||programmingLatched||
+        networkApplyPending||cloudApplyPending||avrUploadOwner||artifactReaders){
+      server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"maintenance_busy\"}"));return;
+    }
+    server.send(200,"application/json",peerRelay.saveRoute(server.jsonBody()));
   });
 #endif
   server.on("/api/panel",HTTP_GET,[](){
@@ -3906,38 +4064,32 @@ void registerApi() {
     server.send(code,ok?"application/json":"text/plain",body);
   });
 #endif
-  server.native().on("/assets/fonts/Vazirmatn-OFL.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send_P(200,"text/plain; charset=utf-8",kVazirmatnLicense);
+  server.native().on(AsyncURIMatcher::exact("/assets/fonts/Vazirmatn-OFL.txt"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"text/plain; charset=utf-8",kVazirmatnLicense,sizeof(kVazirmatnLicense)-1,kStaticLicenseEtag);
   });
   // Immutable public UI asset. Async response reads PROGMEM, not a heap copy.
-  server.native().on("/assets/fonts/Vazirmatn-Regular.ttf", HTTP_GET, [](AsyncWebServerRequest *request) {
-    auto *response = request->beginResponse_P(200, "font/ttf", kVazirmatnGzip, sizeof(kVazirmatnGzip));
-    response->addHeader("Content-Encoding", "gzip");
-    response->addHeader("Cache-Control", "public,max-age=86400");
-    response->addHeader("X-Content-Type-Options", "nosniff");
-    request->send(response);
+  server.native().on(AsyncURIMatcher::exact("/assets/fonts/Vazirmatn-Regular.ttf"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"font/ttf",kVazirmatnGzip,sizeof(kVazirmatnGzip),kStaticFontEtag,true);
   });
   // Immutable static asset: serve on the SDK actor just like the font above.
   // No hardware snapshot or loop-thread state belongs in this handler.
-  server.native().on(AsyncURIMatcher::exact("/basic"), HTTP_GET, [](AsyncWebServerRequest *request) {
-    // ESP32's deprecated char* send_P selects a heap-backed BasicResponse.
-    // Explicit bytes select the SDK's bounded flash response on both targets.
-    request->send(200, "text/html; charset=utf-8",
-                  reinterpret_cast<const uint8_t *>(kBasicUi), sizeof(kBasicUi) - 1);
+  server.native().on(AsyncURIMatcher::exact("/basic"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"text/html; charset=utf-8",kBasicUi,sizeof(kBasicUi)-1,kStaticBasicEtag);
   });
-  server.native().on("/manifest.webmanifest", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200,"application/manifest+json",reinterpret_cast<const uint8_t *>(kWebManifest),sizeof(kWebManifest)-1);
+  server.native().on(AsyncURIMatcher::exact("/manifest.webmanifest"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"application/manifest+json",kWebManifest,sizeof(kWebManifest)-1,kStaticManifestEtag);
   });
-  server.native().on("/app-icon.png", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200,"image/png",kWebAppPng,sizeof(kWebAppPng));
+  server.native().on(AsyncURIMatcher::exact("/app-icon.png"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"image/png",kWebAppPng,sizeof(kWebAppPng),kStaticIconEtag);
   });
-  server.native().on("/sw.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-    auto *response=request->beginResponse(200,"text/javascript",reinterpret_cast<const uint8_t *>(kWebWorker),sizeof(kWebWorker)-1);
-    response->addHeader("Cache-Control","no-cache");request->send(response);
+  server.native().on(AsyncURIMatcher::exact("/board-icon.png"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"image/png",kBoardIconPng,sizeof(kBoardIconPng),kBoardIconEtag);
   });
-  server.native().on(AsyncURIMatcher::exact("/"), HTTP_GET, [](AsyncWebServerRequest *request) {
-    auto *response=request->beginResponse(200,"text/html; charset=utf-8",kWebUiGzip,sizeof(kWebUiGzip));
-    response->addHeader("Content-Encoding","gzip");response->addHeader("Cache-Control","no-cache");request->send(response);
+  server.native().on(AsyncURIMatcher::exact("/sw.js"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"text/javascript; charset=utf-8",kWebWorker,sizeof(kWebWorker)-1,kStaticWorkerEtag);
+  });
+  server.native().on(AsyncURIMatcher::exact("/"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"text/html; charset=utf-8",kWebUiGzip,sizeof(kWebUiGzip),kStaticUiEtag,true);
   });
   server.on("/api/status", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -4093,53 +4245,51 @@ void registerApi() {
     grid.setPhysicalMapping(cellMapping.physical, LedGrid::kCells);
     server.send(200, "application/json", F("{\"updated\":true}"));
   });
-  server.on("/description.xml", HTTP_GET, []() {
+  server.on("/description.xml", HTTP_GET|HTTP_HEAD, []() {
 #if defined(ARDUINO_ARCH_ESP32)
-    server.send(200, "text/xml", s3Discovery.xmlDescription()); return;
+    const String xml=s3Discovery.xmlDescription();
+    if(!xml.length()){server.send(503,"text/plain","Description unavailable");return;}
+    server.send(200, "text/xml; charset=utf-8", xml); return;
 #else
-    String xml = F("<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>");
-    auto escaped = [](const char *input) { String s(input); s.replace("&","&amp;");s.replace("<","&lt;");s.replace(">","&gt;");s.replace("\"","&quot;");s.replace("'","&apos;");return s; };
-    xml += escaped(deviceIdentity.displayName());
-    xml += F("</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>"); xml += escaped(APP_NAME);
-    xml += F("</modelName><UDN>uuid:");
-    char uuid[37]; snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", ESP.getChipId()); xml += uuid;
-    xml += F("</UDN><presentationURL>http://"); xml += hostname;
-    xml += F(".local/</presentationURL></device></root>");
-    server.send(200, "text/xml", xml);
+    class XmlOutput:public Print {public:String value;size_t write(uint8_t byte) override{value+=char(byte);return 1;}} output;
+    if(!output.value.reserve(2048)){server.send(503,"text/plain","Description unavailable");return;}
+    char uuid[37],serial[9];snprintf(uuid,sizeof(uuid),"38323636-4558-4dda-9188-cda0e6%06x",ESP.getChipId());snprintf(serial,sizeof(serial),"%08X",ESP.getChipId());
+    const char* identity[]={"relative-icon-description",deviceIdentity.displayName(),APP_NAME,BoardCore::BuildInfo::kVersion,kBoardIconEtag};
+    PakarDiscovery::description(output,{"urn:schemas-upnp-org:device:Basic:1",deviceIdentity.displayName(),"AtomicDeploy","https://github.com/atomicdeploy",APP_NAME,
+      BoardCore::BuildInfo::kVersion,"https://github.com/atomicdeploy/PakarController",serial,uuid,"/",kBoardIconWidth,kBoardIconHeight,kBoardIconDepth,
+      PakarDiscovery::configId(identity,sizeof(identity)/sizeof(*identity))});
+    server.send(200,"text/xml; charset=utf-8",output.value);
 #endif
   });
   server.on("/api/time", HTTP_GET, []() {
     if (!authenticate()) return;
-    const time_t currentTime = time(nullptr);
-    String body = F("{\"synced\":");
-    body += currentTime > 1700000000 ? F("true") : F("false");
-    body += F(",\"utc_epoch\":");
-    body += currentTime > 1700000000 ? static_cast<uint32_t>(currentTime) : 0U;
-    body += '}';
-    server.send(200, "application/json", body);
+    server.send(200, "application/json", clockJson());
+  });
+  server.on("/api/network/tools",HTTP_GET,[](){if(authenticate())server.send(200,"application/json",networkToolsJson());});
+  server.on("/api/time",HTTP_POST,[](){
+    if(!authenticate())return;uint32_t epoch=0;JsonDocument d;String result;
+    if(!strictU32(server.arg("utc_epoch"),epoch)){server.send(400,"text/plain","UTC epoch required");return;}
+    d["utc_epoch"]=epoch;
+    const bool ok=setBoardClock(d["utc_epoch"],result);
+    server.send(ok?200:409,ok?"application/json":"text/plain",result);
+  });
+  server.on("/api/network/tools",HTTP_POST,[](){
+    if(!authenticate())return;
+    JsonDocument patch;String result;
+    const String raw=server.arg("settings");
+    const bool ok=raw.length()<=1536&&!deserializeJson(patch,raw)&&updateNetworkTools(patch.as<JsonObjectConst>(),result);
+    if(ok)server.send(200,"application/json",result);
+    else {JsonDocument error;error["error"]=result.length()?result:"invalid_settings";String body;serializeJson(error,body);server.send(409,"application/json",body);}
+  });
+  server.on("/api/network/probe",HTTP_POST,[](){
+    if(!authenticate())return;String result;
+    const bool ok=submitNetworkProbe(server.arg("kind"),server.arg("target"),result);
+    if(ok)server.send(202,"application/json",result);
+    else {JsonDocument error;error["error"]=result;String body;serializeJson(error,body);server.send(409,"application/json",body);}
   });
   server.on("/api/wifi/scan", HTTP_GET, []() {
     if (!authenticate()) return;
-    const int count = WiFi.scanNetworks(false, true);
-    String body = F("{\"networks\":[");
-    for (int index = 0; index < count; ++index) {
-      if (index != 0) body += ',';
-      String ssid = WiFi.SSID(index);
-      ssid.replace("\\", "\\\\");
-      ssid.replace("\"", "\\\"");
-      body += F("{\"ssid\":\""); body += ssid;
-      body += F("\",\"rssi\":"); body += WiFi.RSSI(index);
-      body += F(",\"encrypted\":");
-#if defined(ARDUINO_ARCH_ESP32)
-      body += WiFi.encryptionType(index) == WIFI_AUTH_OPEN ? F("false") : F("true");
-#else
-      body += WiFi.encryptionType(index) == ENC_TYPE_NONE ? F("false") : F("true");
-#endif
-      body += '}';
-    }
-    body += F("]}");
-    WiFi.scanDelete();
-    server.send(200, "application/json", body);
+    server.send(200,"application/json",wifiScanJson(server.arg("results")!="true"));
   });
   server.on("/api/mode", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -4224,6 +4374,19 @@ void registerApi() {
     if(error){JsonDocument reply;reply["error"]=error;String json;serializeJson(reply,json);server.send(409,"application/json",json);return;}
     server.send(200,"application/json",pixelGroupsJson());
   });
+  server.on("/api/presentation",HTTP_GET,[](){
+    if(!authenticate())return;server.send(200,"application/json",presentationJson(true));
+  });
+  server.on("/api/presentation",HTTP_POST,[](){
+    if(!authenticate())return;
+    // Use exactly the same peer/request/deadline receipt as WS and USB.
+    JsonDocument request;const String bytes=server.jsonBody();
+    if(bytes.length()>4096||deserializeJson(request,bytes)||!request.is<JsonObject>()){
+      server.send(400,"application/json",F("{\"error\":\"invalid_presentation\"}"));return;
+    }
+    request["command"]="presentation";String message;serializeJson(request,message);
+    server.send(200,"application/json",commandReply(message));
+  });
 #if PAKAR_PIXEL_CORRECTIONS
   server.on("/api/pixels/corrections",HTTP_GET,[](){
     if(!authenticate())return;
@@ -4239,7 +4402,7 @@ void registerApi() {
       server.send(400,"application/json",F("{\"error\":\"invalid_corrections\"}"));return;
     }
     const char *error=strcmp(path,"/api/pixels/corrections/preview")==0?
-      pixelCorrections.preview(document.as<JsonObjectConst>(),millis()):pixelCorrections.save(document.as<JsonObjectConst>());
+      applyCorrectionPreview(document.as<JsonObjectConst>()):pixelCorrections.save(document.as<JsonObjectConst>());
     // Also invalidate a just-expired preview when a stale renewal/save fails.
     grid.setCorrections(&pixelCorrections.mapping);
     keyObservationPending=true;
@@ -4425,6 +4588,9 @@ void registerApi() {
       server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"avr_not_ready\"}"));return;
     }
     if(!requestAndWaitForAck(kGameReset)){server.send(503,"application/json",F("{\"accepted\":false,\"error\":\"avr_reset_not_acknowledged\"}"));return;}
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned)miniReset(millis());
+#endif
     if(!grid.resetWhite()){server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"red_cells_locked\"}"));return;}
     winner = 0;
     grid.setOutputEnabled(true);
@@ -4441,6 +4607,15 @@ void registerApi() {
       server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"game_press_unavailable\"}"));return;
     }
     const uint8_t key=value[0]-'0';
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned){
+      JsonDocument request;request["command"]="minigame-input";request["key"]=key;request["action"]="tap";
+      String result;const bool accepted=miniCommand(request.as<JsonObjectConst>(),result);
+      if(!accepted){JsonDocument error;error["accepted"]=false;error["error"]=result;String json;serializeJson(error,json);server.send(409,"application/json",json);return;}
+      server.send(200,"application/json",String(F("{\"accepted\":true,\"minigame\":"))+result+"}");
+      webSocket.textAll(buildStatusJson());return;
+    }
+#endif
     if(!requestAndWaitForAck(kGamePress,&key,1)){
       server.send(503,"application/json",F("{\"accepted\":false,\"error\":\"game_press_not_acknowledged\"}"));return;
     }
@@ -4502,10 +4677,7 @@ void registerApi() {
         static_cast<uint8_t>(frequency), static_cast<uint8_t>(frequency >> 8),
         static_cast<uint8_t>(duration), static_cast<uint8_t>(duration >> 8),
     };
-    if (!sendToAvr(kBuzzer, sequence++, payload, sizeof(payload))) {
-      server.send(503, "text/plain", F("AVR link unavailable")); return;
-    }
-    server.send(202, "application/json", F("{\"accepted\":true,\"state\":\"queued\"}"));
+    sendAvrHttpCommand(kBuzzer,payload,sizeof(payload));
   });
   server.on("/api/audio", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -4514,10 +4686,7 @@ void registerApi() {
       server.send(400, "text/plain", F("unknown audio cue"));
       return;
     }
-    if (!sendToAvr(kAudioCue, sequence++, &cue, 1)) {
-      server.send(503, "text/plain", F("AVR link unavailable")); return;
-    }
-    server.send(202, "application/json", F("{\"accepted\":true,\"state\":\"queued\"}"));
+    sendAvrHttpCommand(kAudioCue,&cue,1);
   });
   server.on("/api/display", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -4573,8 +4742,7 @@ void registerApi() {
       return;
     }
     const uint8_t payload[] = {static_cast<uint8_t>(mask)};
-    sendToAvr(kOutputMask, sequence++, payload, sizeof(payload));
-    server.send(202, "application/json", F("{\"accepted\":true}"));
+    sendAvrHttpCommand(kOutputMask,payload,sizeof(payload));
   });
   server.on("/api/device/name", HTTP_GET, []() {
     if (!authenticate()) return;
@@ -5004,6 +5172,7 @@ void serviceConsole() {
 }
 
 #include "src/MaintenanceRoutes.h"
+#include "src/UserFileService.h"
 #include "src/UsbApiService.h"
 #include "src/ShellService.h"
 #include "src/ShellTuiBinding.h"
@@ -5025,7 +5194,7 @@ void setup() {
   } // No random identity means remote apply is unavailable, never a reused boot ID.
 #if defined(ARDUINO_ARCH_ESP32)
   sntp_set_time_sync_notification_cb([](struct timeval *) {
-    clockSource="ntp"; ntpObserved=true; lastClockSetAt=millis();
+    ntpSyncPending=true; // SDK TCP/IP task never publishes or edits UI state.
   });
 #else
   settimeofday_cb([](bool sntp) {
@@ -5049,9 +5218,17 @@ void setup() {
   // Never erase damaged storage and silently restore public credentials.
   const bool filesystemMounted = SystemPlatform::mountFilesystem();
   captureBootFilesystemTelemetry(filesystemMounted);
+  userFiles.begin(LittleFS,filesystemMounted);
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  peerRelay.begin(LittleFS,filesystemMounted);
+#endif
+#if PAKAR_MICROSD_ENABLED
+  sdUserFiles.begin(SD_MMC,PakarStorage::mount());
+#endif
   loopMessages.begin(); // PSRAM-backed S3 queue, before any network callback.
   accessConfig.begin(LittleFS, filesystemMounted);
   networkConfig.begin(LittleFS);
+  networkToolsSettings.begin(LittleFS,filesystemMounted);
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
   ethernetConfig.begin(LittleFS);
 #endif
@@ -5095,6 +5272,18 @@ void setup() {
 #endif
 #if PAKAR_FIRST_WINS_ENABLED
   keySettings.load(LittleFS);
+#if PAKAR_FIRST_WINS_ENABLED
+  miniSettings.value.enabledMask=keySettings.enabledMask;
+  for(uint8_t i=0;i<8;++i)miniSettings.value.outputs[i]={BoardCore::KeyMiniGame::KeyWinner,uint8_t(i+1)};
+  if(!miniSettings.load(LittleFS)&&!miniSettings.value.valid()){
+    for(uint8_t i=0;i<BoardCore::KeyMiniGame::ModeCount;++i)if(BoardCore::KeyMiniGame::available(BoardCore::KeyMiniGame::Mode(i))){
+      miniSettings.value=BoardCore::KeyMiniGame::Config::defaults(BoardCore::KeyMiniGame::Mode(i));miniSettings.value.enabledMask=keySettings.enabledMask;
+      if(miniSettings.value.valid())break;
+    }
+  }
+  miniGame.configure(miniSettings.value,millis());grid.setGamePresentation(&miniLayer);
+  miniEpoch=uint16_t(micros())|1U;
+#endif
   syncStateAppearanceFromKeys();
   grid.configureKeys(keySettings.enabledMask,keySettings.idleRgb,keySettings.winRgb,keySettings.loseRgb);
   grid.configureKeyMotion(keySettings.chasePeriodMs,keySettings.chaseNeighbors,keySettings.chaseInvert);
@@ -5113,6 +5302,10 @@ void setup() {
 #endif
 #endif
   upgradeLifecycle.boot(millis(),PAKAR_NETWORK_ENABLED!=0);
+  uint32_t presentationSeed=0;SystemPlatform::randomBytes(&presentationSeed,sizeof(presentationSeed));
+  hostPresentation.begin(LittleFS,filesystemMounted,presentationSeed);
+  beginBoardSnake(filesystemMounted);
+  grid.setPresentation(&hostPresentation.model);
   PakarConfiguration::changes().reset(); // Initial load/migration is not a user settings event.
   if (grid.outputEnabled()) {
     if(PAKAR_NETWORK_ENABLED)grid.presentMaintenance(upgradeLifecycle,millis());
@@ -5152,6 +5345,7 @@ void setup() {
   // not in the human-facing host or recovery AP name.
   hostname = deviceIdentity.hostname();
 #if PAKAR_NETWORK_ENABLED
+  configureNtp();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
   applyEthernetConfig();
   NetworkPath::service();
@@ -5247,6 +5441,10 @@ __attribute__((noinline)) void serviceQueuedWebSocketMessage() {
 
 namespace {
 bool applyKeySettings(const KeyGameSettings &next) {
+#if PAKAR_FIRST_WINS_ENABLED
+  auto miniNext=miniSettings.value;miniNext.enabledMask=next.enabledMask;
+  if(avrMiniGames&&!miniNext.valid())return false;
+#endif
   const bool maskChanged=next.enabledMask!=keySettings.enabledMask;
   const bool audioChanged=next.winnerCue!=keySettings.winnerCue||next.resetCue!=keySettings.resetCue;
   if(audioChanged&&(!avrOnline||!avrGameMelodies))return false;
@@ -5254,6 +5452,9 @@ bool applyKeySettings(const KeyGameSettings &next) {
       (next.resetCue!=BoardCore::AudioCues::kSilent&&next.resetCue>=avrAudioCueCount)))return false;
   if(!next.save(LittleFS))return false;
   keySettings=next;
+#if PAKAR_FIRST_WINS_ENABLED
+  if(maskChanged){miniSettings.value=miniNext;miniGame.configure(miniNext,millis());miniInputFence(millis());}
+#endif
   syncStateAppearanceFromKeys();
   if(audioChanged){keyAudioApplied=false;keyMaskPending=true;keyMaskSentAt=0;}
   if(maskChanged){winner=0;gameAutoResetArmed=false;keyMaskApplied=false;keyMaskPending=true;keyMaskSentAt=0;}
@@ -5274,28 +5475,20 @@ void serviceGameLink(uint32_t now) {
      keySettings.winnerCue!=BoardCore::AudioCues::kSilent){
     const auto &p=keySettings.presentation;
     const uint32_t elapsed=now-gameWinnerAt;
-    if(keySettings.winnerCue==kCueWinner){
-      const uint8_t pulse=p.flashIndex(elapsed);
-      const uint16_t phase=p.flashPhase(elapsed);
-      // A light C-major flourish, not a sustained tone for the entire flash.
-      // Scale down with short flashes; late loop service skips expired notes.
-      const uint16_t on=p.onMs(elapsed);
-      const uint16_t step=on<300U?on/3U:100U;
-      const uint8_t note=step?phase/step:3;
-      const uint16_t notePhase=step?phase%step:0;
-      const uint16_t gate=step*3U/4U;
-      const uint8_t token=pulse*3U+note;
-      if(elapsed<p.flashDuration()&&note<3&&notePhase<gate&&gameAudioPulse!=token){
-        const uint16_t notes[]={1047,1319,1568};
-        const uint16_t hz=notes[note];
-        const uint16_t duration=gate-notePhase;
-        const uint8_t tone[]={uint8_t(hz),uint8_t(hz>>8),uint8_t(duration),uint8_t(duration>>8)};
-        if(sendToAvr(kBuzzer,sequence++,tone,sizeof(tone)))gameAudioPulse=token;
-      }
-    }else if(!gameAudioStarted){
-      gameAudioStarted=true;
-      if(elapsed<100U)sendToAvr(kAudioCue,sequence++,&keySettings.winnerCue,1);
+    if(!gameAudioStarted){
+      gameAudioStarted=true; // One finite intent; never replay a late/uncertain cue.
+      if(keySettings.winnerCue==kCueWinner && avrFlashAudio && p.flashes){
+        uint16_t id=uint16_t(now);if(!id)id=1;
+        const uint8_t payload[]={6,uint8_t(id),uint8_t(id>>8),0,0,
+          uint8_t(p.flashOnMs),uint8_t(p.flashOnMs>>8),uint8_t(p.flashOffMs),uint8_t(p.flashOffMs>>8),
+          p.flashes,uint8_t(p.finalOnMs()),uint8_t(p.finalOnMs()>>8)};
+        gameAudioSequence=sequence++;gameAudioAck=false;gameAudioError=0;
+        gameAudioPending=sendToAvr(kAudioStream,gameAudioSequence,payload,sizeof(payload));
+        gameAudioSentAt=now;
+        if(!gameAudioPending)gameAudioError=kBusy;
+      }else if(elapsed<100U)sendToAvr(kAudioCue,sequence++,&keySettings.winnerCue,1);
     }
+    if(gameAudioPending&&uint32_t(now-gameAudioSentAt)>=150U){gameAudioPending=false;gameAudioError=255;}
   }
 #endif
   if(avrOnline && uint32_t(now-lastAvrFrameAt)>3000U) {
@@ -5315,9 +5508,10 @@ void serviceGameLink(uint32_t now) {
       if(sendToAvr(kHello,sequence++))avrAdmissionRecovery.confirmed();
       return;
     }
-    const uint8_t payload[]={uint8_t(keySettings.enabledMask),uint8_t(keySettings.enabledMask>>8),BoardCore::AudioCues::kSilent,keySettings.resetCue};
+    const uint8_t payload[]={uint8_t(keySettings.enabledMask),uint8_t(keySettings.enabledMask>>8),BoardCore::AudioCues::kSilent,keySettings.resetCue,1,uint8_t(miniEpoch),uint8_t(miniEpoch>>8)};
     keyMaskSequence=sequence++;
-    if(sendToAvr(kKeyMask,keyMaskSequence,payload,avrGameMelodies?sizeof(payload):2)){
+    if(sendToAvr(kKeyMask,keyMaskSequence,payload,avrMiniGames?7:avrGameMelodies?4:2)){
+      miniEpochSent=miniEpoch;
       avrAdmissionRecovery.sent();
       keyMaskSentAt=now;keyMaskSentValue=keySettings.enabledMask;
       keyWinnerCueSent=BoardCore::AudioCues::kSilent;keyResetCueSent=keySettings.resetCue;
@@ -5344,26 +5538,39 @@ void serviceGameLink(uint32_t now) {
 }
 void loop() {
   serviceFilesystemInitialization();
+  if(hostPresentation.model.service(millis())){grid.presentationChanged();keyObservationPending=true;}
 #if PAKAR_PIXEL_CORRECTIONS
   // Retire RAM-only leases even when output/network/animation is disabled.
   if(pixelCorrections.service(millis())){grid.setCorrections(&pixelCorrections.mapping);keyObservationPending=true;}
 #endif
-#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
-  servicePeerRelay();
-  serviceBle();
-#endif
   // A queued job executes outside any request handler. Its bounded background
   // callback services reads, but never framed AVR bytes during a raw session.
   if(urbootQueued) {serviceUpgrade();serviceUrbootJob();serviceUpgrade();return;}
+#if defined(ARDUINO_ARCH_ESP32)
+  // Prioritize accepted local work before optional outbound DNS/connect/relay
+  // housekeeping. This remains the same loop owner, not a second UART writer.
+  if(!urbootRawOwned)avrLink.service();
+  serviceHostLink();
+  serviceQueuedWebSocketMessage();
+#if PAKAR_NETWORK_ENABLED
+  servicePeerRelay();
+  serviceBle();
+#endif
+#endif
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
   passiveAvrRx.service(millis());
   passiveCaptureGuard.store(passiveAvrRx.snapshot().active,std::memory_order_release);
 #endif
   servicePcContracts();
   const uint32_t now = millis();
+  #if PAKAR_FIRST_WINS_ENABLED
+  serviceMiniGame(now);
+  #endif
+  // Submit the autonomous AVR cue before HTTP/DNS/cloud work or LED rendering.
+  // Both the flash scene and sound now start from this input-processing pass.
+  if(PAKAR_NETWORK_ENABLED)serviceGameLink(now);
   if (PAKAR_NETWORK_ENABLED && NetworkPath::service()) {
     cloudServices.suspend();
-    ntpConfigured = false;
     PakarConfiguration::changes().applied(PakarConfiguration::Network);
     requestDiscoveryAnnouncement();
   }
@@ -5400,6 +5607,9 @@ void loop() {
   }
   if(physicalResetAccepted) {
     physicalResetAccepted=false;
+#if PAKAR_FIRST_WINS_ENABLED
+    if(avrMiniOwned)miniReset(now);
+#endif
     if(grid.resetWhite()) {
       winner=0;
       grid.setOutputEnabled(true);
@@ -5416,11 +5626,6 @@ void loop() {
       physicalResetPending=sendToAvr(kGameReset,physicalResetSequence,nullptr,0);
     }
   }
-#endif
-#if defined(ARDUINO_ARCH_ESP32)
-  // Hardware UART and the LED worker are independent on S3. Dispatch pending
-  // user commands before rendering, without a telemetry/poll cadence delay.
-  serviceQueuedWebSocketMessage();
 #endif
   if(!PAKAR_NETWORK_ENABLED) {
     serviceGameLink(millis());
@@ -5506,11 +5711,12 @@ void loop() {
   }
   serviceLedBackendChanges();
   serviceConfigurationChanges();
-  if(!remoteFirmware.busy()&&!otaActive&&!otaRebootAt&&!networkApplyPending&&!urbootBusy.get()&&!avrUploadOwner)
+  if(!remoteFirmware.busy()&&!otaActive&&!otaRebootAt&&!networkApplyPending&&!urbootBusy.get()&&!avrUploadOwner&&!artifactReaders)
     networkConfig.service(millis());
   serviceDiscovery();
   configureNtp();
-  if (wifiScanQueued && !remoteFirmware.busy() && !otaActive && !networkApplyPending) {
+  serviceNetworkTools();
+  if (wifiScanQueued && !remoteFirmware.busy() && !otaActive && !networkApplyPending && !artifactReaders) {
     wifiScanQueued = false;
     if (WiFi.scanComplete() != -1) WiFi.scanNetworks(true, true);
   }
@@ -5523,6 +5729,9 @@ void loop() {
   // timing-critical ISP/update transaction. After a failed transaction, cloud
   // diagnostics can reconnect even with Prog armed; mutations remain guarded.
   if (!remoteFirmware.busy() && !otaActive && !otaRebootAt
+#if defined(ARDUINO_ARCH_ESP32)
+      && !networkToolsLease
+#endif
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
       && !passiveAvrRx.snapshot().active
 #endif
@@ -5538,7 +5747,7 @@ void loop() {
   if (!remoteFirmware.busy() && !otaActive && !otaRebootAt && upgradeLifecycle.visual(millis())==PakarUpdate::Visual::None) { serviceSnake(now);serviceStream(); }
   serviceScenePersistence();
   ntfyService.service(NetworkPath::ready(),time(nullptr)>1700000000,
-      remoteFirmware.busy() || otaActive || otaRebootAt || urbootBusy.get() || avrUploadOwner || urbootRawOwned,
+      remoteFirmware.busy() || otaActive || otaRebootAt || urbootBusy.get() || avrUploadOwner || urbootRawOwned || artifactReaders,
       deviceIdentity.hostname(),millis());
   // Cloud socket calls may have waited while the buffered AVR UART received
   // valid replies. Consume those actual frames before evaluating presence;
@@ -5550,7 +5759,6 @@ void loop() {
       static_cast<uint32_t>(now-lastTelemetryRequestAt)>=5000U) {
     lastTelemetryRequestAt=now;sendToAvr(kGetTelemetry,sequence++);
   }
-  serviceGameLink(millis());
   // AVR owns its welcome melody. A first HELLO is not a completed update:
   // sending the success cue here could replace the still-playing welcome.
 #if !defined(PAKAR_UART_BUFFERED) || !PAKAR_UART_BUFFERED

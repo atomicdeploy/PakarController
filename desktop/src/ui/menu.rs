@@ -3,6 +3,12 @@
 //! Button::shortcut_text idiom; no popup height/font/spacing override is added.
 use eframe::egui;
 
+/// Imported Pealayer icons::submenu: the same Phosphor caret as other controls.
+pub fn submenu(ui: &mut egui::Ui, label: String, contents: impl FnOnce(&mut egui::Ui)) {
+    let button = egui::Button::new(label).right_text(super::icons::CARET_RIGHT);
+    let _ = egui::containers::menu::SubMenuButton::from_button(button).ui(ui, contents);
+}
+
 /// Switch sibling menus on hover while the menubar is active, matching the
 /// interaction of native Windows menu bars. egui's root menu buttons otherwise
 /// only toggle on click.

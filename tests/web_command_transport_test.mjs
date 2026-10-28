@@ -17,6 +17,20 @@ transport=context.createCommandTransport({snapshot:()=>state,valid:()=>true,rand
 await transport.send('/api/effect',{value:'rainbow'});
 assert.equal(await transport.send('/api/audio',{cue:'welcome'}),null,'Unenveloped commands retain HTTP and are never retried over legacy WS');
 assert.equal(transport.receive({type:'command-result',request_id:'foreign'}),false);
+// Advertised AVR fast commands need its ACK, not an arbitrary ESP snapshot.
+{
+ const live={...state,avr_online:true,capabilities:{acknowledged_features:['avr-command-ack']}};
+ let owner,seen,ack=true,requests=0;
+ owner=context.createCommandTransport({snapshot:()=>live,valid:()=>true,random:()=>new Uint8Array(16).fill(8),
+  socket:()=>({readyState:1,bufferedAmount:0,send:bytes=>{seen=JSON.parse(bytes);requests++;queueMicrotask(()=>owner.receive({...reply(seen),avr_acknowledged:ack}));}}),http:()=>{throw Error('No HTTP for immediate AVR ACK');}});
+ await owner.send('/api/buzzer',{frequency:'440',duration_ms:'70'});assert.equal(seen.frequency,440);assert.equal(seen.duration_ms,70);
+ await owner.send('/api/audio',{cue:'winner'});assert.equal(seen.command,'audio');
+ await owner.send('/api/outputs',{mask:'3'});assert.equal(seen.mask,3);
+ ack=false;await assert.rejects(owner.send('/api/audio',{cue:'winner'}),/AVR did not acknowledge/);
+ await assert.rejects(owner.send('/api/outputs',{mask:'256'}),/Invalid mask/);
+ assert.equal(requests,4,'Invalid typed values never reach the board');
+ live.avr_online=false;assert.equal(await owner.send('/api/audio',{cue:'winner'}),null);
+}
 // Freshness authorizes dispatch, not rejection of a delayed matching receipt.
 let fresh=true;
 transport=context.createCommandTransport({snapshot:()=>state,valid:()=>fresh,random:()=>new Uint8Array(16).fill(3),

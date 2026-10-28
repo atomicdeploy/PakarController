@@ -3,6 +3,8 @@
 // ESP8266-only UDP/IGMP lifecycle is replaced by an interface-bound S3 adapter.
 #include "SsdpDevice.h"
 #include "DiscoveryInterfaces.h"
+#include <firmware/esp/src/UpnpDescription.h>
+#include <firmware/esp/src/BoardIconAsset.h>
 
 #include <new>
 namespace PakarS3 {
@@ -34,23 +36,7 @@ SsdpDevice::SsdpDevice() :
 		(uint16_t) ((chipId >>  8) & 0xff),
 		(uint16_t)   chipId        & 0xff);
 
-	// CONFIGID identifies the description shape, not a particular boot. Keep it
-	// deterministic and inside the UPnP-defined 24-bit range.
-	uint32_t configHash = 2166136261UL;
-	const char *identity[] = {
-		FW_UPNP_DEVICE_TYPE,
-		FW_UPNP_SERVICE_TYPE,
-		FW_PRODUCT_MODEL_NAME,
-		FW_MANUFACTURER_NAME
-	};
-	for (const char *value : identity) {
-		while (*value) {
-			configHash ^= static_cast<uint8_t>(*value++);
-			configHash *= 16777619UL;
-		}
-	}
-	m_configId = configHash & 0x00ffffffUL;
-	if (m_configId == 0) m_configId = 1;
+	refreshConfigId();
 
 	clearQueue();
 }
@@ -61,6 +47,7 @@ SsdpDevice::~SsdpDevice() {
 
 bool SsdpDevice::begin() {
 	end();
+	refreshConfigId();
 
 	m_bootId = ESP.getCycleCount() & 0x7fffffffUL;
 	if (m_bootId == 0) m_bootId = 1;
@@ -96,6 +83,7 @@ void SsdpDevice::end() {
 
 void SsdpDevice::update() {
 	if (!m_server || m_last == IPAddress(0, 0, 0, 0)) return;
+	refreshConfigId();
 
 	// Collapse overlapping configuration-change requests into the update that
 	// is already queued so BOOTID/NEXTBOOTID remain a contiguous pair.
@@ -549,60 +537,23 @@ IPAddress SsdpDevice::interfaceForRemote(IPAddress remote) const {
 	return m_last;
 }
 
-static void printXmlEscaped(Print &output, const char *value) {
-	if (!value) return;
-
-	while (*value) {
-		switch (*value) {
-			case '&': output.print(F("&amp;")); break;
-			case '<': output.print(F("&lt;")); break;
-			case '>': output.print(F("&gt;")); break;
-			case '"': output.print(F("&quot;")); break;
-			case '\'': output.print(F("&apos;")); break;
-			default: output.write(static_cast<uint8_t>(*value)); break;
-		}
-		++value;
-	}
+void SsdpDevice::refreshConfigId() {
+	const char* fields[]={"relative-icon-description",m_deviceType,m_friendlyName,m_serialNumber,
+		m_modelName,m_modelNumber,m_modelURL,m_manufacturer,m_manufacturerURL,m_uuid,m_presentationURL,kBoardIconEtag};
+	m_configId=PakarDiscovery::configId(fields,sizeof(fields)/sizeof(*fields));
 }
 
 void SsdpDevice::schema(Print &client) const {
-	const IPAddress ip = activeInterfaceIP();
-
 	client.print(F(
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: text/xml; charset=utf-8\r\n"
 		"Connection: close\r\n"
 		"Access-Control-Allow-Origin: *\r\n"
 		"\r\n"
-		"<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-		"<root xmlns=\"urn:schemas-upnp-org:device-1-0\">"
-		"<specVersion><major>1</major><minor>1</minor></specVersion>"
-		"<URLBase>http://"
 	));
-	client.print(ip);
-	client.print(':');
-	client.print(m_port);
-	client.print(F("/</URLBase><device><deviceType>"));
-	printXmlEscaped(client, m_deviceType);
-	client.print(F("</deviceType><friendlyName>"));
-	printXmlEscaped(client, m_friendlyName);
-	client.print(F("</friendlyName><presentationURL>"));
-	printXmlEscaped(client, m_presentationURL);
-	client.print(F("</presentationURL><serialNumber>"));
-	printXmlEscaped(client, m_serialNumber);
-	client.print(F("</serialNumber><modelName>"));
-	printXmlEscaped(client, m_modelName);
-	client.print(F("</modelName><modelNumber>"));
-	printXmlEscaped(client, m_modelNumber);
-	client.print(F("</modelNumber><modelURL>"));
-	printXmlEscaped(client, m_modelURL);
-	client.print(F("</modelURL><manufacturer>"));
-	printXmlEscaped(client, m_manufacturer);
-	client.print(F("</manufacturer><manufacturerURL>"));
-	printXmlEscaped(client, m_manufacturerURL);
-	client.print(F("</manufacturerURL><UDN>uuid:"));
-	printXmlEscaped(client, m_uuid);
-	client.print(F("</UDN></device></root>\r\n"));
+	PakarDiscovery::description(client,{m_deviceType,m_friendlyName,m_manufacturer,m_manufacturerURL,
+		m_modelName,m_modelNumber,m_modelURL,m_serialNumber,m_uuid,m_presentationURL,
+		kBoardIconWidth,kBoardIconHeight,kBoardIconDepth,m_configId});
 }
 
 void SsdpDevice::handleClient() {

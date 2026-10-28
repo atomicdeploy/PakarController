@@ -158,7 +158,8 @@ pub fn physical_groups(ui: &mut egui::Ui, value: &mut crate::pixel_groups::Layou
 }
 
 /// Edits only a local revision-bound draft. No device write occurs on paint.
-pub fn correction_rules(ui: &mut egui::Ui, value: &mut pixel_corrections::Configuration, rule_toggle: bool) -> bool {
+pub fn correction_rules(ui: &mut egui::Ui, value: &mut pixel_corrections::Configuration, rule_toggle: bool,
+    preview:Option<&pixel_corrections::Configuration>,cursor:Option<pixel_corrections::DiagnosticCursor>) -> bool {
     let mut dirty = false;
     ui.scope(|ui| {
         // Narrow dock projections can inherit Extend from the surrounding tab.
@@ -180,6 +181,7 @@ pub fn correction_rules(ui: &mut egui::Ui, value: &mut pixel_corrections::Config
             let mut remove = None;
             let mut reorder = None;
             let count = value.rules.len();
+            let cursor_slots:Vec<_>=(0..=count).map(|index|cursor.map(|cursor|value.wire_for_cursor(cursor,index))).collect();
             for (index, rule) in value.rules.iter_mut().enumerate() {
                 ui.add_space(8.0);
                 ui.separator();
@@ -224,18 +226,24 @@ pub fn correction_rules(ui: &mut egui::Ui, value: &mut pixel_corrections::Config
                         if square_action(ui,icons::MINUS,"Previous pixel",rule.pixel>0 && value.pixels>0).clicked() {
                             dirty|=rule.step_pixel(-1,value.pixels);
                         }
-                        let mut pixel = rule.pixel.saturating_add(1);
+                        let mut pixel = rule.human_pixel();
                         if ui
                             .add(egui::DragValue::new(&mut pixel).range(1..=value.pixels.max(1)))
                             .changed()
                         {
-                            rule.pixel = pixel - 1;
-                            dirty = true;
+                            dirty |= rule.set_human_pixel(pixel, value.pixels);
                         }
                         if square_action(ui,icons::PLUS,"Next pixel",value.pixels>0 && rule.pixel<value.pixels-1).clicked() {
                             dirty|=rule.step_pixel(1,value.pixels);
                         }
                     });
+                    if let Some(slot)=&cursor_slots[index] {
+                        let response=ui.add_enabled_ui(slot.is_ok(),|ui|dialog::action_button(ui,icons::TARGET,"Use diagnostic cursor")).inner;
+                        if response.clicked() && let Ok(wire)=slot {
+                            dirty|=rule.pixel!=*wire;rule.pixel=*wire;
+                        }
+                        response.on_hover_text(match slot {Ok(wire)=>format!("Output {} after preceding rules",wire+1),Err(error)=>error.clone()});
+                    }
                     if rule.kind == "shift" {
                         ui.horizontal_wrapped(|ui| {
                             ui.label(super::i18n::text("Offset"));
@@ -276,16 +284,25 @@ pub fn correction_rules(ui: &mut egui::Ui, value: &mut pixel_corrections::Config
                 });
                 dirty = true;
             }
+            if let Some(slot)=&cursor_slots[count] {
+                let response=ui.add_enabled_ui(value.rules.len()<32 && slot.is_ok(),|ui|
+                    dialog::action_button(ui,icons::TARGET,"Add at diagnostic cursor")).inner;
+                if response.clicked() && let Ok(wire)=slot {
+                    value.rules.push(pixel_corrections::Rule{kind:"black".into(),pixel:*wire,offset:0,enabled:true});dirty=true;
+                }
+                response.on_hover_text(match slot {Ok(wire)=>format!("Raw {} → output {}",cursor.unwrap().raw+1,wire+1),Err(error)=>error.clone()});
+            }
         });
         ui.add_space(8.0);
-        dialog::section(ui, icons::LIST_CHECKS, "Applied wire mapping", |ui| {
+        dialog::section(ui, icons::LIST_CHECKS, if preview.is_some() {"Live wire preview"} else {"Applied wire mapping"}, |ui| {
             detail(
                 ui,
                 icons::CHECK,
                 "Saved revision",
                 &value.revision.to_string(),
             );
-            if value.sources.is_empty() {
+            let sources=preview.map(|actual|actual.active_sources.as_slice()).unwrap_or(&value.sources);
+            if sources.is_empty() {
                 ui.weak("Mapping has not been returned by the board.");
             } else {
                 ui.weak("Wire pixel ← raw source");
@@ -294,9 +311,9 @@ pub fn correction_rules(ui: &mut egui::Ui, value: &mut pixel_corrections::Config
                     .id_salt("wire-sources")
                     .max_height(220.0)
                     .auto_shrink([false, true])
-                    .show_rows(ui, row_height, value.sources.len(), |ui, rows| {
+                    .show_rows(ui, row_height, sources.len(), |ui, rows| {
                         for wire in rows {
-                            let source = value.sources[wire];
+                            let source = sources[wire];
                             ui.monospace(format!(
                                 "{:>3}  ←  {}",
                                 wire + 1,
@@ -616,6 +633,7 @@ mod tests {
                     }],
                     pixels: 480,
                     sources: (0..480).collect(),
+                    ..Default::default()
                 };
                 let before = serde_json::to_value(&value).unwrap();
                 for corrections in [false, true] {
@@ -632,7 +650,7 @@ mod tests {
                         },
                         |ui| {
                             if corrections {
-                                dirty = correction_rules(ui, &mut value, true);
+                                dirty = correction_rules(ui, &mut value, true,None,None);
                             } else {
                                 intent = network(ui, &status);
                             }
@@ -665,12 +683,12 @@ mod tests {
         for supported in [false,true] {
             let ctx=egui::Context::default();
             let mut value=pixel_corrections::Configuration {revision:9,enabled:true,pixels:480,sources:vec![0,-1,2],
-                rules:vec![pixel_corrections::Rule{kind:"shift".into(),pixel:7,offset:-2,enabled:false}]};
+                rules:vec![pixel_corrections::Rule{kind:"shift".into(),pixel:7,offset:-2,enabled:false}],..Default::default()};
             let render=|value:&mut pixel_corrections::Configuration,events| {
                 let mut changed=false;
                 let mut out=ctx.run_ui(egui::RawInput{events,
                     screen_rect:Some(egui::Rect::from_min_size(egui::Pos2::ZERO,egui::vec2(300.0,900.0))),..Default::default()},|ui| {
-                    changed=correction_rules(ui,value,supported);
+                    changed=correction_rules(ui,value,supported,None,None);
                 });
                 let point=out.shapes.iter().find_map(|shape|match &shape.shape {
                     egui::Shape::Text(text) if text.galley.text()=="Rule 1"=>Some(text.pos+egui::vec2(4.0,4.0)),_=>None

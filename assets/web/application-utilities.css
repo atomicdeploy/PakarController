@@ -1,3 +1,4 @@
+.mini-mode-choice{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;text-align:start}.mini-mode-choice>span,.web-menu-item .menu-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}.mini-mode-choice small,.web-menu-item small{display:block;color:var(--muted);font-size:12px;font-weight:400;line-height:1.4;white-space:normal}.mini-mode-choice strong{line-height:1.3}.studio .web-menu-item:has(.menu-copy){min-height:60px;max-width:430px}.mini-mode-choice>.icon{flex:none;color:var(--accent)}
 .application-activity{margin:18px 0 0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
 .application-activity>summary{min-height:38px;display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;list-style:none;font-size:12px;font-weight:600;line-height:1.25}
 .application-activity>summary::-webkit-details-marker{display:none}.application-activity>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
@@ -21,3 +22,9 @@
 [data-control-density=compact] #workspace :is(button,select,input:not([type=range]):not([type=checkbox]):not([type=color]):not([type=file])){min-height:30px;padding-block:5px;line-height:1.25}
 [data-control-density=compact] #workspace .studio-square{width:30px;height:30px;padding:5px}
 @media(max-width:600px){.application-event{grid-template-columns:16px minmax(0,1fr) auto}.application-event time{grid-column:2;grid-row:2}.application-command-open>span{display:none}.application-command-open{width:36px;min-width:36px;height:36px;padding:8px}}
+/* Shared file workspace: compact columns on desktop, wrapping on mobile. */
+.file-browser-list{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto}
+.file-browser-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px;border-bottom:1px solid var(--line)}
+.file-browser-name{flex:1 1 140px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.file-browser-row .muted{font-size:.85em;flex:1 1 180px}
+#userFilesCard progress{width:100%;accent-color:var(--accent)}

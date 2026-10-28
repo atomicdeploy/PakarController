@@ -38,7 +38,63 @@ class TableViewport extends StatefulWidget {
   State<TableViewport> createState() => _TableViewportState();
 }
 
-class _TableViewportState extends State<TableViewport> {
+// Claim the two-finger gesture before the enclosing page can win a vertical
+// drag. Single-finger taps/holds and scrolling keep their normal arena owner.
+class _TableScaleRecognizer extends ScaleGestureRecognizer {
+  _TableScaleRecognizer({super.debugOwner});
+  final Set<int> pointers = {};
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    pointers.add(event.pointer);
+    super.addAllowedPointer(event);
+    if (pointers.length == 2) resolve(GestureDisposition.accepted);
+  }
+
+  @override
+  void handleEvent(PointerEvent event) {
+    super.handleEvent(event);
+    if (event is PointerUpEvent || event is PointerCancelEvent) {
+      pointers.remove(event.pointer);
+    }
+  }
+
+  @override
+  void rejectGesture(int pointer) {
+    // The SDK stops routing this pointer after rejection, so an eventual Up
+    // cannot clear our set. Never let a prior page drag count as finger two.
+    pointers.remove(pointer);
+    super.rejectGesture(pointer);
+  }
+}
+
+class _TableViewportState extends State<TableViewport>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController snap = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 140),
+  );
+  Offset snapFrom = Offset.zero, snapTo = Offset.zero;
+  @override
+  void initState() {
+    super.initState();
+    snap.addListener(() {
+      widget.controller.change(
+        widget.controller.zoom,
+        Offset.lerp(
+          snapFrom,
+          snapTo,
+          Curves.easeOutCubic.transform(snap.value),
+        )!,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    snap.dispose();
+    super.dispose();
+  }
+
   double previousScale = 1;
   Offset previous = Offset.zero;
   bool gestureActive = false;
@@ -71,11 +127,11 @@ class _TableViewportState extends State<TableViewport> {
           final limit = Offset(
             math.max(
               0,
-              (widget.contentSize.width * fit * zoom + size.width) / 2 - 24,
+              (widget.contentSize.width * fit * zoom - size.width) / 2,
             ),
             math.max(
               0,
-              (widget.contentSize.height * fit * zoom + size.height) / 2 - 24,
+              (widget.contentSize.height * fit * zoom - size.height) / 2,
             ),
           );
           return Offset(
@@ -85,7 +141,22 @@ class _TableViewportState extends State<TableViewport> {
         }
 
         final visiblePan = constrain(view.pan, view.zoom);
+        void settle() {
+          cancelGesture();
+          final pitch = widget.contentSize.width / 20 * fit * view.zoom;
+          snapFrom = constrain(view.pan, view.zoom);
+          snapTo = constrain(
+            Offset(
+              (snapFrom.dx / pitch).round() * pitch,
+              (snapFrom.dy / pitch).round() * pitch,
+            ),
+            view.zoom,
+          );
+          if (snapFrom != snapTo) snap.forward(from: 0);
+        }
+
         void zoomAt(double next, Offset from, Offset to) {
+          snap.stop();
           next = next.clamp(.5, 8);
           // Pealayer timelineZoomAtPointer, extended to both axes and centered fit.
           final scene =
@@ -102,7 +173,10 @@ class _TableViewportState extends State<TableViewport> {
               Row(
                 children: [
                   TextButton.icon(
-                    onPressed: view.fit,
+                    onPressed: () {
+                      snap.stop();
+                      view.fit();
+                    },
                     icon: const Icon(Icons.fit_screen),
                     label: const Text('Fit'),
                   ),
@@ -144,6 +218,7 @@ class _TableViewportState extends State<TableViewport> {
                       GestureBinding.instance.pointerSignalResolver.register(
                         event,
                         (_) {
+                          snap.stop();
                           if (zooming) {
                             zoomAt(
                               view.zoom *
@@ -175,10 +250,10 @@ class _TableViewportState extends State<TableViewport> {
                     key: const Key('table-viewport-gestures'),
                     behavior: HitTestBehavior.opaque,
                     gestures: {
-                      ScaleGestureRecognizer:
+                      _TableScaleRecognizer:
                           GestureRecognizerFactoryWithHandlers<
-                            ScaleGestureRecognizer
-                          >(() => ScaleGestureRecognizer(debugOwner: this), (
+                            _TableScaleRecognizer
+                          >(() => _TableScaleRecognizer(debugOwner: this), (
                             recognizer,
                           ) {
                             recognizer
@@ -189,6 +264,7 @@ class _TableViewportState extends State<TableViewport> {
                                   ? const DeviceGestureSettings(touchSlop: 4)
                                   : MediaQuery.maybeGestureSettingsOf(context)
                               ..onStart = (details) {
+                                snap.stop();
                                 gestureActive = true;
                                 previousScale = 1;
                                 previous = details.localFocalPoint;
@@ -207,7 +283,7 @@ class _TableViewportState extends State<TableViewport> {
                                 previousScale = details.scale;
                                 previous = details.localFocalPoint;
                               }
-                              ..onEnd = (_) => cancelGesture();
+                              ..onEnd = (_) => settle();
                           }),
                     },
                     child: Stack(

@@ -24,6 +24,16 @@ int main() {
   auto dispatch = [&](AsyncWebServerRequest &request) {
     access.middleware()->run(&request, [&]() { ++admitted; });
   };
+  // Discovery artwork and its XML are public reads even with auth enabled;
+  // the exception must never admit POST or an arbitrary settings/file URL.
+  for(const char* path:{"/description.xml","/board-icon.png","/app-icon.png"}){
+    for(int method:{HTTP_GET,HTTP_HEAD}){
+      AsyncWebServerRequest icon;icon.path=path;icon.requestMethod=method;icon.basicAllowed=false;
+      const unsigned before=admitted;dispatch(icon);assert(admitted==before+1&&icon.status==0);
+    }
+    AsyncWebServerRequest mutation;mutation.path=path;mutation.requestMethod=HTTP_POST;mutation.basicAllowed=false;
+    const unsigned before=admitted;dispatch(mutation);assert(admitted==before&&mutation.status==401);
+  }
   for(const char *version:{"0.2.6","0.2.7-alpha","","invalid"}) {
     AsyncWebServerRequest request;request.path="/api/cell";request.requestMethod=HTTP_POST;
     request.headers["X-Pakar-Version"].text=version;const unsigned before=admitted;

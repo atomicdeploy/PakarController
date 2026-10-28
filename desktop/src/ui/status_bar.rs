@@ -232,7 +232,7 @@ impl StatusBar<'_> {
         _ => true,
     } }
     fn connection_label(&self) -> &'static str {
-        if self.connected { "Connected" } else if self.connection_enabled { "Connecting…" } else { "Disconnected" }
+        super::connection_controls::phase_label(self.connection_enabled, self.connected, self.peer_known)
     }
     fn transport(&self) -> &'static str {
         if self.serial_selected { "USB" } else if self.websocket_live && self.connected { "WebSocket" } else { "HTTP" }
@@ -354,6 +354,7 @@ fn paint_widget(ui: &mut egui::Ui, rect: egui::Rect, widget: Widget, status: &St
     let accent = ui.visuals().selection.bg_fill;
     let color = match widget {
         Widget::Connection if status.connected => if ui.visuals().dark_mode { egui::Color32::from_rgb(83, 195, 132) } else { egui::Color32::from_rgb(28, 115, 72) },
+        Widget::Connection if status.connection_enabled => ui.visuals().warn_fg_color,
         Widget::Events if status.error_count > 0 => ui.visuals().error_fg_color,
         Widget::Telemetry if status.hardware_warning() => ui.visuals().warn_fg_color,
         Widget::Progress => accent,
@@ -634,7 +635,7 @@ mod tests {
         assert_eq!(status.transport(), "HTTP");
         assert_eq!(status.rgb_color(), Some(egui::Color32::from_rgb(24,105,61)));
         status.connected = false;
-        assert_eq!(status.connection_label(), "Connecting…");
+        assert_eq!(status.connection_label(), "Reconnecting…");
         assert_eq!(status.rgb_color(), None, "Cached emitted RGB is not current output after disconnect");
         status.connection_enabled = false;
         assert_eq!(status.connection_label(), "Disconnected");

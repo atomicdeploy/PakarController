@@ -1,6 +1,7 @@
 #pragma once
 #include <stddef.h>
 #include <string.h>
+#include "ShellNames.h"
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <pgmspace.h>
 #define PAKAR_SHELL_METADATA_STORAGE PROGMEM
@@ -20,12 +21,25 @@ static const ShellProperty shellProperties[] PAKAR_SHELL_METADATA_STORAGE={
  {"avr.online","device","avr",'b',false,false},{"display.ack","device","display",'b',false,false},
  {"firmware.phase","device","phase",'s',false,false},
  {"network.mode","network","mode",'s',true,false},
+ {"network.station_enabled","network","station_enabled",'b',true,false},
+ {"network.ap_enabled","network","ap_enabled",'b',true,false},
+ {"network.auto_switch","network","auto_switch",'b',true,false},
+ {"network.ap_ssid","network","ap_ssid",'s',false,false},
  {"network.dhcp","network","dhcp",'b',true,false},{"network.ssid","network","ssid",'s',true,false},
  {"network.password","network","password",'s',true,true},
  {"network.address","network","address",'s',true,false},{"network.gateway","network","gateway",'s',true,false},
  {"network.subnet","network","subnet",'s',true,false},{"network.dns1","network","dns1",'s',true,false},
  {"network.dns2","network","dns2",'s',true,false},{"network.ip","network","station_ip",'s',false,false},
  {"network.ap_ip","network","ap_ip",'s',false,false},
+ {"clock.ntp_enabled","network-tools","ntp_enabled",'b',true,false},
+ {"clock.epoch","clock","utc_epoch",'n',true,false},
+ {"clock.ntp_dhcp","network-tools","ntp_dhcp",'b',true,false},
+ {"clock.ntp_server","network-tools","ntp_server",'s',true,false},
+ {"clock.http_date_url","network-tools","http_date_url",'s',true,false},
+ {"clock.http_date_automatic","network-tools","http_date_automatic",'b',true,false},
+ {"network.public_ip_url","network-tools","public_ip_url",'s',true,false},
+ {"network.public_ip_automatic","network-tools","public_ip_automatic",'b',true,false},
+ {"network.observation_seconds","network-tools","refresh_seconds",'n',true,false},
  {"led.enabled","led","enabled",'b',true,false},{"led.mode","led","mode",'s',true,false},
  {"led.brightness","led","brightness",'n',true,false},{"led.effect","led","effect",'s',true,false},
  {"led.backend","driver","backend",'s',false,false},{"led.rmt","driver","rmt",'b',false,false},{"led.dma","driver","dma",'b',false,false},
@@ -43,6 +57,22 @@ static const ShellProperty shellProperties[] PAKAR_SHELL_METADATA_STORAGE={
 #endif
  {"shell.enabled","shell","enabled",'b',true,false},{"shell.port","shell","port",'n',true,false},
  {"shell.color","shell","color",'b',true,false}
+#if PAKAR_SSH_ENABLED
+ ,{"ssh.enabled","ssh","enabled",'b',true,false},{"ssh.port","ssh","port",'n',true,false}
+#endif
+#if PAKAR_FIRST_WINS_ENABLED
+ ,{"game.enabled_mask","game","enabled_mask",'n',true,false},
+ {"game.auto_reset_ms","game","auto_reset_ms",'n',true,false},
+ {"game.effects","game","extended_effects",'b',true,false},
+ {"game.chase_ms","game","chase_period_ms",'n',true,false},
+ {"game.neighbors","game","chase_neighbors",'b',true,false},
+ {"game.invert","game","chase_invert",'b',true,false},
+ {"game.idle_rgb","game","idle_rgb",'n',true,false},
+ {"game.win_rgb","game","win_rgb",'n',true,false},
+ {"game.lose_rgb","game","lose_rgb",'n',true,false},
+ {"game.winner_cue","game","winner_cue",'s',true,false},
+ {"game.reset_cue","game","reset_cue",'s',true,false}
+#endif
 };
 constexpr size_t shellPropertyCount=sizeof(shellProperties)/sizeof(*shellProperties);
 inline ShellProperty shellPropertyAt(size_t index){
@@ -57,7 +87,7 @@ inline ShellProperty shellPropertyAt(size_t index){
 inline bool shellProperty(const char *key,ShellProperty &result){
   if(key)for(size_t index=0;index<shellPropertyCount;++index){
     const auto candidate=shellPropertyAt(index);
-    if(!strcmp(key,candidate.key)){result=candidate;return true;}
+    if(PakarShell::sameName(key,candidate.key)){result=candidate;return true;}
   }
   result={};return false;
 }

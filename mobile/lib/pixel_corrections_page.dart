@@ -14,7 +14,7 @@ import 'workspace_widgets.dart';
 
 typedef PixelCorrectionsPeer = ({int connection, Object? board, Object? boot});
 
-/// Peer-scoped editor: local previews never change the board or its raw scene.
+/// Peer-scoped drafts: transient previews never persist or change the raw scene.
 class PixelCorrectionsPage extends StatefulWidget {
   const PixelCorrectionsPage({
     super.key,
@@ -25,6 +25,7 @@ class PixelCorrectionsPage extends StatefulWidget {
     this.expectedPeer,
     this.incomingRule,
     this.active = true,
+    this.livePreviewInitiallyEnabled,
   });
   final PakarApi api;
   final ValueChanged<bool> busyChanged;
@@ -35,6 +36,7 @@ class PixelCorrectionsPage extends StatefulWidget {
   final PixelCorrectionsPeer? expectedPeer;
   final PixelCorrectionRuleIntent? incomingRule;
   final bool active;
+  final bool? livePreviewInitiallyEnabled;
   @override
   State<PixelCorrectionsPage> createState() => PixelCorrectionsPageState();
 }
@@ -54,6 +56,9 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
   final rulesScroll = ScrollController();
   int nextRuleId = 0;
   bool enabled = true, busy = false, dirty = false;
+  // Default-on policy is not an active lease: opening/loading never writes.
+  // An explicit edit starts the bounded RAM preview; Save alone writes flash.
+  late bool previewOnEdit;
   String? error;
   StreamSubscription<dynamic>? updates;
   StreamSubscription<int>? configurationUpdates;
@@ -99,6 +104,10 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
   @override
   void initState() {
     super.initState();
+    previewOnEdit =
+        widget.livePreviewInitiallyEnabled ??
+        widget.workspace?.correctionLivePreview ??
+        true;
     final observed = widget.api.freshStatus;
     final expected =
         widget.expectedPeer ??
@@ -225,7 +234,7 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
       saved != null && !busy && !_applyingIncomingRule && current;
 
   /// Append one explicit output-slot intent only after verified configuration.
-  /// This is a local draft, even if a previous editor preview was enabled.
+  /// Save remains explicit; the enabled preview policy may display this draft.
   Future<void> _consumeIncomingRule() async {
     final intent = widget.incomingRule;
     if (intent == null ||
@@ -246,6 +255,14 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
       setState(() => error = 'Correction target changed. Reopen this editor.');
       return;
     }
+    if (intent.revision != null &&
+        (dirty || intent.revision != saved!['revision'])) {
+      setState(
+        () => error =
+            'Correction mapping changed. Select the diagnostic pixel again.',
+      );
+      return;
+    }
     if (rules.length >= maxRules) {
       setState(
         () => error = 'The board allows at most $maxRules correction rules.',
@@ -262,9 +279,9 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
       return;
     }
     _applyingIncomingRule = true;
+    var appended = false;
     try {
       // stop() disables renewal synchronously; only our old lease may be cleared.
-      // Never let continuous preview silently publish the new menu draft.
       if (preview.enabled) await preview.stop();
       if (!mounted ||
           !widget.active ||
@@ -279,6 +296,7 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
         dirty = true;
         error = null;
       });
+      appended = true;
     } finally {
       _applyingIncomingRule = false;
       if (mounted) {
@@ -287,6 +305,14 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
           unawaited(_consumeIncomingRule());
         }
       }
+    }
+    if (appended &&
+        mounted &&
+        previewOnEdit &&
+        previewSupported &&
+        invalidFields.isEmpty &&
+        toggleSupported) {
+      await preview.start();
     }
   }
 
@@ -365,8 +391,15 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
       change();
       dirty = true;
     });
-    if (invalidFields.isEmpty && toggleSupported) {
-      preview.edited();
+    if (invalidFields.isEmpty &&
+        toggleSupported &&
+        previewOnEdit &&
+        previewSupported) {
+      if (preview.enabled) {
+        preview.edited();
+      } else {
+        unawaited(preview.start());
+      }
     } else {
       unawaited(preview.stop());
     }
@@ -390,12 +423,34 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
 
   void importPixel(int pixel) {
     if (!editable) return;
+    final index = selectedRule == null ? -1 : rules.indexOf(selectedRule!);
+    final preceding = index < 0 ? rules : rules.take(index).toList();
+    final List<int> matches;
+    try {
+      matches = pixelCorrectionOutputSlots(
+        raw: pixel,
+        pixels: pixels,
+        sources: pixelCorrectionSources(pixels, enabled, preceding),
+      );
+    } on FormatException catch (failure) {
+      setState(() => error = failure.message.toString());
+      return;
+    }
+    if (matches.length != 1) {
+      setState(
+        () => error = matches.isEmpty
+            ? 'Source ${pixel + 1} is absent before this rule. Enter its output slot explicitly.'
+            : 'Source ${pixel + 1} reaches output slots ${matches.map((value) => value + 1).join(', ')}. Choose an output slot explicitly.',
+      );
+      return;
+    }
+    final wire = matches.single;
     if (selectedRule == null || !rules.contains(selectedRule)) {
-      addRule(pixel);
+      addRule(wire);
       return;
     }
     edit(() {
-      selectedRule!['pixel'] = pixel;
+      selectedRule!['pixel'] = wire;
       invalidFields.remove('${idOf(selectedRule!)}-pixel');
       final id = idOf(selectedRule!);
       importedDrafts[id] = (importedDrafts[id] ?? 0) + 1;
@@ -446,9 +501,9 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
     });
     widget.busyChanged(true);
     try {
-      if (widget.api.isUsb || widget.api.isBluetooth) {
+      if (widget.api.isBluetooth) {
         throw StateError(
-          'Pixel correction configuration currently requires the board Wi-Fi connection.',
+          'Pixel correction configuration requires Wi-Fi or USB for this connection.',
         );
       }
       if (save) {
@@ -1037,22 +1092,30 @@ class PixelCorrectionsPageState extends State<PixelCorrectionsPage>
           'Preview the draft on the LEDs. Save to board makes it persistent.',
       child: FilterChip(
         key: const ValueKey('correction-live-preview'),
-        showCheckmark: false,
+        showCheckmark: true,
         avatar: Icon(
           live ? Icons.visibility_rounded : Icons.visibility_outlined,
           size: 18,
         ),
         label: Text(preview.pending && !live ? 'Starting…' : 'Live preview'),
-        selected: preview.enabled,
-        onSelected: preview.enabled
-            ? (_) => unawaited(preview.stop())
+        selected: previewOnEdit,
+        onSelected: previewOnEdit
+            ? (_) {
+                setState(() => previewOnEdit = false);
+                widget.workspace?.correctionLivePreview = false;
+                unawaited(preview.stop());
+              }
             : editable &&
                   !preview.pending &&
                   widget.active &&
                   foreground &&
                   invalidFields.isEmpty &&
                   toggleSupported
-            ? (_) => unawaited(preview.start())
+            ? (_) {
+                setState(() => previewOnEdit = true);
+                widget.workspace?.correctionLivePreview = true;
+                unawaited(preview.start());
+              }
             : null,
       ),
     );

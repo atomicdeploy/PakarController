@@ -1,0 +1,92 @@
+// Adapted donor test_shell.c scenarios: independent contexts, command lookup,
+// built-ins, editing and callback output. No network or production board access.
+#include "TelnetShell.h"
+#include "ShellToneCommand.h"
+#include <cassert>
+#include <string>
+#include <iostream>
+int main(){
+  using namespace PakarShell;
+  std::string output;
+  auto write=[&](const uint8_t* p,size_t n){output.append(reinterpret_cast<const char*>(p),n);};
+  for(size_t i=0;i<commandCount;++i){
+    assert(findCommand(commands[i].name)==&commands[i]);
+    const auto* canonical=findCommand(commands[i].canonical);
+    assert(canonical && canonical->usage && canonical->readOnly==commands[i].readOnly);
+    for(size_t j=0;j<i;++j)assert(strcmp(commands[i].name,commands[j].name));
+  }
+  assert(!findCommand(nullptr)&&!findCommand("unknown")&&!findCommand("setx"));
+  assert(findCommand("STATUS")==findCommand("status"));
+  assert(commandAvailable(*findCommand("game"),true)&&!commandAvailable(*findCommand("game"),false));
+  assert(!commandAvailable(*findCommand("cells"),true)&&commandAvailable(*findCommand("cells"),false));
+  assert(std::string(findCommand("edit")->canonical)=="tui");
+  assert(std::string(findCommand("cls")->canonical)=="clear");
+  assert(!findCommand("set")->readOnly&&!findCommand("reset")->readOnly);
+  assert(findCommand("beep")&&!findCommand("beep")->readOnly);
+  ToneCommand tone;
+  assert(toneCommand("",tone)&&tone.frequency==1000&&tone.duration==100);
+  assert(toneCommand("440 250",tone)&&tone.frequency==440&&tone.duration==250);
+  assert(toneCommand("12000 5000",tone)&&tone.frequency==12000&&tone.duration==5000);
+  for(const char* bad:{"0","19","12001","-1","440 0","440 5001","440 1 extra","440 nope","440 ","1e3","9999999"})assert(!toneCommand(bad,tone));
+  renderHelp(write,true,true,true,80);
+  assert(output.find("Usage")!=std::string::npos&&output.find("Sound & display")!=std::string::npos);
+  assert(output.find(" : ")==std::string::npos&&output.find("cell ID")==std::string::npos);
+  assert(output.find("\xe2\x94\x80")!=std::string::npos&&output.find("\x1b[90m")!=std::string::npos);
+  output.clear();renderHelp(write,false,false,false,40);
+  assert(output.find('\x1b')==std::string::npos&&output.find("game press")==std::string::npos);
+  output.clear();
+  Terminal::clear(write);Terminal::clearLine(write);Terminal::cursorLeft(write,12);
+  Terminal::color(write,32,40);Terminal::reset(write);
+  assert(output=="\x1b[H\x1b[2J\r\x1b[2K\x1b[12D\x1b[32;40m\x1b[0m");
+  output.clear();Terminal::cursorLeft(write,513);Terminal::color(write,123,40);Terminal::color(write,32,99);Terminal::reset(write,false);
+  assert(output.empty());Terminal::clear(write,false);Terminal::cursorLeft(write,2,false);assert(output=="\r\n\b\b");
+  LineEditor a,b;
+  auto feed=[&](LineEditor& editor,const std::string& text){for(unsigned char c:text)editor.feed(c,write);};
+  auto candidates=[](size_t i){return commands[i].name;};
+  feed(a,"sta");output.clear();a.complete(0,commandCount,candidates,write);
+  assert(std::string(a.line())=="sta"&&output.empty()); // hidden password
+  assert(a.feed('\t',write)==LineEditor::None);
+  a.clear();a.setEcho(true);feed(a,"sta");output.clear();
+  assert(a.feed('\t',write)==LineEditor::Complete);
+  a.complete(0,commandCount,candidates,write);
+  assert(std::string(a.line())=="status "&&a.historySize()==0&&b.line()[0]==0);
+  a.clear();feed(a,"cell");a.complete(0,commandCount,candidates,write);
+  assert(std::string(a.line())=="cell"); // ambiguous cell/cells: do not execute
+  assert(output.find("cells")!=std::string::npos);
+  a.clear();feed(a,"co");a.complete(0,commandCount,candidates,write);assert(std::string(a.line())=="color ");
+  a.clear();feed(a,"sta\x1b[D");a.complete(0,commandCount,candidates,write);assert(std::string(a.line())=="sta"&&a.cursor()==2);
+  // Fragmented escape sequences still belong to the editor, never completion.
+  a.clear();feed(a,"sta\x1b[");a.complete(0,commandCount,candidates,write);assert(std::string(a.line())=="sta");
+  a.feed('D',write);assert(a.cursor()==2);
+  const char* props[]={"network.mode","network.ssid",nullptr};
+  auto property=[&](size_t i){return props[i];};
+  a.clear();feed(a,"set net");a.complete(4,3,property,write);assert(std::string(a.line())=="set network.");
+  feed(a,"mo");a.complete(4,3,property,write);assert(std::string(a.line())=="set network.mode ");
+  a.clear();feed(a,"unknown");output.clear();a.complete(0,commandCount,candidates,write);assert(output=="\a");
+  a.clear();feed(a,std::string(LineEditor::kCapacity,'x'));
+  const auto full=std::string(a.line());a.complete(0,1,[&](size_t){return full.c_str();},write);
+  assert(std::string(a.line())==full&&a.cursor()==LineEditor::kCapacity);
+  // All sessions share descriptors, not mutable history/input or IO buffers.
+  b.setEcho(true);feed(b,"edi");b.complete(0,commandCount,candidates,write);
+  assert(std::string(b.line())=="edit "&&std::string(a.line())==full);
+  a.clear();feed(a,"STA");a.complete(0,commandCount,candidates,write);assert(std::string(a.line())=="status ");
+  a.clear();a.setUpper(true);output.clear();feed(a,"echo MixedCase");
+  assert(output=="ECHO MIXEDCASE"&&std::string(a.line())=="echo MixedCase");
+  output.clear();a.redraw(write);assert(output.find("ECHO MIXEDCASE")!=std::string::npos);
+  assert(a.remember(true));a.clear();feed(a,"\x1b[A");assert(std::string(a.line())=="echo MixedCase");
+  a.clear();a.setEcho(false);output.clear();feed(a,"Sensitive");assert(output.empty());
+  a.reset();a.setEcho(true);output.clear();feed(a,"lower");assert(output=="lower");
+  // Ghost suggestions cannot execute, leak arguments, alter history or survive
+  // edits. Fragmented CSI/SS3 Right and both End forms explicitly accept them.
+  for(const char* key:{"\x1b[C","\x1bOC","\x1b[F","\x1b[4~","\x1b[8~"}){
+    a.clear();feed(a,"sta");output.clear();a.suggest(0,commandCount,candidates,write);
+    assert(std::string(a.line())=="sta"&&output=="\x1b[90mtus\x1b[0m\x1b[3D");
+    feed(a,key);assert(std::string(a.line())=="status "&&a.cursor()==7);
+  }
+  a.clear();feed(a,"sta");a.suggest(0,commandCount,candidates,write);feed(a,"\x1b[D");
+  assert(std::string(a.line())=="sta"&&a.cursor()==2);
+  a.clear();feed(a,"sta");a.suggest(0,commandCount,candidates,write);feed(a,"x\x1b[C");assert(std::string(a.line())=="stax");
+  a.clear();a.setEcho(false);feed(a,"sta");output.clear();a.suggest(0,commandCount,candidates,write);feed(a,"\x1b[C");assert(output.empty()&&std::string(a.line())=="sta");
+  a.clear();a.setEcho(true);a.setPrompt("plain",false);feed(a,"sta");output.clear();a.suggest(0,commandCount,candidates,write);assert(output.empty());
+  std::cout<<"Portable-shell catalogue, VT100 and bounded completion passed.\n";
+}

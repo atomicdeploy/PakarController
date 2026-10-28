@@ -5,9 +5,10 @@ $ErrorActionPreference='Stop'
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-shell -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate | Out-Null
 $taskRoot=Split-Path -Parent $PSScriptRoot
-foreach($taskName in @('telnet_shell','shell_tui','shell_wire')){
+foreach($taskName in @('portable_shell','telnet_shell','shell_tui','shell_wire','shell_pixel','shell_remote_query','ssh_policy')){
   $taskOutput=Join-Path $taskRoot "build/native/${taskName}_test.exe"
-  $taskArgs=@('-std=c++17','-Wall','-Wextra','-Werror','-I',(Join-Path $taskRoot 'firmware/esp/src'),'-I',(Join-Path $taskRoot 'tests/access_stubs'),(Join-Path $taskRoot "tests/${taskName}_test.cpp"),'-o',$taskOutput)
+  $taskStandard=if($taskName -eq 'shell_tui'){'-std=c++23'}else{'-std=c++17'}
+  $taskArgs=@($taskStandard,'-Wall','-Wextra','-Werror','-I',(Join-Path $taskRoot 'firmware/esp/src'),'-I',(Join-Path $taskRoot 'tests/access_stubs'),(Join-Path $taskRoot "tests/${taskName}_test.cpp"),'-o',$taskOutput)
   if($Plan){[pscustomobject]@{Executable='g++';Arguments=$taskArgs};continue}
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
   & g++ @taskArgs
@@ -30,3 +31,11 @@ if($LASTEXITCODE){throw 'Shell mDNS fixture compilation failed'}
 if($LASTEXITCODE){throw 'Shell mDNS fixture failed'}
 & node (Join-Path $taskRoot 'tests/shell_service_test.mjs')
 if($LASTEXITCODE){throw 'Actual shell service lease fixture failed'}
+& node (Join-Path $taskRoot 'tests/shell_tone_dispatch_test.mjs')
+if($LASTEXITCODE){throw 'Actual shell-to-AVR tone dispatch fixture failed'}
+& node (Join-Path $taskRoot 'tests/portable_shell_source_test.mjs')
+if($LASTEXITCODE){throw 'Portable-shell source inventory fixture failed'}
+& node (Join-Path $taskRoot 'tests/telnet_client_test.mjs')
+if($LASTEXITCODE){throw 'TCP terminal loopback fixture failed'}
+& node (Join-Path $taskRoot 'tests/udp_device_query_test.mjs')
+if($LASTEXITCODE){throw 'UDP diagnostic client loopback fixture failed'}

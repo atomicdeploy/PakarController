@@ -41,6 +41,7 @@ Widget page(
   GlobalKey<PixelCorrectionsPageState> key,
   PixelCorrectionRuleIntent? intent, {
   bool active = true,
+  bool livePreview = false,
 }) => MaterialApp(
   home: Scaffold(
     body: PixelCorrectionsPage(
@@ -49,6 +50,7 @@ Widget page(
       busyChanged: (_) {},
       incomingRule: intent,
       active: active,
+      livePreviewInitiallyEnabled: livePreview,
     ),
   ),
 );
@@ -130,7 +132,7 @@ void main() {
   });
 
   testWidgets(
-    'new intent stops existing live preview and never sends its draft',
+    'new explicit intent replaces only the owned RAM lease when preview is enabled',
     (tester) async {
       tabletViewport(tester);
       final api = IntentApi();
@@ -146,10 +148,11 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(key.currentState!.rules, hasLength(1));
-      expect(key.currentState!.preview.enabled, false);
-      expect(api.activePreview, isNull);
-      expect(api.requests, hasLength(2));
-      expect(api.requests.last['clear'], true);
+      expect(key.currentState!.preview.enabled, true);
+      expect(api.activePreview, isNotNull);
+      expect(api.requests, hasLength(3));
+      expect(api.requests[1]['clear'], true);
+      expect((api.requests.last['rules'] as List).single['pixel'], 8);
       expect(api.saves, 0);
       await tester.pumpWidget(const SizedBox());
     },
