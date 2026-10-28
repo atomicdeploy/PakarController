@@ -70,6 +70,7 @@ class KeyMiniGame {
       if(mode!=PressToWin&&mode!=Toggle&&mode!=ClearAll)c.limitMs=60000;
       if(mode==ColorOrder)c.paletteSize=9;
       if(mode==Illuminated)c.windowMs=10000;
+      if(mode==Simon){c.rounds=1;c.sequenceLength=8;}
       return c;
     }
     bool valid()const{

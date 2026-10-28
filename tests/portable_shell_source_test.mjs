@@ -20,6 +20,6 @@ for(const file of source.files){
 assert.ok(read('firmware/esp/src/TelnetShell.h').includes('#include "PortableShellCore.h"'));
 const service=read('firmware/esp/src/ShellService.h');
 for(const text of ['PakarShell::findCommand(verb.c_str())','verb=command->canonical',
-  'for(const auto& item:PakarShell::commands)','if(!s.authenticated)return;',
+  'PakarShell::renderHelp(','PakarShell::toneCommand(args.c_str(),tone)','d["command"]="buzzer"','if(!s.authenticated)return;',
   's.editor.complete(start,shellPropertyCount'])assert.ok(service.includes(text),text);
 console.log('All 17 pinned portable-shell files accounted for; live integration wiring checked.');

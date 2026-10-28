@@ -173,11 +173,7 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   if(verb=="exit"||verb=="quit"){s.println(F("Goodbye."));s.closing=true;return;}
   if(verb=="tui"){s.alternateScreen=s.color&&s.parser.ansi();if(s.alternateScreen)s.print(F("\x1b[?1049h"));s.tui.begin(s.color&&s.parser.ansi());shellTuiDraw(s,true);return;}
   if(verb=="help"||verb=="?"){
-    for(const auto& item:PakarShell::commands)if(item.usage){
-      if(!PakarShell::commandAvailable(item,PAKAR_FIRST_WINS_ENABLED))continue;
-      s.println(item.usage);
-    }
-    s.println(F("Tab completes commands and get/set properties. Up/Down recall 8 safe commands. TUI: Tab/Arrows/Enter/Esc."));
+    PakarShell::renderHelp([&](const uint8_t* p,size_t n){s.write(p,n);},PAKAR_FIRST_WINS_ENABLED,s.color&&s.parser.ansi(),s.unicode,s.parser.columns());
   }else if(verb=="properties"||verb=="get"){
     if(args.length()){
       ShellProperty property;if(shellProperty(args.c_str(),property)){shellSafePrint(s,shellGet(property));s.println();}else shellResult(s,false,F("Unknown property"));
@@ -189,7 +185,7 @@ void executeDeviceShell(DeviceShellSession &s,String line){
       const int split=args.indexOf(' ',5);uint32_t w=0,h=0;
       if(split<0||!PakarShell::unsignedNumber(args.substring(5,split).c_str(),240,w)||
          !PakarShell::unsignedNumber(args.substring(split+1).c_str(),100,h)||!s.parser.size(w,h)){
-        shellResult(s,false,F("Use terminal size 40..240 16..100; TUI needs 24 rows"));shellPrompt(s);return;}
+        shellResult(s,false,F("Use terminal size 40..240 16..100"));shellPrompt(s);return;}
     }else if(args.length()){shellResult(s,false,F("Use terminal, terminal unicode|color on|off, terminal size COLS ROWS"));shellPrompt(s);return;}
     s.print(F("Terminal "));s.print(s.parser.terminal());s.print(F(" | "));s.print(s.parser.columns());s.print('x');s.print(s.parser.rows());
     s.print(F(" | Unicode "));s.print(s.unicode?F("on"):F("off"));s.print(F(" | ANSI "));s.println(s.color&&s.parser.ansi()?F("on"):F("off"));
@@ -256,6 +252,11 @@ void executeDeviceShell(DeviceShellSession &s,String line){
       else d["value"]=number;
     }else if(verb=="mode"||verb=="effect")d["value"]=args;
     else if(verb=="audio")d["cue"]=args;
+    else if(verb=="beep"){
+      PakarShell::ToneCommand tone;valid=PakarShell::toneCommand(args.c_str(),tone);
+      d["command"]="buzzer";d["frequency"]=tone.frequency;d["duration_ms"]=tone.duration;
+      if(!valid){shellResult(s,false,F("Use beep [20..12000 Hz [1..5000 ms]]"));shellPrompt(s);return;}
+    }
     else if(verb=="cell"||verb=="cells"){
       const int a=args.indexOf(' '),b=a<0?-1:args.indexOf(' ',a+1);
       if(a<1)valid=false;else{
@@ -278,8 +279,8 @@ void initializeDeviceShell(DeviceShellSession &s,bool telnet){
   s.accessRevision=accessConfig.securityRevision();
   s.authenticated=accessConfig.ready()&&!accessConfig.enabled();s.color=shellSettings.color();s.lastInput=s.lastDrain=millis();
   if(telnet)s.parser.greet([&](const uint8_t *p,size_t n){s.write(p,n);});
-  if(s.color)s.print(F("\x1b[1;36m"));s.print(APP_NAME);s.print(F(" @ "));s.print(deviceIdentity.hostname());
-  if(s.color)s.print(F("\x1b[0m"));s.println(F("  |  help / tui"));
+  if(s.color)s.print(F("\x1b[1;32m"));s.print(APP_NAME);s.print(F(" @ "));s.print(deviceIdentity.hostname());
+  if(s.color)s.print(F("\x1b[0m"));s.println();
   s.editor.setEcho(s.authenticated);if(s.authenticated)shellPrompt(s);else s.print(F("Password: "));
 }
 void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
@@ -287,7 +288,23 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
   if(s.closing||s.fault)return;s.lastInput=millis();
   if(s.tui.active()){shellTuiInput(s,ch);s.escapeAt=millis();return;}
   const auto event=s.editor.feed(ch,[&](const uint8_t *p,size_t n){s.write(p,n);});
-  if(event==PakarShell::LineEditor::None)return;
+  if(event==PakarShell::LineEditor::None){
+    if(!s.authenticated)return;
+    const char* line=s.editor.line();const char* space=strchr(line,' ');
+    auto write=[&](const uint8_t* p,size_t n){s.write(p,n);};
+    if(!space)s.editor.suggest(0,PakarShell::commandCount,[](size_t i)->const char*{
+      const auto& command=PakarShell::commands[i];
+      return PakarShell::commandAvailable(command,PAKAR_FIRST_WINS_ENABLED)?command.name:nullptr;
+    },write);
+    else if(PakarShell::namePrefix(line,"get ",4)||PakarShell::namePrefix(line,"set ",4)||PakarShell::namePrefix(line,"properties ",11)){
+      const size_t start=space-line+1;
+      if(!strchr(line+start,' '))s.editor.suggest(start,shellPropertyCount,[&](size_t i){
+        const auto p=shellPropertyAt(i);return (PakarShell::namePrefix(line,"set ",4)&&!p.writable)?nullptr:p.key;
+      },write);
+    }
+    return;
+  }
+
   if(event==PakarShell::LineEditor::Complete){
     if(!s.authenticated)return;
     auto write=[&](const uint8_t *p,size_t n){s.write(p,n);};
@@ -400,7 +417,7 @@ void serviceDeviceShells(){
       s.parser.feed(uint8_t(byte),[&](const uint8_t *p,size_t n){s.write(p,n);},[&](uint8_t ch){inputDeviceShell(s,ch);});
       if(s.closing||s.fault)break;
     }
-    if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>60){shellTuiInput(s,0,true);terminalInput=true;}
+    if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>350){shellTuiInput(s,0,true);terminalInput=true;}
     if(terminalInput&&s.tui.active()&&s.output.length()<4096U)shellTuiDraw(s);
   }
   const uint32_t serialNow=millis();
@@ -492,7 +509,7 @@ bool handleShellFrame(const BoardCore::Protocol::Frame &frame){
   const uint16_t ack=p[5]|uint16_t(p[6])<<8;size_t consumed=0;
   if(!s.serialOutput.acknowledge(ack,consumed)){hostLink.error(frame.sequence,frame.opcode,kUnsafe);return true;}
   if(consumed)s.output.remove(0,consumed);
-  if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>60)shellTuiInput(s,0,true);
+  if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>350)shellTuiInput(s,0,true);
   uint8_t response[48]={3};memcpy(response+1,&token,4);const uint16_t next=shellChannel.next();memcpy(response+5,&next,2);
   if(!s.serialOutput.stage(reinterpret_cast<const uint8_t*>(s.output.c_str()),s.output.length())){s.fault=true;s.closing=true;}
   response[7]=uint8_t(s.closing)|(s.fault?2:0);

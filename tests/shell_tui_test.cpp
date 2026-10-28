@@ -23,7 +23,8 @@ int main(){
   auto feed=[&](const std::string& bytes){bool emitted=false;for(unsigned char byte:bytes)emitted=model.feed(byte,snapshot,action)||emitted;return emitted;};
   model.begin();assert(model.active());assert(model.render(snapshot,write));assert(output.size()<=4096);
   assert(output.find("never-render-this")==std::string::npos);
-  assert(output.find("[read]")!=std::string::npos&&output.find("[edit]")!=std::string::npos);
+  assert(output.find("Firmware")!=std::string::npos&&output.find("Hostname")!=std::string::npos);
+  assert(output.find("[read]")==std::string::npos&&output.find("[edit]")==std::string::npos);
   output.clear();model.feedback("Saved\x1b]52;c;private\a");
   assert(model.render(snapshot,write)&&output.find("Saved")!=std::string::npos&&output.find("private")==std::string::npos);
   assert(action.type==T::Action::None); // Feedback is display-only, never a command.
@@ -47,7 +48,7 @@ int main(){
   snapshot.canLeds=true;snapshot.canPixels=true;snapshot.pixelCount=480;
   assert(!feed("\t\t"));assert(model.page()==T::Led);
   assert(action.type==T::Action::None); // Page entry never actuates.
-  output.clear();assert(model.render(snapshot,write));assert(output.find("not physical geometry")!=std::string::npos);
+  output.clear();assert(model.render(snapshot,write));assert(output.find("01")!=std::string::npos);
   assert(!feed("\x1b[C\x1b[B"));assert(model.selectedCell()==12);
   assert(feed("r"));assert(action.type==T::Action::Cell&&action.index==12&&std::string(action.value)=="red");
   snapshot.canLeds=false;assert(!feed("w"));
@@ -81,7 +82,7 @@ int main(){
   assert(!game.feed('3',keys,action)&&action.type==T::Action::None);
   assert(game.feed('r',keys,action)&&action.type==T::Action::Reset);
   keys.gameReady=false;assert(!game.feed('1',keys,action));assert(!game.feed('r',keys,action));
-  keys.lines=16;keys.gameReady=true;assert(!game.feed('1',keys,action));
+  keys.lines=15;keys.gameReady=true;assert(!game.feed('1',keys,action));
   output.clear();game.render(keys,write);assert(output.find("Resize terminal")!=std::string::npos);
   keys.lines=24;game.feed('\t',keys,action);assert(game.page()==T::TerminalPage);
   keys.unicode=false;output.clear();game.render(keys,write);assert(output.find("\xe2\x95\xad")==std::string::npos);
@@ -132,7 +133,7 @@ int main(){
   assert(!input("g"));for(unsigned i=0;i<11;++i)assert(input("+"));
   assert(action.index==215&&action.count==1);assert(!input("+"));
   output.clear();assert(variable.render(geometry,write));assert(output.find("/ 216 (216 capacity)")!=std::string::npos);
-  geometry.lines=16;assert(!input("\x1b[D"));assert(variable.selectedPixel()==215);
+  geometry.lines=15;assert(!input("\x1b[D"));assert(variable.selectedPixel()==215);
   geometry.lines=24;
 
   // A resize redraws an open form without erasing its draft or overflowing the
@@ -144,9 +145,32 @@ int main(){
   output.clear();resized.render(narrow,write);narrow.columns=40;
   output.clear();assert(resized.render(narrow,write));assert(savedDraft==resized.draft());
   assert(output.find("Edit Device label: savedx")!=std::string::npos);
-  narrow.lines=16;output.clear();assert(resized.render(narrow,write));
+  narrow.lines=15;output.clear();assert(resized.render(narrow,write));
   assert(output.find("Resize terminal")!=std::string::npos&&resized.editing());
   narrow.lines=24;resized.render(narrow,write);assert(savedDraft==resized.draft());
+
+  // A common 80x16 Telnet viewport is interactive; CSI/SS3 arrows are fed
+  // one byte per callback, not synchronous reads. Page keys never actuate.
+  T compact;T::Snapshot small;small.columns=80;small.lines=16;small.terminalSettings=true;
+  T::Row compactRows[]={{"First","hostname","abc",true,false},{"Second","label","def",true,false},{"Third","label","ghi",true,false}};
+  small.rows=compactRows;small.rowCount=3;compact.begin();
+  auto key=[&](const char* bytes){bool sent=false;for(;*bytes;++bytes)sent=compact.feed(*bytes,small,action)||sent;return sent;};
+  assert(!key("\x1b[B\r")&&compact.editing());assert(std::string(compact.draft())=="def");
+  assert(!key("\x1b[1~\x1b[3~"));assert(std::string(compact.draft())=="ef");
+  assert(!key("\x1bOFx"));assert(std::string(compact.draft())=="efx");
+  key("\x1b");assert(!compact.flushEscape(action)&&!compact.editing());
+  assert(!key("\x1b[6~\r")&&std::string(compact.draft())=="ghi");
+  key("\x1b");compact.flushEscape(action);
+  assert(!key("\x1b[5~\r")&&std::string(compact.draft())=="abc");
+  key("\x1b");compact.flushEscape(action);
+  assert(!key("\x1b[C")&&compact.page()==T::Network);
+  assert(!key("\x1b[D")&&compact.page()==T::Device);
+  assert(!key("\x1b[Z")&&compact.page()==T::TerminalPage);
+  assert(!key("\t")&&compact.page()==T::Device);
+  assert(!key("\x1b[15~\r")&&std::string(compact.draft())=="abc"); // F5 isn't Home/Delete.
+  output.clear();compact.render(small,write);assert(output.find("\x1b[15;")!=std::string::npos);
+  key("\x1b");compact.flushEscape(action);compact.render(small,write);
+  output.clear();key("\x1bOB");compact.render(small,write);assert(output.find("\x1b[2J")==std::string::npos);
 
   alignas(T) unsigned char modelStorage[sizeof(T)]{};
   auto *dying=new(modelStorage) T;dying->begin();

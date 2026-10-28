@@ -1,4 +1,5 @@
 #include "../firmware/esp/src/ShellProperties.h"
+#include "../firmware/esp/src/ShellLabels.h"
 #include <cassert>
 #include <cstdio>
 int main(){
@@ -19,6 +20,8 @@ int main(){
  for(size_t index=0;index<shellPropertyCount;++index){
   const auto property=shellPropertyAt(index);ShellProperty found{};
   assert(property.key&&property.domain&&property.field);
+  const char* label=PakarShell::propertyLabel(property.key);
+  assert(label&&strcmp(label,"Setting")&&strcmp(label,property.key));
   assert(shellProperty(property.key,found));
   assert(!strcmp(property.key,found.key)&&!strcmp(property.domain,found.domain)&&!strcmp(property.field,found.field));
   assert(property.type==found.type&&property.writable==found.writable&&property.secret==found.secret);

@@ -1,6 +1,7 @@
 // Adapted donor test_shell.c scenarios: independent contexts, command lookup,
 // built-ins, editing and callback output. No network or production board access.
 #include "TelnetShell.h"
+#include "ShellToneCommand.h"
 #include <cassert>
 #include <string>
 #include <iostream>
@@ -21,6 +22,19 @@ int main(){
   assert(std::string(findCommand("edit")->canonical)=="tui");
   assert(std::string(findCommand("cls")->canonical)=="clear");
   assert(!findCommand("set")->readOnly&&!findCommand("reset")->readOnly);
+  assert(findCommand("beep")&&!findCommand("beep")->readOnly);
+  ToneCommand tone;
+  assert(toneCommand("",tone)&&tone.frequency==1000&&tone.duration==100);
+  assert(toneCommand("440 250",tone)&&tone.frequency==440&&tone.duration==250);
+  assert(toneCommand("12000 5000",tone)&&tone.frequency==12000&&tone.duration==5000);
+  for(const char* bad:{"0","19","12001","-1","440 0","440 5001","440 1 extra","440 nope","440 ","1e3","9999999"})assert(!toneCommand(bad,tone));
+  renderHelp(write,true,true,true,80);
+  assert(output.find("Usage")!=std::string::npos&&output.find("Sound & display")!=std::string::npos);
+  assert(output.find(" : ")==std::string::npos&&output.find("cell ID")==std::string::npos);
+  assert(output.find("\xe2\x94\x80")!=std::string::npos&&output.find("\x1b[90m")!=std::string::npos);
+  output.clear();renderHelp(write,false,false,false,40);
+  assert(output.find('\x1b')==std::string::npos&&output.find("game press")==std::string::npos);
+  output.clear();
   Terminal::clear(write);Terminal::clearLine(write);Terminal::cursorLeft(write,12);
   Terminal::color(write,32,40);Terminal::reset(write);
   assert(output=="\x1b[H\x1b[2J\r\x1b[2K\x1b[12D\x1b[32;40m\x1b[0m");
@@ -62,5 +76,17 @@ int main(){
   assert(a.remember(true));a.clear();feed(a,"\x1b[A");assert(std::string(a.line())=="echo MixedCase");
   a.clear();a.setEcho(false);output.clear();feed(a,"Sensitive");assert(output.empty());
   a.reset();a.setEcho(true);output.clear();feed(a,"lower");assert(output=="lower");
+  // Ghost suggestions cannot execute, leak arguments, alter history or survive
+  // edits. Fragmented CSI/SS3 Right and both End forms explicitly accept them.
+  for(const char* key:{"\x1b[C","\x1bOC","\x1b[F","\x1b[4~","\x1b[8~"}){
+    a.clear();feed(a,"sta");output.clear();a.suggest(0,commandCount,candidates,write);
+    assert(std::string(a.line())=="sta"&&output=="\x1b[90mtus\x1b[0m\x1b[3D");
+    feed(a,key);assert(std::string(a.line())=="status "&&a.cursor()==7);
+  }
+  a.clear();feed(a,"sta");a.suggest(0,commandCount,candidates,write);feed(a,"\x1b[D");
+  assert(std::string(a.line())=="sta"&&a.cursor()==2);
+  a.clear();feed(a,"sta");a.suggest(0,commandCount,candidates,write);feed(a,"x\x1b[C");assert(std::string(a.line())=="stax");
+  a.clear();a.setEcho(false);feed(a,"sta");output.clear();a.suggest(0,commandCount,candidates,write);feed(a,"\x1b[C");assert(output.empty()&&std::string(a.line())=="sta");
+  a.clear();a.setEcho(true);a.setPrompt("plain",false);feed(a,"sta");output.clear();a.suggest(0,commandCount,candidates,write);assert(output.empty());
   std::cout<<"Portable-shell catalogue, VT100 and bounded completion passed.\n";
 }

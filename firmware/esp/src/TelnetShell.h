@@ -146,11 +146,28 @@ class LineEditor {
   const char* line() const { return command_; }
   size_t cursor() const { return cursor_; }
   size_t historySize() const { return historyCount_; }
+  // Suggestions contain descriptor names only, never history or argument values.
+  // They remain outside command_ until explicitly accepted with Right/End/Tab.
+  template<class Candidate,class Write>
+  void suggest(size_t start,size_t count,Candidate candidate,Write write) {
+    if(!echo_||!ansi_||overflow_||escape_||cursor_!=strlen(command_)||start>=cursor_)return;
+    eraseSuggestion(write);
+    const size_t typed=cursor_-start;
+    for(size_t i=0;i<count;++i){
+      const char* name=candidate(i);
+      if(!name||!namePrefix(name,command_+start,typed)||strlen(name)<=typed)continue;
+      const size_t size=strlen(name)-typed;
+      if(size>=sizeof(suggestion_)||cursor_+size+1>kCapacity)return;
+      memcpy(suggestion_,name+typed,size+1);
+      emit(write,"\x1b[90m");emitInput(write,suggestion_);emit(write,"\x1b[0m");cursorBack(write,size);return;
+    }
+  }
   // Completion never executes, records history, or operates on password input.
   // Only an end-of-line token may be replaced; text to the right stays untouched.
   template<class Candidate,class Write>
   void complete(size_t start,size_t count,Candidate candidate,Write write) {
     if(!echo_ || overflow_ || escape_ || cursor_!=strlen(command_) || start>cursor_)return;
+    eraseSuggestion(write);
     const size_t typed=cursor_-start;
     const char* first=nullptr;size_t matches=0,common=0;
     for(size_t i=0;i<count;++i){
@@ -179,6 +196,7 @@ class LineEditor {
     volatile char* p = command_;
     for (size_t i = 0; i < sizeof(command_); ++i) p[i] = 0;
     scrub(draft_,sizeof(draft_));draftCursor_=historyOffset_=0;
+    scrub(suggestion_,sizeof(suggestion_));
     cursor_ = 0; escape_ = attribute_ = escapeBytes_ = 0; overflow_ = false;
   }
   void setEcho(bool enabled) { echo_ = enabled; }
@@ -213,12 +231,13 @@ class LineEditor {
   }
   template <typename Write> void prompt(Write write) const {
     if(!echo_)return;
-    if(ansi_){emit(write,"\x1b[1;36m");}emit(write,prompt_);emit(write,"> ");
+    if(ansi_){emit(write,"\x1b[1;32m");}emit(write,prompt_);emit(write,"> ");
     if(ansi_)emit(write,"\x1b[0m");
   }
   template <typename Write> void redraw(Write write) const {
     if(!echo_)return;
     Terminal::clearLine(write,ansi_);prompt(write);emitInput(write,command_);
+    if(ansi_&&suggestion_[0]){emit(write,"\x1b[90m");emitInput(write,suggestion_);emit(write,"\x1b[0m");cursorBack(write,strlen(suggestion_));}
     cursorBack(write,strlen(command_)-cursor_);
   }
   template <typename Write> void redrawEvent(const char* text, Write write) const {
@@ -227,6 +246,8 @@ class LineEditor {
     emit(write,safe);emit(write,"\r\n");if(echo_)redraw(write);
   }
   template <typename Write> Event feed(uint8_t ch, Write write) {
+    // Do not erase at ESC: fragmented arrows must still be able to accept it.
+    if(!escape_&&ch!=27)eraseSuggestion(write);
     if (crPending_ && (ch == '\n' || ch == 0)) { crPending_ = false; return None; }
     if (ch == '\r' || ch == '\n') {
       crPending_ = ch == '\r'; emit(write, "\r\n");
@@ -322,6 +343,12 @@ class LineEditor {
   }
   template <typename Write> void move(uint8_t direction, Write write) {
     const size_t length = strlen(command_);
+    if((direction=='C'||direction=='F')&&cursor_==length&&suggestion_[0]){
+      const size_t size=strlen(suggestion_);
+      memcpy(command_+cursor_,suggestion_,size);cursor_+=size;command_[cursor_++]=' ';command_[cursor_]=0;
+      emitInput(write,suggestion_);emit(write," ");scrub(suggestion_,sizeof(suggestion_));historyOffset_=0;return;
+    }
+    eraseSuggestion(write);
     if (direction == 'D') {
       if (cursor_ == 0) { bell(write); return; }
       --cursor_; cursorBack(write,1);
@@ -346,6 +373,7 @@ class LineEditor {
     if (escape_ == 3) {
       if (ch == '~') {
         if (attribute_ == '3') {
+          eraseSuggestion(write);
           if (cursor_ < strlen(command_)) { shiftLeft(); if (echo_) fixCursor(write, true); }
           else bell(write);
         } else if (attribute_ == '1' || attribute_ == '4' || attribute_=='7' || attribute_=='8') move(attribute_ == '1'||attribute_=='7' ? 'H' : 'F', write);
@@ -355,9 +383,15 @@ class LineEditor {
     } else move(ch, write);
     escape_ = attribute_ = escapeBytes_=0;
   }
+  template<class Write> void eraseSuggestion(Write write){
+    if(!suggestion_[0])return;
+    if(echo_&&ansi_)emit(write,"\x1b[K");
+    scrub(suggestion_,sizeof(suggestion_));
+  }
   char command_[kCapacity + 1] = {};
   char history_[kHistory][kCapacity+1] = {},draft_[kCapacity+1]={};
   char prompt_[49]="pakar";
+  char suggestion_[80]{};
   size_t historyNext_=0,historyCount_=0,historyOffset_=0,draftCursor_=0;
   size_t cursor_ = 0;
   uint8_t escape_ = 0, attribute_ = 0,escapeBytes_=0;

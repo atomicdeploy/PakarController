@@ -7,6 +7,7 @@ static void tap(Game &g,uint8_t key,uint32_t now){assert(g.input(key,true,now));
 static Config config(Game::Mode mode,uint16_t mask=15){auto c=Config::defaults(mode);c.enabledMask=mask;c.introEnabled=false;return c;}
 static void configure(Game &g,Config c,uint32_t now=0){assert(g.configure(c,now));assert(g.phase()==Game::Ready);}
 static void basics(){
+  const auto simon=Config::defaults(Game::Simon);assert(simon.rounds==1&&simon.sequenceLength==8&&simon.valid());
   Game g;auto c=config(Game::PressToWin);configure(g,c);
   assert(c.limitMs==0);g.tick(600000);assert(g.phase()==Game::Ready);
   tap(g,2,600000);assert(g.view().winner==2&&g.phase()==Game::Success);

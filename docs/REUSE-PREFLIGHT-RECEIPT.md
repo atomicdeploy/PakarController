@@ -1,5 +1,42 @@
 # Donor-first preflight receipt
 
+## Device terminal polish and Simon default, 2026-10-28 (issue #29 / #32)
+
+Reconsulted device-shell, terminal-ui, PU850 Shell.cpp donor-audit and
+games-streaming. Reread the actual PU850 Shell/Telnet/Commands sources at
+4311040, portable-shell command/VT100 sources at 67c5dcb8, and RayanLamp's
+contextual key/form ownership and terminal key-byte routing. Retained incremental
+input, scrubbing, bounded output, role gates and shared command owners. No Go
+runtime or blocking donor editor loop is imported onto the ESP.
+
+The concrete missing command was `beep`: it was absent from the catalogue and
+dispatch. The new finite Hz/ms parser feeds the existing buzzer/AVR owner. An
+actual-source fixture compiles both shell and AVR-route branches together and
+checks bytes, bounds, rejection and no replay. Muted descriptor-only suggestions
+use the existing editor; accepting them never executes. Help groups and wraps
+the existing catalogue. TUI uses readable labels and accepts additional CSI/SS3
+navigation, smaller viewports, in-place redraw and a 350 ms standalone-Escape
+delimiter on Telnet/framed USB. Full Unicode editing/RTL remains open.
+
+Canonical shell/property tests, production metadata/service fixtures, TCP/UDP
+loopback, actual tone dispatch and all/excluded-mode game fixtures pass. A changed
+message assertion initially failed; its abandoned Windows fixture process then
+locked the cache executable. After the automatic Stop-Process was denied, no
+alternate filename, kill utility or cleanup workaround was used. The process
+subsequently exited; the same canonical executable rebuilt and passed. The
+first tone fixture also exposed a missing direct ShellWire dependency, fixed
+with its existing bounded unsigned-number parser. No duplicated numeric parser.
+
+Simon defaults are one round with eight steps on new/default mode selection;
+saved records are not migrated or overwritten. ASUS SSH still refuses the
+current localhost:8022 connection. This pass has not flashed, rebooted, changed
+a saved scene, or sounded a production board. Installed terminal navigation,
+audio and human acceptance remain pending; source/loopback/build results do
+not replace them. The firmware cache is rebuilt with the unchanged keycontroller
+hardware profile, GPIO fallback and included runtime RMT, BLE/SSH disabled.
+
+
+
 ## Host Wi-Fi join and management (issue #31)
 
 Read the complete actual PCController Android DiscoveryChannel.kt, verified

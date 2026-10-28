@@ -48,7 +48,7 @@ struct ShellTuiSnapshot {
     }
     view.rowCount=count;
     for(size_t i=0;i<count;++i){ShellProperty property;const bool known=shellProperty(list[i],property);
-      values[i]=known?shellGet(property):String("unknown");rows[i]={list[i],list[i],values[i].c_str(),known&&property.writable&&!shellBusy(),known&&property.secret};}
+      values[i]=known?shellGet(property):String("unknown");rows[i]={PakarShell::propertyLabel(list[i]),list[i],values[i].c_str(),known&&property.writable&&!shellBusy(),known&&property.secret};}
     for(uint8_t i=0;i<80;++i)cells[i]=grid.state(i+1);
   }
 };

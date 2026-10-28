@@ -31,6 +31,8 @@ if($LASTEXITCODE){throw 'Shell mDNS fixture compilation failed'}
 if($LASTEXITCODE){throw 'Shell mDNS fixture failed'}
 & node (Join-Path $taskRoot 'tests/shell_service_test.mjs')
 if($LASTEXITCODE){throw 'Actual shell service lease fixture failed'}
+& node (Join-Path $taskRoot 'tests/shell_tone_dispatch_test.mjs')
+if($LASTEXITCODE){throw 'Actual shell-to-AVR tone dispatch fixture failed'}
 & node (Join-Path $taskRoot 'tests/portable_shell_source_test.mjs')
 if($LASTEXITCODE){throw 'Portable-shell source inventory fixture failed'}
 & node (Join-Path $taskRoot 'tests/telnet_client_test.mjs')

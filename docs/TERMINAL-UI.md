@@ -1,5 +1,53 @@
 # Interactive terminal checkpoint
 
+## Terminal interaction polish (2026-10-28 candidate)
+
+The greeting is just product and hostname, with no `help / tui` narration.
+The green prompt and cyan command syntax share a restrained palette with muted
+suggestions/hints. `help` groups the role-filtered catalogue under Device, Game,
+Lighting, Sound & display and Workspace, with aligned descriptions and wrapping
+for narrow terminals. Unicode separators have an ASCII fallback.
+
+Typing a command or `get`/`set` property shows a muted descriptor-name suffix.
+Right or End at the end of the input accepts the suggestion; it does not execute
+it. Tab retains common-prefix completion and the ambiguity list. Suggestions
+never come from history, credentials or argument values, never appear during
+password entry and are disabled for plain terminals. Editing or moving left
+clears the old suffix. Enter submits only the actual typed/accepted input.
+
+`beep` is now a real command: `beep` defaults to a 1000 Hz, 100 ms tone;
+`beep 440 250` requests 440 Hz for 250 ms. Bounds are 20–12000 Hz and 1–5000 ms.
+It uses the same validated `buzzer` command and AVR command owner as the apps,
+not a shell-local tone driver or the donor's ASCII-byte Request_Beep argument.
+An accepted/queued response does not prove audible playback. `audio CUE` retains
+the configured cue catalogue and the same readiness/maintenance admission.
+
+The device TUI accepts CSI and SS3 arrows across fragmented callbacks, plus
+Home/End (including numeric variants), Page Up/Down, Delete and Shift-Tab.
+Left/Right change pages while fields are focused; in a form they move the text
+cursor, and in the LED/pixel workspace they move the selected item. Tab and
+Shift-Tab change pages without sending a command. Settings use human labels;
+stable raw property identifiers remain available through get/set. A 40×16
+viewport is now interactive, with fewer visible rows and a paged cell grid.
+Navigation redraws in place instead of clearing the whole screen each time.
+Standalone Escape waits 350 ms on Telnet/framed USB to avoid prematurely
+consuming a fragmented arrow on a slower link. Ctrl-C remains immediate.
+
+This is a source/candidate checkpoint, not installed terminal/audio acceptance.
+Full UTF-8 text entry, grapheme widths and RTL shaping remain separate work.
+
+Final guarded keycontroller build: 2,357,183 sketch bytes / 3,342,336 OTA slot;
+127,276 static RAM bytes, 200,404 remaining before runtime allocations.
+Application file 2,357,328 bytes, SHA256
+`428ba2d09aa21b5d463ce78136c56c26d34fd433ec02941ce80c81ec309fdc0e`.
+The candidate was compiled in the shared checkout, with concurrent disabled-SSH
+plumbing present; it is not an exact clean-commit binary attestation. The owned
+staged source projection separately passed canonical shell, property, metadata,
+tone-dispatch, loopback and minigame fixtures. ASUS connectivity and installed
+navigation/audio feedback remain deployment/acceptance gates. No app rebuild is
+required by the terminal change. Saved mode configuration is untouched; newly
+selected/default Simon uses one round with eight steps.
+
 ## Shell consistency and UDP diagnostic checkpoint
 
 `pixel 0 1 FF0000` selects API pixel index zero. `pixel group 1 FF0000`
@@ -61,7 +109,7 @@ contracts in RFC1073 and RFC1091, not every optional Telnet extension.
 `terminal unicode off` selects ASCII borders; `terminal color off` disables TUI
 ANSI presentation. `terminal size 80 24` supplies dimensions when the client does
 not negotiate them. Terminal settings are per-session, not flash writes. The
-Terminal page edits the same values. TUI needs at least 40 columns and 24 rows;
+Terminal page edits the same values. TUI needs at least 40 columns and 16 rows;
 resizing below this pauses editing/actions while retaining the draft. Escape
 returns to the shell. Unicode currently covers the rendered frame, not general
 Unicode text entry: editable property values remain ASCII; full UTF-8 editing,
