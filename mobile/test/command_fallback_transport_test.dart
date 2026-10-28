@@ -6,8 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pakarcontroller/api.dart';
 import 'package:pakarcontroller/models.dart';
 import 'package:pakarcontroller/pixel_diagnostic.dart';
+import 'package:pakarcontroller/minigame.dart';
 
 import 'peer_fixture.dart';
+import 'minigame_test.dart' show miniStatus;
 
 Map<String, dynamic> status({PixelProbe? probe}) => {
   ...peerFixture(
@@ -38,6 +40,8 @@ Map<String, dynamic> status({PixelProbe? probe}) => {
 };
 
 class CommandServer {
+  CommandServer({this.snapshot});
+  final Map<String, dynamic> Function()? snapshot;
   late HttpServer server;
   final sockets = <WebSocket>[];
   final timers = <Timer>[];
@@ -52,11 +56,11 @@ class CommandServer {
       if (request.uri.path == '/ws') {
         final socket = await WebSocketTransformer.upgrade(request);
         sockets.add(socket);
-        socket.add(jsonEncode(status()));
+        socket.add(jsonEncode(snapshot?.call() ?? status()));
         socket.listen((message) {
           final q = jsonDecode(message as String) as Map;
           if (q['type'] != 'command') {
-            socket.add(jsonEncode(status()));
+            socket.add(jsonEncode(snapshot?.call() ?? status()));
             return;
           }
           packets.add(q);
@@ -75,11 +79,11 @@ class CommandServer {
                 jsonEncode({
                   'type': 'command-result',
                   'request_id': q['request_id'],
-                  'board_id': 'fixture',
-                  'boot_id': 'a' * 32,
+                  'board_id': q['board_id'],
+                  'boot_id': q['boot_id'],
                   'accepted': true,
                   if (q['command'] == 'cells') 'count': 2,
-                  'status': status(probe: probe),
+                  'status': snapshot?.call() ?? status(probe: probe),
                 }),
               ),
             ),
@@ -92,7 +96,7 @@ class CommandServer {
           writes++;
         }
         request.response.headers.contentType = ContentType.json;
-        request.response.write(jsonEncode(status()));
+        request.response.write(jsonEncode(snapshot?.call() ?? status()));
         await request.response.close();
       }
     });
@@ -125,6 +129,30 @@ class CommandServer {
 }
 
 void main() {
+  test('Game box taps prefer WS with typed values and no HTTP write or preflight read', () async {
+    final base = miniStatus(phase: 'input').json;
+    final observed = {...base, 'board_id': 'fixture', 'boot_id': 'a' * 32};
+    final server = CommandServer(snapshot: () => observed);
+    await server.start();
+    final api = server.api();
+    final live = await server.live(api);
+    try {
+      final reads = server.reads;
+      final actual = await api.fastCommand(minigameInput, {
+        'key': '2',
+        'action': 'tap',
+      }, authorize: () => true);
+      expect(actual?.peer.minigame?.phase, 'input');
+      expect(server.packets.single['command'], 'minigame-input');
+      expect(server.packets.single['key'], 2);
+      expect(server.writes, 0);
+      expect(server.reads, reads);
+    } finally {
+      await api.close();
+      await live.cancel();
+      await server.close();
+    }
+  });
   test('HTTP command fallback defaults enabled', () async {
     final api = PakarApi();
     expect(api.commandHttpFallback, true);

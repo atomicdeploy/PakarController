@@ -851,7 +851,7 @@
         {
           "path": "web/modules/components.js",
           "anchor": "function dialog(",
-          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
+          "sha256": "235848fa3e63603672f79cbb2b5e860ffe38df0f880cd01d64e3232d754b29b6"
         },
         {
           "path": "assets/web/application-utilities.js",
@@ -993,7 +993,7 @@
         {
           "path": "assets/web/command-transport.js",
           "anchor": "if(path==='/api/led/diagnostic')",
-          "sha256": "5897b07c647aba6bfcfa799caa0cbb3d25873ab331cfe48d74840a338712fb68"
+          "sha256": "c7b5e835f07cd2fc7900808a78b4be1b0753667eb34d6b4b2664a7c1b5fe96a8"
         },
         {
           "path": "assets/web/studio.css",
@@ -1186,7 +1186,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "final correctionPeer = (",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2"
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78"
         },
         {
           "path": "mobile/lib/pixel_correction_address.dart",
@@ -1282,17 +1282,17 @@
         {
           "path": "web/modules/components.js",
           "anchor": "function decorateControl(",
-          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
+          "sha256": "235848fa3e63603672f79cbb2b5e860ffe38df0f880cd01d64e3232d754b29b6"
         },
         {
           "path": "web/modules/components.js",
           "anchor": "function setControlText(",
-          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
+          "sha256": "235848fa3e63603672f79cbb2b5e860ffe38df0f880cd01d64e3232d754b29b6"
         },
         {
           "path": "assets/web/localization.js",
           "anchor": "function renderUiText(",
-          "sha256": "1d8625b2a63a926b54431c3bb357eeb798fa59a033a97e906e14dbe14109b56d"
+          "sha256": "c1677c13a1ab0e08f0e9640abef2a2076a63dc811cc4e52198a62a208271250a"
         }
       ],
       "proof": [
@@ -1348,7 +1348,7 @@
         {
           "path": "web/index.html",
           "anchor": "function renderAssignmentTools(",
-          "sha256": "db2cd9d91c49b3ab835ee7ec9b8202941e478c58834fedc24dc5c709f79f49bd"
+          "sha256": "5114b245011e83c43180e39bb680123ddbfe2add1fbc2eda48716935e1b0e435"
         }
       ],
       "proof": [
@@ -1393,7 +1393,7 @@
         {
           "path": "web/modules/components.js",
           "anchor": "const actionIcons=",
-          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
+          "sha256": "235848fa3e63603672f79cbb2b5e860ffe38df0f880cd01d64e3232d754b29b6"
         },
         {
           "path": "assets/web/application-utilities.js",
@@ -1448,12 +1448,12 @@
         {
           "path": "web/modules/components.js",
           "anchor": "const controlIcons=",
-          "sha256": "72213399f1a59128dda0ea8d30f1f6e9fe279f06008f492109ffe90fc082d207"
+          "sha256": "235848fa3e63603672f79cbb2b5e860ffe38df0f880cd01d64e3232d754b29b6"
         },
         {
           "path": "assets/web/localization.js",
           "anchor": "function renderUiText(",
-          "sha256": "1d8625b2a63a926b54431c3bb357eeb798fa59a033a97e906e14dbe14109b56d"
+          "sha256": "c1677c13a1ab0e08f0e9640abef2a2076a63dc811cc4e52198a62a208271250a"
         }
       ],
       "proof": [
@@ -1750,7 +1750,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "selectionHasCellState(status!.json, selection, value)",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2"
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78"
         }
       ],
       "proof": [
@@ -2449,12 +2449,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -2488,12 +2488,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -2573,7 +2573,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -2648,19 +2648,19 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
+          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -2694,19 +2694,19 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
+          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -2740,7 +2740,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
@@ -2790,12 +2790,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -3167,7 +3167,8 @@
       "verdict": "parity-gap",
       "preserved": [
         "Firmware specialist read all 886 actual donor lines through EOF and matched original-byte inventory hash. Adapted PROGRAM_BASIC/PROGRAM_PUZZLE/PROGRAM_CODE/PROGRAM_MAZE preprocessor selection into one validated GameRole shared by ESP and AVR, rather than retaining several runtime games. Unsupported roles fail compilation; the baked role is disclosed to peers and clients filter acknowledged controls.",
-        "2026-10-27 issue #32: reread all 886 donor lines. The new runtime-game request supersedes the earlier single-game policy inside keycontroller, not table/key role separation. Adapted mode transitions, countdown and relay predicates into one bounded ESP-owned engine with ten optional modes, explicit AVR raw-edge ownership and shared HostPresentation effects. No blocking tones, fixed puzzle code or maze wiring copied."
+        "2026-10-27 issue #32: reread all 886 donor lines. The new runtime-game request supersedes the earlier single-game policy inside keycontroller, not table/key role separation. Adapted mode transitions, countdown and relay predicates into one bounded ESP-owned engine with ten optional modes, explicit AVR raw-edge ownership and shared HostPresentation effects. No blocking tones, fixed puzzle code or maze wiring copied.",
+        "2026-10-28 issue #32: reread the unchanged 886-line donor through EOF and adapt its phase-local presentation and finite finish/incorrect cues, without its blocking welcome/tone waits. Add configurable ordered fade/reveal, per-entry Simon feedback, a distinct wrong-pair phase duration, phase-aligned blink rendering, matched-color progress and locally timed atomic arpeggios using the existing AVR circular queue. Existing saved instance values are not migrated or overwritten; core/transport evidence is not physical acceptance."
       ],
       "targets": [
         {
@@ -3177,17 +3178,17 @@
         },
         {
           "path": "libraries/BoardCore/src/KeyMiniGame.h",
-          "sha256": "c499f2f2b1a85332a8e9b2408c0d38d8bd6f33b2a1144d96e42acd91457a9ae4",
+          "sha256": "42038c7dacf636614509334cba3bb670b09c31c8c5399ece4c25597fed77c815",
           "anchor": "class KeyMiniGame"
         },
         {
           "path": "firmware/esp/src/KeyMiniGameSettings.h",
-          "sha256": "d8c42721282606be94fc116ba9ed06c2fe0ab8e48c70ff09df0bfd2141a99620",
+          "sha256": "e4f135174b37a402278acc041f222a0b78a7e35821606c394d812ccaae1fb274",
           "anchor": "struct KeyMiniGameSettings"
         },
         {
           "path": "firmware/esp/src/KeyMiniGameService.h",
-          "sha256": "09110c23572afbd4a3daeab1d56bae92baf061ce69a8f060a152062bb27cd1e8",
+          "sha256": "c73c99a7533a3e202a466f5595e01b816c54cea90c08198959e01c1eb863e194",
           "anchor": "void serviceMiniGame"
         }
       ],
@@ -3204,12 +3205,12 @@
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "67a6aa782f577d383583dc7a963968b370a6d37a5fce3ebd7068e40abb27b149",
+          "sha256": "6164f3223217bdba785e35237703890ebcd0edfd113ad4ca76994ee26da6e517",
           "anchor": "static void toggle()"
         },
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "4163c310bb2609a29db6982b0f2ed11621b993b31eb8a6961f8ab6d1ff32cc87",
+          "sha256": "97dd25ba175d370427bab2083c1359196a95dd6e8b4ad5c4711b75e385403065",
           "anchor": "test('every minigame command"
         }
       ],
@@ -3311,7 +3312,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78",
           "anchor": ": WorkspaceActivityStrip("
         },
         {
@@ -3338,7 +3339,7 @@
         },
         {
           "path": "mobile/test/output_panel_test.dart",
-          "sha256": "c08d3cb1d9a62c6b51390250c496f63bd7a5df7ace1f192b7475fe3162640e9d",
+          "sha256": "b75b25f46b391a84c0400f08361c4c520e2fda547e95f8b9030078f7f281e317",
           "anchor": "Phone activity navigation keeps eight panels reachable without squeezing"
         },
         {
@@ -6550,7 +6551,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6633,7 +6634,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6695,7 +6696,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6757,7 +6758,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6819,7 +6820,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6881,7 +6882,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6938,7 +6939,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -6979,7 +6980,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -7020,7 +7021,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -7061,7 +7062,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -7102,7 +7103,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -7143,7 +7144,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -7184,7 +7185,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -7225,7 +7226,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "enum Pattern : uint8_t"
         }
       ],
@@ -8408,7 +8409,7 @@
         {
           "path": "mobile/lib/command_failure.dart",
           "anchor": "class DeviceCommandRejected",
-          "sha256": "778977413377a3f3a1aa6bc706e68ec39e0b04158a64ad01806fd176d938f22b"
+          "sha256": "08630bd0a48b7373e27426ca9d59151059c009428c4aa3eb60f7c7f6eb9aadeb"
         },
         {
           "path": "mobile/test/command_failure_test.dart",
@@ -8469,7 +8470,7 @@
         {
           "path": "mobile/test/command_fallback_transport_test.dart",
           "anchor": "void main()",
-          "sha256": "c05c6aaa794202ddde9051e37513062464264ae34bdd83d70f5917a6509238bb"
+          "sha256": "0d6590e9ef902d4c3ad270d445fa2312549c56022475d484b16ad64c3718b434"
         },
         {
           "path": "mobile/test/command_preferences_widget_test.dart",
@@ -8618,7 +8619,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function firmwareUpdateObservation(s)"
         }
       ],
@@ -9388,7 +9389,7 @@
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "void TonePlayer::update(uint32_t now)"
         }
       ],
@@ -9515,7 +9516,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "Wall-clock interpolation"
         },
         {
@@ -9542,7 +9543,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "kCueWelcome40Led"
         },
         {
@@ -9609,12 +9610,12 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void resetGame(bool playWelcome = true)"
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "bool LedGrid::resetWhite()"
         }
       ],
@@ -10234,7 +10235,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "void LedGrid::service(uint32_t now)"
         },
         {
@@ -10343,12 +10344,12 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "void LedGrid::service(uint32_t now)"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "void TonePlayer::update(uint32_t now)"
         }
       ],
@@ -10365,7 +10366,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -10425,7 +10426,7 @@
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "void TonePlayer::update(uint32_t now)"
         }
       ],
@@ -10442,7 +10443,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -10497,7 +10498,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void chooseWinner(uint8_t button)"
         },
         {
@@ -10577,7 +10578,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const uint16_t durations[kCueCount]",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -10616,7 +10617,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const uint16_t durations[kCueCount]",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -12649,7 +12650,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -12694,7 +12695,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function upgradeObservation(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         }
       ],
       "omissions": [
@@ -12819,7 +12820,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         }
       ],
       "proof": [
@@ -12909,7 +12910,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         }
       ],
       "proof": [
@@ -12999,7 +13000,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         }
       ],
       "proof": [
@@ -13089,7 +13090,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         }
       ],
       "proof": [
@@ -13151,7 +13152,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -13209,7 +13210,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
         }
       ],
       "omissions": [
@@ -13270,7 +13271,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13286,7 +13287,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -13401,7 +13402,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -13433,7 +13434,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -13542,14 +13543,14 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         }
       ],
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -13721,7 +13722,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -13798,7 +13799,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -14599,7 +14600,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function statusRgbOutput"
         }
       ],
@@ -14648,7 +14649,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -14733,7 +14734,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function acceptStatusRgb("
         }
       ],
@@ -15078,7 +15079,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15207,7 +15208,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -15383,7 +15384,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78",
           "anchor": "api.onPeerChanged = ()"
         },
         {
@@ -15403,7 +15404,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
           "anchor": "bool authenticate()"
         },
         {
@@ -15443,7 +15444,7 @@
         },
         {
           "path": "mobile/lib/command_wire.dart",
-          "sha256": "99f7b9b6b9a4d8e150a8de6d1259794bd8b0b9d523513e33a21c5b53f6b0a7d6",
+          "sha256": "93cdedfd116e59f1c7d3e9397bf539b47974001dacffd7b06a3eaab9c2712708",
           "anchor": "String commandPacket("
         },
         {
@@ -15453,7 +15454,7 @@
         },
         {
           "path": "mobile/lib/table_workspace.dart",
-          "sha256": "1f21007e69778ddbedb34a1c392a152693f5dd742aae185019e6dbc1dc2b08a5",
+          "sha256": "02445683146ff2b3bdca50bfa8d1aa1dedb94261c361613fdb545e7ca4f7c83e",
           "anchor": "class TableWorkspace"
         },
         {
@@ -16648,7 +16649,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function connectWs()"
         }
       ],
@@ -16757,7 +16758,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -16849,7 +16850,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -17021,7 +17022,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function connectWs()"
         }
       ],
@@ -17119,12 +17120,12 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "1d8625b2a63a926b54431c3bb357eeb798fa59a033a97e906e14dbe14109b56d",
+          "sha256": "c1677c13a1ab0e08f0e9640abef2a2076a63dc811cc4e52198a62a208271250a",
           "anchor": "function startUiLocaleController()"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -17220,7 +17221,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -17305,7 +17306,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -17499,12 +17500,12 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "db2cd9d91c49b3ab835ee7ec9b8202941e478c58834fedc24dc5c709f79f49bd",
+          "sha256": "5114b245011e83c43180e39bb680123ddbfe2add1fbc2eda48716935e1b0e435",
           "anchor": "function renderLedBackendControl(anchor){"
         },
         {
           "path": "web/index.html",
-          "sha256": "db2cd9d91c49b3ab835ee7ec9b8202941e478c58834fedc24dc5c709f79f49bd",
+          "sha256": "5114b245011e83c43180e39bb680123ddbfe2add1fbc2eda48716935e1b0e435",
           "anchor": "function waitForLedBackend("
         }
       ],
@@ -17677,7 +17678,7 @@
       "targets": [
         {
           "path": "assets/web/localization.js",
-          "sha256": "1d8625b2a63a926b54431c3bb357eeb798fa59a033a97e906e14dbe14109b56d",
+          "sha256": "c1677c13a1ab0e08f0e9640abef2a2076a63dc811cc4e52198a62a208271250a",
           "anchor": "function uiTr(text,values)"
         },
         {
@@ -17687,7 +17688,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -18119,7 +18120,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function statusRgbOutput"
         },
         {
@@ -18290,7 +18291,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78",
           "anchor": "Future<bool> _command"
         },
         {
@@ -18300,12 +18301,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function peerAvailability("
         }
       ],
@@ -18495,7 +18496,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         }
       ],
       "omissions": [
@@ -18554,7 +18555,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -18615,7 +18616,7 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78",
           "anchor": "peer.application?.icon ?? bundledApplicationArtwork"
         },
         {
@@ -18689,12 +18690,12 @@
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78",
           "anchor": "Future<void> _openConnection()"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -18704,7 +18705,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -18785,7 +18786,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -19495,12 +19496,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
+          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "startsAt = stepEndsAt_"
         },
         {
@@ -19526,7 +19527,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -19553,18 +19554,18 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.setMuted(false)"
         },
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -19589,7 +19590,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "fifteen finite cues",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         }
       ],
       "improvement": "Tested late-loop and wraparound timing without cumulative melody-length drift; initialized default construction; validation at enqueue; mute changes publish immediately; unmute no longer restarts an interrupted note."
@@ -19606,12 +19607,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
+          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -19638,12 +19639,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -19666,12 +19667,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
+          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "startsAt = stepEndsAt_"
         },
         {
@@ -19697,7 +19698,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -19739,18 +19740,18 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.setMuted(false)"
         },
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -19775,7 +19776,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "fifteen finite cues",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -19797,12 +19798,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "fa6f768e3f06bfdcb1d8a8b7574eba4bad69156245c42438dcb1a02d81cb1f7b",
+          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "3f5b56e00804b1c19e2e6c158a5d9537d234e752ad8972dc9fd75639d4712965",
+          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -19829,12 +19830,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9",
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -20149,7 +20150,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -20200,7 +20201,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -20253,12 +20254,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -20298,12 +20299,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -20389,7 +20390,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -20445,7 +20446,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -20501,7 +20502,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -20614,12 +20615,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "uint8_t brightness_ = 255"
         },
         {
@@ -20684,12 +20685,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "uint8_t brightness_ = 255"
         }
       ],
@@ -21706,7 +21707,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -21811,7 +21812,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "/* Fixed manager slots:"
         },
         {
@@ -22042,7 +22043,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0",
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -22117,7 +22118,7 @@
         },
         {
           "path": "assets/web/localization.js",
-          "sha256": "1d8625b2a63a926b54431c3bb357eeb798fa59a033a97e906e14dbe14109b56d",
+          "sha256": "c1677c13a1ab0e08f0e9640abef2a2076a63dc811cc4e52198a62a208271250a",
           "anchor": "subscribeLocalePreferences(value=>"
         }
       ],
@@ -22433,7 +22434,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22489,7 +22490,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22545,7 +22546,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22601,7 +22602,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "ba488adb3e1bb2a6a8c1f534885633726546855c59594bfd4842f6b2598bf5d5",
+          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22968,7 +22969,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -22999,7 +23000,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -23090,7 +23091,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "4a5bb8bc709395e83e51af66804dbdb1631d1cc8336a5d8da9d86a2e3c62c4a9"
+          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -23808,12 +23809,12 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "bool setCells("
         },
         {
@@ -23838,7 +23839,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -23909,7 +23910,7 @@
         {
           "path": "firmware/esp/src/LedGrid.cpp",
           "anchor": "bool LedGrid::diagnostic(",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a"
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a"
         },
         {
           "path": "firmware/esp/src/DiagnosticReceipt.h",
@@ -23919,7 +23920,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -24115,12 +24116,12 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a",
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a",
           "anchor": "bool LedGrid::setCells("
         },
         {
           "path": "firmware/esp/src/LedGrid.h",
-          "sha256": "23f00016c886a9443da15430334bd366d24e1bc3b6429b809e9753defd327b39",
+          "sha256": "113307ee50a57c81c43aa640aed4af5c2016fa214d7b0748aa2008185e4ea4c5",
           "anchor": "bool setCells("
         },
         {
@@ -24145,7 +24146,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2",
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24211,7 +24212,7 @@
         {
           "path": "firmware/esp/src/LedGrid.cpp",
           "anchor": "bool LedGrid::diagnostic(",
-          "sha256": "339637c6e1b8bcdaa8acf81b3ee011eb052720bbafa705de7d6195a40d61b86a"
+          "sha256": "69899f8691d99693be176770cecf4c15448a7379b5bb9e0b14660763aba3ba5a"
         },
         {
           "path": "firmware/esp/src/DiagnosticReceipt.h",
@@ -24221,7 +24222,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "6ce36ccdcd8c12b6e284433039518b47ee127eb1367762a28789eab7087032e2"
+          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
         }
       ],
       "omissions": [
@@ -24374,7 +24375,7 @@
       "targets": [
         {
           "path": "mobile/lib/output_panel.dart",
-          "sha256": "380f077085491cd4772f1f5dacdcde3811f119f18dfe239bd4792846f62ff7e8",
+          "sha256": "3cf8895bbbdfc82cb7f4c12ed8e1895623099975722753d5dc722d3eb7ebe9c3",
           "anchor": "class OutputPanel"
         },
         {
@@ -24384,22 +24385,22 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "db2cd9d91c49b3ab835ee7ec9b8202941e478c58834fedc24dc5c709f79f49bd",
+          "sha256": "5114b245011e83c43180e39bb680123ddbfe2add1fbc2eda48716935e1b0e435",
           "anchor": "function workspaceDiagnosticDraft()"
         },
         {
           "path": "mobile/test/output_panel_test.dart",
-          "sha256": "c08d3cb1d9a62c6b51390250c496f63bd7a5df7ace1f192b7475fe3162640e9d",
+          "sha256": "b75b25f46b391a84c0400f08361c4c520e2fda547e95f8b9030078f7f281e317",
           "anchor": "Output order is bounded, durable and independent of table selection"
         },
         {
           "path": "mobile/lib/table_workspace.dart",
-          "sha256": "1f21007e69778ddbedb34a1c392a152693f5dd742aae185019e6dbc1dc2b08a5",
+          "sha256": "02445683146ff2b3bdca50bfa8d1aa1dedb94261c361613fdb545e7ca4f7c83e",
           "anchor": "class TableWorkspace"
         },
         {
           "path": "mobile/lib/main.dart",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2",
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78",
           "anchor": "Future<void> _saveWorkspaces()"
         },
         {
@@ -24430,7 +24431,7 @@
         {
           "path": "mobile/lib/table_workspace.dart",
           "anchor": "class FrontPanelWorkspace",
-          "sha256": "1f21007e69778ddbedb34a1c392a152693f5dd742aae185019e6dbc1dc2b08a5"
+          "sha256": "02445683146ff2b3bdca50bfa8d1aa1dedb94261c361613fdb545e7ca4f7c83e"
         },
         {
           "path": "desktop/src/workspace_layout.rs",
@@ -24496,7 +24497,7 @@
         },
         {
           "path": "mobile/test/output_panel_test.dart",
-          "sha256": "c08d3cb1d9a62c6b51390250c496f63bd7a5df7ace1f192b7475fe3162640e9d",
+          "sha256": "b75b25f46b391a84c0400f08361c4c520e2fda547e95f8b9030078f7f281e317",
           "anchor": "Single-mode table has no empty Scene and hidden cards keep their saved order"
         }
       ],
@@ -24575,7 +24576,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2"
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78"
         }
       ],
       "proof": [
@@ -24615,7 +24616,7 @@
         {
           "path": "mobile/lib/main.dart",
           "anchor": "_saveWorkspaces",
-          "sha256": "df2326919e66b3c55b0aa1f2f2d2ab49c1126de156069610511feb1e486c75d2"
+          "sha256": "fb65bcfec34e61141e18c222e27735cbfe73e9f536c008472f1099e329519f78"
         }
       ],
       "proof": [
@@ -24715,7 +24716,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function createWorkspaceStorage",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         },
         {
           "path": "assets/web/device-settings.js",
@@ -24769,7 +24770,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function workspaceSettingsRecord",
-          "sha256": "f28569f36e2627e02beacc5d291de9e442c74e9fc7f8ac64595dd8f299891cb0"
+          "sha256": "4ff72a3c971c4a023e7f215bb1c15f40402a63a4d9cedc3fabb7d85f65cea98b"
         }
       ],
       "proof": [
@@ -24976,11 +24977,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -24992,7 +24994,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25016,11 +25018,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25032,7 +25035,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25056,11 +25059,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25072,7 +25076,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25096,11 +25100,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25112,7 +25117,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25136,11 +25141,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25152,7 +25158,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25176,11 +25182,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25192,7 +25199,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25216,11 +25223,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25232,7 +25240,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25256,11 +25264,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25272,7 +25281,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25296,11 +25305,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25312,7 +25322,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25336,11 +25346,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25352,7 +25363,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25376,11 +25387,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25392,7 +25404,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25416,11 +25428,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25432,7 +25445,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25456,11 +25469,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25472,7 +25486,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25496,11 +25510,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25512,7 +25527,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25536,11 +25551,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25552,7 +25568,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }
@@ -25576,11 +25592,12 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below."
+        "Primary mechanics and variant differences reviewed against the actual local donor; file-specific disposition below.",
+        "2026-10-28 consumer-only refresh: reread the current complete mini-app README and snake_host_test.mjs through EOF, including committed capability/role and tablet steering assertions. Preserve existing donor-source decisions and unfinished two-player/tilt/map/Android-host gates; this hash refresh is not a new donor read or hardware acceptance."
       ],
       "targets": [
         {
-          "sha256": "c3541f590b5bd6821fb6fa2f5a6874923510f04bc1b830173aa35ab30cee777d",
+          "sha256": "c3c692853c771323f123de55da5444d28f73a1344b7db32c539edeb6c648cec9",
           "path": "mini-apps/snake/README.md",
           "anchor": "# DRS Snake"
         },
@@ -25592,7 +25609,7 @@
       ],
       "proof": [
         {
-          "sha256": "5198852dacd64dedd5a5f3f3a259165910f1f7ab87a7b38aaf537426afcc60dc",
+          "sha256": "b828e13885ff256a253af281c5ce7827ecc746bc64f6330db585511899f61a67",
           "path": "tests/snake_host_test.mjs",
           "anchor": "80 table addresses are bijective"
         }

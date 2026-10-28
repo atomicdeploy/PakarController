@@ -36,4 +36,9 @@ test('countdown presentation keeps update progress priority and shared effects',
   assert.match(panel,/!updating&&miniReady\(\)&&miniGame\.view\(\)\.timed&&miniGame\.running\(\)/);
   assert.match(panel,/semanticPanel\.persistent\(updating\|\|gameCountdown,text\)/);
   assert.match(led,/Presentation::composeLayer\(\*gameLayer_/);
+  assert.match(led,/millis\(\)-gamePresentationAt_/);
+  assert.match(service,/grid\.setGamePresentationEpoch\(miniGame\.presentationAt\(\)\)/);
+  assert.match(service,/mode!=G::PressToWin&&\(v\.phase==G::Ready\|\|v\.phase==G::Stopped\)/);
+  assert.match(service,/resultCue=kCueIncorrect/);
+  assert.match(service,/resultCue=keySettings\.winnerCue/);
 });

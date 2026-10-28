@@ -92,7 +92,11 @@ class _MiniGamePanelState extends State<MiniGamePanel>
       }
       return ok;
     } catch (e) {
-      if (mounted) setState(() => error = '$e');
+      if (mounted) {
+        setState(
+          () => error = e is FormatException ? e.message.toString() : '$e',
+        );
+      }
       return false;
     } finally {
       if (mounted) setState(() => pending = false);
@@ -236,11 +240,10 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       SizedBox(
-                        width: 320,
+                        width: 380,
                         child: InputDecorator(
                           decoration: const InputDecoration(
                             labelText: 'Game mode',
-                            prefixIcon: Icon(Icons.videogame_asset_outlined),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 4,
@@ -251,16 +254,19 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                               key: const ValueKey('minigame-mode'),
                               value: snapshot.mode,
                               isExpanded: true,
-                              isDense: true,
+                              itemHeight: 64,
+                              isDense: false,
                               borderRadius: BorderRadius.circular(16),
                               items: [
                                 for (final entry in snapshot.modes.entries)
                                   DropdownMenuItem(
                                     value: entry.key,
-                                    child: Text(
-                                      entry.value,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    child: _GameModeChoice(
+                                      id: entry.key,
+                                      label: entry.value,
+                                      description: snapshot.description(
+                                        entry.key,
+                                      ),
                                     ),
                                   ),
                               ],
@@ -404,6 +410,11 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                           active: true,
                           icon: Icons.my_location,
                         ),
+                      if (snapshot.mode == 'color-match')
+                        WorkspaceBadge(
+                          'Matched: ${snapshot.number('progress')}',
+                          icon: Icons.palette_outlined,
+                        ),
                       if (snapshot.number('last_reaction_ms') > 0)
                         WorkspaceBadge(
                           'Reaction: ${snapshot.number('last_reaction_ms')} ms',
@@ -436,11 +447,11 @@ class _MiniGamePanelState extends State<MiniGamePanel>
             KeyBoxDesigner(
               status: widget.status,
               workspace: widget.workspace,
-              enabled: ready,
+              enabled: ready && snapshot.acceptsInput,
               onTap: (key) =>
                   send(minigameInput, {'key': '$key', 'action': 'tap'}),
-              onHoldStart: beginHold,
-              onHoldEnd: endHold,
+              onHoldStart: snapshot.usesHold ? beginHold : null,
+              onHoldEnd: snapshot.usesHold ? endHold : null,
               openSettings: widget.openBoxSettings,
               inputKeyPrefix: 'minigame-key',
             ),
@@ -459,6 +470,56 @@ class _MiniGamePanelState extends State<MiniGamePanel>
       ),
     );
   }
+}
+
+class _GameModeChoice extends StatelessWidget {
+  const _GameModeChoice({
+    required this.id,
+    required this.label,
+    required this.description,
+  });
+  final String id, label, description;
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(
+        switch (id) {
+          'press-to-win' => Icons.emoji_events_outlined,
+          'illuminated' => Icons.my_location,
+          'color-match' => Icons.palette_outlined,
+          'simon' => Icons.queue_music,
+          'memory-pairs' => Icons.style_outlined,
+          'clear-all' => Icons.checklist_rounded,
+          'color-order' => Icons.sort_rounded,
+          'switch-pattern' => Icons.grid_view_rounded,
+          'reaction-chase' => Icons.bolt_rounded,
+          'toggle' => Icons.toggle_on_outlined,
+          _ => Icons.sports_esports_outlined,
+        },
+        size: 23,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 2),
+            Text(
+              description,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
 /// Adapted from PCController EffectEditor.number/numberDrafts/save: invalid text
@@ -493,6 +554,9 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
     'show_ms': 'Show time (ms)',
     'gap_ms': 'Gap (ms)',
     'feedback_ms': 'Feedback time (ms)',
+    'intro_ms': 'Reveal fade per box (ms)',
+    'preview_ms': 'Pairs preview hold (ms)',
+    'mismatch_ms': 'Wrong pair feedback (ms)',
     'rounds': 'Rounds',
     'sequence_length': 'Sequence length',
     'palette_size': 'Palette size',
@@ -614,6 +678,22 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
                         ),
                   ],
                 ),
+                for (final entry in {
+                  'intro_enabled': 'Reveal colors and notes before play',
+                  'color_arpeggio': 'Arpeggio color notes',
+                }.entries)
+                  if (draft[entry.key] is bool &&
+                      (entry.key != 'intro_enabled' ||
+                          const [
+                            'color-match',
+                            'memory-pairs',
+                          ].contains(draft['mode'])))
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(entry.value),
+                      value: draft[entry.key] as bool,
+                      onChanged: saving ? null : (v) => change(entry.key, v),
+                    ),
                 if (draft['hard'] is bool)
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,

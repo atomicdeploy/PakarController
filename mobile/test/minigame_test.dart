@@ -15,6 +15,8 @@ DeviceStatus miniStatus({
   bool ready = true,
   String phase = 'ready',
   String board = 'keys-A',
+  String mode = 'press-to-win',
+  String toggleKind = 'toggle',
 }) {
   final base = keyObservation(board: board).json;
   return DeviceStatus({
@@ -29,7 +31,7 @@ DeviceStatus miniStatus({
     },
     'minigame': {
       'ready': ready,
-      'mode': 'press-to-win',
+      'mode': mode,
       'phase': phase,
       'revision': 2,
       'available_modes': [
@@ -51,7 +53,7 @@ DeviceStatus miniStatus({
       'last_reaction_ms': 200,
       'best_reaction_ms': 150,
       'settings': {
-        'mode': 'press-to-win',
+        'mode': mode,
         'limit_ms': 60000,
         'warning_ms': 10000,
         'urgent_ms': 3000,
@@ -64,7 +66,7 @@ DeviceStatus miniStatus({
         'sequence_length': 4,
         'palette_size': 7,
         'fixed_target': 0,
-        'toggle_kind': 'toggle',
+        'toggle_kind': toggleKind,
         'hard': false,
         'outputs': List.generate(8, (_) => {'source': 'disabled', 'key': 0}),
       },
@@ -92,6 +94,48 @@ Widget fixture(
 );
 
 void main() {
+  test(
+    'Receipt owner survives the input fence without admitting a new command',
+    () {
+      final ready = miniStatus(), fenced = miniStatus(ready: false);
+      expect(
+        commandPeerMatches(
+          fenced,
+          ready.json['board_id'],
+          ready.json['boot_id'],
+        ),
+        isTrue,
+      );
+      expect(fenced.peer.allows(minigameControl, {'action': 'start'}), isFalse);
+      expect(
+        commandPeerMatches(
+          miniStatus(board: 'other'),
+          ready.json['board_id'],
+          ready.json['boot_id'],
+        ),
+        isFalse,
+      );
+      expect(commandPeerMatches(null, null, null), isFalse);
+    },
+  );
+  test('Intro and arpeggio settings are typed, bounded and optional', () {
+    final snapshot = miniStatus().peer.minigame!;
+    final fields = {
+      'settings': '{"intro_enabled":true,"color_arpeggio":true,"intro_ms":1000,"preview_ms":1500,"mismatch_ms":1200}',
+    };
+    expect(snapshot.allows(minigameConfigure, fields), isTrue);
+    expect(
+      snapshot.allows(minigameConfigure, {'settings': '{"mismatch_ms":100}'}),
+      isFalse,
+    );
+    expect(
+      snapshot.allows(minigameConfigure, {
+        'settings': '{"color_arpeggio":"true"}',
+      }),
+      isFalse,
+    );
+    expect(snapshot.description('toggle'), contains('without a timer'));
+  });
   testWidgets('Untimed press to win has no elapsed countdown', (tester) async {
     final base = miniStatus().json;
     final status = DeviceStatus({
@@ -286,10 +330,13 @@ void main() {
       final commands = <(String, Map<String, String>)>[];
       final down = Completer<bool>();
       await tester.pumpWidget(
-        fixture(miniStatus(), (path, values) async {
-          commands.add((path, values));
-          return values['action'] == 'down' ? down.future : true;
-        }),
+        fixture(
+          miniStatus(mode: 'toggle', phase: 'input', toggleKind: 'press'),
+          (path, values) async {
+            commands.add((path, values));
+            return values['action'] == 'down' ? down.future : true;
+          },
+        ),
       );
       await tester.ensureVisible(find.byKey(const ValueKey('minigame-key-1')));
       await tester.pumpAndSettle();

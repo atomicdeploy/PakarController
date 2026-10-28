@@ -40,6 +40,45 @@ pub fn modes(game: &Value) -> Vec<(&str, &str)> {
     }
     modes
 }
+fn mode_visual(id: &str) -> (&'static str, &'static str) {
+    match id {
+        "press-to-win" => (
+            icons::HAND_TAP,
+            "First press wins; reset for the next round",
+        ),
+        "illuminated" => (
+            icons::TARGET,
+            "Press the glowing target before its window closes",
+        ),
+        "color-match" => (
+            icons::PALETTE,
+            "Cycle button colors to match the indicator colors",
+        ),
+        "simon" => (
+            icons::MUSIC_NOTE,
+            "Watch, remember and repeat the light sequence",
+        ),
+        "memory-pairs" => (icons::COPY, "Reveal colors and find every matching pair"),
+        "clear-all" => (
+            icons::LIST_CHECKS,
+            "Press every illuminated button to clear the board",
+        ),
+        "color-order" => (icons::LIST, "Press the boxes in palette color order"),
+        "switch-pattern" => (
+            icons::GRID_FOUR,
+            "Toggle buttons to copy the indicator pattern",
+        ),
+        "reaction-chase" => (
+            icons::LIGHTNING,
+            "Catch the moving light inside its response window",
+        ),
+        "toggle" => (
+            icons::TOGGLE_RIGHT,
+            "Control latched or momentary outputs without a timer",
+        ),
+        _ => (icons::PLAY, "Board-provided game"),
+    }
+}
 pub fn settings(text: &str, game: &Value) -> Result<Value, String> {
     let patch: Value = serde_json::from_str(text).map_err(|_| "Invalid game settings")?;
     let fields = patch
@@ -51,7 +90,7 @@ pub fn settings(text: &str, game: &Value) -> Result<Value, String> {
             "mode" => value
                 .as_str()
                 .is_some_and(|id| modes(game).iter().any(|(known, _)| *known == id)),
-            "hard" => value.is_boolean(),
+            "hard" | "intro_enabled" | "color_arpeggio" => value.is_boolean(),
             "toggle_kind" => value
                 .as_str()
                 .is_some_and(|v| matches!(v, "toggle" | "latch" | "press")),
@@ -93,6 +132,9 @@ fn bounds(field: &str) -> Option<(u64, u64, &'static str)> {
         "show_ms" => (100, 10000, "Show duration"),
         "gap_ms" => (50, 5000, "Sequence gap"),
         "feedback_ms" => (50, 5000, "Feedback duration"),
+        "intro_ms" => (100, 10000, "Reveal fade per box"),
+        "preview_ms" => (0, 10000, "Pairs preview hold"),
+        "mismatch_ms" => (600, 10000, "Wrong pair feedback"),
         "rounds" => (1, 32, "Rounds"),
         "sequence_length" => (1, 32, "Sequence length"),
         "palette_size" => (2, 9, "Palette size"),
@@ -269,7 +311,9 @@ pub fn input(key: u8, action: &str) -> Request {
     }
 }
 pub fn input_action(ui: &egui::Ui, status: &DeviceStatus) -> String {
-    if !hold_controls(status) { return "tap".into(); }
+    if !hold_controls(status) {
+        return "tap".into();
+    }
     ui.data(|data| {
         data.get_temp::<String>(egui::Id::new((
             "minigame-input",
@@ -295,6 +339,8 @@ fn setting_visible(mode: &str, field: &str, timed: bool) -> bool {
         "penalty_ms" => timed && mode == "color-order",
         "window_ms" | "fixed_target" => matches!(mode, "illuminated" | "reaction-chase"),
         "show_ms" | "gap_ms" | "sequence_length" => mode == "simon",
+        "intro_ms" => matches!(mode, "color-match" | "memory-pairs"),
+        "preview_ms" | "mismatch_ms" => mode == "memory-pairs",
         "rounds" => matches!(mode, "illuminated" | "reaction-chase" | "simon"),
         "palette_size" => matches!(mode, "color-match" | "memory-pairs" | "color-order"),
         "feedback_ms" => !matches!(mode, "press-to-win" | "toggle"),
@@ -302,340 +348,469 @@ fn setting_visible(mode: &str, field: &str, timed: bool) -> bool {
     }
 }
 pub fn input_controls(ui: &mut egui::Ui, status: &DeviceStatus) {
-    if !hold_controls(status) { return; }
-    let id = egui::Id::new(("minigame-input", &status.board_id, &status.boot_id, status.minigame["mode"].as_str().unwrap_or("")));
+    if !hold_controls(status) {
+        return;
+    }
+    let id = egui::Id::new((
+        "minigame-input",
+        &status.board_id,
+        &status.boot_id,
+        status.minigame["mode"].as_str().unwrap_or(""),
+    ));
     let mut action = input_action(ui, status);
     ui.horizontal_wrapped(|ui| {
         ui.weak("On click");
         for (value, label) in [("tap", "Tap"), ("down", "Hold"), ("up", "Release")] {
-            if crate::ui::effect_controls::choice(ui, icons::HAND_TAP, label, action == value, true).clicked() { action = value.into(); }
+            if crate::ui::effect_controls::choice(ui, icons::HAND_TAP, label, action == value, true)
+                .clicked()
+            {
+                action = value.into();
+            }
         }
     });
     ui.data_mut(|data| data.insert_temp(id, action));
 }
 fn hold_controls(status: &DeviceStatus) -> bool {
     status.minigame["mode"] == "color-match"
-        || (status.minigame["mode"] == "toggle" && status.minigame["settings"]["toggle_kind"] == "press")
+        || (status.minigame["mode"] == "toggle"
+            && status.minigame["settings"]["toggle_kind"] == "press")
 }
-fn panel(ui: &mut egui::Ui, status: &DeviceStatus, writable: bool, settings_only: bool) -> Vec<Request> {
+fn panel(
+    ui: &mut egui::Ui,
+    status: &DeviceStatus,
+    writable: bool,
+    settings_only: bool,
+) -> Vec<Request> {
     let Some(game) = snapshot(status) else {
         return Vec::new();
     };
     let mut requests = Vec::new();
     let enabled = writable && ready(status);
-    dialog::section(ui, if settings_only { icons::GEAR } else { icons::PLAY }, if settings_only { "Rules & timing" } else { "Game" }, |ui| {
-        let phase = game["phase"].as_str().unwrap_or("Unknown");
-        let mode = game["mode"].as_str().unwrap_or("");
-        let catalog = modes(game);
-        if !settings_only { ui.horizontal_wrapped(|ui| {
-            ui.strong(
-                catalog
-                    .iter()
-                    .find(|(id, _)| *id == mode)
-                    .map(|(_, label)| *label)
-                    .unwrap_or(mode),
-            );
-            let color = match phase { "success" => ui.visuals().selection.bg_fill, "failure" | "timeout" => ui.visuals().error_fg_color, _ => ui.visuals().text_color() };
-            ui.colored_label(color, format!("{}  {}", icons::DOT_OUTLINE, phase));
-            if game["timed"] != true { ui.weak("Untimed"); }
-            if let Some(winner) = game["winner"].as_u64().filter(|v| *v > 0) {
-                ui.strong(format!("Winner · Box {winner}"));
-            }
-            if let Some(target) = game["target"].as_u64().filter(|v| *v > 0) {
-                ui.label(format!("Target · Box {target}"));
-            }
-        });
-        if game["timed"] == true {
-            if let (Some(remaining), Some(limit)) = (
-                game["remaining_ms"].as_u64(),
-                game["settings"]["limit_ms"].as_u64(),
-            ) {
-                let fraction = if limit > 0 {
-                    (remaining as f32 / limit as f32).clamp(0.0, 1.0)
-                } else {
-                    0.0
-                };
-                let mut bar = egui::ProgressBar::new(fraction).text(format!(
-                    "{}:{:02}.{:01} remaining",
-                    remaining / 60000,
-                    remaining / 1000 % 60,
-                    remaining / 100 % 10
-                ));
-                if game["warning"].as_u64().unwrap_or(0) > 0 {
-                    bar = bar.fill(ui.visuals().warn_fg_color);
-                }
-                ui.add(bar);
-            }
-        }
-        ui.horizontal_wrapped(|ui| {
-            for (field, label) in [
-                ("round", "Round"),
-                ("progress", "Progress"),
-                ("mistakes", "Mistakes"),
-            ] {
-                if shows_elapsed(mode) && let Some(n) = game[field].as_u64() {
-                    ui.weak(format!("{label} {n}"));
-                }
-            }
-            if shows_elapsed(mode) && let Some(ms) = game["elapsed_ms"].as_u64() {
-                ui.weak(format!("Elapsed {}:{:02}", ms / 60000, ms / 1000 % 60));
-            }
-            for (field, label) in [("last_reaction_ms", "Last"), ("best_reaction_ms", "Best")] {
-                if let Some(ms) = game[field].as_u64().filter(|v| *v > 0) {
-                    ui.weak(format!("{label} {ms} ms"));
-                }
-            }
-        });
-        ui.horizontal_wrapped(|ui| {
-            for (field, label) in [
-                ("participating_mask", "Playing"),
-                ("held_mask", "Held"),
-                ("latched_mask", "Latched"),
-            ] {
-                if let Some(mask) = game[field].as_u64() {
-                    let keys: Vec<String> = (1..=9)
-                        .filter(|key| mask & (1 << (key - 1)) != 0)
-                        .map(|key| key.to_string())
-                        .collect();
-                    if !keys.is_empty() {
-                        ui.weak(format!("{label}: {}", keys.join(", ")));
-                    }
-                }
-            }
-        });
-        if !ready(status) {
-            ui.colored_label(
-                ui.visuals().warn_fg_color,
-                "Waiting for game hardware readiness",
-            );
-        }
-        ui.add_enabled_ui(enabled, |ui| {
-            let running = matches!(phase, "show" | "input" | "feedback");
-            let (primary_action, primary_label) = if running {
-                ("pause", "Pause")
-            } else if phase == "paused" {
-                ("resume", "Resume")
-            } else {
-                ("start", "Start")
-            };
-            // Reuse the measured scoped-action helper: horizontal_wrapped cannot
-            // wrap dialog scopes after their minimum width is discovered.
-            crate::ui::panel_details::action_row(
-                ui,
-                &[
-                    (if running { icons::PAUSE } else { icons::PLAY }, primary_label),
-                    (icons::ARROW_COUNTER_CLOCKWISE, "Reset to white"),
-                    (icons::STOP, "Stop"),
-                ],
-                |ui| {
-                    for (action, label, icon, allowed) in [
-                        (primary_action, primary_label, if running { icons::PAUSE } else { icons::PLAY }, true),
-                        ("reset", "Reset to white", icons::ARROW_COUNTER_CLOCKWISE, true),
-                        ("stop", "Stop", icons::STOP, phase != "stopped"),
-                    ] {
-                        if ui
-                            .add_enabled_ui(allowed, |ui| {
-                                if action == "reset" { dialog::primary_action_button(ui, icon, label) }
-                                else { dialog::action_button(ui, icon, label) }
-                            })
-                            .inner
-                            .clicked()
-                        {
-                            requests.push(Request {
-                                path: CONTROL,
-                                form: vec![("action".into(), action.into())],
-                            });
-                        }
-                    }
-                },
-            );
-        }); }
-        if settings_only { ui.add_enabled_ui(enabled, |ui| {
-                let id = egui::Id::new(("minigame-settings", &status.board_id, &status.boot_id));
-                let current = &game["settings"];
-                if !current.is_object() {
-                    ui.weak("Settings unavailable");
-                    return;
-                }
-                let mut draft = ui
-                    .data(|data| data.get_temp::<Draft>(id))
-                    .unwrap_or_else(|| Draft {
-                        base: current.clone(),
-                        edited: current.clone(),
-                    });
-                if draft.edited == *current || draft.edited == draft.base {
-                    draft = Draft {
-                        base: current.clone(),
-                        edited: current.clone(),
-                    };
-                }
-                let stale = draft.base != *current;
-                if stale {
-                    ui.colored_label(
-                        ui.visuals().warn_fg_color,
-                        "Board settings changed. Revert draft to reload before applying.",
-                    );
-                }
-                let mut selected = draft.edited["mode"].as_str().unwrap_or(mode).to_owned();
-                ComboBox::from_id_salt("minigame-mode")
-                    .selected_text(
+    dialog::section(
+        ui,
+        if settings_only {
+            icons::GEAR
+        } else {
+            icons::PLAY
+        },
+        if settings_only {
+            "Rules & timing"
+        } else {
+            "Game"
+        },
+        |ui| {
+            let phase = game["phase"].as_str().unwrap_or("Unknown");
+            let mode = game["mode"].as_str().unwrap_or("");
+            let catalog = modes(game);
+            if !settings_only {
+                ui.horizontal_wrapped(|ui| {
+                    ui.strong(
                         catalog
                             .iter()
-                            .find(|(id, _)| *id == selected)
+                            .find(|(id, _)| *id == mode)
                             .map(|(_, label)| *label)
-                            .unwrap_or(&selected),
-                    )
-                    .show_ui(ui, |ui| {
-                        for (id, label) in &catalog {
-                            ui.dropdown_value(&mut selected, (*id).to_owned(), *label);
+                            .unwrap_or(mode),
+                    );
+                    let color = match phase {
+                        "success" => ui.visuals().selection.bg_fill,
+                        "failure" | "timeout" => ui.visuals().error_fg_color,
+                        _ => ui.visuals().text_color(),
+                    };
+                    ui.colored_label(color, format!("{}  {}", icons::DOT_OUTLINE, phase));
+                    if game["timed"] != true {
+                        ui.weak("Untimed");
+                    }
+                    if let Some(winner) = game["winner"].as_u64().filter(|v| *v > 0) {
+                        ui.strong(format!("Winner · Box {winner}"));
+                    }
+                    if let Some(target) = game["target"].as_u64().filter(|v| *v > 0) {
+                        ui.label(format!("Target · Box {target}"));
+                    }
+                });
+                if game["timed"] == true {
+                    if let (Some(remaining), Some(limit)) = (
+                        game["remaining_ms"].as_u64(),
+                        game["settings"]["limit_ms"].as_u64(),
+                    ) {
+                        let fraction = if limit > 0 {
+                            (remaining as f32 / limit as f32).clamp(0.0, 1.0)
+                        } else {
+                            0.0
+                        };
+                        let mut bar = egui::ProgressBar::new(fraction).text(format!(
+                            "{}:{:02}.{:01} remaining",
+                            remaining / 60000,
+                            remaining / 1000 % 60,
+                            remaining / 100 % 10
+                        ));
+                        if game["warning"].as_u64().unwrap_or(0) > 0 {
+                            bar = bar.fill(ui.visuals().warn_fg_color);
                         }
-                    });
-                if draft.edited["mode"] != selected {
-                    draft.edited["limit_ms"] = json!(if matches!(selected.as_str(), "press-to-win" | "toggle" | "clear-all") {0} else {60000});
-                }
-                draft.edited["mode"] = json!(selected);
-                let mut timed = draft.edited["limit_ms"].as_u64().unwrap_or(0) > 0;
-                if ui.checkbox(&mut timed, "Time limit").changed() {
-                    draft.edited["limit_ms"] = json!(if timed {60000} else {0});
-                }
-                for field in [
-                    "limit_ms",
-                    "warning_ms",
-                    "urgent_ms",
-                    "penalty_ms",
-                    "window_ms",
-                    "show_ms",
-                    "gap_ms",
-                    "feedback_ms",
-                    "rounds",
-                    "sequence_length",
-                    "palette_size",
-                    "fixed_target",
-                ] {
-                    if !setting_visible(&selected, field, timed) { continue; }
-                    if let Some(mut number) = draft.edited[field].as_u64() {
-                        let (min, max, label) = bounds(field).unwrap();
-                        dialog::setting_row(ui, icons::SLIDERS_HORIZONTAL, label, None, |ui| {
-                            let suffix = if field.ends_with("_ms") { " ms" } else { "" };
-                            if ui
-                                .add(
-                                    egui::DragValue::new(&mut number)
-                                        .range(min..=max)
-                                        .suffix(suffix),
-                                )
-                                .changed()
-                            {
-                                draft.edited[field] = json!(number);
-                            }
-                        });
+                        ui.add(bar);
                     }
                 }
-                if matches!(selected.as_str(), "switch-pattern" | "color-match") && let Some(mut hard) = draft.edited["hard"].as_bool() {
-                    if ui.checkbox(&mut hard, "Hard mode").changed() {
-                        draft.edited["hard"] = json!(hard);
-                    }
-                }
-                if selected == "toggle" && let Some(kind) = draft.edited["toggle_kind"].as_str() {
-                    let mut kind = kind.to_owned();
-                    ui.horizontal_wrapped(|ui| {
-                        ui.label("Switch behavior");
-                        for value in ["toggle", "latch", "press"] {
-                            ui.selectable_value(&mut kind, value.into(), value);
+                ui.horizontal_wrapped(|ui| {
+                    for (field, label) in [
+                        ("round", "Round"),
+                        ("progress", "Progress"),
+                        ("mistakes", "Mistakes"),
+                    ] {
+                        if shows_elapsed(mode)
+                            && let Some(n) = game[field].as_u64()
+                        {
+                            ui.weak(format!("{label} {n}"));
                         }
-                    });
-                    draft.edited["toggle_kind"] = json!(kind);
-                }
-                ui.collapsing("Output mapping", |ui| {
-                    if let Some(rules) = draft.edited["outputs"].as_array_mut() {
-                        for (index, rule) in rules.iter_mut().enumerate() {
-                            ui.push_id(index, |ui| {
-                                ui.horizontal_wrapped(|ui| {
-                                    ui.label(format!("Output {}", index + 1));
-                                    let mut source =
-                                        rule["source"].as_str().unwrap_or("disabled").to_owned();
-                                    ComboBox::from_id_salt("source")
-                                        .selected_text(&source)
-                                        .show_ui(ui, |ui| {
-                                            for source_id in [
-                                                "disabled", "active", "success", "failure", "held",
-                                                "latched", "winner", "lost",
-                                            ] {
-                                                ui.dropdown_value(
-                                                    &mut source,
-                                                    source_id.into(),
-                                                    source_id,
-                                                );
-                                            }
-                                        });
-                                    let keyed = matches!(
-                                        source.as_str(),
-                                        "held" | "latched" | "winner" | "lost"
-                                    );
-                                    let mut key = rule["key"].as_u64().unwrap_or(0);
-                                    if keyed {
-                                        key = key.clamp(1, 9);
-                                        ui.add(
-                                            egui::DragValue::new(&mut key)
-                                                .range(1..=9)
-                                                .prefix("Box "),
-                                        );
-                                    } else {
-                                        key = 0;
-                                    }
-                                    *rule = json!({"source":source,"key":key});
-                                });
-                            });
+                    }
+                    if shows_elapsed(mode)
+                        && let Some(ms) = game["elapsed_ms"].as_u64()
+                    {
+                        ui.weak(format!("Elapsed {}:{:02}", ms / 60000, ms / 1000 % 60));
+                    }
+                    for (field, label) in
+                        [("last_reaction_ms", "Last"), ("best_reaction_ms", "Best")]
+                    {
+                        if let Some(ms) = game[field].as_u64().filter(|v| *v > 0) {
+                            ui.weak(format!("{label} {ms} ms"));
                         }
                     }
                 });
-                let patch: serde_json::Map<String, Value> = draft
-                    .edited
-                    .as_object()
-                    .unwrap()
-                    .iter()
-                    .filter(|(k, v)| draft.base[*k] != **v)
-                    .map(|(k, v)| (k.clone(), v.clone()))
-                    .collect();
-                let patch = Value::Object(patch);
-                let valid = settings(&patch.to_string(), game);
-                crate::ui::panel_details::action_row(
-                    ui,
-                    &[
-                        (icons::CHECK, "Apply & reset"),
-                        (icons::ARROW_COUNTER_CLOCKWISE, "Revert draft"),
-                    ],
-                    |ui| {
-                        if ui
-                            .add_enabled_ui(valid.is_ok() && !stale, |ui| {
-                                dialog::primary_action_button(ui, icons::CHECK, "Apply & reset")
-                            })
-                            .inner
-                            .clicked()
-                        {
-                            requests.push(Request {
-                                path: CONFIGURE,
-                                form: vec![("settings".into(), patch.to_string())],
-                            });
+                ui.horizontal_wrapped(|ui| {
+                    for (field, label) in [
+                        ("participating_mask", "Playing"),
+                        ("held_mask", "Held"),
+                        ("latched_mask", "Latched"),
+                    ] {
+                        if let Some(mask) = game[field].as_u64() {
+                            let keys: Vec<String> = (1..=9)
+                                .filter(|key| mask & (1 << (key - 1)) != 0)
+                                .map(|key| key.to_string())
+                                .collect();
+                            if !keys.is_empty() {
+                                ui.weak(format!("{label}: {}", keys.join(", ")));
+                            }
                         }
-                        if dialog::action_button(ui, icons::ARROW_COUNTER_CLOCKWISE, "Revert draft")
-                            .clicked()
-                        {
-                            draft = Draft {
+                    }
+                });
+                if !ready(status) {
+                    ui.colored_label(
+                        ui.visuals().warn_fg_color,
+                        "Waiting for game hardware readiness",
+                    );
+                }
+                ui.add_enabled_ui(enabled, |ui| {
+                    let running = matches!(phase, "show" | "input" | "feedback");
+                    let (primary_action, primary_label) = if running {
+                        ("pause", "Pause")
+                    } else if phase == "paused" {
+                        ("resume", "Resume")
+                    } else {
+                        ("start", "Start")
+                    };
+                    // Reuse the measured scoped-action helper: horizontal_wrapped cannot
+                    // wrap dialog scopes after their minimum width is discovered.
+                    crate::ui::panel_details::action_row(
+                        ui,
+                        &[
+                            (
+                                if running { icons::PAUSE } else { icons::PLAY },
+                                primary_label,
+                            ),
+                            (icons::ARROW_COUNTER_CLOCKWISE, "Reset to white"),
+                            (icons::STOP, "Stop"),
+                        ],
+                        |ui| {
+                            for (action, label, icon, allowed) in [
+                                (
+                                    primary_action,
+                                    primary_label,
+                                    if running { icons::PAUSE } else { icons::PLAY },
+                                    true,
+                                ),
+                                (
+                                    "reset",
+                                    "Reset to white",
+                                    icons::ARROW_COUNTER_CLOCKWISE,
+                                    true,
+                                ),
+                                ("stop", "Stop", icons::STOP, phase != "stopped"),
+                            ] {
+                                if ui
+                                    .add_enabled_ui(allowed, |ui| {
+                                        if action == "reset" {
+                                            dialog::primary_action_button(ui, icon, label)
+                                        } else {
+                                            dialog::action_button(ui, icon, label)
+                                        }
+                                    })
+                                    .inner
+                                    .clicked()
+                                {
+                                    requests.push(Request {
+                                        path: CONTROL,
+                                        form: vec![("action".into(), action.into())],
+                                    });
+                                }
+                            }
+                        },
+                    );
+                });
+            }
+            if settings_only {
+                ui.add_enabled_ui(enabled, |ui| {
+                    let id =
+                        egui::Id::new(("minigame-settings", &status.board_id, &status.boot_id));
+                    let current = &game["settings"];
+                    if !current.is_object() {
+                        ui.weak("Settings unavailable");
+                        return;
+                    }
+                    let mut draft =
+                        ui.data(|data| data.get_temp::<Draft>(id))
+                            .unwrap_or_else(|| Draft {
                                 base: current.clone(),
                                 edited: current.clone(),
-                            };
-                        }
-                    },
-                );
-                if draft.edited != draft.base {
-                    ui.weak("Unsaved settings · applying returns the game to Ready.");
-                    if let Err(error) = valid {
-                        ui.colored_label(ui.visuals().warn_fg_color, error);
+                            });
+                    if draft.edited == *current || draft.edited == draft.base {
+                        draft = Draft {
+                            base: current.clone(),
+                            edited: current.clone(),
+                        };
                     }
-                }
-                ui.data_mut(|data| data.insert_temp(id, draft));
-        }); }
-    });
+                    let stale = draft.base != *current;
+                    if stale {
+                        ui.colored_label(
+                            ui.visuals().warn_fg_color,
+                            "Board settings changed. Revert draft to reload before applying.",
+                        );
+                    }
+                    let mut selected = draft.edited["mode"].as_str().unwrap_or(mode).to_owned();
+                    ComboBox::from_id_salt("minigame-mode")
+                        .selected_text(
+                            catalog
+                                .iter()
+                                .find(|(id, _)| *id == selected)
+                                .map(|(_, label)| format!("{}  {label}", mode_visual(&selected).0))
+                                .unwrap_or_else(|| selected.clone()),
+                        )
+                        .width(ui.available_width().min(430.0))
+                        .height(460.0)
+                        .show_ui(ui, |ui| {
+                            for (id, label) in &catalog {
+                                let (icon, fallback) = mode_visual(id);
+                                let detail = game["available_modes"]
+                                    .as_array()
+                                    .and_then(|items| items.iter().find(|item| item["id"] == *id))
+                                    .and_then(|item| item["description"].as_str())
+                                    .unwrap_or(fallback);
+                                let response = dialog::navigation_detail_button(
+                                    ui,
+                                    selected == *id,
+                                    icon,
+                                    label,
+                                    detail,
+                                    ui.available_width(),
+                                );
+                                let response = crate::ui::dropdown::register_choice(
+                                    ui,
+                                    response,
+                                    selected == *id,
+                                );
+                                if response.clicked() {
+                                    selected = (*id).to_owned();
+                                    ui.close();
+                                }
+                            }
+                        });
+                    if draft.edited["mode"] != selected {
+                        draft.edited["limit_ms"] = json!(if matches!(
+                            selected.as_str(),
+                            "press-to-win" | "toggle" | "clear-all"
+                        ) {
+                            0
+                        } else {
+                            60000
+                        });
+                        draft.edited["window_ms"] = json!(if selected == "illuminated" {
+                            10000
+                        } else {
+                            1200
+                        });
+                    }
+                    draft.edited["mode"] = json!(selected);
+                    let mut timed = draft.edited["limit_ms"].as_u64().unwrap_or(0) > 0;
+                    if ui.checkbox(&mut timed, "Time limit").changed() {
+                        draft.edited["limit_ms"] = json!(if timed { 60000 } else { 0 });
+                    }
+                    for field in [
+                        "limit_ms",
+                        "warning_ms",
+                        "urgent_ms",
+                        "penalty_ms",
+                        "window_ms",
+                        "show_ms",
+                        "gap_ms",
+                        "feedback_ms",
+                        "intro_ms",
+                        "preview_ms",
+                        "mismatch_ms",
+                        "rounds",
+                        "sequence_length",
+                        "palette_size",
+                        "fixed_target",
+                    ] {
+                        if !setting_visible(&selected, field, timed) {
+                            continue;
+                        }
+                        if let Some(mut number) = draft.edited[field].as_u64() {
+                            let (min, max, label) = bounds(field).unwrap();
+                            dialog::setting_row(ui, icons::SLIDERS_HORIZONTAL, label, None, |ui| {
+                                let suffix = if field.ends_with("_ms") { " ms" } else { "" };
+                                if ui
+                                    .add(
+                                        egui::DragValue::new(&mut number)
+                                            .range(min..=max)
+                                            .suffix(suffix),
+                                    )
+                                    .changed()
+                                {
+                                    draft.edited[field] = json!(number);
+                                }
+                            });
+                        }
+                    }
+                    for (field, label) in [
+                        ("intro_enabled", "Reveal colors and notes before play"),
+                        ("color_arpeggio", "Arpeggio color notes"),
+                    ] {
+                        if field == "intro_enabled"
+                            && !matches!(selected.as_str(), "color-match" | "memory-pairs")
+                        {
+                            continue;
+                        }
+                        if let Some(mut value) = draft.edited[field].as_bool() {
+                            if ui.checkbox(&mut value, label).changed() {
+                                draft.edited[field] = json!(value);
+                            }
+                        }
+                    }
+                    if matches!(selected.as_str(), "switch-pattern" | "color-match")
+                        && let Some(mut hard) = draft.edited["hard"].as_bool()
+                    {
+                        if ui.checkbox(&mut hard, "Hard mode").changed() {
+                            draft.edited["hard"] = json!(hard);
+                        }
+                    }
+                    if selected == "toggle"
+                        && let Some(kind) = draft.edited["toggle_kind"].as_str()
+                    {
+                        let mut kind = kind.to_owned();
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label("Switch behavior");
+                            for value in ["toggle", "latch", "press"] {
+                                ui.selectable_value(&mut kind, value.into(), value);
+                            }
+                        });
+                        draft.edited["toggle_kind"] = json!(kind);
+                    }
+                    ui.collapsing("Output mapping", |ui| {
+                        if let Some(rules) = draft.edited["outputs"].as_array_mut() {
+                            for (index, rule) in rules.iter_mut().enumerate() {
+                                ui.push_id(index, |ui| {
+                                    ui.horizontal_wrapped(|ui| {
+                                        ui.label(format!("Output {}", index + 1));
+                                        let mut source = rule["source"]
+                                            .as_str()
+                                            .unwrap_or("disabled")
+                                            .to_owned();
+                                        ComboBox::from_id_salt("source")
+                                            .selected_text(&source)
+                                            .show_ui(ui, |ui| {
+                                                for source_id in [
+                                                    "disabled", "active", "success", "failure",
+                                                    "held", "latched", "winner", "lost",
+                                                ] {
+                                                    ui.dropdown_value(
+                                                        &mut source,
+                                                        source_id.into(),
+                                                        source_id,
+                                                    );
+                                                }
+                                            });
+                                        let keyed = matches!(
+                                            source.as_str(),
+                                            "held" | "latched" | "winner" | "lost"
+                                        );
+                                        let mut key = rule["key"].as_u64().unwrap_or(0);
+                                        if keyed {
+                                            key = key.clamp(1, 9);
+                                            ui.add(
+                                                egui::DragValue::new(&mut key)
+                                                    .range(1..=9)
+                                                    .prefix("Box "),
+                                            );
+                                        } else {
+                                            key = 0;
+                                        }
+                                        *rule = json!({"source":source,"key":key});
+                                    });
+                                });
+                            }
+                        }
+                    });
+                    let patch: serde_json::Map<String, Value> = draft
+                        .edited
+                        .as_object()
+                        .unwrap()
+                        .iter()
+                        .filter(|(k, v)| draft.base[*k] != **v)
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect();
+                    let patch = Value::Object(patch);
+                    let valid = settings(&patch.to_string(), game);
+                    crate::ui::panel_details::action_row(
+                        ui,
+                        &[
+                            (icons::CHECK, "Apply & reset"),
+                            (icons::ARROW_COUNTER_CLOCKWISE, "Revert draft"),
+                        ],
+                        |ui| {
+                            if ui
+                                .add_enabled_ui(valid.is_ok() && !stale, |ui| {
+                                    dialog::primary_action_button(ui, icons::CHECK, "Apply & reset")
+                                })
+                                .inner
+                                .clicked()
+                            {
+                                requests.push(Request {
+                                    path: CONFIGURE,
+                                    form: vec![("settings".into(), patch.to_string())],
+                                });
+                            }
+                            if dialog::action_button(
+                                ui,
+                                icons::ARROW_COUNTER_CLOCKWISE,
+                                "Revert draft",
+                            )
+                            .clicked()
+                            {
+                                draft = Draft {
+                                    base: current.clone(),
+                                    edited: current.clone(),
+                                };
+                            }
+                        },
+                    );
+                    if draft.edited != draft.base {
+                        ui.weak("Unsaved settings · applying returns the game to Ready.");
+                        if let Err(error) = valid {
+                            ui.colored_label(ui.visuals().warn_fg_color, error);
+                        }
+                    }
+                    ui.data_mut(|data| data.insert_temp(id, draft));
+                });
+            }
+        },
+    );
     requests
 }
 

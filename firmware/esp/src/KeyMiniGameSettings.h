@@ -30,6 +30,7 @@ struct KeyMiniGameSettings {
        !number("urgent_ms",86400000,next.urgentMs)||!number("penalty_ms",86400000,next.penaltyMs)||
        !number("window_ms",60000,next.windowMs)||!number("show_ms",10000,next.showMs)||
        !number("gap_ms",5000,next.gapMs)||!number("feedback_ms",5000,next.feedbackMs)||
+       !number("intro_ms",10000,next.introMs)||!number("preview_ms",10000,next.previewMs)||!number("mismatch_ms",10000,next.mismatchMs)||
        !number("rounds",32,next.rounds)||!number("sequence_length",32,next.sequenceLength)||
        !number("palette_size",9,next.paletteSize)||!number("fixed_target",9,next.fixedTarget))return false;
     if(!v["toggle_kind"].isUnbound()){
@@ -39,6 +40,9 @@ struct KeyMiniGameSettings {
       if(!found)return false;
     }
     if(!v["hard"].isUnbound()){if(!v["hard"].is<bool>())return false;next.hard=v["hard"];}
+    for(const auto name:{"intro_enabled","color_arpeggio"})if(!v[name].isUnbound()&&!v[name].is<bool>())return false;
+    if(!v["intro_enabled"].isUnbound())next.introEnabled=v["intro_enabled"];
+    if(!v["color_arpeggio"].isUnbound())next.colorArpeggio=v["color_arpeggio"];
     if(!v["outputs"].isUnbound()){
       if(!v["outputs"].is<JsonArrayConst>()||v["outputs"].size()!=8)return false;
       for(uint8_t i=0;i<8;++i){auto r=v["outputs"][i];
@@ -58,6 +62,9 @@ struct KeyMiniGameSettings {
     out["feedback_ms"]=c.feedbackMs;out["rounds"]=c.rounds;out["sequence_length"]=c.sequenceLength;
     out["palette_size"]=c.paletteSize;out["fixed_target"]=c.fixedTarget;
     out["toggle_kind"]=toggleName(c.toggleKind);out["hard"]=c.hard;
+    out["intro_enabled"]=c.introEnabled;out["intro_ms"]=c.introMs;out["preview_ms"]=c.previewMs;
+    out["color_arpeggio"]=c.colorArpeggio;
+    out["mismatch_ms"]=c.mismatchMs;
     auto a=out["outputs"].to<JsonArray>();for(const auto &r:c.outputs){auto o=a.add<JsonObject>();o["source"]=outputName(r.source);o["key"]=r.key;}
   }
   bool load(fs::FS &fs){auto f=fs.open("/minigame.json","r");if(!f||f.size()>4096)return false;

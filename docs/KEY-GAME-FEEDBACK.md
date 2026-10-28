@@ -57,3 +57,55 @@ priority; the independently witnessed GDMA refill remains level 3/core 1.
 Builds include pre-existing shared-checkout guarded shell/native-artwork work;
 they are not clean-commit binary attestations. No ledcontroller update or scene
 mutation is part of this delivery. Hardware/visual/audio acceptance stays open.
+
+## Mode feedback follow-up (2026-10-28)
+
+Mode choices in Flutter, Rust and the canonical Web app now include icons and
+second-line descriptions. Unknown advertised modes retain a generic icon;
+known modes do not require a particular firmware build identity.
+
+The illuminated-target default response window is 10000 ms (`window_ms`),
+adjustable from 100 to 60000 ms. Existing explicitly saved values are retained;
+changing to this mode applies its defaults. Press-to-win remains untimed.
+
+Color pattern and Matching pairs now default `intro_enabled=true`. Enabled
+boxes reveal in physical box order with smooth fades and color notes, using
+`intro_ms=1000` per box. Pairs then hold their preview for `preview_ms=1500`.
+The reveal does not consume response time. Turning the introduction off enters
+Input immediately. Color matching reports `matching_mask` and matched progress;
+160 generated puzzles across two/four/six/nine and non-adjacent box layouts
+complete when the displayed button/reference colors match.
+
+Simon has a visible, sounded Feedback phase after every correct entry, using
+`feedback_ms`, before accepting the next. Wrong pairs use a separate
+`mismatch_ms=1200` (600..10000 ms), three visible blink periods, and the complete
+incorrect cue. The game renderer's effect clock starts at the phase boundary,
+not at an arbitrary point in uptime. Completing other puzzles plays the saved
+winner cue once during the success rainbow; Silent remains respected.
+
+`color_arpeggio=true` plays each color as a root/major-third/fifth arpeggio.
+The AVR acknowledges support in HELLO audio-feature bit 1. Its existing
+`kAudioStream` now accepts one atomic finite batch:
+
+    [7,idLo,idHi,0,0,{HzLo,HzHi,msLo,msHi} x 1..10]
+
+The whole batch is validated before replacing playback. It reuses the existing
+circular queue and absolute local deadlines, adds no static AVR SRAM, and
+rejects duplicate IDs without restarting audio. Reset/stop cancel puzzle cues
+without cutting the separate first-wins reset melody.
+
+Flutter box control remains WebSocket-first with same-request-ID HTTP recovery
+when enabled. Receipt verification now checks board/boot identity separately
+from admission for the next command, so an acknowledged AVR ownership fence
+does not falsely revoke the connection. Known board rejections have actionable
+messages; unsafe/unknown outcomes remain visible rather than being hidden or
+replayed. Box input is disabled during Show/Feedback, not dispatched to fail.
+
+Verification: 11 Flutter game tests, 6 actual loopback WebSocket/fallback tests,
+6 focused native tests, core mode/exclusion/soak tests, canonical Web protocol
+and mobile-width DOM tests, and AVR audio tests pass. The Web mode menu was
+captured and visually inspected. New Android/native/AVR candidates build; the
+RF-enabled buffered AVR uses 29828 bytes flash and 1654 bytes static SRAM.
+New candidates are not installed: ASUS SSH8022 refused consecutive attempts.
+The earlier autonomous-audio audible confirmation remains pending. No current
+board scene, correction rule, enabled-box mask or saved mode was overwritten.

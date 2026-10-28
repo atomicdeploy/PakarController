@@ -33,6 +33,17 @@ const commandNames = {
   '/api/pixels/corrections/preview': 'pixel-corrections-preview',
 };
 
+// Receipt ownership is identity, not admission for a subsequent mutation. A
+// valid configure/start receipt can temporarily report ready=false during the
+// AVR input fence. Never turn that successful handoff into a disconnection.
+bool commandPeerMatches(DeviceStatus? actual, Object? board, Object? boot) =>
+    board is String &&
+    board.isNotEmpty &&
+    boot is String &&
+    boot.isNotEmpty &&
+    actual?.json['board_id'] == board &&
+    actual?.json['boot_id'] == boot;
+
 String commandPacket(
   DeviceStatus status,
   String path,
@@ -121,11 +132,7 @@ DeviceStatus verifyCommandReply(
     );
   }
   if (reply['accepted'] != true) {
-    throw DeviceCommandRejected(
-      error: path == '/api/pixels/corrections/preview'
-          ? reply['reason'] ?? reply['error']
-          : reply['error'],
-    );
+    throw DeviceCommandRejected(error: reply['reason'] ?? reply['error']);
   }
   if (const ['/api/audio', '/api/buzzer', '/api/outputs'].contains(path) &&
       reply['avr_acknowledged'] != true) {

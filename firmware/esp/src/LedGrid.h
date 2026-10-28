@@ -54,6 +54,7 @@ class LedGrid {
   using Presentation=BoardCore::HostPresentation<kCells,kPixels>;
   void setPresentation(Presentation *value){presentation_=value;dirty_=true;}
   void setGamePresentation(Presentation::Layer *value){gameLayer_=value;dirty_=true;}
+  void setGamePresentationEpoch(uint32_t value){gamePresentationAt_=value;}
   void presentationChanged(){dirty_=true;}
   bool presentationReady()const{return !staging_&&!maintenanceActive_&&!diagnosticActive_&&!previewActive(millis());}
   const GroupLayout &groupLayout()const{return groupLayout_;}
@@ -152,6 +153,7 @@ class LedGrid {
   bool presentationAnimated()const{return presentation_&&presentation_->needsFrame(millis(),lastFrameAt_);}
   Presentation *presentation_=nullptr;
   Presentation::Layer *gameLayer_=nullptr;
+  uint32_t gamePresentationAt_=0;
   uint32_t publishedPresentationRevision_=0;
   const CRGB *corrected(const CRGB *raw) {
 #if PAKAR_PIXEL_CORRECTIONS

@@ -289,7 +289,7 @@ uint16_t keyMaskSentValue=0;
 bool avrGameMelodies=false,keyAudioApplied=false;
 bool avrRemotePress=false;
 bool avrAudioStream=false,audioStreamWaiting=false,audioStreamReceived=false;
-bool avrFlashAudio=false,gameAudioPending=false,gameAudioAck=false;
+bool avrFlashAudio=false,avrAtomicAudio=false,gameAudioPending=false,gameAudioAck=false;
 uint8_t gameAudioSequence=0,gameAudioError=0;
 uint32_t gameAudioSentAt=0;
 uint8_t audioStreamSequence=0,audioStreamReply[8]={};
@@ -3597,7 +3597,8 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     avrGameMelodies=frame.payloadLength>=17 && frame.payload[16]==1;
     avrRemotePress=frame.payloadLength>=18 && frame.payload[17]==1;
     avrAudioStream=frame.payloadLength>=19 && frame.payload[18]==1;
-    avrFlashAudio=frame.payloadLength>=21 && frame.payload[20]==1;
+    avrFlashAudio=frame.payloadLength>=21 && (frame.payload[20]&1);
+    avrAtomicAudio=frame.payloadLength>=21 && (frame.payload[20]&2);
     avrTelemetryKnown = false;
     avrResetTelemetryKnown = false;
     avrVersionKnown = frame.payloadLength >= 9 &&

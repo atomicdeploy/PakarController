@@ -59,6 +59,8 @@ transport=context.createCommandTransport({snapshot:()=>state,valid:()=>true,rand
 await transport.send('/api/minigame/configure',{settings:{mode:'toggle',limit_ms:'60000',hard:'true'}});
 assert.equal(packet.command,'minigame-configure');assert.equal(packet.settings.limit_ms,60000);assert.equal(packet.settings.hard,true);
 await transport.send('/api/minigame/control',{action:'pause'});assert.equal(packet.command,'minigame-control');
+await transport.send('/api/minigame/configure',{settings:{intro_enabled:true,color_arpeggio:true,intro_ms:1000,preview_ms:1500,mismatch_ms:1200}});
+assert.equal(packet.settings.intro_enabled,true);assert.equal(packet.settings.mismatch_ms,1200);
 await transport.send('/api/minigame/input',{key:'2',action:'down'});assert.equal(packet.key,2);
 const before=requests;
 for(const [path,data] of [

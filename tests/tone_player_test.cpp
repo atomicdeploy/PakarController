@@ -93,6 +93,16 @@ int main() {
   flash[5]=120;assert(player.stream(flash,sizeof(flash))==0);
   player.setMuted(true);player.update(50);assert((TCCR1B & (_BV(CS10)|_BV(CS11)|_BV(CS12)))==0);
   player.stop();assert(!player.isBusy());player.setMuted(false);
+  uint8_t finite[]={7,5,0,0,0,11,2,55,0,142,2,55,0,16,3,100,0};
+  assert(player.stream(finite,sizeof(finite))==0);
+  player.update(100);assert(player.activeFrequencyHz()==523);
+  assert(player.stream(finite,sizeof(finite))==6); // No audible duplicate replay.
+  finite[1]=6;finite[7]=0;assert(player.stream(finite,sizeof(finite))==3);
+  player.update(155);assert(player.activeFrequencyHz()==654); // Invalid replacement left timeline intact.
+  player.update(210);assert(player.activeFrequencyHz()==784);
+  player.update(310);assert(!player.isBusy());
+  finite[7]=55;assert(player.stream(finite,sizeof(finite))==0);
+  player.stop();assert(!player.isBusy());
   using namespace BoardCore::Protocol;
   const uint16_t durations[kCueCount] = {530,450,410,300,1080,450,400,600,100,5750,300,300,520,590,240};
   CueTimeline timelines[kCueCount];

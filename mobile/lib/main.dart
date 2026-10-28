@@ -17,6 +17,7 @@ import 'board_sound_preferences.dart';
 import 'winner_notice.dart';
 import 'models.dart';
 import 'command_readback.dart';
+import 'command_wire.dart' show commandPeerMatches;
 import 'table_layout.dart';
 import 'table_workspace.dart';
 import 'table_viewport.dart';
@@ -1055,6 +1056,8 @@ class _ControlShellState extends State<ControlShell>
     bool propagateFailure = false,
   }) async {
     final attempt = ++commandAttempt;
+    final intentBoard = status?.json['board_id'];
+    final intentBoot = status?.json['boot_id'];
     if (commandPending) {
       setState(
         () => commandFailure =
@@ -1088,8 +1091,8 @@ class _ControlShellState extends State<ControlShell>
         authorize: () =>
             mounted &&
             owner == api.connectionRevision &&
-            peer == status?.hostname &&
-            status?.peer.allows(path, values) == true,
+            api.connectionWanted &&
+            commandPeerMatches(status, intentBoard, intentBoot),
       );
       late final DeviceStatus actual;
       if (fast != null) {
@@ -1127,7 +1130,7 @@ class _ControlShellState extends State<ControlShell>
           !api.connectionWanted ||
           owner != api.connectionRevision ||
           peer != actual.hostname ||
-          !actual.peer.allows(path, values)) {
+          !commandPeerMatches(actual, intentBoard, intentBoot)) {
         throw const StaleConnection();
       }
       _observe(actual);
@@ -1175,7 +1178,11 @@ class _ControlShellState extends State<ControlShell>
               : SupportIncident.commandRejected,
         );
         if (attempt == commandAttempt) {
-          setState(() => commandFailure = error.toString());
+          setState(
+            () => commandFailure = error is FormatException
+                ? error.message.toString()
+                : error.toString(),
+          );
         }
         if (error is StaleConnection) {
           _revoke(error.toString());

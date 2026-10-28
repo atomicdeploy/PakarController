@@ -621,7 +621,7 @@ void LedGrid::showStaged() {
     const uint16_t first=groupLayout_.start(group);
     for(uint16_t sector=1;sector<groupLayout_.count(group);++sector)pixels_[first+sector]=pixels_[first];
   }
-  if(gamePresenting)Presentation::composeLayer(*gameLayer_,pixels_,groupLayout_,physicalCells_,millis());
+  if(gamePresenting)Presentation::composeLayer(*gameLayer_,pixels_,groupLayout_,physicalCells_,millis()-gamePresentationAt_);
   else if(presenting)presentation_->compose(pixels_,groupLayout_,physicalCells_,millis());
 #if PAKAR_FIRST_WINS_ENABLED
   // Clear disabled physical boxes on EVERY frame, including rainbow/stream.

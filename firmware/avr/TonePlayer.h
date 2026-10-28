@@ -33,6 +33,7 @@ public:
   // Stream commands: begin=0, append=1, start=2, finish=3, query=4, cancel=5.
   // Header [action,idLE16,offsetLE16]; append carries packed [HzLE16,msLE16].
   // action6: atomic flash cue [6,idLE16,0,0,onLE16,offLE16,count,lastOnLE16].
+  // action7: atomic finite cue [7,idLE16,0,0,{HzLE16,msLE16} x 1..10].
   // Autonomous playback reports ordinary Playing (2), zero append credits;
   // stop/cue/reset cancels it. The internal state needs no public new enum.
   // Returns 0 accepted, 3 invalid, 5 full/busy, 6 muted or stale stream.

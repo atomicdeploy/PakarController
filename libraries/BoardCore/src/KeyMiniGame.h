@@ -60,21 +60,23 @@ class KeyMiniGame {
     uint16_t enabledMask=511;
     uint32_t limitMs=0, warningMs=10000, urgentMs=3000, penaltyMs=2000;
     uint16_t windowMs=1200, showMs=500, gapMs=200, feedbackMs=240;
+    uint16_t introMs=1000, previewMs=1500, mismatchMs=1200;
     uint8_t rounds=5, sequenceLength=4, paletteSize=7, fixedTarget=0;
     ToggleKind toggleKind=Flip;
-    bool hard=false;
+    bool hard=false, introEnabled=true, colorArpeggio=true;
     OutputRule outputs[8]{};
     static Config defaults(Mode mode){
       Config c;c.mode=mode;
       if(mode!=PressToWin&&mode!=Toggle&&mode!=ClearAll)c.limitMs=60000;
       if(mode==ColorOrder)c.paletteSize=9;
+      if(mode==Illuminated)c.windowMs=10000;
       return c;
     }
     bool valid()const{
       if(!available(mode)||!enabledMask||enabledMask>511||limitMs>86400000UL||
          warningMs>86400000UL||urgentMs>warningMs||penaltyMs>86400000UL||
          windowMs<100||windowMs>60000||showMs<100||showMs>10000||gapMs<50||gapMs>5000||
-         feedbackMs<50||feedbackMs>5000||!rounds||rounds>32||!sequenceLength||sequenceLength>32||
+         feedbackMs<50||feedbackMs>5000||introMs<100||introMs>10000||previewMs>10000||mismatchMs<600||mismatchMs>10000||!rounds||rounds>32||!sequenceLength||sequenceLength>32||
          paletteSize<2||paletteSize>9||toggleKind>Momentary||fixedTarget>9||
          (fixedTarget&&!(enabledMask&keyBit(fixedTarget))))return false;
       if(mode==MemoryPairs&&count(enabledMask)<2)return false;
@@ -112,6 +114,21 @@ class KeyMiniGame {
     for(uint8_t i=0;i<ModeCount;++i)if(text&&!strcmp(text,name(Mode(i)))){mode=Mode(i);return available(mode);}
     return false;
   }
+  static const char *description(Mode mode){
+    switch(mode){
+      case PressToWin:return "First press wins; reset for the next round";
+      case Illuminated:return "Press the glowing target before its window closes";
+      case ColorMatch:return "Cycle button colors to match the indicator colors";
+      case Simon:return "Watch, remember and repeat the light sequence";
+      case MemoryPairs:return "Reveal colors and find every matching pair";
+      case ClearAll:return "Press every illuminated button to clear the board";
+      case ColorOrder:return "Press the boxes in palette color order";
+      case SwitchPattern:return "Toggle buttons to copy the indicator pattern";
+      case ReactionChase:return "Catch the moving light inside its response window";
+      case Toggle:return "Control latched or momentary outputs without a timer";
+      default:return "Board-provided game";
+    }
+  }
   static const char *phaseName(Phase phase){
     switch(phase){case Ready:return "ready";case Show:return "show";case Input:return "input";
       case Feedback:return "feedback";case Success:return "success";case Timeout:return "timeout";
@@ -128,6 +145,8 @@ class KeyMiniGame {
   }
   const Config &config()const{return config_;}
   Phase phase()const{return phase_;}
+  uint32_t presentationAt()const{return phaseAt_;}
+  bool feedbackCorrect()const{return phase_==Feedback&&feedbackGood_;}
   bool running()const{return phase_==Show||phase_==Input||phase_==Feedback;}
   bool configure(const Config &next,uint32_t now){
     if(!next.valid())return false;
@@ -182,6 +201,10 @@ class KeyMiniGame {
 #endif
       default:break;
     }
+    if(config_.introEnabled&&(config_.mode==ColorMatch||config_.mode==MemoryPairs)){
+      showIndex_=0;target_=1;while(!(participating_&keyBit(target_)))++target_;
+      emitNote(targets_[target_-1]);enter(Show,now);return true;
+    }
     enter(Input,now);
     if(config_.mode==Illuminated||config_.mode==ReactionChase)chooseTarget(now);
     return true;
@@ -232,7 +255,7 @@ class KeyMiniGame {
         cueKey_=key;cueAt_=now;
         emitNote(key-1);
         if(sequence_[progress_]!=key){mistake(now);finish(Failed,now);}
-        else if(++progress_>=sequenceSize()){feedbackGood_=true;enter(Feedback,now);}
+        else{++progress_;feedbackGood_=true;enter(Feedback,now);}
         break;
 #endif
 #if PAKAR_GAME_MEMORY_PAIRS
@@ -280,19 +303,22 @@ class KeyMiniGame {
     const uint32_t previous=revision_,delta=now-lastAt_;lastAt_=now;
     if(!running())return false;
     // All intervals are below 2^31; unsigned differences survive millis wrap.
-    elapsed_=delta>86400000UL-elapsed_?86400000UL:elapsed_+delta;
+    if(!(phase_==Show&&(config_.mode==ColorMatch||config_.mode==MemoryPairs)))
+      elapsed_=delta>86400000UL-elapsed_?86400000UL:elapsed_+delta;
     if(config_.limitMs&&elapsed_+penalty_>=config_.limitMs){finish(Timeout,now);return true;}
-    if(phase_==Feedback&&uint32_t(now-phaseAt_)>=config_.feedbackMs){
+    const uint16_t feedbackDuration=config_.mode==MemoryPairs&&!feedbackGood_?config_.mismatchMs:config_.feedbackMs;
+    if(phase_==Feedback&&uint32_t(now-phaseAt_)>=feedbackDuration){
       if(config_.mode==MemoryPairs){first_=second_=0;
         if(matched_==participating_)finish(Success,now);else enter(Input,now);
-      }else if(config_.mode==ColorOrder||!feedbackGood_)enter(Input,now);
+      }else if(config_.mode==Simon&&feedbackGood_&&progress_<sequenceSize())enter(Input,now);
+      else if(config_.mode==ColorOrder||!feedbackGood_)enter(Input,now);
       else if(round_>=config_.rounds)finish(Success,now);
       else{++round_;progress_=showIndex_=0;
         if(config_.mode==Simon){enter(Show,now);target_=sequence_[0];emitNote(target_-1);}
         else{enter(Input,now);chooseTarget(now);}}
     }
 #if PAKAR_GAME_SIMON
-    if(phase_==Show){
+    if(phase_==Show&&config_.mode==Simon){
       const uint32_t age=now-phaseAt_;
       if(target_&&age>=config_.showMs){target_=0;++revision_;}
       if(age>=uint32_t(config_.showMs)+config_.gapMs){
@@ -301,6 +327,19 @@ class KeyMiniGame {
       }
     }
 #endif
+    if(phase_==Show&&(config_.mode==ColorMatch||config_.mode==MemoryPairs)){
+      const uint32_t age=now-phaseAt_;
+      if(target_&&age>=config_.introMs){
+        if(++showIndex_>=count(participating_)){target_=0;phaseAt_=now;++revision_;}
+        else{
+          uint8_t rank=0;
+          for(uint8_t k=1;k<=9;++k)if(participating_&keyBit(k)){
+            if(rank++==showIndex_){target_=k;break;}
+          }
+          phaseAt_=now;emitNote(targets_[target_-1]);++revision_;
+        }
+      }else if(!target_&&age>=(config_.mode==MemoryPairs?config_.previewMs:config_.gapMs))enter(Input,now);
+    }
     if(phase_==Input){
       if((config_.mode==Illuminated||config_.mode==ReactionChase)&&uint32_t(now-targetAt_)>=config_.windowMs){
         if(config_.mode==Illuminated)finish(Timeout,now);
@@ -322,12 +361,19 @@ class KeyMiniGame {
     v.remainingMs=v.timed&&used<config_.limitMs?config_.limitMs-used:0;
     v.participatingMask=participating_;v.heldMask=held_;v.latchedMask=latched_;
     v.winner=winner_;v.target=target_;v.round=round_;v.progress=progress_;v.mistakes=mistakes_;
+    if(config_.mode==ColorMatch){v.progress=0;for(uint8_t k=1;k<=9;++k)
+      if((participating_&keyBit(k))&&player_[k-1]==targets_[k-1])++v.progress;}
     v.lastReactionMs=lastReaction_;v.bestReactionMs=bestReaction_;
     if(v.timed&&running())v.warning=v.remainingMs<=config_.urgentMs?2:v.remainingMs<=config_.warningMs?1:0;
     return v;
   }
   // One finite note, replaced by a newer note rather than replaying stale audio.
   uint16_t takeNote(){const uint16_t out=note_;note_=0;return out;}
+  uint16_t matchingMask()const{
+    uint16_t mask=0;
+    for(uint8_t k=1;k<=9;++k)if((participating_&keyBit(k))&&player_[k-1]==targets_[k-1])mask|=keyBit(k);
+    return mask;
+  }
   uint8_t outputMask()const{
     if(phase_==Stopped)return 0;
     uint8_t result=0;
@@ -343,7 +389,9 @@ class KeyMiniGame {
   void styles(Style (&out)[18])const{
     for(auto &s:out){s.clear();s.enabled=true;}
     const auto v=view();
+    uint8_t rank=0;
     for(uint8_t k=1;k<=9;++k){if(!(participating_&keyBit(k)))continue;
+      const uint8_t position=rank++;
       auto &button=out[(k-1)*2],&indicator=out[(k-1)*2+1];
       if(phase_==Stopped)continue;
       if(phase_==Ready){button.rgb=indicator.rgb=0xffffff;continue;}
@@ -352,6 +400,19 @@ class KeyMiniGame {
           button.effect=indicator.effect=Presentation::Rainbow;
         continue;}
       if(phase_==Failed||phase_==Timeout){button.rgb=indicator.rgb=0xff0000;button.effect=indicator.effect=Presentation::Blink;continue;}
+      if(phase_==Show&&(config_.mode==ColorMatch||config_.mode==MemoryPairs)){
+        if(position<=showIndex_){
+          const uint32_t age=lastAt_-phaseAt_;
+          uint16_t gain=255;
+          if(target_&&position==showIndex_){
+            const uint32_t x=age>=config_.introMs?255:uint64_t(age)*255/config_.introMs;
+            gain=x*x*(765-2*x)/65025; // Smoothstep, not a stepped/blinking reveal.
+          }
+          button.rgb=scaled(color(config_.mode==ColorMatch?player_[k-1]:targets_[k-1]),gain);
+          indicator.rgb=scaled(color(targets_[k-1]),gain);
+        }
+        continue;
+      }
       switch(config_.mode){
         case PressToWin:button.rgb=indicator.rgb=0xffffff;break;
         case Illuminated:case ReactionChase:
@@ -360,11 +421,11 @@ class KeyMiniGame {
           break;
         case ColorMatch:button.rgb=color(player_[k-1]);indicator.rgb=color(targets_[k-1]);break;
         case Simon:
-          if(k==target_||(phase_==Input&&((held_&keyBit(k))||(cueKey_==k&&uint32_t(lastAt_-cueAt_)<config_.feedbackMs))))button.rgb=indicator.rgb=color(k-1);
+          if(k==target_||((phase_==Input||phase_==Feedback)&&((held_&keyBit(k))||(cueKey_==k&&uint32_t(lastAt_-cueAt_)<config_.feedbackMs))))button.rgb=indicator.rgb=color(k-1);
           break;
         case MemoryPairs:
           if((matched_&keyBit(k))||k==first_||k==second_){button.rgb=indicator.rgb=color(targets_[k-1]);
-            if(phase_==Feedback&&!feedbackGood_&&(k==first_||k==second_)){button.effect=indicator.effect=Presentation::Blink;button.periodMs=indicator.periodMs=100;}}
+            if(phase_==Feedback&&!feedbackGood_&&(k==first_||k==second_)){button.effect=indicator.effect=Presentation::Blink;button.periodMs=indicator.periodMs=config_.mismatchMs/3;}}
           break;
         case ClearAll:button.rgb=indicator.rgb=(latched_&keyBit(k))?0:0xffffff;break;
         case ColorOrder:button.rgb=indicator.rgb=(latched_&keyBit(k))?0:color(targets_[k-1]);break;
@@ -387,6 +448,8 @@ class KeyMiniGame {
   uint8_t player_[9]{},targets_[9]{},sequence_[32]{};
   uint8_t winner_=0,target_=0,round_=0,progress_=0,mistakes_=0,first_=0,second_=0,showIndex_=0,cueKey_=0;
   bool feedbackGood_=false;
+  static uint32_t scaled(uint32_t rgb,uint16_t gain){return
+    (((rgb>>16)*gain/255)<<16)|((((rgb>>8)&255)*gain/255)<<8)|((rgb&255)*gain/255);}
   uint8_t random(uint8_t n){rng_^=rng_<<13;rng_^=rng_>>17;rng_^=rng_<<5;return uint8_t(rng_%n);}
   void shuffle(uint8_t *items,uint8_t n){for(uint8_t i=n;i>1;--i){uint8_t j=random(i),v=items[i-1];items[i-1]=items[j];items[j]=v;}}
   uint8_t sequenceSize()const{uint16_t n=config_.sequenceLength+round_-1;return n>32?32:n;}

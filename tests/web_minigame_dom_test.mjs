@@ -11,6 +11,8 @@ try{
   const page=await browser.newPage({viewport:{width:390,height:844}});
   await page.route('**/*',route=>route.abort());
   await page.setContent('<style>'+[...source.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m=>m[1]).join('\n')+'</style><main><div id="contextMessage"></div></main>');
+  await page.evaluate(()=>document.body.classList.add('studio'));
+  await page.addScriptTag({content:readFileSync(new URL('../web/modules/components.js',import.meta.url),'utf8')});
   await page.addScriptTag({content:`
     var calls=[],state={board_id:'fixture',boot_id:'boot',winner:0,key_mask_applied:true,key_game:{enabled_mask:3,idle_rgb:16777215,win_rgb:65280,lose_rgb:16711680},minigame:{available_modes:[{id:'press-to-win',label:'First press wins'},{id:'toggle',label:'Toggle'},{id:'color-match',label:'Color match'}],mode:'press-to-win',phase:'ready',revision:1,ready:true,elapsed_ms:0,remaining_ms:60000,timed:true,participating_mask:3,held_mask:0,latched_mask:0,winner:0,round:0,progress:0,mistakes:0,settings:{mode:'press-to-win',limit_ms:60000,warning_ms:10000,urgent_ms:3000,penalty_ms:2000,window_ms:1200,show_ms:500,gap_ms:200,feedback_ms:240,rounds:5,sequence_length:4,palette_size:7,fixed_target:0,toggle_kind:'toggle',hard:false,outputs:Array.from({length:8},()=>({source:'disabled',key:0}))}}};
     var peer={known:true,role:'first-wins',has:()=>true},peerHttp={writable:()=>true};
@@ -36,7 +38,11 @@ try{
   await page.locator('[data-mini-form] [type=submit]').click();
   assert.deepEqual(await page.evaluate(()=>calls.at(-1).settings.outputs[0]),{source:'held',key:2});
   assert.equal(await page.evaluate(()=>calls.at(-1).settings.limit_ms),45000);
-  await page.locator('[data-mini-mode]').selectOption('toggle');
+  await page.locator('[data-mini-choice]').click();
+  assert.equal(await page.locator('[role=menuitemcheckbox] small').count(),3,'Each mode has a second-line description');
+  assert.equal(await page.locator('[role=menuitemcheckbox] svg').count(),3,'Each mode has a vector icon');
+  if(process.env.PAKAR_GAME_MENU_CAPTURE)await page.screenshot({path:process.env.PAKAR_GAME_MENU_CAPTURE});
+  await page.getByRole('menuitemcheckbox').filter({hasText:'Toggle'}).click();
   assert.equal(await page.locator('[data-mini-form] [name=limit_ms]').inputValue(),'0','Mode selection replaces previous countdown with board defaults');
   await page.locator('[data-mini-form] [name=toggle_kind]').selectOption('press');
   await page.locator('[data-mini-form] [type=submit]').click();
@@ -45,7 +51,8 @@ try{
   const bounds=await box.boundingBox();await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down();await page.mouse.up();
   await page.waitForFunction(()=>calls.at(-1)?.action==='up');
   assert.deepEqual(await page.evaluate(()=>calls.slice(-2).map(call=>call.action)),['down','up']);
-  await page.locator('[data-mini-mode]').selectOption('color-match');
+  await page.locator('[data-mini-choice]').click();
+  await page.getByRole('menuitemcheckbox').filter({hasText:'Color match'}).click();
   assert.equal(await page.locator('[data-mini-form] [name=limit_ms]').inputValue(),'60000');
   await box.scrollIntoViewIfNeeded();const colorBounds=await box.boundingBox();
   await page.mouse.move(colorBounds.x+colorBounds.width/2,colorBounds.y+colorBounds.height/2);

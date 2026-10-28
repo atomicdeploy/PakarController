@@ -16,10 +16,25 @@ const minigameLimits = <String, (int, int)>{
   'show_ms': (100, 10000),
   'gap_ms': (50, 5000),
   'feedback_ms': (50, 5000),
+  'intro_ms': (100, 10000),
+  'preview_ms': (0, 10000),
+  'mismatch_ms': (600, 10000),
   'rounds': (1, 32),
   'sequence_length': (1, 32),
   'palette_size': (2, 9),
   'fixed_target': (0, 9),
+};
+const minigameDescriptions = <String, String>{
+  'press-to-win': 'First press wins; reset for the next round',
+  'illuminated': 'Press the glowing target before its window closes',
+  'color-match': 'Cycle button colors to match the indicator colors',
+  'simon': 'Watch, remember and repeat the light sequence',
+  'memory-pairs': 'Reveal colors and find every matching pair',
+  'clear-all': 'Press every illuminated button to clear the board',
+  'color-order': 'Press the boxes in palette color order',
+  'switch-pattern': 'Toggle buttons to copy the indicator pattern',
+  'reaction-chase': 'Catch the moving light inside its response window',
+  'toggle': 'Control latched or momentary outputs without a timer',
 };
 const minigameOutputSources = [
   'disabled',
@@ -42,6 +57,22 @@ class MiniGameSnapshot {
   int number(String key) => json[key] as int;
   bool get ready => json['ready'] == true;
   bool get running => const ['show', 'input', 'feedback'].contains(phase);
+  bool get acceptsInput =>
+      ready &&
+      (phase == 'input' ||
+          (phase == 'ready' &&
+              const ['press-to-win', 'toggle'].contains(mode)));
+  bool get usesHold =>
+      mode == 'color-match' ||
+      (mode == 'toggle' && settings['toggle_kind'] == 'press');
+  String description(String id) {
+    for (final entry in json['available_modes'] as List) {
+      if (entry['id'] == id && entry['description'] is String) {
+        return entry['description'] as String;
+      }
+    }
+    return minigameDescriptions[id] ?? 'Board-provided game';
+  }
 
   static MiniGameSnapshot? read(Object? raw) {
     if (raw is! Map ||
@@ -134,7 +165,7 @@ class MiniGameSnapshot {
         } else {
           valid = switch (entry.key) {
             'mode' => modes.containsKey(value),
-            'hard' => value is bool,
+            'hard' || 'intro_enabled' || 'color_arpeggio' => value is bool,
             'toggle_kind' => const ['toggle', 'latch', 'press'].contains(value),
             'outputs' => validOutputs(value),
             _ => false,

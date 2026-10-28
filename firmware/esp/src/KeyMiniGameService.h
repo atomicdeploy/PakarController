@@ -12,10 +12,13 @@ String miniJson(){
   d["winner"]=v.winner;d["target"]=v.target;d["round"]=v.round;d["progress"]=v.progress;
   d["mistakes"]=v.mistakes;d["warning"]=v.warning;d["last_reaction_ms"]=v.lastReactionMs;d["best_reaction_ms"]=v.bestReactionMs;
   d["remote_hold_lease_ms"]=5000;d["outputs_owned"]=avrMiniOwned;miniSettings.json(d["settings"].to<JsonObject>());
+  if(miniGame.config().mode==G::ColorMatch)d["matching_mask"]=miniGame.matchingMask();
+  d["arpeggio_supported"]=avrOnline&&avrAtomicAudio;
+  if(v.phase==G::Feedback)d["feedback_correct"]=miniGame.feedbackCorrect();
   auto modes=d["available_modes"].to<JsonArray>();
   constexpr const char *labels[]={"Press to win","Illuminated target","Color pattern","Repeat sequence","Matching pairs",
     "Clear all","Color order","Switch pattern","Reaction chase","Toggle"};
-  for(uint8_t i=0;i<G::ModeCount;++i)if(G::available(G::Mode(i))){auto mode=modes.add<JsonObject>();mode["id"]=G::name(G::Mode(i));mode["label"]=labels[i];}
+  for(uint8_t i=0;i<G::ModeCount;++i)if(G::available(G::Mode(i))){auto mode=modes.add<JsonObject>();mode["id"]=G::name(G::Mode(i));mode["label"]=labels[i];mode["description"]=G::description(G::Mode(i));}
   String result;serializeJson(d,result);return result;
 }
 void miniInput(uint8_t key,bool down,bool physical,uint32_t now){
@@ -97,14 +100,37 @@ void serviceMiniGame(uint32_t now){
   // First-wins retains the established winner flash/ring/pulse presentation.
   miniLayer.enabled=(miniGame.config().mode!=G::PressToWin||v.warning)&&v.phase!=G::Stopped;
   miniLayer.overlay=false;miniGame.styles(miniLayer.entries);
+  grid.setGamePresentationEpoch(miniGame.presentationAt());
   static uint32_t revision=UINT32_MAX,lastSecond=UINT32_MAX;
   const uint32_t second=(v.timed?v.remainingMs:v.elapsedMs)/1000;
   if(revision!=v.revision||second!=lastSecond){revision=v.revision;lastSecond=second;
     keyObservationPending=true;grid.presentationChanged();}
   const uint16_t tone=miniFenceNote?miniFenceNote:miniGame.takeNote();miniFenceNote=0;
-  if(tone&&miniGame.config().mode!=G::PressToWin){
-    const uint8_t payload[]={uint8_t(tone),uint8_t(tone>>8),80,0};sendToAvr(kBuzzer,sequence++,payload,sizeof(payload));
+  static G::Phase audioPhase=G::Ready;static uint32_t successAt=0;static bool successCue=false;static uint8_t resultCue=BoardCore::AudioCues::kSilent;
+  if(audioPhase!=v.phase){audioPhase=v.phase;
+    if(v.phase==G::Success&&miniGame.config().mode!=G::PressToWin){successAt=now;successCue=true;resultCue=keySettings.winnerCue;}
+    else if(v.phase==G::Feedback&&miniGame.config().mode==G::MemoryPairs&&!miniGame.feedbackCorrect()){
+      successAt=now;successCue=true;resultCue=kCueIncorrect;
+    }
+    else if(v.phase!=G::Success){successCue=false;
+      // First-wins owns its reset/welcome cue in serviceGameLink. Do not cut
+      // that cue when its AVR input fence subsequently returns to Ready.
+      if(miniGame.config().mode!=G::PressToWin&&(v.phase==G::Ready||v.phase==G::Stopped)){
+        const uint8_t silence[]={0,0,1,0};sendToAvr(kBuzzer,sequence++,silence,sizeof(silence));}}
   }
+  if(tone&&miniGame.config().mode!=G::PressToWin){
+    if(avrAtomicAudio){
+      static uint16_t audioId=0x4000;if(++audioId==0)++audioId;
+      uint8_t payload[17]={7,uint8_t(audioId),uint8_t(audioId>>8),0,0};uint8_t length=5;
+      auto step=[&](uint16_t hz,uint16_t ms){payload[length++]=hz;payload[length++]=hz>>8;payload[length++]=ms;payload[length++]=ms>>8;};
+      if(miniGame.config().colorArpeggio){step(tone,55);step(uint32_t(tone)*5/4,55);step(uint32_t(tone)*3/2,100);}
+      else step(tone,100);
+      sendToAvr(kAudioStream,sequence++,payload,length);
+    }else{const uint8_t payload[]={uint8_t(tone),uint8_t(tone>>8),80,0};sendToAvr(kBuzzer,sequence++,payload,sizeof(payload));}
+  }
+  // Let the completing color finish, then play the configured full winner cue
+  // once alongside the board-local success rainbow. No per-note network timing.
+  if(successCue&&uint32_t(now-successAt)>=240){successCue=false;if(resultCue!=BoardCore::AudioCues::kSilent)sendToAvr(kAudioCue,sequence++,&resultCue,1);}
   // Set a level, never replay a press. Only differing confirmed outputs cause
   // bounded retries; ACK/readback remains the existing AVR output observation.
   const uint8_t outputs=miniGame.outputMask();
