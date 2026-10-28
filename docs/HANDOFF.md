@@ -8,9 +8,45 @@ publishing source is not a new hardware deployment or complete feature acceptanc
 
 ## Verified GitHub integration
 
-### Current consolidation: PR #27
+### Completed main consolidation (2026-10-28)
 
-The current handoff continues through PR #27, rather than the historical
+PR27 merged normally as `e47b230d1791d3bf4186f3b48d5690436b5b4f98`;
+PR34 merged normally as `da12fde72257d98d7952230b9474760356629b1e`.
+The latter has the identical source tree of complete-stack head
+`ccc061d1b79907c00547a0ea963fc1ab5c6b4a5c`, which passed every build/package/
+contract/resource job in [Build40753870815](https://github.com/atomicdeploy/PakarController/actions/runs/40753870815)
+and [CodeQL40753922292](https://github.com/atomicdeploy/PakarController/actions/runs/40753922292),
+including the standalone finding check. Parent8102f04 independently passed
+[Build40753861517](https://github.com/atomicdeploy/PakarController/actions/runs/40753861517)
+and [CodeQL40753861444](https://github.com/atomicdeploy/PakarController/actions/runs/40753861444).
+Draft publishing was skipped; no release or tag was created.
+
+All paginated conversations/reviews/threads, including outdated findings, and
+both complete PR diffs were reviewed. All four CodeQL threads are resolved;
+no completed Copilot review is claimed. Original preservation/source heads are
+verified main ancestors. Root main is fast-forwarded; only its verified-merged
+feature branch and obsolete remote-tracking refs were removed. The other clean,
+fully merged PortableShell worktree remains owned by its original chat: preserve
+it rather than archiving/deleting it. No stash hides source or drafts.
+
+Windows495 tests/package, Android analysis/tests/APK, both S3 roles, AVR link
+profiles, optional transfers, Web/ledger/tooling and absolute resource budgets
+pass. No retained resource baseline existed, so a historical growth comparison
+is not claimed. The subsequent handoff/audit commit changes metadata only;
+post-merge main CI is separate from the verified application-code runs above.
+
+Issue2's three GitHub/source/merge boxes and issue29's integration-merge box are
+checked with evidence; all hardware and product acceptance remains open. The
+host/palette filename collision, AVR role compile guard, flaky RX fixture and
+review/contract drift are repaired. Issue17 records the remaining Linux tray
+dependency security investigation, not a claimed fix. The Arduino setup action's
+Node20 declaration warning under forced Node24 is nonblocking tooling follow-up.
+No board, installed client, saved scene/rules, host network or credentials changed.
+Private settings, backups and build outputs are preserved locally, not published.
+
+### Consolidation review and repair history (PR #27)
+
+The consolidation proceeded through PR #27, rather than the historical
 PR21-24 checkpoint below. Its published reconciliation commits are
 `378016eeb91dffea64b38d29d7a64bfb18270668` and
 `89b4a6f8ae36cdf7c9e27ba181931aa7fa831e8c`. All previously uncommitted native
@@ -57,6 +93,16 @@ is on PR27/issue2; inspect GitHub's current main SHA before pulling. No release,
 tag, installed app replacement, firmware flash/reset or production output action
 is part of this source handoff. Private backups/settings/caches remain local.
 
+### Subsequent dependency checkpoint (PR35)
+
+Dependabot opened PR35 after both consolidation merges. The reviewed update
+changes only rustls0.23.45 to0.23.46 and its verified crates.io checksum;
+incidental tempfile/getrandom resolver churn is removed. The stale Cargo.lock
+donor target binding is refreshed after rereading the actual PuzzleBoard lock
+and checking the bounded dependency diff. Final-head CI and normal merge remain
+required; the preceding successful runs do not certify this new dependency.
+No production deployment is included.
+
 ### Remaining issues, not forgotten work
 
 Use GitHub's open-issue list as authority, not historical counts in old receipts.
@@ -72,7 +118,7 @@ its physical gates. Current work is grouped as follows:
 | Hidden Snake | #30: external host app and hidden launchers exist; board engine remains opt-in/excluded from current builds and keycontroller. Preserve the normal scene on exit; actual cross-client sound/control acceptance remains open. |
 | Optional hardware | #19/#20: W5500/TFT/BLE coexistence and exact electrical/module/runtime acceptance remain open. Do not infer another board's ISP wiring from ledcontroller's verified build profile. |
 | Native/mobile/Web polish | #4/#5/#8: current source is not full visual, Explorer, background/reconnect or hardware acceptance. Keep one canonical Web source/entrypoint and explicit size-only build flags. |
-| Provenance/build/repository | #3/#9/#11/#16: 430 hash-bound comparisons,4302 pending and310 known gaps. Continue actual donor reads; no blanket parity claim. CI/package/API policy evidence stays separate from deployment. |
+| Provenance/build/repository | #3/#9/#11/#16: 434 hash-bound comparisons,4302 pending and310 known gaps. Continue actual donor reads; no blanket parity claim. CI/package/API policy evidence stays separate from deployment. |
 | Dependency security | #17: glib0.18.5 remains in the default Linux AppIndicator dependency chain. Upstream tray-icon0.26.1 now has a GTK-free KSNI/menu-snapshot backend worth evaluating with actual Linux compilation and runtime coverage; no unsafe forced glib upgrade or tray removal was made. |
 | Preserved legacy | #25: ESP8266 source is retained but its full image still exceeds physical budgets; S3+AVR remain the release targets. |
 

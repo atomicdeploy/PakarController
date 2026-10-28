@@ -216,15 +216,22 @@
       "repository": "atomicdeploy/PakarController",
       "number": 27,
       "scope": "full-record",
-      "content_sha256": "73ea652466fdce87a6fc4b6a672ca1ff6362d09f36d3a0ad990fd8207c42de65",
-      "application": "Read the complete current PR body, twelve top-level comments, seven review summaries and all four paginated threads including outdated state and fix replies. Descriptor reads and trusted-script extraction findings are fixed without suppression; current-head CodeQL workflow and standalone check pass. All local client work is published;495 native and869 Flutter tests plus full quality pass. SDK/Windows/Android CI and complete accumulated code-diff review remain merge gates, not waived by conversation review. No completed Copilot review or production acceptance claimed."
+      "content_sha256": "4069a0fe72c22ec2d7fe70850e032747a9e998d4a543c2e2dcd602ff6207bef9",
+      "application": "Read the complete body, thirteen comments, seven review summaries and four resolved/outdated threads, plus the complete accumulated source diff. Final8102f04 passed Build40753861517 and CodeQL40753861444; normal merge e47b230 preserves all original source checkpoints.495 native and869 Flutter tests pass. No completed Copilot review or production acceptance claimed."
     },
     {
       "repository": "atomicdeploy/PakarController",
       "number": 17,
       "scope": "full-record",
-      "content_sha256": "aa8bfc3ad41850be2d28245cad031017e44d49335d8170ddf7a01bcb4d512626",
-      "application": "Read full advisory issue and fresh Dependabot alert1. glib0.18.5 remains via default Linux GTK3/AppIndicator; forced0.20 breaks its type family. Actual pinned tray-icon0.26.1 now exposes GTK-free KSNI with menu snapshots, worth a separate Linux compiled/runtime migration. No dependency, tray feature, platform or security alert was silently removed or dismissed."
+      "content_sha256": "35a394a249f7a1093fdff04502b11a9db5608076b4573da334b1690a80e610df",
+      "application": "Read the complete advisory issue and current investigation comment. Actual Linux reverse graph retains glib0.18.5 through GTK3/AppIndicator; current tray-icon KSNI source and menu dependencies were read for a separate migration. No dependency/security alert or Linux runtime gate is silently removed; issue remains open."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 34,
+      "scope": "full-record",
+      "content_sha256": "db92e234768984b620ac7522c6bfc691d92da34a41908a9a050d649ae86227cc",
+      "application": "Read complete body, both comments and all review/thread pages (none), and the full canonical four-header/adapters/manifest/tests diff. Finalccc061d passed Build40753870815 and CodeQL40753922292 plus standalone security check. Normal merge da12fde preserves exactly that code tree. No live shell/hardware acceptance or completed Copilot review inferred."
     }
   ]
 }
