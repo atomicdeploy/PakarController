@@ -6180,6 +6180,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 - Test-code evidence: `tests/key_minigame_test.cpp:174 [UTF8-LF sha256=d2b57769a1ad667ae39b642c3a44114a4be2480772d5cbff42b52a3c7bc3d1b9; anchor=static void panelFeedback()]`.
 - Test-code evidence: `tests/semantic_panel_test.cpp:53 [UTF8-LF sha256=24f15644080821c8ee821f8d9851a07ed22557c637714a32b9f0a5b5bd4188bd; anchor=Presenter animated]`.
 - Test-code evidence: `tests/tone_player_test.cpp:105 [UTF8-LF sha256=d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42; anchor=uint8_t tick[]]`.
+- Test-code evidence: `tests/key_minigame_settings_test.cpp:37 [UTF8-LF sha256=f19be5b2bf9bffe0557cde8f40d8bc16dc4acc5ae51ccd6bb7a9c8dbcf38947e; anchor=Actual minigame settings:]`.
 - Scoped advantage: Keeps reusable status/display/input/audio behavior while removing incompatible pins, blocking delays, unframed commands and the donor's four-byte display-buffer overrun.
 - Remaining: Physically verify TM1637 ACK/brightness/text/perimeter/status timing, all fitted keys/relays, exact audio cues and ESP-AVR UART. Host fixtures do not prove optical, electrical or audible behavior.
 

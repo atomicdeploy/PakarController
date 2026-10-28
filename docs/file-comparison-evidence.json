@@ -9590,6 +9590,11 @@
           "path": "tests/tone_player_test.cpp",
           "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "uint8_t tick[]"
+        },
+        {
+          "path": "tests/key_minigame_settings_test.cpp",
+          "sha256": "f19be5b2bf9bffe0557cde8f40d8bc16dc4acc5ae51ccd6bb7a9c8dbcf38947e",
+          "anchor": "Actual minigame settings:"
         }
       ],
       "omissions": [

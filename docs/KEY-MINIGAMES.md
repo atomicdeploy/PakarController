@@ -54,6 +54,11 @@ or hardware pins are introduced; TM1637 remains A4/DIO and A5/CLK.
 Source/fixture evidence is not an audible or optical test. This candidate still
 needs paired ESP/AVR installation and human display/audio feedback.
 
+The actual KeyMiniGameSettings parser/store also has a native fault fixture in
+`test-key-minigames.ps1`: old files gain defaults without a write, bad mixed
+patches leave every policy unchanged, save/readback preserves wiring, identical
+saves do not write, and a failed rename retains the previous configuration.
+
 ## Transport and persistence
 
 Use the existing `/api/command` correlated envelope over WebSocket, HTTP or USB,

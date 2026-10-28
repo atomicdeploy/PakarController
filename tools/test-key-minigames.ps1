@@ -16,3 +16,13 @@ $taskExcluded=@('ILLUMINATED','COLOR_MATCH','SIMON','MEMORY_PAIRS','CLEAR_ALL','
 if($LASTEXITCODE){throw 'Mode-exclusion compilation failed'}
 & $taskOutput
 if($LASTEXITCODE){throw 'Mode-exclusion assertions failed'}
+$taskSettings=Join-Path $taskRoot 'build/native/key_minigame_settings_test.exe'
+& g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror `
+    -I (Join-Path $taskRoot 'tests/correction_stubs') `
+    -I (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Arduino/libraries/ArduinoJson/src') `
+    -I (Join-Path $taskRoot 'libraries/BoardCore/src') `
+    -I (Join-Path $taskRoot 'firmware/esp/src') `
+    (Join-Path $taskRoot 'tests/key_minigame_settings_test.cpp') -o $taskSettings
+if($LASTEXITCODE){throw 'Minigame settings compilation failed'}
+& $taskSettings
+if($LASTEXITCODE){throw 'Minigame settings persistence assertions failed'}
