@@ -118,6 +118,11 @@ WiFiClient pending(const char* input=""){
 }
 void serial(){serialShell=std::make_unique<DeviceShellSession>();initializeDeviceShell(*serialShell,false);shellChannel.open(9);}
 int main(){
+  reset();accessConfig.authentication=true;
+  DeviceShellSession sshAuthenticated;initializeDeviceShell(sshAuthenticated,false,true);
+  assert(sshAuthenticated.authenticated&&sshAuthenticated.output.find("Password:")==std::string::npos);
+  DeviceShellSession unauthenticated;initializeDeviceShell(unauthenticated,false);
+  assert(!unauthenticated.authenticated&&unauthenticated.output.find("Password:")!=std::string::npos);
   reset();auto first=pending("status\r");serviceDeviceShells();
   assert(telnetSessions[0]&&first.connected());
   assert(first.state->wire.find(APP_NAME)!=std::string::npos&&inputBytes==7);

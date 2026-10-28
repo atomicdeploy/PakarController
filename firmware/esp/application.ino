@@ -456,6 +456,7 @@ void beginDeviceShells();
 void serviceDeviceShells();
 unsigned shellConnectionCount();
 uint16_t shellAdvertisedPort();
+uint16_t sshAdvertisedPort();
 String shellStatusJson();
 bool handleShellFrame(const BoardCore::Protocol::Frame &frame);
 bool handleUsbApiFrame(const BoardCore::Protocol::Frame &frame);
@@ -1466,7 +1467,7 @@ void startDiscovery() {
 #if defined(ARDUINO_ARCH_ESP32)
   if (!NetworkPath::ready() && !apStarted) return;
   discoveryAddress = NetworkPath::ready() ? NetworkPath::localIP() : WiFi.softAPIP();
-  s3Discovery.begin(hostname.c_str(), deviceIdentity.displayName(), SystemPlatform::chipId(), kStreamPort,shellAdvertisedPort());
+  s3Discovery.begin(hostname.c_str(), deviceIdentity.displayName(), SystemPlatform::chipId(), kStreamPort,shellAdvertisedPort(),sshAdvertisedPort());
   mdnsStarted = s3Discovery.mdnsReady();
   ssdpStarted = s3Discovery.ssdpReady();
   netbiosStarted = s3Discovery.netbiosReady();

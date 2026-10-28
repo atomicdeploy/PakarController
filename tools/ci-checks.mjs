@@ -9,6 +9,7 @@ export const phases={
     ["node", "tests/doc_links_test.mjs"],
     ["node", "tools/check-doc-links.mjs"],
     ["pwsh", "-File", "tools/test-user-files.ps1"],
+    ["pwsh", "-NoProfile", "-File", "tools/test-ssh.ps1"],
     ["node", "tests/native_dependency_graph_test.mjs"],
     // Static source certificates must fail before expensive SDK/native builds.
     ["node", "tests/pc_contract_mapping_test.mjs"],

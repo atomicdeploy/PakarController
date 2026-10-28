@@ -24,6 +24,8 @@ param(
     [ValidateRange(1,4)] [int] $ShellSessions = 2,
     [switch] $DisableSerialShell,
     [switch] $DisableTelnet,
+    [switch] $S3Ssh,
+    [switch] $S3Scp,
     [switch] $EnableUdpDiagnostics,
     [switch] $BoardSnake,
     [switch] $DisableNetworking,
@@ -52,6 +54,8 @@ if($BoardSnake -and ($Target -ne 'esp32s3' -or $GameMode -ne 'table-selection'))
 if ($S3MicroSd -and ($Target -ne 'esp32s3' -or $S3SdClk -eq -1 -or $S3SdCmd -eq -1 -or $S3SdD0 -eq -1 -or @(@($S3SdClk,$S3SdCmd,$S3SdD0) | Select-Object -Unique).Count -ne 3)) { throw 'microSD requires ESP32-S3 and three explicit, distinct reviewed SD_MMC pins.' }
 if (-not $S3MicroSd -and ($S3SdClk -ne -1 -or $S3SdCmd -ne -1 -or $S3SdD0 -ne -1)) { throw 'SD pins require the explicit -S3MicroSd opt-in.' }
 if ($InitializeFilesystem) { throw 'Commissioning auto-format builds are retired. Build normal firmware and use tools/initialize-device-filesystem.ps1 for explicit, erased-partition-only USB initialization.' }
+if($S3Ssh -and ($Target -ne 'esp32s3' -or $DisableNetworking)){throw 'Native SSH requires the networked ESP32-S3 target.'}
+if($S3Scp -and -not $S3Ssh){throw 'Native SCP requires the explicit -S3Ssh flag.'}
 $recoveryBytes=$null
 if($AvrRecoveryImage){
     if($Target -ne 'esp32s3'){throw 'Bundled AVR recovery requires the ESP32-S3 target'}
@@ -258,6 +262,8 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
             $ledProfile.Content += "namespace PakarAvrRecovery { static const unsigned char image[32768]={"+($recoveryBytes -join ',')+"}; static const char sha256[]=`"$recoveryHash`"; }`n"
         }
         $ledProfile.Content += "#define PAKAR_PIXEL_CORRECTIONS $(if($PixelCorrections -eq 'enabled'){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_SSH_ENABLED $(if($S3Ssh){1}else{0})`n"
+        $ledProfile.Content += "#define PAKAR_SCP_ENABLED $(if($S3Scp){1}else{0})`n"
         if ($DeviceName) { $ledProfile.Content += "#ifndef PAKAR_INITIAL_NAME`n#define PAKAR_INITIAL_NAME $DeviceName`n#endif`n" }
         $ledProfile.Content += "#ifndef PAKAR_S3_LED_DATA`n#define PAKAR_S3_LED_DATA $S3LedDataPin`n#endif`n"
         $ledProfile.Content += "#ifndef PAKAR_S3_ISP_ELECTRICAL_VERIFIED`n#define PAKAR_S3_ISP_ELECTRICAL_VERIFIED $(if($S3IspElectricalVerified){1}else{0})`n#endif`n#ifndef PAKAR_INITIALIZE_FILESYSTEM`n#define PAKAR_INITIALIZE_FILESYSTEM $(if($InitializeFilesystem){1}else{0})`n#endif`n"

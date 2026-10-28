@@ -15,7 +15,13 @@ int main(){
 #else
  0;
 #endif
- assert(shellPropertyCount==50+added+gameAdded);
+ constexpr unsigned sshAdded=
+#if PAKAR_SSH_ENABLED
+ 2;
+#else
+ 0;
+#endif
+ assert(shellPropertyCount==50+added+gameAdded+sshAdded);
  unsigned secrets=0,writable=0;
  for(size_t index=0;index<shellPropertyCount;++index){
   const auto property=shellPropertyAt(index);ShellProperty found{};
@@ -28,7 +34,13 @@ int main(){
   for(size_t earlier=0;earlier<index;++earlier)assert(strcmp(property.key,shellPropertyAt(earlier).key));
   secrets+=property.secret;writable+=property.writable;
  }
- assert(secrets==3+added/2&&writable==35+added+gameAdded);
+ assert(secrets==3+added/2&&writable==35+added+gameAdded+sshAdded);
+ ShellProperty ssh{};
+ assert(shellProperty("ssh.enabled",ssh)==(sshAdded!=0));
+#if PAKAR_SSH_ENABLED
+ assert(ssh.writable&&!ssh.secret&&!strcmp(ssh.domain,"ssh"));
+ assert(shellProperty("ssh.port",ssh)&&ssh.type=='n'&&ssh.writable&&!ssh.secret);
+#endif
  ShellProperty game{};
  assert(shellProperty("game.enabled_mask",game)==(gameAdded!=0));
  ShellProperty ntfy{};

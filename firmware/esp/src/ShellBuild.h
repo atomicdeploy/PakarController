@@ -11,3 +11,18 @@
 #ifndef PAKAR_TELNET_ENABLED
 #define PAKAR_TELNET_ENABLED 1
 #endif
+#ifndef PAKAR_SSH_ENABLED
+#define PAKAR_SSH_ENABLED 0
+#endif
+#ifndef PAKAR_SCP_ENABLED
+#define PAKAR_SCP_ENABLED 0
+#endif
+#if PAKAR_SCP_ENABLED && !PAKAR_SSH_ENABLED
+#error Native SCP requires native SSH
+#endif
+#if PAKAR_SSH_ENABLED
+#if !defined(ARDUINO_ARCH_ESP32)
+#error Native SSH requires ESP32-S3
+#endif
+#include "../../esp32s3/src/SshTransport.h"
+#endif

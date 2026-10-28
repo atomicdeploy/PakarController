@@ -25,7 +25,11 @@ struct ShellTuiSnapshot {
       view.groupCounts=groupCounts;view.groupStarts=groupStarts;
       for(uint8_t i=0;i<view.groupCount;++i){groupCounts[i]=layout.count(i+1);groupStarts[i]=layout.start(i+1);}
     }
-    const char *device[]={"hostname","label","version","boot_id","uptime","heap","avr.online","display.ack","firmware.phase","shell.enabled","shell.port","shell.color","firmware.hash","build.date"};
+    const char *device[]={"hostname","label","version","boot_id","uptime","heap","avr.online","display.ack","firmware.phase","shell.enabled","shell.port","shell.color","firmware.hash","build.date"
+#if PAKAR_SSH_ENABLED
+      ,"ssh.enabled","ssh.port"
+#endif
+    };
     const char *network[]={"network.mode","network.station_enabled","network.ap_enabled","network.auto_switch","network.dhcp","network.ssid","network.password","network.address","network.gateway","network.subnet","network.dns1","network.dns2","network.ip","network.ap_ip","network.ap_ssid"};
     const char *cloud[]={"mqtt.enabled","mqtt.host","mqtt.port","mqtt.tls","mqtt.user","mqtt.password","mqtt.topic","websocket.enabled","websocket.host","websocket.port","websocket.tls","websocket.path","websocket.token","telemetry.seconds"};
     const char *notifications[]={"ntfy.enabled","ntfy.host","ntfy.topic","ntfy.token"};

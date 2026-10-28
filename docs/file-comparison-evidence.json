@@ -87,7 +87,7 @@
         {
           "path": "firmware/esp/src/ShellProperties.h",
           "anchor": "struct ShellProperty",
-          "sha256": "9b4a3bfc3a8a5d4771624441856a287578b20a32b6c3296878292c2f47b7d552"
+          "sha256": "8c387c783a84f0042363333afb95a2115dd4e4983c90c18b422190626e65f69b"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -127,7 +127,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0"
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -201,7 +201,7 @@
         {
           "path": "tools/test-shell.ps1",
           "anchor": "foreach($taskName",
-          "sha256": "87d93fd0ad770fe71731c6b14ae2f0a7a007208e3359cb8f067c4a31c99f9cd9"
+          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -318,7 +318,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0"
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
@@ -410,7 +410,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0"
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -465,7 +465,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0"
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4"
         }
       ],
       "proof": [
@@ -507,7 +507,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0"
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -567,7 +567,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0"
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4"
         },
         {
           "path": "firmware/esp/src/ShellTui.h",
@@ -629,7 +629,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0"
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -689,7 +689,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0"
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4"
         }
       ],
       "proof": [
@@ -2346,7 +2346,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -2393,7 +2393,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -2943,7 +2943,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         },
         {
@@ -3057,7 +3057,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -3104,7 +3104,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -3677,7 +3677,7 @@
       "proof": [
         {
           "path": "tests/script_tooling_test.mjs",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054",
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380",
           "anchor": "const independent=createLogger("
         }
       ],
@@ -6283,7 +6283,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0",
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4",
           "anchor": "void serviceShellRemoteQuery()"
         },
         {
@@ -7600,12 +7600,12 @@
         },
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2",
+          "sha256": "d2cd172d2934642d6255106edb2a417a5bf128ff021dd353ad4de57262277cd0",
           "anchor": "mdnsReady_ = startDiscoveryMdns("
         },
         {
           "path": "firmware/esp32s3/src/DiscoveryMdns.h",
-          "sha256": "ce5382414fc13567b127b6268ef1be610ae9ca566690dfc5ef0482b04039dfe4",
+          "sha256": "970da9d6bf5565bc8d11729c002cfe45c04479621a51aa31827e637169399960",
           "anchor": "bool startDiscoveryMdns("
         },
         {
@@ -7632,7 +7632,7 @@
         },
         {
           "path": "tests/discovery_mdns_test.cpp",
-          "sha256": "115c8090212c01bdf7c3857386a5f4e2f0b05a4840bef9100a45f723906c8e37",
+          "sha256": "145885cd9c34501d9f94205116bf4d231172e4a32901c17c84917120c3258f76",
           "anchor": "for(unsigned at=1;at<=15;++at)"
         },
         {
@@ -9687,7 +9687,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -9738,7 +9738,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -10682,7 +10682,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -10721,7 +10721,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10788,7 +10788,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "const cliPlan=",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/update_tool_test.mjs",
@@ -10817,7 +10817,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10893,7 +10893,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -10954,7 +10954,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11024,7 +11024,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11095,7 +11095,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11137,7 +11137,7 @@
         {
           "path": "tools/firmware-dependencies.json",
           "anchor": "\"platforms\"",
-          "sha256": "dc64a7f76dbb2272bcd6f35a51623a372e6bff55256ae588f02a2a4d315d3207"
+          "sha256": "95a5da284e415b35c47d8f4e9048381ec41c3e181261c437ec91b9cdcf1090c1"
         },
         {
           "path": "tools/firmware-dependencies.mjs",
@@ -11156,7 +11156,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11197,12 +11197,12 @@
         {
           "path": "tools/firmware-dependencies.json",
           "anchor": "\"platforms\"",
-          "sha256": "dc64a7f76dbb2272bcd6f35a51623a372e6bff55256ae588f02a2a4d315d3207"
+          "sha256": "95a5da284e415b35c47d8f4e9048381ec41c3e181261c437ec91b9cdcf1090c1"
         },
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b"
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276"
         }
       ],
       "omissions": [
@@ -11216,7 +11216,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11281,7 +11281,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11346,7 +11346,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11412,7 +11412,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11478,7 +11478,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11525,7 +11525,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "node tests/script_tooling_test.mjs",
-          "sha256": "7fdfa12570415ac19ce820153258ddd0298717e5a044f43dbb115935e092d6c1"
+          "sha256": "e17fd06d3dceef89f7315433ddcc626fbb3b64fdb44acb544672f9aaced7c846"
         }
       ],
       "omissions": [
@@ -11539,7 +11539,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11604,7 +11604,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11670,7 +11670,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11738,7 +11738,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11794,7 +11794,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11849,7 +11849,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11904,7 +11904,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -11945,7 +11945,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🧰 Scripts · ${{ matrix.os }}\"",
-          "sha256": "7fdfa12570415ac19ce820153258ddd0298717e5a044f43dbb115935e092d6c1"
+          "sha256": "e17fd06d3dceef89f7315433ddcc626fbb3b64fdb44acb544672f9aaced7c846"
         },
         {
           "path": ".github/actionlint.yaml",
@@ -11964,7 +11964,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12024,7 +12024,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12084,7 +12084,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12153,7 +12153,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12282,7 +12282,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12338,7 +12338,7 @@
         {
           "path": ".github/workflows/build.yml",
           "anchor": "name: \"🔧 ESP32-S3 + AVR\"",
-          "sha256": "7fdfa12570415ac19ce820153258ddd0298717e5a044f43dbb115935e092d6c1"
+          "sha256": "e17fd06d3dceef89f7315433ddcc626fbb3b64fdb44acb544672f9aaced7c846"
         },
         {
           "path": "tools/firmware-report.mjs",
@@ -12357,7 +12357,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12441,7 +12441,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12523,7 +12523,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12584,7 +12584,7 @@
         {
           "path": "tools/firmware-dependencies.json",
           "anchor": "\"platforms\"",
-          "sha256": "dc64a7f76dbb2272bcd6f35a51623a372e6bff55256ae588f02a2a4d315d3207"
+          "sha256": "95a5da284e415b35c47d8f4e9048381ec41c3e181261c437ec91b9cdcf1090c1"
         },
         {
           "path": "upgrade.sh",
@@ -12608,7 +12608,7 @@
         {
           "path": "tests/script_tooling_test.mjs",
           "anchor": "Script tooling:",
-          "sha256": "9aa75b94bda7dec8ae34f4e4ad9bcde0b94bb7005437fc30f6613c33b0d37054"
+          "sha256": "8cecc892a9f416c7fd4d7df6aae64cef7792b557e73213bc77d9e6a4a53c1380"
         },
         {
           "path": "tests/script_tooling_test.ps1",
@@ -12665,7 +12665,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -13167,7 +13167,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -13225,7 +13225,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993"
         }
       ],
       "omissions": [
@@ -13286,7 +13286,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13302,7 +13302,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -13617,7 +13617,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -13668,7 +13668,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -14383,12 +14383,12 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2",
+          "sha256": "d2cd172d2934642d6255106edb2a417a5bf128ff021dd353ad4de57262277cd0",
           "anchor": "class Discovery {"
         },
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2",
+          "sha256": "d2cd172d2934642d6255106edb2a417a5bf128ff021dd353ad4de57262277cd0",
           "anchor": "String xmlDescription() const {"
         }
       ],
@@ -14430,7 +14430,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2",
+          "sha256": "d2cd172d2934642d6255106edb2a417a5bf128ff021dd353ad4de57262277cd0",
           "anchor": "SsdpDevice ssdp_;"
         }
       ],
@@ -14685,7 +14685,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -15115,7 +15115,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15440,7 +15440,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993",
           "anchor": "bool authenticate()"
         },
         {
@@ -17846,7 +17846,7 @@
       "targets": [
         {
           "path": ".github/workflows/build.yml",
-          "sha256": "7fdfa12570415ac19ce820153258ddd0298717e5a044f43dbb115935e092d6c1",
+          "sha256": "e17fd06d3dceef89f7315433ddcc626fbb3b64fdb44acb544672f9aaced7c846",
           "anchor": "name: \"🚀 Build · Test · Release\""
         },
         {
@@ -17856,7 +17856,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "8c9eb8293e72734611f38cc35365ea84116a32550ea2dc86538b3754ed588a9b",
+          "sha256": "39654528879e28f74cd464ebf077ccbee358764dc314d302d2a3e0e7853f704e",
           "anchor": "export function runChecks"
         },
         {
@@ -18337,7 +18337,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
@@ -20786,6 +20786,7 @@
       "section_review_date": "2026-10-19",
       "reviewed_sections": [
         "ShellOutputScope; ShellHasFlag/SetFlag/ResetInput/SubmitLine/WritePromptPrefix/WriteEventLine; Initialize/Disconnect/Exit/Send and serial Begin/Service/Write",
+        "2026-10-28 full Shell.cpp/.h reread: transport callbacks/session isolation reused by native SSH. Crypto worker/queues bridge the same loop-owned DeviceShellSession; separate SCP download adapter uses the existing public UserFileStore rather than direct raw filesystem access.",
         "ShellService every split NVT/CSI/SS3/numeric/direct escape/control/overflow branch; SendCursor/Multi/ShiftLeft/Right/FixCursor/Clear/New/Redraw",
         "CompStr/ExecutePrompt every command/descriptor branch; all string/number/hex/newline/insert helpers, NumberFromString/BroadcastLine and every LegacyShellSession overload",
         "Exact function dispositions and generic remaining work: docs/PU850-PARITY.md Fresh runtime and shell section review, 2026-10-19."
@@ -20806,7 +20807,7 @@
         },
         {
           "path": "firmware/esp/src/ShellProperties.h",
-          "sha256": "9b4a3bfc3a8a5d4771624441856a287578b20a32b6c3296878292c2f47b7d552",
+          "sha256": "8c387c783a84f0042363333afb95a2115dd4e4983c90c18b422190626e65f69b",
           "anchor": "static const ShellProperty shellProperties[]"
         },
         {
@@ -20816,13 +20817,33 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "3a2ef38f0e2eb85b25dfdd987908b8c3a9a7b4bdb0eedb2d453f6e3983e595f4",
+          "sha256": "e81c9a87d1b66404524dce292bc1eebefe8747f0b859fa0a0248b9db4942ff70",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
           "path": "tools/device-shell.ps1",
           "sha256": "4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55",
           "anchor": "AutomaticCommandRetry=$false"
+        },
+        {
+          "path": "firmware/esp/src/SshShellBinding.h",
+          "sha256": "886a7b7384461835b863914073f9b2e4a12ebac5e7e2018907a0e66ccf4682b6",
+          "anchor": "void serviceSshShell()"
+        },
+        {
+          "path": "firmware/esp32s3/src/SshTransport.h",
+          "sha256": "d5c03ff6159e87ebed3f9899218492d03c559f3a195d9bd7c8c1db8a93f0feec",
+          "anchor": "class SshTransport {"
+        },
+        {
+          "path": "firmware/esp32s3/src/ScpDownload.h",
+          "sha256": "a5864de20e077f081c03ddce98e9a9dac3a78a46149b3618ae66f330a53aca8c",
+          "anchor": "class ScpDownload {"
+        },
+        {
+          "path": "firmware/esp/src/SshScpBinding.h",
+          "sha256": "9acf2193fac080639fc5460273b16a3ebc5a1022fb4c95f67df8c0dab22d8e4a",
+          "anchor": "void serviceSshScp()"
         }
       ],
       "proof": [
@@ -20833,12 +20854,12 @@
         },
         {
           "path": "tests/shell_service_test.cpp",
-          "sha256": "f235dde1902ae6949f8a4460a03c55b99c8886adf6befc113af9f9ea6112294b",
+          "sha256": "076058d45758b87cf76c294e94827929dd74a7e7075cee533aa4ee7251f7e47b",
           "anchor": "Accept crosses millis rollover."
         },
         {
           "path": "tests/shell_properties_test.cpp",
-          "sha256": "fe2802883b9f73af04238c0e8a0eaa5db686e77e6aff8e74b83bfa0e0def3f6d",
+          "sha256": "ccf8a633641fad43b1cbd70febfdc490e4347c92cc1d1b7c406a9c336c746ec1",
           "anchor": "int main()"
         },
         {
@@ -20858,8 +20879,33 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "87d93fd0ad770fe71731c6b14ae2f0a7a007208e3359cb8f067c4a31c99f9cd9",
+          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075",
           "anchor": "-Concern device-shell -Gate"
+        },
+        {
+          "path": "tests/ssh_settings_test.cpp",
+          "sha256": "44c6fda6dce749d7302d284c9f8ba1b9919b36fefd4e3e61fd00b665dfdf6ad2",
+          "anchor": "int main()"
+        },
+        {
+          "path": "tests/ssh_policy_test.cpp",
+          "sha256": "4d6e33842b9108763776e1aab04261235adc0abd2a70cbfeadcc43a7c470822e",
+          "anchor": "int main()"
+        },
+        {
+          "path": "tests/ssh_scp_binding_test.cpp",
+          "sha256": "b47ef508eb652a9099ab0f29e33da744e83d23f1b452cc1c195b4118a3081412",
+          "anchor": "int main()"
+        },
+        {
+          "path": "tests/scp_download_test.cpp",
+          "sha256": "49b22f7ce4a962b1d5fd677ac3bc37bbc6aac8f41a5f7ac4ebcf9790caa79dd8",
+          "anchor": "int main("
+        },
+        {
+          "path": "tests/scp_client_test.mjs",
+          "sha256": "bec216abf19d74af291ecba65e496d689e8ccdeb4e4c12f0707fcea2389b6a1d",
+          "anchor": "Real OpenSSH SCP client accepted"
         }
       ],
       "omissions": [
@@ -20891,7 +20937,8 @@
       ],
       "remaining": [
         "Compile and deploy the integrated shell, then prove simultaneous bounded Telnet sessions, AP/station/Ethernet listener and discovery changes, and framed USB recovery alongside normal protocol commands.",
-        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success."
+        "Exercise authentication changes, disconnect/reconnect, slow-reader backpressure and maintenance exclusion on the actual board; an immediate OK/queued command is not proof of AVR execution or physical LED/display/audio success.",
+        "Issue #33: optional native SSH shares DeviceShellSession/editor/TUI/dispatch; separately gated read-only SCP uses public-file hash/revision guards. Policy/NVS/transport-FS doubles and real OpenSSH client over stdio are not an encrypted board login. Final SDK evidence is recorded in the reuse receipt/GitHub; actual login, persistent identity, memory/TLS/LED coexistence, upload/SFTP support and authorized deployment remain open."
       ],
       "improvement": "Source comparison and hash-bound fixture references only; deployment, terminal interoperability and hardware acceptance remain pending."
     },
@@ -20923,7 +20970,7 @@
         },
         {
           "path": "firmware/esp/src/ShellProperties.h",
-          "sha256": "9b4a3bfc3a8a5d4771624441856a287578b20a32b6c3296878292c2f47b7d552",
+          "sha256": "8c387c783a84f0042363333afb95a2115dd4e4983c90c18b422190626e65f69b",
           "anchor": "static const ShellProperty shellProperties[]"
         },
         {
@@ -20933,7 +20980,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "3a2ef38f0e2eb85b25dfdd987908b8c3a9a7b4bdb0eedb2d453f6e3983e595f4",
+          "sha256": "e81c9a87d1b66404524dce292bc1eebefe8747f0b859fa0a0248b9db4942ff70",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -20950,12 +20997,12 @@
         },
         {
           "path": "tests/shell_service_test.cpp",
-          "sha256": "f235dde1902ae6949f8a4460a03c55b99c8886adf6befc113af9f9ea6112294b",
+          "sha256": "076058d45758b87cf76c294e94827929dd74a7e7075cee533aa4ee7251f7e47b",
           "anchor": "Accept crosses millis rollover."
         },
         {
           "path": "tests/shell_properties_test.cpp",
-          "sha256": "fe2802883b9f73af04238c0e8a0eaa5db686e77e6aff8e74b83bfa0e0def3f6d",
+          "sha256": "ccf8a633641fad43b1cbd70febfdc490e4347c92cc1d1b7c406a9c336c746ec1",
           "anchor": "int main()"
         },
         {
@@ -20975,7 +21022,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "87d93fd0ad770fe71731c6b14ae2f0a7a007208e3359cb8f067c4a31c99f9cd9",
+          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -21042,7 +21089,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0",
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21052,7 +21099,7 @@
         },
         {
           "path": "firmware/esp/src/ShellBuild.h",
-          "sha256": "a2a8a9ee528e9cb48a64ad11268ff473cfbaecc8351ab01c1d9c0d55ed8128a7",
+          "sha256": "e62b1175983658a41c4d2af05bc6b99ab0198529623fd757591257d38d13838c",
           "anchor": "PAKAR_TELNET_SESSIONS"
         }
       ],
@@ -21064,7 +21111,7 @@
         },
         {
           "path": "tests/shell_service_test.cpp",
-          "sha256": "f235dde1902ae6949f8a4460a03c55b99c8886adf6befc113af9f9ea6112294b",
+          "sha256": "076058d45758b87cf76c294e94827929dd74a7e7075cee533aa4ee7251f7e47b",
           "anchor": "Accept crosses millis rollover."
         },
         {
@@ -21084,7 +21131,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "87d93fd0ad770fe71731c6b14ae2f0a7a007208e3359cb8f067c4a31c99f9cd9",
+          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -21139,7 +21186,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0",
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21149,7 +21196,7 @@
         },
         {
           "path": "firmware/esp/src/ShellBuild.h",
-          "sha256": "a2a8a9ee528e9cb48a64ad11268ff473cfbaecc8351ab01c1d9c0d55ed8128a7",
+          "sha256": "e62b1175983658a41c4d2af05bc6b99ab0198529623fd757591257d38d13838c",
           "anchor": "PAKAR_TELNET_SESSIONS"
         }
       ],
@@ -21161,7 +21208,7 @@
         },
         {
           "path": "tests/shell_service_test.cpp",
-          "sha256": "f235dde1902ae6949f8a4460a03c55b99c8886adf6befc113af9f9ea6112294b",
+          "sha256": "076058d45758b87cf76c294e94827929dd74a7e7075cee533aa4ee7251f7e47b",
           "anchor": "Accept crosses millis rollover."
         },
         {
@@ -21181,7 +21228,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "87d93fd0ad770fe71731c6b14ae2f0a7a007208e3359cb8f067c4a31c99f9cd9",
+          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -21232,12 +21279,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0",
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "3a2ef38f0e2eb85b25dfdd987908b8c3a9a7b4bdb0eedb2d453f6e3983e595f4",
+          "sha256": "e81c9a87d1b66404524dce292bc1eebefe8747f0b859fa0a0248b9db4942ff70",
           "anchor": "shellGet(property)"
         },
         {
@@ -21350,12 +21397,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0",
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "3a2ef38f0e2eb85b25dfdd987908b8c3a9a7b4bdb0eedb2d453f6e3983e595f4",
+          "sha256": "e81c9a87d1b66404524dce292bc1eebefe8747f0b859fa0a0248b9db4942ff70",
           "anchor": "shellGet(property)"
         },
         {
@@ -21444,7 +21491,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "3a2ef38f0e2eb85b25dfdd987908b8c3a9a7b4bdb0eedb2d453f6e3983e595f4",
+          "sha256": "e81c9a87d1b66404524dce292bc1eebefe8747f0b859fa0a0248b9db4942ff70",
           "anchor": "struct ShellTuiSnapshot"
         }
       ],
@@ -21512,7 +21559,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "f64e032f783276061abb06b8b3308a40254c88451670dbfd3e642ff4bad904c0",
+          "sha256": "6c7e3739ba77ab203ce15b1bddc8890b265cfa8bc5cdcc09b4dd238956f7f2a4",
           "anchor": "void closeDeviceShells()"
         },
         {
@@ -23005,7 +23052,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -23875,12 +23922,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -23956,7 +24003,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -24182,12 +24229,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "81f5a942e0f43739ae0fc0a5164b64f9c55d030523f6fde789da2df40b564b8b",
+          "sha256": "baab793441c1c5ea8e38e32b8819da030dacd75a46614bb91d66ceb48c3da276",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -24258,7 +24305,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
+          "sha256": "0ffc6026603296335a601b20d007267776648445405c90f0ecd0a54012aab993"
         }
       ],
       "omissions": [
@@ -24859,7 +24906,7 @@
         {
           "path": "firmware/esp32s3/src/Discovery.h",
           "anchor": "bool netbiosReady() const",
-          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2"
+          "sha256": "d2cd172d2934642d6255106edb2a417a5bf128ff021dd353ad4de57262277cd0"
         },
         {
           "path": "firmware/esp32s3/src/Lldp.h",
@@ -24948,7 +24995,7 @@
         {
           "path": "firmware/esp32s3/src/Discovery.h",
           "anchor": "bool netbiosReady() const",
-          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2"
+          "sha256": "d2cd172d2934642d6255106edb2a417a5bf128ff021dd353ad4de57262277cd0"
         },
         {
           "path": "firmware/esp32s3/src/Lldp.h",

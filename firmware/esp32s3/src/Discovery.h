@@ -10,11 +10,11 @@
 namespace PakarS3 {
 class Discovery {
  public:
-  bool begin(const String &hostname, const String &displayName, uint32_t chipId, uint16_t streamPort = 7777,uint16_t shellPort=23) {
+  bool begin(const String &hostname, const String &displayName, uint32_t chipId, uint16_t streamPort = 7777,uint16_t shellPort=23,uint16_t sshPort=0) {
     end(); hostname_ = hostname;
     if (!activeDiscoveryInterfaces().count) return false;
     mdnsReady_ = startDiscoveryMdns(MDNS,hostname.c_str(),APP_NAME,APP_ID,
-        BoardCore::BuildInfo::kVersion,streamPort,shellPort);
+        BoardCore::BuildInfo::kVersion,streamPort,shellPort,sshPort);
     ssdp_.setSchemaURL("description.xml"); ssdp_.setHTTPPort(80);
     ssdp_.setName(displayName); ssdp_.setSerialNumber(chipId); ssdp_.setURL("/");
     ssdp_.setDeviceType(FW_UPNP_DEVICE_TYPE);

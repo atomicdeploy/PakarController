@@ -48,6 +48,9 @@ static const ShellProperty shellProperties[] PAKAR_SHELL_METADATA_STORAGE={
 #endif
  {"shell.enabled","shell","enabled",'b',true,false},{"shell.port","shell","port",'n',true,false},
  {"shell.color","shell","color",'b',true,false}
+#if PAKAR_SSH_ENABLED
+ ,{"ssh.enabled","ssh","enabled",'b',true,false},{"ssh.port","ssh","port",'n',true,false}
+#endif
 #if PAKAR_FIRST_WINS_ENABLED
  ,{"game.enabled_mask","game","enabled_mask",'n',true,false},
  {"game.auto_reset_ms","game","auto_reset_ms",'n',true,false},

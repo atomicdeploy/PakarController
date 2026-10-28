@@ -10655,3 +10655,59 @@ lifecycle/router interoperability remain open. This is not UPnP certification.
 The pre-existing CI failure at pc_contract_mapping_test (AVR target hash) is
 separate from this source checkpoint. Concurrent SSH/native/mobile work is left
 unstaged rather than folded into this change.
+
+## Native SSH and bounded SCP continuation, 2026-10-28
+
+Issue #33 and existing PR #27. Consulted device-shell, terminal-ui, network-cloud,
+donor-audit and build-storage. The initially attempted ssh-transport lookup had
+no route; added an explicit issue #33 route to the existing complete-read PU850
+Shell.cpp/.h records rather than bypassing consultation. Reread both complete
+actual files at 431104072952f694a35b3a83c19f13fbb098ca5b. Existing callback/session
+separation is reused by DeviceShellSession; crypto never executes game commands.
+Read the installed pinned LibSSH-ESP32 5.10.0 README and complete public-domain
+samplesshd-kbdint example; inspected actual bind/options/channel close behavior.
+External dependency/source/archive identity and license are recorded in SSH.md.
+No demonstration passwords, credential logging, network setup or formatting are
+imported. The broader library is LGPL, not relicensed by the sample's exception.
+
+Finished the inherited opt-in transport, persistent enable/port settings,
+per-board ECDSA host key/fingerprint, mandatory SSH password authentication,
+security-revision/token-fenced worker queues, shared loop-owned shell/TUI,
+bounded PTY resize and actual-only DNS-SD advertisement. Added separately gated
+SCP download for exact /user/ names through UserFileStore metadata/hash/chunk
+reads; no raw filesystem access or new plaintext FTP listener. Private settings,
+firmware partitions, uploads, SFTP, recursive copies and arbitrary exec remain
+unavailable/explicitly reported. Upload integrity/replacement and bidirectional
+SFTP are useful pending work, not fulfilled by the library's SCP client example.
+
+Found that pinned ssh_bind_set_blocking changes a struct flag, not its listen
+descriptor: explicit F_GETFL/F_SETFL/O_NONBLOCK prevents a select/accept race
+from stranding revocation. Fatal select errors retire the worker. Final exit
+status/close are drained with bounded socket progress before freeing the channel.
+
+Focused SSH policy/NVS tests, real-library API compilation with SCP included and
+excluded, SCP byte/backpressure/parser tests and actual SCP/public-store binding
+tests pass. The actual OpenSSH scp -O client accepted binary and zero-byte files
+over a stdio protocol fixture; Windows text-mode CRLF initially broke filename
+validation, fixed in the fixture by binary stdin/stdout (network source already
+emits correct LF/raw bytes). This is client compatibility, not an encrypted ESP
+session. Shell/TUI/property/discovery/lease/audio-dispatch regressions and script
+syntax/tooling tests pass. CI installs exact pinned headers, runs SSH tests and
+builds opt-in SSH/SCP before restoring its ordinary firmware artifact. An old
+ArduinoJson-specific workflow assertion was updated to validate the generalized
+exact-name/version install loop; no guard is disabled.
+
+Final ESP32 3.3.12 SDK build with SSH+SCP passes: program 2,657,491/3,342,336
+bytes; static RAM 129,204/327,680. Candidate SHA256
+ea17dba7e1c44afb157d48ee763df8fb76f8804dd0b03d0628fff679960126b7.
+The explicit enabled profile was rebuilt after the final socket-close fix.
+These are compile/static figures, not live crypto/heap or a clean signed release.
+Feature-excluded policy/shell fixtures pass; a final excluded SDK rebuild is not
+claimed by this continuation. Runtime listener remains disabled until configured.
+ASUS localhost:8022
+refused repeated read-only SSH probes. No production installation, reboot,
+configuration or actuation occurred. Real OpenSSH login, wrong-password handling,
+host-key persistence/reconnect, terminal resize and simultaneous API/UART/LED/TLS
+load remain live acceptance gates. The upstream hardware-SHA concurrency warning
+is retained; the SDK was not secretly reconfigured. The existing unrelated AVR
+contract-mapping CI failure remains outside this checkpoint.

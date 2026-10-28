@@ -48,6 +48,13 @@ struct DeviceShellSession : public Print {
   using Print::write;
 };
 std::unique_ptr<DeviceShellSession> telnetSessions[PAKAR_TELNET_SESSIONS],serialShell;
+#if PAKAR_SSH_ENABLED
+PakarS3::SshTransport deviceSsh;
+std::unique_ptr<DeviceShellSession> sshShell;
+uint32_t sshShellToken=0;
+uint16_t sshAnnouncedPort=0;
+bool updateSshConfiguration(JsonObjectConst patch,String &result);
+#endif
 WiFiClient shellPeers[PAKAR_TELNET_SESSIONS];
 PakarShell::SerialChannel shellChannel;
 uint32_t shellTokenCounter=0,shellRebindAt=0,lastShellObserve=0;
@@ -84,6 +91,10 @@ String shellGet(const ShellProperty &p){
   if(key=="led.brightness")return String(grid.brightness());if(key=="led.effect")return grid.patternName();
   if(key=="shell.enabled")return shellSettings.enabled()?F("true"):F("false");
   if(key=="shell.port")return String(shellSettings.port());if(key=="shell.color")return shellSettings.color()?F("true"):F("false");
+#if PAKAR_SSH_ENABLED
+  if(key=="ssh.enabled")return deviceSsh.enabled()?F("true"):F("false");
+  if(key=="ssh.port")return String(deviceSsh.port());
+#endif
   JsonDocument d;
 #if PAKAR_FIRST_WINS_ENABLED
   if(String(p.domain)=="game"){
@@ -109,6 +120,12 @@ bool shellSet(const String &requestedKey,const String &value,String &result){
     boolean=value=="true"||value=="on"||value=="1";
   }
   if(p->type=='n'&&!PakarShell::unsignedNumber(value.c_str(),UINT32_MAX,number)){result=F("Invalid bounded integer");return false;}
+#if PAKAR_SSH_ENABLED
+  if(String(p->domain)=="ssh"){
+    JsonDocument patch;if(p->type=='b')patch[p->field]=boolean;else patch[p->field]=number;
+    return updateSshConfiguration(patch.as<JsonObjectConst>(),result);
+  }
+#endif
   if(String(p->domain)=="shell"){
     JsonDocument patch;if(p->type=='b')patch[p->field]=boolean;else patch[p->field]=number;
     return updateShellConfiguration(patch.as<JsonObjectConst>(),result);
@@ -275,9 +292,9 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   }
   if(!s.closing&&!s.tui.active())shellPrompt(s);
 }
-void initializeDeviceShell(DeviceShellSession &s,bool telnet){
+void initializeDeviceShell(DeviceShellSession &s,bool telnet,bool transportAuthenticated=false){
   s.accessRevision=accessConfig.securityRevision();
-  s.authenticated=accessConfig.ready()&&!accessConfig.enabled();s.color=shellSettings.color();s.lastInput=s.lastDrain=millis();
+  s.authenticated=accessConfig.ready()&&(transportAuthenticated||!accessConfig.enabled());s.color=shellSettings.color();s.lastInput=s.lastDrain=millis();
   if(telnet)s.parser.greet([&](const uint8_t *p,size_t n){s.write(p,n);});
   if(s.color)s.print(F("\x1b[1;32m"));s.print(APP_NAME);s.print(F(" @ "));s.print(deviceIdentity.hostname());
   if(s.color)s.print(F("\x1b[0m"));s.println();
@@ -304,7 +321,6 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
     }
     return;
   }
-
   if(event==PakarShell::LineEditor::Complete){
     if(!s.authenticated)return;
     auto write=[&](const uint8_t *p,size_t n){s.write(p,n);};
@@ -336,12 +352,19 @@ void inputDeviceShell(DeviceShellSession &s,uint8_t ch){
   if(line.indexOf("://")>=0)historySafe=false;
   s.editor.remember(historySafe);s.editor.clear();executeDeviceShell(s,line);
 }
+#include "SshShellBinding.h"
 void closeDeviceShells(){
   // Auth callbacks can run on AsyncTCP's task. Only the main loop destroys
   // editor/socket owners; input is independently fenced by accessRevision.
   shellCloseRequested=true;
 }
 void retireDeviceShells(){
+#if PAKAR_SSH_ENABLED
+  deviceSsh.invalidate();sshShell.reset();sshShellToken=0;
+#if PAKAR_SCP_ENABLED
+  sshScp=SshScpSession{};
+#endif
+#endif
   for(unsigned i=0;i<PAKAR_TELNET_SESSIONS;++i){shellPeers[i].stop();telnetSessions[i].reset();}
   serialShell.reset();shellChannel.close();
 }
@@ -355,9 +378,19 @@ String shellStatusJson(){
 #if PAKAR_REMOTE_QUERY_UDP_ENABLED
   d["udp_query_listening"]=shellRemoteQuery.listening();d["udp_query_port"]=PakarShell::RemoteQuery::port;
 #endif
-  d["serial_open"]=shellChannel.active();d["tui"]=true;String json;serializeJson(d,json);return json;
+  d["serial_open"]=shellChannel.active();d["tui"]=true;
+#if PAKAR_SSH_ENABLED
+  JsonDocument ssh;deserializeJson(ssh,sshStatusJson());d["ssh"]=ssh.as<JsonVariantConst>();
+#else
+  d["ssh"]["built"]=false;
+#endif
+  String json;serializeJson(d,json);return json;
 }
-void beginDeviceShells(){shellSettings.begin(LittleFS);shellRebindAt=millis();}
+void beginDeviceShells(){shellSettings.begin(LittleFS);shellRebindAt=millis();
+#if PAKAR_SSH_ENABLED
+  deviceSsh.begin();
+#endif
+}
 void serviceDeviceShells(){
   const uint32_t now=millis();
 #if PAKAR_REMOTE_QUERY_UDP_ENABLED
@@ -367,6 +400,9 @@ void serviceDeviceShells(){
   if(shellCloseRequested.exchange(false))retireDeviceShells();
 #else
   if(shellCloseRequested){shellCloseRequested=false;retireDeviceShells();}
+#endif
+#if PAKAR_SSH_ENABLED
+  serviceSshShell();
 #endif
   if(shellRebindAt&&int32_t(now-shellRebindAt)>=0){
     shellRebindAt=0;retireDeviceShells();telnetServer.stop();shellListening=false;shellListeningPort=0;
@@ -439,9 +475,16 @@ void serviceDeviceShells(){
         slot->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){slot->write(p,n);});
       if(serialShell&&serialShell->authenticated&&serialShell->watch&&!serialShell->tui.active()&&serialShell->output.length()<1024U)
         serialShell->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){serialShell->write(p,n);});
+#if PAKAR_SSH_ENABLED
+      if(sshShell&&sshShell->watch&&!sshShell->tui.active()&&sshShell->output.length()<1024U)
+        sshShell->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){sshShell->write(p,n);});
+#endif
     }
     for(auto &slot:telnetSessions)if(slot&&slot->authenticated&&slot->tui.active()&&slot->output.length()<1024U)shellTuiDraw(*slot);
     if(serialShell&&serialShell->authenticated&&serialShell->tui.active()&&serialShell->output.length()<1024U)shellTuiDraw(*serialShell);
+#if PAKAR_SSH_ENABLED
+    if(sshShell&&sshShell->tui.active()&&sshShell->output.length()<1024U)shellTuiDraw(*sshShell);
+#endif
   }
 }
 bool updateShellConfiguration(JsonObjectConst patch,String &result){
@@ -456,10 +499,16 @@ bool updateShellConfiguration(JsonObjectConst patch,String &result){
       if(!value.is<uint16_t>()||!value.as<uint16_t>()){result=F("Invalid shell TCP port");return false;}port=value.as<uint16_t>();
     }else{result=F("Unknown shell setting");return false;}
   }
+#if PAKAR_SSH_ENABLED
+  if(port==deviceSsh.port()){result=F("Telnet and SSH require distinct ports");return false;}
+#endif
   if(!shellSettings.configure(enabled,port,color)){result=F("Invalid/reserved port or durable shell save failed");return false;}
   shellRebindAt=millis()+1000U;result=F("Shell settings saved; listener applies after response");return true;
 }
 void registerShellApi(){
+#if PAKAR_SSH_ENABLED
+  registerSshApi();
+#endif
   server.on("/api/shell",HTTP_GET,[](){if(authenticate())server.send(200,"application/json",shellStatusJson());});
   server.on("/api/shell",HTTP_POST,[](){
     if(!authenticate())return;

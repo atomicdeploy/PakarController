@@ -5,7 +5,7 @@ $ErrorActionPreference='Stop'
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-shell -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate | Out-Null
 $taskRoot=Split-Path -Parent $PSScriptRoot
-foreach($taskName in @('portable_shell','telnet_shell','shell_tui','shell_wire','shell_pixel','shell_remote_query')){
+foreach($taskName in @('portable_shell','telnet_shell','shell_tui','shell_wire','shell_pixel','shell_remote_query','ssh_policy')){
   $taskOutput=Join-Path $taskRoot "build/native/${taskName}_test.exe"
   $taskStandard=if($taskName -eq 'shell_tui'){'-std=c++23'}else{'-std=c++17'}
   $taskArgs=@($taskStandard,'-Wall','-Wextra','-Werror','-I',(Join-Path $taskRoot 'firmware/esp/src'),'-I',(Join-Path $taskRoot 'tests/access_stubs'),(Join-Path $taskRoot "tests/${taskName}_test.cpp"),'-o',$taskOutput)
