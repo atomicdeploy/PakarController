@@ -38,6 +38,7 @@ export const phases={
     ["node", "tests/lcd_web_test.mjs"],
     ["pwsh", "-File", "tools/consult-reuse.ps1", "-Concern", "ethernet", "-Gate"],
     ["node", "tests/ethernet_live_tool_test.mjs"],
+    ["pwsh", "-NoProfile", "-File", "tools/test-ethernet-management.ps1"],
     ["node", "tests/pixel_workbench_live_tool_test.mjs"],
     ["node", "tests/board_silent_test.mjs"],
     ["node", "tests/avr_boot_image_test.mjs"],

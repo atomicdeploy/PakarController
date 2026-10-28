@@ -47,6 +47,12 @@ bool miniCommand(JsonObjectConst request,String &result){
     KeyMiniGameSettings next=miniSettings;next.value.enabledMask=keySettings.enabledMask;
     if(!next.patch(request["settings"])){result=F("invalid_minigame_settings");return false;}
     if(!grid.presentationReady()||hostPresentation.model.active()){result=F("presentation_busy");return false;}
+#if defined(ARDUINO_ARCH_ESP32)
+    // The same flash/LED owner as other persistent settings. Filesystem writes
+    // must not race a frame or driver switch; failure keeps the live game intact.
+    PakarS3::ScopedLedFlashPause pause;
+    if(!pause){result=F("led_flash_guard_busy");return false;}
+#endif
     if(!next.save(LittleFS)){result=F("minigame_settings_not_saved");return false;}
     miniSettings=next;miniGame.configure(next.value,now);miniInputFence(now);winner=0;grid.resetWhite();
   }else if(command=="minigame-control"){

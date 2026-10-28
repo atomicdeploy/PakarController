@@ -11154,3 +11154,30 @@ pass. CodeQL then requested forgiving closing-tag extraction; the minigame
 syntax fixture now uses the already-reviewed web_app_contract_test extraction,
 including upper-case and ignored closing attributes. No sanitizer is exposed.
 The complete final quality rerun remains separate, not implied by these tests.
+
+That full quality rerun subsequently passed, as did all495 native tests and the
+complete869-test Flutter suite (three explicit skips). Both analyzer and the
+corrected signal-popup tests pass. The updated CodeQL workflow/standalone check
+passes; its fourth forgiving-end-tag finding also auto-resolved after89b4a6f.
+All thread pages, including the new/outdated finding and replies, were read.
+
+Final source review found a real minigame configuration gap: next.save entered
+LittleFS without the common ScopedLedFlashPause. It now acquires that same LED
+flash owner before writing and returns led_flash_guard_busy without replacing
+live settings/game state on refusal. Existing Puzzles.ino configuration mapping
+is retained, not an added writer. The all-mode/press-only core and four actual
+integration fixtures pass; no physical LED improvement is inferred.
+
+CI40743454384 then failed before SDK compilation: ethernet_management_test.cpp
+included the shared CloudManagement::busy owner without its newly added
+artifactReaders observation. Read the actual shared header, the complete
+Ethernet fixture and existing cloud-management fixture. Add the same typed
+counter and a refusal/preserved-bytes test while a reader lease is held. Both
+Ethernet feature0/feature1 fixtures pass. Add the existing canonical wrapper to
+early quality so this mismatch fails before SDK/native/APK jobs. An initial new
+test compared against an older DHCP snapshot; it was corrected to capture the
+immediate pre-lease bytes, not weaken the refusal assertion. Guarded S3 build
+Plan,23 source mappings,50 route bindings and provenance generation pass.
+
+No user scene, correction values, board firmware, USB/UART, network, installed
+apps or credentials were changed. Source handoff is separate from deployment.

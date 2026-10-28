@@ -488,7 +488,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 - Target: `libraries/BoardCore/src/GameRole.h:7 [UTF8-LF sha256=d8e5d603f3669b68c40ef697e4e87744daa0ca9f029dbfd723dc690bb9749315; anchor=#ifndef PAKAR_GAME_MODE]`.
 - Target: `libraries/BoardCore/src/KeyMiniGame.h:45 [UTF8-LF sha256=0421c7dbb75880594bc56e643f37fa4fd87d74bb7d28a6d9f9800de2dd181121; anchor=class KeyMiniGame]`.
 - Target: `firmware/esp/src/KeyMiniGameSettings.h:8 [UTF8-LF sha256=e4f135174b37a402278acc041f222a0b78a7e35821606c394d812ccaae1fb274; anchor=struct KeyMiniGameSettings]`.
-- Target: `firmware/esp/src/KeyMiniGameService.h:81 [UTF8-LF sha256=c73c99a7533a3e202a466f5595e01b816c54cea90c08198959e01c1eb863e194; anchor=void serviceMiniGame]`.
+- Target: `firmware/esp/src/KeyMiniGameService.h:87 [UTF8-LF sha256=ba5aaf72a17e63252cd994a2a99ef936633425274932a9f90cac90834d11a87f; anchor=void serviceMiniGame]`.
 - Retained: Firmware specialist read all 886 actual donor lines through EOF and matched original-byte inventory hash. Adapted PROGRAM_BASIC/PROGRAM_PUZZLE/PROGRAM_CODE/PROGRAM_MAZE preprocessor selection into one validated GameRole shared by ESP and AVR, rather than retaining several runtime games. Unsupported roles fail compilation; the baked role is disclosed to peers and clients filter acknowledged controls.
 - Retained: 2026-10-27 issue #32: reread all 886 donor lines. The new runtime-game request supersedes the earlier single-game policy inside keycontroller, not table/key role separation. Adapted mode transitions, countdown and relay predicates into one bounded ESP-owned engine with ten optional modes, explicit AVR raw-edge ownership and shared HostPresentation effects. No blocking tones, fixed puzzle code or maze wiring copied.
 - Retained: 2026-10-28 issue #32: reread the unchanged 886-line donor through EOF and adapt its phase-local presentation and finite finish/incorrect cues, without its blocking welcome/tone waits. Add configurable ordered fade/reveal, per-entry Simon feedback, a distinct wrong-pair phase duration, phase-aligned blink rendering, matched-color progress and locally timed atomic arpeggios using the existing AVR circular queue. Existing saved instance values are not migrated or overwritten; core/transport evidence is not physical acceptance.
@@ -497,7 +497,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 - Test-code evidence: `tools/test-game-role.ps1:7 [UTF8-LF sha256=f56acaa20e366cd1f8632472fe58a045295db476de2f310d3abf654c82a0f136; anchor=foreach($mode in @(1,2))]`.
 - Test-code evidence: `tests/game_role_renderer_test.cpp:49 [UTF8-LF sha256=2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59; anchor=A locked table scene never traps first-wins reset]`.
 - Test-code evidence: `tests/key_minigame_test.cpp:121 [UTF8-LF sha256=4423bb677d1993a4f100f09a9224adaa785311fd0846664bc6e068177f12ad73; anchor=static void toggle()]`.
-- Test-code evidence: `tests/key_minigame_integration_test.mjs:7 [UTF8-LF sha256=97dd25ba175d370427bab2083c1359196a95dd6e8b4ad5c4711b75e385403065; anchor=test('every minigame command]`.
+- Test-code evidence: `tests/key_minigame_integration_test.mjs:7 [UTF8-LF sha256=821cb2688ee4bff15d5f97bb02e0009e1826696bbdcef3ec9c58f490782f9a89; anchor=test('every minigame command]`.
 - Remaining: Issue #2/#6: approved deployment and physical keypad/display/audio/game acceptance; complete remaining generic donor integration separately. Host role fixtures and SDK compiles do not prove actual paired-board operation.
 - Remaining: Issue #32: core/client tests and compilation are not physical acceptance. Approved paired deployment, nine-key simultaneous input load, actual display/tones/relay behavior and user feedback for each mode remain required.
 
@@ -3072,7 +3072,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 - Target: `.github/workflows/build.yml:2 [UTF8-LF sha256=2011a5c6db4cce2042b223c1724d4fc6481d140f7aaf68527bc0f8ccf79c363e; anchor=name: "🚀 Build · Test · Release"]`.
 - Target: `tools/build-desktop.ps1:47 [UTF8-LF sha256=8ebd02ebcd5556bd70f97216faed6ea3c03ec8e92950514118e1b9901132e037; anchor=--test-threads=1]`.
-- Target: `tools/ci-checks.mjs:273 [UTF8-LF sha256=41070ef3f4e480e6e052728d11a41bfc22fa748d64c726ffd6ce510b17c3bf78; anchor=export function runChecks]`.
+- Target: `tools/ci-checks.mjs:274 [UTF8-LF sha256=185205c24d8ebf5fbd4b26499841843093544c3f1f626310d901f0f41c229c07; anchor=export function runChecks]`.
 - Target: `tools/prepare-release.mjs:18 [UTF8-LF sha256=820cefc9698d46f95cf39b4cd667494a05cd03d119a1c54f9892b2a35d8b824b; anchor=export function firmwareManifest]`.
 - Retained: Actual donor branch/PR/tag/dispatch/merge-group triggers, concurrency policy, pinned actions without checkout credentials, health-before-build jobs, timeouts, Rust cache reuse, locked tests/builds, packaging, curated notes, manifest/checksums/provenance and aggregate results adapted to current Windows/ESP/AVR/Android targets.
 - Retained: Release content is gated on all supported-target builds, created as an immutable draft prerelease, with the matched S3/AVR buffered pair and raw HTTPS update manifests. Explicit legacy packaging is preserved but the overflowing ESP8266 image is not promised as a release output. Untrusted PRs do not execute publishing code with a write token.
@@ -4753,9 +4753,9 @@ Verdict: **parity-gap**. Revision: `431104072952f694a35b3a83c19f13fbb098ca5b`. O
 - Test-code evidence: `tests/cloud_management_test.cpp:49 [UTF8-LF sha256=bd562de830d4688831338d8fc2bd30fa228a1405f0351e55edddbc79b8d55065; anchor=int main()]`.
 - Test-code evidence: `tests/command_values_test.cpp:17 [UTF8-LF sha256=99f8a78b05de3080ab8bfc32ce623094a13b1f807f4f43a987210de1e05375bc; anchor=int main()]`.
 - Test-code evidence: `tests/ethernet_config_test.cpp:19 [UTF8-LF sha256=947b9a7062895d4d06083652e8952814e5136ac115b773d6b7f8ba089812c4ff; anchor=int main()]`.
-- Test-code evidence: `tests/ethernet_management_test.cpp:67 [UTF8-LF sha256=831f71b7b3f4e357bb3efd751ae8a087212fd990492fa47596f110c5a4ddc1ad; anchor=int main()]`.
+- Test-code evidence: `tests/ethernet_management_test.cpp:68 [UTF8-LF sha256=7c17e3d485afaccfa6a723ca4d97adba33fbf9bebf3d8d706fe86ea5887afa9a; anchor=int main()]`.
 - Test-code evidence: `tests/s3_ethernet_port_test.cpp:76 [UTF8-LF sha256=0985aaf25e5ec0d41ae3fcbbb6ef41766a8d2bd07bdb2e388e390b9721191452; anchor=No background retry/reset storm.]`.
-- Test-code evidence: `tests/ethernet_management_test.cpp:76 [UTF8-LF sha256=831f71b7b3f4e357bb3efd751ae8a087212fd990492fa47596f110c5a4ddc1ad; anchor=auto offline=snapshot(ethernetStatusJson());]`.
+- Test-code evidence: `tests/ethernet_management_test.cpp:77 [UTF8-LF sha256=7c17e3d485afaccfa6a723ca4d97adba33fbf9bebf3d8d706fe86ea5887afa9a; anchor=auto offline=snapshot(ethernetStatusJson());]`.
 - Test-code evidence: `tests/ethernet_live_tool_test.mjs:17 [UTF8-LF sha256=6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9; anchor=for(const scenario of []`.
 - Test-code evidence: `tests/cloud_services_test.cpp:174 [UTF8-LF sha256=9d73f8c4c8ce53c485644ef67da077be526fd244b51e41534ef784df529d1331; anchor=A slow failed connect must wait a full interval AFTER completion]`.
 - Test-code evidence: `tests/filesystem_telemetry_test.cpp:17 [UTF8-LF sha256=188dc83c627b88b6359d616676a6c5f58b5dcb281c1db4673aebe879a9dfb0c3; anchor=Thousands of ordinary telemetry snapshots]`.
