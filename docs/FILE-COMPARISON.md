@@ -3138,7 +3138,7 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `7a91d9fa8778383ee37e33d861ceebc5ab210e46bedab6af8be82d56c27523cc`.
 
 - Target: `tools/audit-github-conversations.mjs:59 [UTF8-LF sha256=d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a; anchor=export function collect]`.
-- Target: `docs/GITHUB-COORDINATION.md:1 [UTF8-LF sha256=9ca5c47d5e27cab9b0fd4ac45832c270c56bd33c509c805286c9e6a39e431846; anchor=# Conversation-aware integration]`.
+- Target: `docs/GITHUB-COORDINATION.md:1 [UTF8-LF sha256=536d8178757144e3edc145cb212a7731c2eb30e5f7582680cbe2a149fde1fc0e; anchor=# Conversation-aware integration]`.
 - Retained: Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController.
 - Omitted/replaced code: `Historical media thumbnails, MPV surface and DLL basename, timeline/cue migration, audio delay and media picking fixes`. Disposition: **not-applicable**. Reason: Pakar is an mpv-free controller and does not own donor playback/media/timeline models. Generic staging safety, keyboard ownership, error correlation, authentication and service-worker origin lessons remain applicable and tracked independently.
 - Omitted/replaced code: `Complete semantic disposition of every historical issue/review and full DNS-rebinding, actuator/persistence, UI/PWA/physical acceptance`. Disposition: **pending**. Reason: All pages are collected but fetching does not mean reading or implementing them. Only explicitly hash-bound reviewed scopes are marked; every unread record and source-file import remains pending.
@@ -6196,7 +6196,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 Verdict: **equivalent-behavior**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `5e6becf3291f81ae0307f6b78c57659cfab5abc13d9afc7bf0a3ff3f6248d608`.
 
-- Target: `desktop/Cargo.lock:5318 [UTF8-LF sha256=1628906a2dfa32184b70a12be6104efa8da733e31c45a5db2a4ad27c27ba9f8a; anchor=name = "tungstenite"]`.
+- Target: `desktop/Cargo.lock:5318 [UTF8-LF sha256=5db30a66eec5474a07fe5c9cfabb39cbbc35e6d4c6ac12450c26202849b61e0e; anchor=name = "tungstenite"]`.
 - Retained: Read all 836 lockfile lines through EOF, including both npm v2 package and duplicated dependency trees. Reproducible transport dependency pinning is retained by the current native lockfile.
 - Omitted/replaced code: `obsolete npm v2 Socket.IO/chokidar dependency graph`. Disposition: **replaced**. Reason: No production Node update daemon remains. Retaining its 2023 graph would add an unused install/cache and duplicated attack surface without preserving functionality.
 - Omitted/replaced code: `Darwin-only fsevents and duplicated ws 8.11/8.14 records`. Disposition: **not-applicable**. Reason: The Windows/embedded deployment does not use this file watcher stack; Rust/firmware lock their own actually linked transports.
