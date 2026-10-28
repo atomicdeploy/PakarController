@@ -4,9 +4,11 @@ import vm from 'node:vm';
 
 const source=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
 // Parse trusted repository script bodies for syntax, never sanitize user HTML.
-const scriptBodies = html => [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script\s*>/gi)].map(match=>match[1]);
+// Same forgiving tag extraction as web_app_contract_test.mjs.
+const scriptBodies = html => [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script[^>]*>/gi)].map(match=>match[1]);
 for(const body of scriptBodies(source))new vm.Script(body);
 assert.deepEqual(scriptBodies('<SCRIPT>const upper=1;</SCRIPT >'), ['const upper=1;']);
+assert.deepEqual(scriptBodies('<script>const checked=1;</script\t\n ignored>'), ['const checked=1;']);
 const controls=source.split('// BEGIN KEY GAME PRESS CONTROLS')[1].split('// END KEY GAME PRESS CONTROLS')[0];
 function fixture(){
   const calls=[],peer={known:true,role:'first-wins',has:()=>true};

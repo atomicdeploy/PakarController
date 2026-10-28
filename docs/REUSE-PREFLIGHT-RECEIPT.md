@@ -11117,3 +11117,14 @@ the previously unpublished owner records: 430 comparisons,4302 pending,310 gaps.
 Complete remaining quality/CI and final PR diff review are pending at this
 checkpoint, not waived by the focused successes. Physical/device acceptance,
 unfinished ESP8266 support and the glib dependency issue remain separate.
+
+The next complete-quality pass exposed three older fixture assumptions, not
+firmware regressions: DNS recovery is now preceded by safe first-boot TCP/IP
+initialization; table extraction must find its end marker after its own start,
+not the earlier minigame output editor; static-group wording no longer assumes
+six LEDs when custom group sizes exist. Assertions now inspect those exact
+owners and retain their negative/readback checks. All three focused suites
+pass. CodeQL then requested forgiving closing-tag extraction; the minigame
+syntax fixture now uses the already-reviewed web_app_contract_test extraction,
+including upper-case and ignored closing attributes. No sanitizer is exposed.
+The complete final quality rerun remains separate, not implied by these tests.

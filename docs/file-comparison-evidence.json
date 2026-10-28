@@ -14314,7 +14314,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "2f224ecd6b8eade6e985bf64244690a8a93347fe6e95ab0b4646edfaa823412a",
+          "sha256": "778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662",
           "anchor": "assert.match(automationStore,"
         }
       ]
@@ -14674,7 +14674,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "2f224ecd6b8eade6e985bf64244690a8a93347fe6e95ab0b4646edfaa823412a",
+          "sha256": "778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662",
           "anchor": "assert.match(transfer, /esp_partition_read"
         },
         {
@@ -16750,7 +16750,7 @@
         },
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "e364947a8d6f93c1fc56cfbfa050f722a033ba63f24d30190238b6bfb0d95f92",
+          "sha256": "a76a645ffaca445ca0c4ec835a3e577f781b7f05a0f88d14ca326f303b2cdf02",
           "anchor": "Additive metadata does not select another generation"
         }
       ],
@@ -17327,7 +17327,7 @@
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "22cbf98740547bde586d0faf786238135e2745130dde39c978d0de1336f4f63a",
+          "sha256": "ac7e5a9d0b7af5bcacad0949c10e4dc9d08377364c05495593585883b566d6b1",
           "anchor": "Selection must not mutate hardware"
         }
       ]
@@ -18498,7 +18498,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "e364947a8d6f93c1fc56cfbfa050f722a033ba63f24d30190238b6bfb0d95f92",
+          "sha256": "a76a645ffaca445ca0c4ec835a3e577f781b7f05a0f88d14ca326f303b2cdf02",
           "anchor": "No inferred board kind or controls"
         },
         {
@@ -18553,7 +18553,7 @@
       "targets": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "e364947a8d6f93c1fc56cfbfa050f722a033ba63f24d30190238b6bfb0d95f92",
+          "sha256": "a76a645ffaca445ca0c4ec835a3e577f781b7f05a0f88d14ca326f303b2cdf02",
           "anchor": "const manifest="
         },
         {
@@ -18600,7 +18600,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "e364947a8d6f93c1fc56cfbfa050f722a033ba63f24d30190238b6bfb0d95f92",
+          "sha256": "a76a645ffaca445ca0c4ec835a3e577f781b7f05a0f88d14ca326f303b2cdf02",
           "anchor": "Unsupported geometry is not forced"
         },
         {
@@ -18714,7 +18714,7 @@
       "proof": [
         {
           "path": "tests/web_context_test.mjs",
-          "sha256": "e364947a8d6f93c1fc56cfbfa050f722a033ba63f24d30190238b6bfb0d95f92",
+          "sha256": "a76a645ffaca445ca0c4ec835a3e577f781b7f05a0f88d14ca326f303b2cdf02",
           "anchor": "Native wiring is source-checked only"
         },
         {
@@ -22157,7 +22157,7 @@
         },
         {
           "path": "tests/web_cell_table_test.mjs",
-          "sha256": "22cbf98740547bde586d0faf786238135e2745130dde39c978d0de1336f4f63a",
+          "sha256": "ac7e5a9d0b7af5bcacad0949c10e4dc9d08377364c05495593585883b566d6b1",
           "anchor": "Manager must not allocate state-dependent selectable Frames"
         },
         {
@@ -23357,7 +23357,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "2f224ecd6b8eade6e985bf64244690a8a93347fe6e95ab0b4646edfaa823412a",
+          "sha256": "778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662",
           "anchor": "sceneStore.begin"
         },
         {
@@ -23642,7 +23642,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "2f224ecd6b8eade6e985bf64244690a8a93347fe6e95ab0b4646edfaa823412a",
+          "sha256": "778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662",
           "anchor": "const flashRead ="
         },
         {
