@@ -155,7 +155,7 @@ if (-not $OnlyOrigin -or $OnlyOrigin -eq 'portable-shell') {
             if($hash -ne $file.sha256 -or $bytes.Length -ne $file.bytes){throw "Pinned portable-shell snapshot changed: $($file.path)"}
         } elseif($file.path -ne '_codeql_detected_source_root'){throw 'Unexpected omitted portable-shell snapshot'}
         $rows.Add([pscustomobject][ordered]@{
-            origin='portable-shell';revision=$portableSource.revision;path=$file.path;sha256=$file.sha256;bytes=$file.bytes;
+            origin='portable-shell';revision=$(if($file.revision){$file.revision}else{$portableSource.revision});path=$file.path;sha256=$file.sha256;bytes=$file.bytes;
             category=(Get-Category -Origin 'portable-shell' -RelativePath $file.path);availability=$(if($file.snapshot){'present'}else{'pinned-blob'});
             screening_signals='shell';review_status='screened';reuse_target='';
             notes='Pinned branch read through EOF; immutable source snapshot (CodeQL marker recorded only). Manual dispositions in file-comparison-evidence.json.'

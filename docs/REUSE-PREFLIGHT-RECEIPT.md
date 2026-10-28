@@ -1,5 +1,31 @@
 # Donor-first preflight receipt
 
+## PortableShell component consolidation, 2026-10-28 (issue #29)
+
+Read portable-shell, device-shell, terminal-ui and donor-audit mappings; read the
+complete live Pakar TelnetShell/PortableShellCore/ShellTui and bindings/tests at
+b09650e3, and the canonical PortableShell C core. Upstreamed the reusable event
+editor, Telnet and snapshot/action view as bounded components, retaining all
+product dispatch/authentication and USB/SSH/transfer owners here. Source pin and
+four complete-read mappings join the same existing ledger; old evidence stays.
+
+A plain type alias failed the existing explicit `~ShellTui()` destruction fixture.
+After consulting terminal-ui again and checking the real destructor regression,
+a zero-state derived facade preserves that source interface and inherited scrub.
+No destructor test was removed or weakened. Standard ANSI color replay support
+was corrected upstream; inspected Agave images use the actual component bytes.
+
+`tools/test-shell.ps1` passes catalogue/completion, editor, TUI, USB ownership,
+pixel topology, diagnostic/SSH policy, auth persistence, two-platform production
+session doubles, exact beep dispatch and TCP/UDP loopbacks. Full firmware build,
+CI and physical USB/Telnet/board acceptance remain distinct; nothing is flashed.
+Work is isolated from the active task's checkout and production processes.
+
+GitHub's first CLI lookup failed TLS negotiation. The standard OpenSSL Git TLS
+backend successfully verified the same remote; no certificate checks were
+removed. Subsequent GitHub CLI requests worked normally. Source was preserved
+throughout the connection failure; a failed lookup was never reported as a push.
+
 ## Cold-start matrix Fire and runtime direction, 2026-10-28 (issue #26)
 
 Reconsulted led-benchmark, games-streaming and the PCController AddressableLeds

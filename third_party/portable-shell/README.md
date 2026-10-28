@@ -1,5 +1,33 @@
 # Portable Shell source integration
 
+## Canonical components (current integration)
+
+PortableShell commit `52c5f7f94581806109e30f5c1ffd6c74ff5bff40` now owns the
+shared C Telnet/terminal primitives, C event editor, thin C++ callback facade
+and optional snapshot/action device view. The exact four headers are compiled
+from `firmware/esp/src/portable-shell/`; `source.json` binds their upstream paths,
+commit and SHA-256. CI rejects drift. Do not patch that slice independently:
+change atomicdeploy/portable-shell first, then review and update this pin.
+
+`TelnetShell.h`, `ShellTui.h` and the Terminal binding in `PortableShellCore.h`
+are thin adapters. Pakar retains command metadata, authentication, property
+validation, hardware dispatch, SSH/FTP, USB ownership and session scheduling.
+The generic library does not gain authority to operate a board. The shared view
+retains secret drafts, capability checks and LED/pixel/game actions; diagnostics
+can be compiled out with `PS_DEVICE_VIEW_DIAGNOSTICS=0`. Default rendering adds
+red rounded framing and magenta selection, plus real Unicode direction symbols.
+
+PortableShell also gained Pakar's secret-history policy, complete escape-payload
+sanitization and explicit scrubbing. Its rich C provider panels, UTF-8 command
+runtime, batch mode and host adapters remain available in that same repository.
+The bounded firmware event profile intentionally avoids pulling in the desktop
+workspace or changing the existing command/authentication owner.
+
+The comparison and reusable integration guide is upstream `PAKAR-INTEGRATION.md`.
+The 17 older entries below remain historical source evidence, not another live
+implementation. Four current component entries bring the authoritative ledger
+to 21 files. Their original Git history is preserved; nothing is silently retired.
+
 Exact donor: https://github.com/atomicdeploy/portable-shell/tree/67c5dcb8a63f4055cbdaf02e9ff271c53b46410d
 Requested branch: `copilot/organize-readme-into-plan`. License: MIT, retained in
 `upstream/LICENSE` and in every original source notice.
@@ -13,7 +41,7 @@ Every file's original SHA-256, exact mapping, omissions and remaining acceptance
 are in the existing `docs/legacy-source-ledger.csv` and
 `docs/file-comparison-evidence.json`, tracked by issue #29.
 
-## Live integration
+## Historical adaptation (before canonical component extraction)
 
 `firmware/esp/src/PortableShellCore.h` adapts PSCommand's name/help descriptors,
 strcmp command lookup and VT100 callback emitters. The catalogue now owns command

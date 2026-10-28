@@ -17,14 +17,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -52,14 +52,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -92,14 +92,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -132,14 +132,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -167,19 +167,19 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         },
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "4699926c543a4e79d0c750e1379f8497c9e0ad386bb01a22a820339ccd0787b0"
+          "sha256": "23ec970b7349e0eb29fbc420e5e8973461f46d0c4be70c141e0ee0bacbf6ace7"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [],
@@ -206,14 +206,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -241,14 +241,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -276,14 +276,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -323,14 +323,14 @@
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345"
+          "sha256": "69b28602442267c2c524cf05660f789725cbdfed3db8ef7ecb088c387a9d9e97"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -364,7 +364,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "e9792a68877e64c2c7355d9af2dfffb03dc5973ce3d01788c586ceb6f37bbd14"
+          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -376,7 +376,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         },
         {
           "path": "tests/telnet_client_test.mjs",
@@ -422,7 +422,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         },
         {
           "path": "tests/telnet_client_test.mjs",
@@ -455,12 +455,12 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "4699926c543a4e79d0c750e1379f8497c9e0ad386bb01a22a820339ccd0787b0"
+          "sha256": "23ec970b7349e0eb29fbc420e5e8973461f46d0c4be70c141e0ee0bacbf6ace7"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345"
+          "sha256": "69b28602442267c2c524cf05660f789725cbdfed3db8ef7ecb088c387a9d9e97"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
@@ -477,7 +477,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -524,7 +524,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         },
         {
           "path": "tests/telnet_client_test.mjs",
@@ -557,12 +557,12 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "4699926c543a4e79d0c750e1379f8497c9e0ad386bb01a22a820339ccd0787b0"
+          "sha256": "23ec970b7349e0eb29fbc420e5e8973461f46d0c4be70c141e0ee0bacbf6ace7"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345"
+          "sha256": "69b28602442267c2c524cf05660f789725cbdfed3db8ef7ecb088c387a9d9e97"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
@@ -570,9 +570,9 @@
           "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
         },
         {
-          "path": "firmware/esp/src/ShellTui.h",
-          "anchor": "class ShellTui",
-          "sha256": "f1da4420e769c7a9da2570603ee70981c894808804d07cb3b8451e093f7d6efd"
+          "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
+          "anchor": "class DeviceView",
+          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991"
         },
         {
           "path": "firmware/esp/src/ShellLabels.h",
@@ -594,7 +594,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         },
         {
           "path": "tests/shell_tone_dispatch_test.mjs",
@@ -646,7 +646,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         },
         {
           "path": "tests/telnet_client_test.mjs",
@@ -679,12 +679,12 @@
         {
           "path": "firmware/esp/src/PortableShellCore.h",
           "anchor": "struct Command",
-          "sha256": "4699926c543a4e79d0c750e1379f8497c9e0ad386bb01a22a820339ccd0787b0"
+          "sha256": "23ec970b7349e0eb29fbc420e5e8973461f46d0c4be70c141e0ee0bacbf6ace7"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
           "anchor": "class LineEditor",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345"
+          "sha256": "69b28602442267c2c524cf05660f789725cbdfed3db8ef7ecb088c387a9d9e97"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
@@ -701,7 +701,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -735,7 +735,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "proof": [
@@ -747,7 +747,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "a648b3e984600cefb2c81f3acd898d57bfd39a47453b6684993023bb4b1fcb5b"
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
         }
       ],
       "omissions": [
@@ -2906,9 +2906,9 @@
       ],
       "targets": [
         {
-          "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "f1da4420e769c7a9da2570603ee70981c894808804d07cb3b8451e093f7d6efd",
-          "anchor": "class ShellTui"
+          "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
+          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+          "anchor": "class DeviceView"
         }
       ],
       "proof": [
@@ -20866,7 +20866,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345",
+          "sha256": "69b28602442267c2c524cf05660f789725cbdfed3db8ef7ecb088c387a9d9e97",
           "anchor": "class LineEditor"
         },
         {
@@ -21089,7 +21089,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345",
+          "sha256": "69b28602442267c2c524cf05660f789725cbdfed3db8ef7ecb088c387a9d9e97",
           "anchor": "class LineEditor"
         },
         {
@@ -21208,7 +21208,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345",
+          "sha256": "69b28602442267c2c524cf05660f789725cbdfed3db8ef7ecb088c387a9d9e97",
           "anchor": "class TelnetParser"
         },
         {
@@ -21305,7 +21305,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345",
+          "sha256": "69b28602442267c2c524cf05660f789725cbdfed3db8ef7ecb088c387a9d9e97",
           "anchor": "class TelnetParser"
         },
         {
@@ -21609,9 +21609,9 @@
       ],
       "targets": [
         {
-          "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "f1da4420e769c7a9da2570603ee70981c894808804d07cb3b8451e093f7d6efd",
-          "anchor": "if(editing_)return edit(ch,snapshot,action);"
+          "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
+          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+          "anchor": "class DeviceView"
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
@@ -21672,14 +21672,14 @@
           "anchor": "class OutputWindow"
         },
         {
-          "path": "firmware/esp/src/TelnetShell.h",
-          "sha256": "d5ddb4296bba6cd7fbf0a928e613eeb1589c080d4e681db6e6fe2bda8de45345",
-          "anchor": "inline size_t terminalText"
+          "path": "firmware/esp/src/portable-shell/portable_terminal.h",
+          "sha256": "cb4c730a516b496b4a6daf8f4d03e2cec15a5b68e0654a44fd2f24531456ddeb",
+          "anchor": "static inline size_t ps_terminal_text"
         },
         {
-          "path": "firmware/esp/src/ShellTui.h",
-          "sha256": "f1da4420e769c7a9da2570603ee70981c894808804d07cb3b8451e093f7d6efd",
-          "anchor": "class ShellTui"
+          "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
+          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+          "anchor": "class DeviceView"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
@@ -25996,6 +25996,122 @@
       ],
       "remaining": [
         "Expand accepted operator walkthroughs as runtime and hardware gates are completed."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "include/portable_terminal.h",
+      "sha256": "cb4c730a516b496b4a6daf8f4d03e2cec15a5b68e0654a44fd2f24531456ddeb",
+      "source_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Exact canonical component bytes, compared through EOF against PortableShell commit 52c5f7f94581806109e30f5c1ffd6c74ff5bff40. Pakar uses adapters; no independently maintained parser/editor/view copy. Preserves hidden input, bounded memory, history classification, capability/stale-field checks and external command ownership. Native shell and TCP loopback fixtures pass; diagnostics remain compile-selectable."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/portable-shell/portable_terminal.h",
+          "sha256": "cb4c730a516b496b4a6daf8f4d03e2cec15a5b68e0654a44fd2f24531456ddeb",
+          "anchor": "static inline int ps_telnet_feed"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e",
+          "anchor": "Consumer must use canonical components"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Complete board firmware CI and separately authorized live device acceptance; no production deployment in this source integration."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "include/portable_editor.h",
+      "sha256": "a88fc73d10a37770f531d3029d7466f3e6470a9bdcf16f5d3661cff976198c63",
+      "source_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Exact canonical component bytes, compared through EOF against PortableShell commit 52c5f7f94581806109e30f5c1ffd6c74ff5bff40. Pakar uses adapters; no independently maintained parser/editor/view copy. Preserves hidden input, bounded memory, history classification, capability/stale-field checks and external command ownership. Native shell and TCP loopback fixtures pass; diagnostics remain compile-selectable."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/portable-shell/portable_editor.h",
+          "sha256": "a88fc73d10a37770f531d3029d7466f3e6470a9bdcf16f5d3661cff976198c63",
+          "anchor": "static inline int ps_editor_feed"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e",
+          "anchor": "Consumer must use canonical components"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Complete board firmware CI and separately authorized live device acceptance; no production deployment in this source integration."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "include/portable_shell_editor.hpp",
+      "sha256": "2596f4e070331aeef24c444c7234767f218f9e8ee0fd966b30efa4c0613c4ee5",
+      "source_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Exact canonical component bytes, compared through EOF against PortableShell commit 52c5f7f94581806109e30f5c1ffd6c74ff5bff40. Pakar uses adapters; no independently maintained parser/editor/view copy. Preserves hidden input, bounded memory, history classification, capability/stale-field checks and external command ownership. Native shell and TCP loopback fixtures pass; diagnostics remain compile-selectable."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/portable-shell/portable_shell_editor.hpp",
+          "sha256": "2596f4e070331aeef24c444c7234767f218f9e8ee0fd966b30efa4c0613c4ee5",
+          "anchor": "class LineEditor"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e",
+          "anchor": "Consumer must use canonical components"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Complete board firmware CI and separately authorized live device acceptance; no production deployment in this source integration."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "include/portable_device_view.hpp",
+      "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+      "source_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Exact canonical component bytes, compared through EOF against PortableShell commit 52c5f7f94581806109e30f5c1ffd6c74ff5bff40. Pakar uses adapters; no independently maintained parser/editor/view copy. Preserves hidden input, bounded memory, history classification, capability/stale-field checks and external command ownership. Native shell and TCP loopback fixtures pass; diagnostics remain compile-selectable."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
+          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+          "anchor": "class DeviceView"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e",
+          "anchor": "Consumer must use canonical components"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Complete board firmware CI and separately authorized live device acceptance; no production deployment in this source integration."
       ]
     }
   ]
