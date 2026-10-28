@@ -244,8 +244,8 @@
       "repository": "atomicdeploy/PakarController",
       "number": 36,
       "scope": "full-record",
-      "content_sha256": "6f8c382ac65355491581ca48a1f8ba315b2dd3b2af067ee98e12584b4a33c802",
-      "application": "Read the complete source diff, body and coordination comment; no reviews or inline threads existed at audit. Four exact shared headers pin PortableShell 10b7d294; prior command/authentication/hardware owners remain intact. Focused shell/loopback and source gates passed before merging current main 335755a normally. Current combined-head CI and physical acceptance remain separate gates."
+      "content_sha256": "ef19b3ce2c5c2636da026d02fae5e1b1d66a2acf5f5e9ec0c2ac6588a8215e09",
+      "application": "Read complete canonical source/manifest/ledger diff, body and both coordination comments; no reviews or inline threads. Existing capacities and hardware/authentication owners remain unchanged. Preserve original b793233, owner8aa81bd/9721cb and normal main335755a histories; resolve metadata conflicts by retaining the complete donor inventory and both independent review records. Actual shell suite and21-file source gate pass on combined source; final combined-head CI and physical acceptance remain separate gates."
     }
   ]
 }
