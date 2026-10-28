@@ -1,7 +1,7 @@
 // Adapted from PCController .github/scripts/repository-check.mjs and
 // repository-policy.mjs (MIT option; docs/licenses/PCController-MIT.txt).
 // Scope: maintained entry guides, not immutable donor snapshots or old receipts.
-import {existsSync, readFileSync, statSync} from 'node:fs';
+import {closeSync, fstatSync, openSync, readFileSync} from 'node:fs';
 import {dirname, relative, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -76,12 +76,35 @@ export function localLinkReference(rawTarget) {
 
 export function checkGuides(root, guides = entryGuides) {
   const errors = [], cache = new Map();
+  // Adapt donor readOrdinaryTextFile's single-descriptor ownership. Do not
+  // check a pathname and then reopen it: a concurrent rename can change the
+  // file between those operations. Cache one observation for this check only.
+  const snapshot = (path, text = true) => {
+    const key = `${text}:${path}`;
+    if (cache.has(key)) return cache.get(key);
+    let descriptor;
+    try {
+      descriptor = openSync(path, 'r');
+      const stat = fstatSync(descriptor);
+      if (!stat.isFile() || !stat.size) return null;
+      if (text && stat.size > 2 * 1024 * 1024) throw Error('Guide exceeds 2 MiB');
+      const value = text ? readFileSync(descriptor, 'utf8') : true;
+      cache.set(key, value);
+      return value;
+    } catch (error) {
+      if (['ENOENT', 'ENOTDIR', 'EISDIR'].includes(error.code)) return null;
+      throw error;
+    } finally {
+      if (descriptor !== undefined) closeSync(descriptor);
+    }
+  };
   for (const guide of guides) {
     const path = resolve(root, guide);
-    if (!existsSync(path) || !statSync(path).isFile() || !statSync(path).size) {
+    const markdown = snapshot(path);
+    if (markdown === null) {
       errors.push(`${guide}: required guide missing or empty`); continue;
     }
-    const prose = proseLines(readFileSync(path, 'utf8')).join('\n');
+    const prose = proseLines(markdown).join('\n');
     // Same inline Markdown links as donor, plus our branded HTML image/link tags.
     const links = [...prose.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/gu)].map(match => match[1]);
     for (const match of prose.matchAll(/<(?:a|img)\b[^>]*?\b(?:href|src)=["']([^"']+)["'][^>]*>/giu)) links.push(match[1]);
@@ -91,11 +114,15 @@ export function checkGuides(root, guides = entryGuides) {
       if (!ref) continue;
       const dest = ref.target ? resolve(ref.target.startsWith('/') ? root : dirname(path), ref.target.replace(/^\//u, '')) : path;
       const owned = relative(root, dest);
-      if (owned === '..' || owned.startsWith('../') || owned.startsWith('..\\') || !existsSync(dest)) {
+      if (owned === '..' || owned.startsWith('../') || owned.startsWith('..\\')) {
+        errors.push(`${guide}: missing/outside local link: ${link}`); continue;
+      }
+      const target = snapshot(dest, dest.toLowerCase().endsWith('.md'));
+      if (target === null) {
         errors.push(`${guide}: missing/outside local link: ${link}`); continue;
       }
       if (ref.fragment && dest.toLowerCase().endsWith('.md')) {
-        if (!cache.has(dest)) cache.set(dest, markdownAnchors(readFileSync(dest, 'utf8')));
+        if (!cache.has(dest)) cache.set(dest, markdownAnchors(target));
         if (!cache.get(dest).has(ref.fragment)) errors.push(`${guide}: missing heading: ${link}`);
       }
     }

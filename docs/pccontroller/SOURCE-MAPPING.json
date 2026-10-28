@@ -75,10 +75,10 @@
       "source_sha256": "57b32c4e0b9144a77a68118aceb35bbfcd366b6098601c5a5241a7125047a011",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.h",
-      "target_sha256_utf8_lf": "190a37d530949c34ea196e5771c5da0c02017021b1a302c5da45fda7d0b9a9ef",
-      "line": 90,
+      "target_sha256_utf8_lf": "0b07b3873c843b44e822be817f669ac049419c39fe2b17adeaf11f8fed626cdd",
+      "line": 96,
       "anchor": "ControllerCore::MacroRing ring_",
-      "retained": "Same actual MacroRing owner behind Pakar hardware interface. Complete current target reread after the semantic-panel checkpoint: the only header addition is espTouchedAt_, separate from offers/ACK timestamps, so physical menu inactivity can expire without changing MacroRing ownership, feature flags or result queues.",
+      "retained": "Same actual MacroRing owner behind Pakar hardware interface. Reread the complete current header and donor MacroQueue.h after the board-owned game addition: gameInput uses the existing bounded event queue; gameOwner/gameEpoch retire old work, fence new rounds and prevent macro replay or legacy automation from taking game outputs. MacroRing ownership, feature guards and result queues remain shared. Tests pc_contract_test.cpp cover all-nine-input bursts, epoch idempotence, stale event retirement, macro exclusion and companion loss.",
       "omitted_code_and_reason": "Donor UartProtocol/global relay state wrapper replaced; a second ring or relay substitute would waste RAM or lie about installed hardware."
     },
     {
@@ -86,10 +86,10 @@
       "source_sha256": "43a627c50e9908c20ea4b1d33c2eb4ef914672362ec5b9f5129604a7e5678b96",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "247a68576d68de47fe261f13c0d04ea5013acbf019c87ae220f7aadd0dea9d22",
-      "line": 290,
+      "target_sha256_utf8_lf": "7e419d2c63737a20f3bdcce8fece569e792c78471c82053cb4ed62f82582cb7b",
+      "line": 311,
       "anchor": "PcControllerRuntime::macro(",
-      "retained": "Ring lifecycle and result events integrated into guarded common dispatch; shift-mask recordings use real outputs. Complete current target and semantic-panel diff reread: the added physical-only 15-second ESP menu lease does not modify macro append/dequeue/record/replay timing, 0xFE result accounting, programming guards or safe-stop behavior.",
+      "retained": "Ring lifecycle and result events integrated into guarded common dispatch; shift-mask recordings use real outputs. Complete current target and semantic-panel diff reread: the added physical-only 15-second ESP menu lease does not modify macro append/dequeue/record/replay timing, 0xFE result accounting, programming guards or safe-stop behavior. Reconciled the board-owned-game delta: input events now carry the current round epoch; macro playback and legacy automation cannot cancel the game owner; companion loss still safely releases outputs. Physical-only menu leases, segment readback, guarded dispatch and shared MacroRing remain intact. Reviewed full current target and donor MacroQueue adapter plus front-panel definitions; existing ownership/epoch/audio fixtures exercise the changed branches.",
       "omitted_code_and_reason": "Relay-specific recording opcode replaced by Pakar OutputMask; no relay side/safety hardware exists."
     },
     {
@@ -174,10 +174,10 @@
       "source_sha256": "1e4e69d6d3b3a8d4a159104d7c4faf97e43520ed8ba33fc48bb3be4f9f60b084",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "247a68576d68de47fe261f13c0d04ea5013acbf019c87ae220f7aadd0dea9d22",
+      "target_sha256_utf8_lf": "7e419d2c63737a20f3bdcce8fece569e792c78471c82053cb4ed62f82582cb7b",
       "line": 10,
       "anchor": "constexpr uint8_t labels",
-      "retained": "Stable page list/layout/hide/reorder and real six-page state adapted to present hardware. Complete target and semantic-panel diff reread: abandoned physical ESP menus now close after 15000ms; only physical key gestures renew that lease, while state offers, ACKs and rendering do not. Stable six-page IDs, local/host ownership and captured-panel guards remain intact.",
+      "retained": "Stable page list/layout/hide/reorder and real six-page state adapted to present hardware. Complete target and semantic-panel diff reread: abandoned physical ESP menus now close after 15000ms; only physical key gestures renew that lease, while state offers, ACKs and rendering do not. Stable six-page IDs, local/host ownership and captured-panel guards remain intact. Reconciled the board-owned-game delta: input events now carry the current round epoch; macro playback and legacy automation cannot cancel the game owner; companion loss still safely releases outputs. Physical-only menu leases, segment readback, guarded dispatch and shared MacroRing remain intact. Reviewed full current target and donor MacroQueue adapter plus front-panel definitions; existing ownership/epoch/audio fixtures exercise the changed branches.",
       "omitted_code_and_reason": "Fourteen sensor/motion/RF/PWM/relay modes and related enum values are not applicable; six IDs are explicitly profile-specific, not fake donor mode IDs."
     },
     {
@@ -240,10 +240,10 @@
       "source_sha256": "b176da4a854a9b0b77c653d96a00d5359277e9c9681b47e14551d92b282b3301",
       "source_read": "complete",
       "target": "firmware/avr/PcControllerRuntime.cpp",
-      "target_sha256_utf8_lf": "247a68576d68de47fe261f13c0d04ea5013acbf019c87ae220f7aadd0dea9d22",
-      "line": 100,
+      "target_sha256_utf8_lf": "7e419d2c63737a20f3bdcce8fece569e792c78471c82053cb4ed62f82582cb7b",
+      "line": 121,
       "anchor": "PcControllerRuntime::dispatch",
-      "retained": "Entire donor dispatcher read; every registered request has an explicit current owner/response or exclusion. Actual algorithms reuse imported modules rather than duplicate engines. Complete current target and semantic-panel diff reread: physical ESP menu activity expires independently of offer freshness, while frontPanel still sends the actual four segment bytes in the donor's bounded 47-byte snapshot. Programming/read-only dispatch guards, target-5 scheduled text ownership and host timeout release are unchanged; requested semantic events never substitute for actual segment ACK/readback.",
+      "retained": "Entire donor dispatcher read; every registered request has an explicit current owner/response or exclusion. Actual algorithms reuse imported modules rather than duplicate engines. Complete current target and semantic-panel diff reread: physical ESP menu activity expires independently of offer freshness, while frontPanel still sends the actual four segment bytes in the donor's bounded 47-byte snapshot. Programming/read-only dispatch guards, target-5 scheduled text ownership and host timeout release are unchanged; requested semantic events never substitute for actual segment ACK/readback. Reconciled the board-owned-game delta: input events now carry the current round epoch; macro playback and legacy automation cannot cancel the game owner; companion loss still safely releases outputs. Physical-only menu leases, segment readback, guarded dispatch and shared MacroRing remain intact. Reviewed full current target and donor MacroQueue adapter plus front-panel definitions; existing ownership/epoch/audio fixtures exercise the changed branches.",
       "omitted_code_and_reason": "All mismatched hardware handlers fail HardwareUnavailable, preserved future guards require drivers/pin profiles; registry-only host-menu IDs Unsupported. Profile-specific settings/status/menu IDs are not stock schema-3 byte compatibility."
     },
     {

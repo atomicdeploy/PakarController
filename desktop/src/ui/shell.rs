@@ -1162,6 +1162,12 @@ impl PakarControllerApp {
             .map(|a| a.name.clone())
             .unwrap_or_else(|| "PakarController".into());
         if let Some(icon) = crate::branding::sync_peer(ctx, self.presentation_context()) {
+            #[cfg(windows)]
+            if let Some(desktop) = &self.windows_desktop {
+                if let Err(error) = desktop.set_icon(&icon) {
+                    self.record_event("Windows application artwork", &error);
+                }
+            }
             if let Some(tray) = &self.tray {
                 if let Err(error) = tray.set_application(&app_name, &icon) {
                     self.record_event("Application artwork", &error);

@@ -16,4 +16,9 @@ for (const link of ['guide.md#not-a-heading','missing.md','../outside.md','guide
   assert.equal(checkGuides(root, ['README.md']).length, 1, link);
 }
 assert.equal(checkGuides(root, ['absent.md']).length, 1);
+assert.equal(checkGuides(root, ['.']).length, 1, 'Directory is not a guide');
+writeFileSync(resolve(root, 'README.md'), '[directory](.)');
+assert.equal(checkGuides(root, ['README.md']).length, 1, 'Directory is not a linked file');
+writeFileSync(resolve(root, 'README.md'), '[valid](guide.md#hello) [again](guide.md#hello-1)');
+assert.deepEqual(checkGuides(root, ['README.md']), [], 'Repeated links reuse one descriptor snapshot');
 console.log('Donor-adapted documentation checks: local links, headings, fences, Unicode, HTML, boundaries and malformed URLs passed.');
