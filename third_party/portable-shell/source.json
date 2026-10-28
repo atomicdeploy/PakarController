@@ -104,6 +104,35 @@
       "sha256": "f26c767cd4ab7471a586b3b1500f9a613cc0ce00ac3f0ad23733e0c04af526eb",
       "bytes": 6263,
       "snapshot": "upstream/tests/test_shell.c"
+    },
+    {
+      "path": "include/portable_terminal.h",
+      "revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "sha256": "cb4c730a516b496b4a6daf8f4d03e2cec15a5b68e0654a44fd2f24531456ddeb",
+      "bytes": 13532,
+      "snapshot": "../../firmware/esp/src/portable-shell/portable_terminal.h"
+    },
+    {
+      "path": "include/portable_editor.h",
+      "revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "sha256": "a88fc73d10a37770f531d3029d7466f3e6470a9bdcf16f5d3661cff976198c63",
+      "bytes": 16957,
+      "snapshot": "../../firmware/esp/src/portable-shell/portable_editor.h"
+    },
+    {
+      "path": "include/portable_shell_editor.hpp",
+      "revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "sha256": "2596f4e070331aeef24c444c7234767f218f9e8ee0fd966b30efa4c0613c4ee5",
+      "bytes": 5560,
+      "snapshot": "../../firmware/esp/src/portable-shell/portable_shell_editor.hpp"
+    },
+    {
+      "path": "include/portable_device_view.hpp",
+      "revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+      "bytes": 37621,
+      "snapshot": "../../firmware/esp/src/portable-shell/portable_device_view.hpp"
     }
-  ]
+  ],
+  "component_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40"
 }

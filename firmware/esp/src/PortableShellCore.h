@@ -1,4 +1,5 @@
 #pragma once
+#include "portable-shell/portable_shell_editor.hpp"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -123,27 +124,5 @@ template<class Write> void renderHelp(Write write,bool firstWins,bool ansi,bool 
 
 // Donor VT100 emitters retain callback-based transport independence. Unlike the
 // original, invalid/unbounded movement and color codes cannot escape to a terminal.
-struct Terminal {
-  template<class Write> static void text(Write write,const char* value) {
-    write(reinterpret_cast<const uint8_t*>(value),strlen(value));
-  }
-  template<class Write> static void clear(Write write,bool ansi=true) {
-    text(write,ansi?"\x1b[H\x1b[2J":"\r\n");
-  }
-  template<class Write> static void clearLine(Write write,bool ansi=true) {
-    text(write,ansi?"\r\x1b[2K":"\r");
-  }
-  template<class Write> static void cursorLeft(Write write,size_t count,bool ansi=true) {
-    if (!count || count>512) return;
-    if (!ansi) { while(count--)text(write,"\b"); return; }
-    char buf[20];snprintf(buf,sizeof(buf),"\x1b[%uD",static_cast<unsigned>(count));text(write,buf);
-  }
-  template<class Write> static void color(Write write,int fg,int bg,bool ansi=true) {
-    if (!ansi || fg<30 || fg>37 || bg<40 || bg>47) return;
-    char buf[32];snprintf(buf,sizeof(buf),"\x1b[%d;%dm",fg,bg);text(write,buf);
-  }
-  template<class Write> static void reset(Write write,bool ansi=true) {
-    if(ansi)text(write,"\x1b[0m");
-  }
-};
+using PortableShell::Terminal;
 } // namespace PakarShell
