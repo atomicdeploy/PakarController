@@ -23236,7 +23236,8 @@
         "Pixel corrections reuse the existing SceneStore staged close/readback/atomic-rename transaction and donor MCU-owned validated record/unchanged-write discipline. The correction store adds explicit revision comparison, a private checksum and bounded ordered rules. New remapping math is project-specific, not represented as imported donor code. Native mapping tests and S3 compilation passed. This pixel-workbench checkpoint additionally exercises correction lease expiry/ownership, failed commit restoration and integrity migration with host filesystem fixtures; final installed clients, physical interrupted-flash durability and optical acceptance remain open.",
         "Runtime-backend checkpoint reread the complete ledger-bound b0111ae0 Project/SettingsStore.cpp via immutable git show; the newer local checkout has different bytes and is not relabelled as matching this source. Adapt validated MCU-owned settings and EEPROM.update unchanged-write discipline to LedBackendSettings' separate private12-byte LittleFS record, reusing stage/close/exact-readback/rename. Requested backend is durable before asynchronous driver admission and independent of scene/render mode/current activation success. Before driver startup initializeDefault explicitly writes a valid absent-record build default once; damaged, unmounted and no-driver records never trigger automatic repair, formatting or replacement.",
         "Pixel-workbench checkpoint preserves validated MCU-owned records and unchanged-write avoidance while extending PixelCorrectionStore with optional per-rule enabled flags (missing means enabled), integrity-protected durable serialization and ordered skip/re-enable behavior. A revision-fenced, owner-token RAM preview lease is a Pakar-specific extension, not a claimed donor feature: expiry/clear restores the saved map, preview frames never write flash, a different editor cannot commit over the lease, and a failed same-owner save preserves the live preview until explicit retry/expiry. Diagnostics capture the original output policy so temporary clear/overlay frames cannot replace the semantic scene.",
-        "Per-physical-group pixel counts use a separate checksum-validated board-owned PixelGroupStore with stage/close/readback/rename and no-op write avoidance. Loading a missing or corrupt record never formats the filesystem or overwrites it. Host fault-injection tests cover failed persistence without applying a draft; this is not physical interrupted-flash proof."
+        "Per-physical-group pixel counts use a separate checksum-validated board-owned PixelGroupStore with stage/close/readback/rename and no-op write avoidance. Loading a missing or corrupt record never formats the filesystem or overwrites it. Host fault-injection tests cover failed persistence without applying a draft; this is not physical interrupted-flash proof.",
+        "Reread the complete matching SettingsStore header/implementation and both actual Pakar presentation stores during source handoff. Adapt the donor independent-region/no-overlap ownership to distinct host-presentation.json/host-presentation.pending files; retain the existing validated staged transaction without migrating or overwriting the established presentation.json palette. The combined production-store regression reproduces the collision before the fix and verifies independent palette/host saves, failed rename and reboot, with correction/scene/staging bytes unchanged."
       ],
       "targets": [
         {
@@ -23323,6 +23324,11 @@
           "path": "firmware/esp/src/PixelGroupStore.h",
           "anchor": "class PixelGroupStore",
           "sha256": "9153156602bcbb9d725506c9ea3d87d0a6c5e4cdce56fa42c78b8418ded09d52"
+        },
+        {
+          "path": "firmware/esp/src/HostPresentationStore.h",
+          "anchor": "static const char *stagingPath()",
+          "sha256": "b4db20cf50260b0498205c5ead521704f4dd6dbc36013f7a9f6e40481ada4aac"
         }
       ],
       "omissions": [
@@ -23449,6 +23455,11 @@
           "path": "tests/pixel_group_store_test.cpp",
           "anchor": "int main()",
           "sha256": "45efe22ef09d0ccb1f156026a7e499bb9f593e5be5bad94b1efed199b5d8ea8b"
+        },
+        {
+          "path": "tests/host_presentation_test.cpp",
+          "anchor": "Two production stores share LittleFS",
+          "sha256": "f0069540e8e4861d6215156018ad8f76c0f7fa2eb172d53b8ac74766e7aa1cb3"
         }
       ],
       "improvement": "Verified semantic scene restore replaces unconditional white boot; safe initial white and read-only legacy brightness migration remain. Animation/stream bytes never become per-frame persistence writes."

@@ -15,7 +15,9 @@ PR21-24 checkpoint below. Its published reconciliation commits are
 `378016eeb91dffea64b38d29d7a64bfb18270668` and
 `89b4a6f8ae36cdf7c9e27ba181931aa7fa831e8c`. All previously uncommitted native
 taskbar/notification and Flutter signal-display work is included, together with
-the reviewed provenance records; no stash or extra worktree owns source.
+the reviewed provenance records. A separate active PortableShell integration
+worktree owns stacked PR #34; preserve it and merge in dependency order. No stash
+is used to hide work.
 
 Local verification: all495 native tests, Flutter analyzer and869 Flutter tests
 (three explicitly skipped), full `node tools/ci-checks.mjs quality`, source-version agreement and the
@@ -30,6 +32,16 @@ guard before saving; refusal preserves live state. CI's Ethernet fixture now
 declares/tests the shared artifact-reader lease and runs in the earlier quality
 phase too. Core/integration, enabled/disabled Ethernet fixtures and guarded S3
 build Plan pass. Final firmware linking remains a CI gate, not a Plan claim.
+
+Further complete-store review reproduced a shared-filename data-loss risk:
+host presentations and normal appearance both used `/presentation.json`.
+Host layers now use `/host-presentation.json` and their own staging file. Actual
+combined-store tests verify independent save/reboot and unchanged scene,
+corrections and palette staging bytes. No automatic migration or device write.
+The next CI failure was a Linux 10ms RX-fixture preflight race, not a production
+retry: deterministic transport-loss fixtures retain exact one-START/one-STOP
+checks and verify the failure phase. Current-head CI must be refreshed after
+these changes; previous-head results do not attest the new firmware.
 
 Merge only after every required check succeeds and the complete diff and every
 conversation/review-thread page are reviewed. The final synchronization receipt
