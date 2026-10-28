@@ -4,7 +4,7 @@
 namespace ConfigurationManagement {
 inline bool busy() {
   return remoteFirmware.busy() || otaActive || otaRebootAt || avrUploadOwner ||
-      programmingLatched || networkApplyPending || cloudApplyPending;
+      programmingLatched || networkApplyPending || cloudApplyPending || artifactReaders;
 }
 inline String json(const JsonDocument &document) {
   String result;

@@ -718,3 +718,89 @@ relayed device/transport in Flutter/Rust/Web. The endpoint deliberately keeps
 `discovery` and `event_subscription` false until implemented. Also pending:
 BLE-central/ESP-NOW/USB-host adapters, remote TLS peers, and resumable verified
 file/firmware transfer. Existing direct OTA remains the update owner.
+
+## Clock and network observation tools
+
+ESP32 builds with networking advertise `network-tools`. There is one owner for
+these settings and observations across HTTP, local WebSocket, MQTT, remote
+WebSocket and the boot-fenced USB API. Configuration is persisted separately in
+`/network-tools.json`; runtime observations are never written to flash or
+accepted as client-provided public-IP/DNS/ping results.
+
+| Operation | HTTP / USB API | Shared command |
+| --- | --- | --- |
+| Configuration + actual UTC, effective NTP servers, public IP, last probe | `GET /api/network/tools` | `network-tools` |
+| Save a typed partial configuration | `POST /api/network/tools` | `configure-network-tools`, `settings: {...}` |
+| Start a bounded diagnostic | `POST /api/network/probe` | `network-probe`, `kind`, optional `target` |
+| Read actual UTC | `GET /api/time` | clock in `network-tools` |
+| Set UTC explicitly | `POST /api/time`, integer `utc_epoch` | `set-clock`, integer `utc_epoch` |
+| Request asynchronous SSID scan | `GET /api/wifi/scan` | `wifi-scan` |
+| Read scan results without restarting | `GET /api/wifi/scan?results=true` | `wifi-scan-results` |
+| Select/connect/save a station profile | `POST /api/network` | `configure-network`, `settings: {...}` |
+
+HTTP tools configuration is form-encoded `settings=<JSON object>`. USB bodies
+are the typed object directly, not the HTTP form wrapper. USB scan result reads
+use `body: {"results":true}`. Configuration export/import includes the
+`network_tools` section (only configuration, never acquired values). Existing
+station/network, cloud and Ethernet export/import behavior is retained.
+
+Settings: `ntp_enabled` (true), `ntp_dhcp` (true), `ntp_server`
+(`pool.ntp.org`), `http_date_url` (`https://example.com/`),
+`http_date_automatic` (false), `public_ip_url` (`https://api.ipify.org/`),
+`public_ip_automatic` (false), `refresh_seconds` (3600, range 60–86400).
+URLs must use HTTPS with a hostname, without credentials, fragments, custom
+ports or controls. Lookup services are public, unauthenticated endpoints; do not
+put secrets in their URLs. Automatic third-party HTTP lookups are opt-in.
+
+SNTP is configured before interface DHCP starts, so DHCP option 42 can supply
+servers without an address-change callback replacing them with hard-coded
+ones. `ntp_server` remains the fallback; disable `ntp_dhcp` to force it. Changing
+the DHCP policy affects the next DHCP lease; saving does not disconnect Wi-Fi.
+`effective_ntp_servers` reports SDK observations rather than inferring that a
+DHCP server was used. NTP is not authenticated (no NTS). UTC includes its source,
+uptime and last-set uptime. Local clock setting also permits offline bootstrap.
+
+Probe kinds: `dns` (IPv4 A; hostname or literal), `ping` (three ICMP requests),
+`http-date` and `public-ip` (use their saved URLs). One job is admitted at a time,
+with a maintenance lease; a background worker performs I/O, never the game loop.
+DNS is bounded to 900 ms. ICMP uses 700 ms per reply and a 200 ms interval.
+HTTPS uses a pinned resolved public IPv4 address, the original TLS hostname/SNI,
+the SDK CA bundle, an absolute read deadline, no redirects or insecure fallback,
+and a `PakarController/<version>` user agent. Public-IP bodies are limited to 64
+bytes with a known Content-Length and must contain one valid public IPv4 address.
+IPv6 public-IP lookup and traceroute are not implemented or advertised.
+
+HTTP `Date` must be exact IMF-fixdate with a real date, matching weekday, UTC,
+no stale cache Age, and agreement within five minutes of the current clock.
+HTTPS requires an initialized clock for certificate verification: it does not
+bypass TLS to bootstrap an unset clock. It independently checks NTP time; with
+NTP disabled it can maintain a previously initialized clock. Failed observations
+retain the last successful public-IP sample with its age, not a fabricated
+current value. A failed ping does not prove the target is offline (ICMP can be
+filtered). DNS and ping do not prove Internet availability either.
+
+Completion emits peer-bound `network-observation` events; settings and SNTP
+changes emit `configuration-changed` with scope `network-tools`. Full operational
+telemetry contains both `network_tools.settings` and actual `clock`, `observed`,
+`job` snapshots. MQTT and remote WebSocket commands use the normal board/boot,
+request-ID, UTC expiry and replay guards; diagnostics do not bypass these guards.
+They remain disabled on instances where cloud features are disabled.
+
+Flutter: **⋮ → Advanced → Clock & network tools**. Wi-Fi, board outbound
+connections and the app bridge are separate Advanced destinations. The tools
+page preserves unsaved edits, verifies saved readback, listens for WebSocket
+events, and uses bounded read-only result polling for USB/HTTP-only sessions.
+Opening it never starts a probe or applies settings.
+
+Telnet/framed serial: `clock`, `dns example.com`, `ping 192.168.4.1`,
+`public-ip`, `http-date`. `clock` reads completion results. Typed properties use
+the same owner, e.g. `set clock.ntp_server pool.ntp.org`,
+`set clock.ntp_dhcp false`, `set network.public_ip_automatic true`,
+`set network.observation_seconds 3600`, `set clock.epoch 1793190896`.
+Existing `network scan` / `network scan-results` and `network.ssid`/password
+properties select station networks. No alternate raw UDP command authority is
+introduced. `tools/invoke-usb-api.ps1` carries these API requests on the existing
+COBS/CRC USB transport without opening Wi-Fi or resetting the device.
+
+Source/fixture and SDK build evidence is not live NTP/DHCP, Internet, RF scanning,
+MQTT or board acceptance; those remain separately verified deployment gates.

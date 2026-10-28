@@ -10857,3 +10857,48 @@ Run 40714319535 confirms the existing AVR mapping mismatch is still the CI
 failure; no check bypass or broad unrelated code review is claimed. David said
 he will restore ASUS access after additional requests: no repeated access prompt,
 deployment, board actuation or new network configuration was attempted.
+
+## 2026-10-28 — configurable clock and advanced network observations (#7, #27)
+
+Scoped donor reread: PU850 sketch dormant NTPClient `/ntp/get` implementation
+1148–1180, plus complete Public.cpp, RemoteCommand.cpp and Shell.h. Retain the
+configuration/scan/command ownership intent; do not copy commented blocking
+`forceUpdate`, mutable calendar globals, UDP placeholders or blanket success.
+Actual pinned Arduino-ESP32 3.3.12 esp32-hal-time.c, ESP SNTP API, TLS client and
+ping_sock.h were consulted. New network I/O uses those real SDK implementations,
+the existing bounded resolver and one lazy worker, not a donor stub.
+
+NTP settings/DHCP fallback and HTTPS Date/public-IP lookup configuration share
+staged typed persistence and the existing local/USB/cloud command owner. UTC,
+effective NTP servers, successful observations, age and last diagnostic errors
+remain separate from saved settings. NTP is explicitly unauthenticated; HTTPS
+never uses an insecure clock-bootstrap workaround. DNS and finite ICMP are real
+SDK-backed jobs. Traceroute and IPv6 public-IP are explicitly unsupported.
+Network scans no longer block the HTTP/game owner; Web/Flutter poll results
+without resubmitting scans. No arbitrary acquired values can be imported as
+measured truth. Configuration export/import includes network_tools.
+
+Flutter now has an actual Advanced destination with separate board clock/tools,
+Wi-Fi/Ethernet, board remote connections and app bridge pages. It reuses the
+existing Workspace widgets and boot-fenced WS-first/USB API owners. Save sends
+only changed fields, verifies readback and preserves drafts during event refresh.
+Human-readable clock properties are included in the existing terminal/TUI.
+
+Verification: typed date/weekday/public-IPv4/hostname policy; actual settings
+store readback/unchanged suppression and write/rename failure preservation;
+cloud/network maintenance exclusion; USB API bounds/replay; terminal metadata,
+TUI/navigation, session lifecycle, tone routing and source peer/stack guards;
+canonical Web script/contracts and focused Flutter tests/analyzer passed.
+ESP32-S3 SDK build passed: 2,387,023/3,342,336 program bytes; static RAM
+140,156/327,680. Candidate is 2,387,168 bytes, SHA256
+ed8da2de86931261bfe9de4e922001513bf3155cf4b4bad4c23f05cd9e4a6673.
+Android production-hold candidate built, 64,385,613 bytes, SHA256
+f0a8bc68737a3705e37933bef13e003c68b3f26b636e57157322244d6cb511a3.
+APK came from the preserved mixed workspace, including pre-existing signal
+indicator edits; this scoped checkpoint does not claim ownership of those edits.
+
+No production board, Wi-Fi configuration or cloud-enabled policy was changed.
+No live NTP/DHCP/Internet, SSID/RF, MQTT/remote WebSocket, USB device or tablet
+acceptance is claimed. ASUS access remains deferred by David; do not repeat
+access prompts or route around that boundary. CI's pre-existing AVR source
+mapping certificate failure is not resolved by these targeted checks.

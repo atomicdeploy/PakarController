@@ -140,6 +140,11 @@ class PakarApi {
   int _configurationRevision = 0;
   final _configurationUpdates = StreamController<int>.broadcast(sync: true);
   Stream<int> get configurationUpdates => _configurationUpdates.stream;
+  final _networkObservations = StreamController<Map<String, dynamic>>.broadcast(
+    sync: true,
+  );
+  Stream<Map<String, dynamic>> get networkObservations =>
+      _networkObservations.stream;
   void Function()? onTransportRetired;
   void Function(Map<String, dynamic>)? onPeripheralEvent;
   void Function()? onPeripheralStreamLost;
@@ -241,6 +246,22 @@ class PakarApi {
       connectionMethod == ConnectionMethod.network;
   bool supportsRoute(String method, String path) {
     if (isUsb) {
+      if (_latestStatus?.peer.has('network-tools') == true &&
+          (method == 'GET'
+                  ? const {
+                      '/api/network/tools',
+                      '/api/time',
+                      '/api/wifi/scan',
+                      '/api/network',
+                    }
+                  : const {
+                      '/api/network/tools',
+                      '/api/network/probe',
+                      '/api/network',
+                    })
+              .contains(path)) {
+        return true;
+      }
       return method == 'GET'
           ? {'/api/status', '/api/cells/mapping'}.contains(path)
           : {
@@ -1430,6 +1451,18 @@ class PakarApi {
           authorize: () => owner == connectionRevision && connectionWanted,
         );
       }
+      final uri = Uri.parse(path);
+      if (const {
+        '/api/network/tools',
+        '/api/time',
+        '/api/wifi/scan',
+        '/api/network',
+      }.contains(uri.path)) {
+        final owner = connectionRevision;
+        return usb.networkApi('GET', uri.path, {
+          if (uri.queryParameters['results'] == 'true') 'results': true,
+        }, authorize: () => owner == connectionRevision && connectionWanted);
+      }
       throw const FormatException(
         'This read is unavailable through USB; no network fallback attempted',
       );
@@ -1454,6 +1487,76 @@ class PakarApi {
   }
 
   Future<Map<String, dynamic>> getJson(String path) => _get(path);
+
+  /// Same boot-fenced USB API or correlated WS-first command, with the existing
+  /// user-configurable HTTP fallback. No independent network/command owner.
+  Future<Map<String, dynamic>> networkToolsWrite(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final owner = connectionRevision;
+    bool admitted() =>
+        owner == connectionRevision &&
+        connectionWanted &&
+        _latestStatus?.peer.has('network-tools') == true;
+    if (isUsb) {
+      await _ensureUsb();
+      final result = await usb.networkApi(
+        'POST',
+        path,
+        body,
+        authorize: admitted,
+      );
+      if (result['settings'] is Map && result['clock'] is Map) return result;
+      return usb.networkApi(
+        'GET',
+        '/api/network/tools',
+        const {},
+        authorize: admitted,
+      );
+    }
+    Map<String, dynamic>? receipt;
+    final actual = await _fastCommand(
+      path,
+      {
+        if (path == '/api/network/tools') 'settings': jsonEncode(body),
+        if (path == '/api/network/probe')
+        ...{
+          'kind': '${body['kind']}',
+          if (body.containsKey('target')) 'target': '${body['target']}',
+        },
+      },
+      authorize: admitted,
+      receipt: (value) => receipt = value,
+    );
+    if (actual == null || receipt?['network_tools'] is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Network operation receipt unavailable; inspect before retrying',
+      );
+    }
+    final result = receipt!['network_tools'] as Map<String, dynamic>;
+    if (path == '/api/network/probe') {
+      final job = result['job'];
+      if (job is! Map ||
+          job['kind'] != body['kind'] ||
+          const {'dns', 'ping'}.contains(body['kind']) &&
+              job['target'] != body['target']) {
+        throw const OperationUncertain(
+          'The current diagnostic belongs to another request; no probe was replayed',
+        );
+      }
+    }
+    if (path == '/api/network/tools') {
+      final saved = result['settings'];
+      if (saved is! Map ||
+          !body.entries.every((entry) => saved[entry.key] == entry.value)) {
+        throw const OperationUncertain(
+          'Saved network tools differ from the requested settings',
+        );
+      }
+    }
+    return result;
+  }
 
   /// Bounded single-dispatch maintenance transport. Even ISP probe uses this
   /// path: its GET resets AVR, so it must not be retried through discovery.
@@ -1675,6 +1778,33 @@ class PakarApi {
     bool Function()? authorize,
   }) async {
     _requireNetwork();
+    if (isUsb && path == '/api/network') {
+      await _ensureUsb();
+      final owner = connectionRevision;
+      const booleans = {
+        'station_enabled',
+        'ap_enabled',
+        'dhcp',
+        'station_open',
+        'auto_switch',
+      };
+      return usb.networkApi(
+        'POST',
+        path,
+        {
+          for (final entry in values.entries)
+            entry.key:
+                booleans.contains(entry.key) &&
+                    const {'true', 'false'}.contains(entry.value)
+                ? entry.value == 'true'
+                : entry.value,
+        },
+        authorize: () =>
+            owner == connectionRevision &&
+            connectionWanted &&
+            authorize?.call() != false,
+      );
+    }
     if (path.startsWith('/api/minigame/')) {
       final actual = await fastCommand(
         path,
@@ -2199,6 +2329,16 @@ class PakarApi {
         if (message is! String) continue;
         final value = jsonDecode(message);
         if (value is Map<String, dynamic> &&
+            value['type'] == 'network-observation') {
+          if (value['board_id'] == _verifiedBoard &&
+              value['boot_id'] == _verifiedBoot &&
+              _verifiedBoard != null &&
+              !_networkObservations.isClosed) {
+            _networkObservations.add(value);
+          }
+          continue;
+        }
+        if (value is Map<String, dynamic> &&
             value['type'] == 'configuration-changed') {
           final changed = value['revision'];
           if (value['board_id'] == _verifiedBoard &&
@@ -2682,6 +2822,7 @@ class PakarApi {
     _configurationRefresh?.cancel();
     _configurationRefresh = null;
     unawaited(_configurationUpdates.close());
+    unawaited(_networkObservations.close());
     await bluetooth.close();
     await usb.close();
     _abortReads();

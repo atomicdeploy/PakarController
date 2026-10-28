@@ -5,7 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {resolve,dirname} from 'node:path';
 const source=readFileSync('firmware/esp/src/ShellService.h','utf8');
 const binding=readFileSync('firmware/esp/src/ShellTuiBinding.h','utf8');
-const tuiKeys=[...binding.matchAll(/const char \*(?:device|network|led|pixel|game|cloud|notifications)\[\]=\{([^}]+)\}/g)]
+const tuiKeys=[...binding.matchAll(/const char \*(?:device|network|led|pixel|game|cloud|notifications|clock)\[\]=\{([^}]+)\}/g)]
   .flatMap(match=>[...match[1].matchAll(/"([^"]+)"/g)].map(key=>key[1]));
 if(tuiKeys.length<50)throw Error('TUI property catalogue extraction changed');
 const start=source.indexOf('String shellGet(const ShellProperty &p){');

@@ -10,6 +10,7 @@ NetworkFixtureWiFi WiFi;
 struct RemoteFixture { bool active=false; bool busy()const{return active;} } remoteFirmware;
 bool otaActive=false,avrUploadOwner=false,programmingLatched=false;
 bool networkApplyPending=false,cloudApplyPending=false;
+unsigned artifactReaders=0;
 uint32_t otaRebootAt=0,networkApplyAt=0,cloudApplyAt=0;
 struct CloudFixture {
   bool mqttConnected()const{return false;}
@@ -133,6 +134,7 @@ int main() {
   for(bool* busy:{&otaActive,&avrUploadOwner,&programmingLatched,&networkApplyPending,&cloudApplyPending,&remoteFirmware.active}) {
     *busy=true;assert(!cloud("{\"telemetry_seconds\":19}",result));assert(!network("{\"dhcp\":true}",result));*busy=false;
   }
+  artifactReaders=1;assert(!cloud("{\"telemetry_seconds\":19}",result));assert(!network("{\"dhcp\":true}",result));artifactReaders=0;
   otaRebootAt=1;assert(!cloud("{\"telemetry_seconds\":19}",result));otaRebootAt=0;
   std::cout<<"Actual cloud/network shared configuration: ACK, exact types, redaction/escaping, candidate commit, failure preservation, pending fences, DHCP/static profile passed\n";
 }

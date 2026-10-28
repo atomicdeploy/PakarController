@@ -821,6 +821,35 @@ class PakarUsbTransport {
     );
   });
 
+  Future<Map<String, dynamic>> networkApi(
+    String method,
+    String path,
+    Map<String, dynamic> body, {
+    required bool Function() authorize,
+  }) => _exclusive(() async {
+    if (!ready || !authorize() || !latest!.peer.has('network-tools')) {
+      throw const FormatException(
+        'Network tools are not advertised by this board',
+      );
+    }
+    const reads = {
+      '/api/network/tools',
+      '/api/time',
+      '/api/wifi/scan',
+      '/api/network',
+    };
+    const writes = {'/api/network/tools', '/api/network/probe', '/api/network'};
+    if (!(method == 'GET'
+            ? reads
+            : method == 'POST'
+            ? writes
+            : const <String>{})
+        .contains(path)) {
+      throw const FormatException('Unsupported USB network operation');
+    }
+    return _apiJson(method, path, body, authorize);
+  });
+
   /// The common boot-fenced API transaction also carries correction settings.
   /// Preview stays RAM-only; only the explicit non-preview POST persists.
   Future<Map<String, dynamic>> pixelCorrectionsApi({

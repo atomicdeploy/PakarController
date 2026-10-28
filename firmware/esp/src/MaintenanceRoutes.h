@@ -72,9 +72,13 @@ String encodedJson(const JsonDocument &d) {
 }
 String clockJson() {
   JsonDocument d;d[F("epoch")]=static_cast<uint32_t>(time(nullptr));
+  d["utc_epoch"]=time(nullptr)>1700000000?static_cast<uint32_t>(time(nullptr)):0;
+  d["synced"]=time(nullptr)>1700000000;d["uptime_ms"]=millis();
   d[F("valid")]=time(nullptr)>1700000000;d[F("source")]=clockSource;
   d[F("ntp_configured")]=ntpConfigured;d[F("ntp_observed")]=ntpObserved;
   d[F("last_set_uptime_ms")]=lastClockSetAt;d[F("timezone")]=F("UTC");d[F("rtc_present")]=false;
+  d["ntp_enabled"]=networkToolsSettings.ntpEnabled;d["ntp_dhcp"]=networkToolsSettings.ntpDhcp;
+  d["ntp_server"]=networkToolsSettings.ntpServer;d["ntp_authenticated"]=false;
   return encodedJson(d);
 }
 String networkTelemetry() {
@@ -284,6 +288,7 @@ String buildTelemetryJson() {
     return out.length()==expected;
   };
   if(!add("network",networkTelemetry()) || !add("clock",clockJson()) ||
+     !add("network_tools",networkToolsJson()) ||
      !add("remote_firmware",remoteFirmware.json()) || !add("board",buildStatusJson(true)) ||
      !add("clients",clientTelemetry.json(now)))
     return "{\"type\":\"telemetry-error\",\"error\":\"insufficient_heap_or_snapshot_limit\"}";
@@ -490,8 +495,8 @@ void registerMaintenanceRoutes() {
       uint32_t epoch;if(!RemotePolicy::utc(server.arg("val").c_str(),epoch)) {
         server.send(400,"text/plain",F("Use valid UTC YYYY-MM-DDTHH:MM:SSZ"));return;
       }
-      if(apply) {timeval tv={static_cast<time_t>(epoch),0};
-        if(settimeofday(&tv,nullptr)) {server.send(500,"text/plain",F("Clock update failed"));return;}}
+      if(apply) {JsonDocument request;request["utc_epoch"]=epoch;String result;
+        if(!setBoardClock(request["utc_epoch"],result)) {server.send(409,"text/plain",result);return;}}
       JsonDocument d;d[F("epoch")]=epoch;d[F("applied")]=apply;sendMaintenanceJson(encodedJson(d));
     });
   }

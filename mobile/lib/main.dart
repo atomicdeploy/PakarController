@@ -35,7 +35,7 @@ import 'workspace_activity_strip.dart';
 import 'application_artwork.dart';
 import 'device_settings_page.dart';
 import 'devices_page.dart';
-import 'bridge_page.dart';
+import 'advanced_page.dart';
 import 'firmware_page.dart';
 import 'firmware_progress.dart';
 import 'firmware_automation.dart';
@@ -1801,14 +1801,19 @@ class _ControlShellState extends State<ControlShell>
                         child: Scaffold(
                           appBar: AppBar(
                             title: Text(
-                              target == 'bridge'
-                                  ? 'Advanced bridge'
+                              target == 'advanced'
+                                  ? 'Advanced'
                                   : 'Firmware',
                             ),
                             automaticallyImplyLeading: !locked,
                           ),
-                          body: target == 'bridge'
-                              ? BridgePage(api: api, observed: () => status)
+                          body: target == 'advanced'
+                              ? AdvancedPage(api: api, observed: () => status,
+                                  openSettings: (section) {
+                                    workspaces[workspaceBoard]?.settings.page = section;
+                                    Navigator.of(context).pop();
+                                    _navigate('device-settings');
+                                  })
                               : FirmwarePage(
                                   api: api,
                                   authorized: (feature) =>
@@ -1867,9 +1872,9 @@ class _ControlShellState extends State<ControlShell>
                     pixelCorrectionIcon,
                   ),
                 workspaceMenuItem(
-                  'bridge',
-                  'Advanced MQTT / bridge…',
-                  PakarIcons.link,
+                  'advanced',
+                  'Advanced…',
+                  Icons.tune,
                 ),
                 const PopupMenuDivider(),
                 workspaceMenuItem(

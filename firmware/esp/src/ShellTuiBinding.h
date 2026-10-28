@@ -10,6 +10,7 @@ struct ShellTuiSnapshot {
     view.columns=session.parser.columns();view.lines=session.parser.rows();view.unicode=session.unicode;
     view.terminalSettings=true;
     view.cloudSettings=true;
+    view.clockSettings=true;
 #if defined(ARDUINO_ARCH_ESP32)
     view.notificationSettings=true;
 #endif
@@ -33,6 +34,7 @@ struct ShellTuiSnapshot {
     const char *network[]={"network.mode","network.station_enabled","network.ap_enabled","network.auto_switch","network.dhcp","network.ssid","network.password","network.address","network.gateway","network.subnet","network.dns1","network.dns2","network.ip","network.ap_ip","network.ap_ssid"};
     const char *cloud[]={"mqtt.enabled","mqtt.host","mqtt.port","mqtt.tls","mqtt.user","mqtt.password","mqtt.topic","websocket.enabled","websocket.host","websocket.port","websocket.tls","websocket.path","websocket.token","telemetry.seconds"};
     const char *notifications[]={"ntfy.enabled","ntfy.host","ntfy.topic","ntfy.token"};
+    const char *clock[]={"clock.epoch","clock.ntp_enabled","clock.ntp_dhcp","clock.ntp_server","clock.http_date_url","clock.http_date_automatic","network.public_ip_url","network.public_ip_automatic","network.observation_seconds"};
     const char *led[]={"led.enabled","led.mode","led.brightness","led.effect","led.backend","led.rmt","led.dma"};
     const char *pixel[]={"led.enabled","led.mode","led.brightness","led.effect","led.backend","led.rmt","led.dma"};
     const char *game[]={"game.enabled_mask","game.effects","game.auto_reset_ms","game.chase_ms","game.neighbors","game.invert","game.idle_rgb","game.win_rgb","game.lose_rgb","game.winner_cue","game.reset_cue"};
@@ -43,6 +45,7 @@ struct ShellTuiSnapshot {
     else if(session.tui.page()==T::Game){list=game;count=sizeof(game)/sizeof(*game);}
     else if(session.tui.page()==T::Cloud){list=cloud;count=sizeof(cloud)/sizeof(*cloud);}
     else if(session.tui.page()==T::Notifications){list=notifications;count=sizeof(notifications)/sizeof(*notifications);}
+    else if(session.tui.page()==T::Clock){list=clock;count=sizeof(clock)/sizeof(*clock);}
     else if(session.tui.page()==T::TerminalPage){
       values[0]=session.parser.terminal();values[1]=String(session.parser.columns());values[2]=String(session.parser.rows());
       values[3]=session.unicode?"true":"false";values[4]=session.color?"true":"false";

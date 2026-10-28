@@ -147,6 +147,7 @@ class PeerContext {
   bool allows(String path, Map<String, String> values) {
     if (!known) return false;
     return switch (path) {
+      '/api/network/tools' || '/api/network/probe' => has('network-tools'),
       minigameConfigure || minigameControl || minigameInput =>
         has('command-ack') && minigame?.allows(path, values) == true,
       '/api/led/presentation' ||
@@ -257,6 +258,7 @@ class LedOutputCapability {
 }
 
 const knownFeatures = {
+  'network-tools',
   'state-presentation',
   'game-press',
   'game-presentation',

@@ -107,6 +107,11 @@
 #include "src/NetworkConfig.h"
 #include "src/NetworkPath.h"
 #include "src/PeerRelay.h"
+#include "src/NetworkToolsSettings.h"
+#include "src/NetworkTools.h"
+#if defined(ARDUINO_ARCH_ESP32)
+#include <esp_sntp.h>
+#endif
 #include "src/CommandValues.h"
 #if defined(ARDUINO_ARCH_ESP32)
 #include "src/EthernetConfig.h"
@@ -379,7 +384,17 @@ uint8_t physicalResetSequence=0;
 uint32_t physicalResetSentAt=0;
 #endif
 bool ntpConfigured = false;
+char ntpServerName[254]="pool.ntp.org"; // lwIP retains the configured name pointer.
+NetworkToolsSettings networkToolsSettings;
+#if defined(ARDUINO_ARCH_ESP32)
+NetworkTools networkTools;
+bool networkToolsLease=false;
+uint32_t nextDateLookup=0,nextPublicIpLookup=0;
+#endif
 bool ntpObserved = false;
+#if defined(ARDUINO_ARCH_ESP32)
+std::atomic<bool> ntpSyncPending{false};
+#endif
 uint32_t lastClockSetAt = 0;
 const char *clockSource = "unset";
 uint8_t avrTelemetry[46] = {};
@@ -485,6 +500,9 @@ String ethernetStatusJson(bool compact);
 String lcdStatusJson();
 String buildUsbTableSnapshot(bool includePixels=false);
 String buildTelemetryJson();
+String clockJson();
+String networkToolsJson();
+void configureNtp();
 String avrVersionText();
 uint8_t resumeAvrApplication();
 bool recordClientReport(const String &report,const String &peer,const String &agent=String(),const String &version=String());
@@ -521,6 +539,7 @@ void serviceAvrFor(uint32_t durationMs);
 void setAvrTransmitBlocked(bool blocked);
 EspFrontPanel espFrontPanel;
 bool wifiScanQueued = false;
+bool wifiScanReportPending=false;
 uint32_t lastEspPanelOfferAt = 0;
 class EspPanelSettings : public EspFrontPanel::Settings {
  public:
@@ -1549,7 +1568,7 @@ void applyEthernetConfig() {
   cloudServices.suspend();
   NetworkPath::setEthernetDhcp(ethernetConfig.dhcpEnabled());
   if(!ethernetConfig.enabled()) {
-    NetworkPath::ethernet().end();NetworkPath::service();ntpConfigured=false;
+    NetworkPath::ethernet().end();NetworkPath::service();
     PakarConfiguration::changes().applied(PakarConfiguration::Ethernet);return;
   }
   if(!NetworkPath::ethernet().ensureInitialized(hostname.c_str())) {
@@ -1561,7 +1580,7 @@ void applyEthernetConfig() {
     PakarConfiguration::changes().failed(PakarConfiguration::Ethernet);return;
   }
   NetworkPath::ethernet().setLldp(ethernetConfig.lldpEnabled(),ethernetConfig.lldpReceive());
-  NetworkPath::service();ntpConfigured=false;
+  configureNtp();NetworkPath::service();
   PakarConfiguration::changes().applied(PakarConfiguration::Ethernet);
 #endif
 }
@@ -1576,6 +1595,7 @@ void applyNetworkConfig() {
     closeDeviceShells();
   }
   stopDiscovery();
+  configureNtp();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
   NetworkPath::begin(hostname.c_str(),ethernetConfig.enabled());
@@ -1583,7 +1603,6 @@ void applyNetworkConfig() {
   NetworkPath::begin(hostname.c_str());
 #endif
   NetworkPath::service();
-  ntpConfigured = false;
   const uint16_t scopes=PakarConfiguration::Network|(renamed?PakarConfiguration::Identity:0);
   if(networkConfig.lastError()[0])PakarConfiguration::changes().failed(scopes);
   else PakarConfiguration::changes().applied(scopes);
@@ -2404,6 +2423,9 @@ String buildStatusJson(bool compact) {
   body += F("\",\"application\":"); body += applicationIdentityJson();
   body += F(",\"acknowledged_features\":[\"command-ack\",\"pixel-diagnostic\",\"pixel-diagnostic-effects\",\"pixel-diagnostic-overlay\",\"pixel-group-layout\",\"panel-events\",\"usb-demand\",\"usb-pixel-diagnostic\"");
   body += F(",\"state-presentation\",\"host-presentation\"");
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  body += F(",\"network-tools\"");
+#endif
 #if PAKAR_SNAKE_ENABLED
   body += F(",\"board-snake\"");
 #endif
@@ -2513,7 +2535,7 @@ String configurationStateJson(const PakarConfiguration::Journal::Event *event) {
   if(event) {
     d["phase"]=PakarConfiguration::phaseName(event->phase);
     auto scopes=d["scopes"].to<JsonArray>();
-    for(uint16_t scope=1;scope<=256;scope<<=1)
+    for(uint16_t scope=1;scope<=512;scope<<=1)
       if(event->scopes&scope)scopes.add(PakarConfiguration::scopeName(scope));
   }
   auto addresses=d["addresses"].to<JsonArray>();
@@ -2628,9 +2650,24 @@ String buildUsbTableSnapshot(bool includePixels) {
 }
 
 void configureNtp() {
+#if defined(ARDUINO_ARCH_ESP32)
+  // The thread-safe SNTP wrappers need the TCP/IP mailbox even on first boot,
+  // before Wi-Fi has been started. Match configTime's SDK initialization order.
+  if(PAKAR_NETWORK_ENABLED&&!ntpConfigured&&esp_netif_init()!=ESP_OK)return;
+#endif
   NetworkPath::serviceDns(millis(), !ntpConfigured);
-  if (!NetworkPath::ready() || ntpConfigured) return;
-  configTime(0, 0, "pool.ntp.org", "time.cloudflare.com");
+  if (!PAKAR_NETWORK_ENABLED || ntpConfigured) return;
+#if defined(ARDUINO_ARCH_ESP32)
+  esp_sntp_stop();
+  esp_sntp_servermode_dhcp(networkToolsSettings.ntpEnabled&&networkToolsSettings.ntpDhcp);
+  if(!networkToolsSettings.ntpEnabled){esp_sntp_stop();ntpConfigured=true;return;}
+#else
+  if(!networkToolsSettings.ntpEnabled){ntpConfigured=true;return;}
+#endif
+  // Configure before DHCP starts; a DHCP NTP offer may then replace the
+  // fallback. Do not reset SNTP after every acquired address and erase it.
+  networkToolsSettings.ntpServer.toCharArray(ntpServerName,sizeof(ntpServerName));
+  configTime(0, 0, ntpServerName);
   ntpConfigured = true;
 }
 
@@ -2664,7 +2701,7 @@ String commandReply(const String &message,bool boundedDiagnostic) {
     const String id=PakarCommand::stringValue(object,"request_id");
     const String command=PakarCommand::stringValue(object,"command");
     reply["request_id"]=id;
-    const bool supported=command=="minigame-configure"||command=="minigame-control"||command=="minigame-input"||command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
+    const bool supported=command=="set-clock"||command=="network-tools"||command=="configure-network-tools"||command=="network-probe"||command=="wifi-scan"||command=="wifi-scan-results"||command=="configure-network"||command=="minigame-configure"||command=="minigame-control"||command=="minigame-input"||command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command=="state-presentation"||command=="color-preview"||command=="reset"||command=="game-settings"||command=="game-press"||command=="cells"||command=="cell"||command=="effect"||
         command=="mode"||command=="brightness"||command=="led-output"||command=="pixel-diagnostic"||command=="panel-notice"||command=="shell-config"||command=="configure-shell"||command=="cell-assignments"||command=="cell-lock"||command=="audio"||command=="buzzer"||command=="outputs";
     if(PakarCommand::stringValue(object,"board_id")!=pcBoardId ||
        PakarCommand::stringValue(object,"boot_id")!=pcBootId || !webAccess.peerFenceReady()) {
@@ -2679,6 +2716,7 @@ String commandReply(const String &message,bool boundedDiagnostic) {
         String result;
         entry->accepted=!programmingLatched && !otaActive && !otaRebootAt && !avrUploadOwner &&
             !remoteFirmware.busy() && !networkApplyPending && !cloudApplyPending && handleCloudCommand(message,result);
+        if(!entry->accepted&&(command=="network-probe"||command=="configure-network-tools"||command=="configure-network"))reply["reason"]=result;
         if(!entry->accepted&&(command=="snake"||command=="presentation"||command=="pixel-corrections-preview"||command.startsWith("minigame-")))reply["reason"]=result;
         if(!entry->accepted)entry->failure=result==F("red_cells_locked")?BoardCore::CommandReceipts::RedCellsLocked:
             result==F("invalid_cell_assignments")?BoardCore::CommandReceipts::InvalidCellAssignments:
@@ -2735,6 +2773,9 @@ String commandReply(const String &message,bool boundedDiagnostic) {
   }
   if(reply["accepted"]==true&&request["command"]=="snake"){
     JsonDocument details;if(!deserializeJson(details,boardSnakeJson()))reply["snake"]=details.as<JsonObjectConst>();
+  }
+  if(reply["accepted"]==true&&(request["command"]=="set-clock"||request["command"]=="network-probe"||request["command"]=="configure-network-tools"||request["command"]=="network-tools")){
+    JsonDocument details;if(!deserializeJson(details,networkToolsJson()))reply["network_tools"]=details.as<JsonObjectConst>();
   }
 #if PAKAR_PIXEL_CORRECTIONS
   if(reply["accepted"]==true&&request["command"]=="pixel-corrections-preview"){
@@ -2988,6 +3029,7 @@ bool submitDisplayText(const String &text, long speed, long hold,
 }
 
 #include "src/CloudManagement.h"
+#include "src/NetworkToolsBinding.h"
 #include "src/EthernetManagement.h"
 #include "src/LcdManagement.h"
 
@@ -3166,6 +3208,12 @@ bool handleCloudCommand(const String &message, String &result) {
 #endif
   }
   if(command=="shell-config"){result=shellStatusJson();return true;}
+  if(command=="network-tools"){result=networkToolsJson();return true;}
+  if(command=="set-clock")return setBoardClock(commandRequest["utc_epoch"],result);
+  if(command=="wifi-scan"){result=wifiScanJson(true);JsonDocument d;return !deserializeJson(d,result)&&d["accepted"]==true;}
+  if(command=="wifi-scan-results"){result=wifiScanJson(false);return true;}
+  if(command=="configure-network-tools")return updateNetworkTools(commandRequest["settings"].as<JsonObjectConst>(),result);
+  if(command=="network-probe")return submitNetworkProbe(commandRequest["kind"]|"",commandRequest["target"]|"",result);
   if(command=="snake")return boardSnakeCommand(commandRequest,result);
   if(command=="configure-shell")return updateShellConfiguration(commandRequest["settings"].as<JsonObjectConst>(),result);
   if (command=="cloud-config" || command=="network-config" || command=="ethernet-config" ||
@@ -4215,36 +4263,33 @@ void registerApi() {
   });
   server.on("/api/time", HTTP_GET, []() {
     if (!authenticate()) return;
-    const time_t currentTime = time(nullptr);
-    String body = F("{\"synced\":");
-    body += currentTime > 1700000000 ? F("true") : F("false");
-    body += F(",\"utc_epoch\":");
-    body += currentTime > 1700000000 ? static_cast<uint32_t>(currentTime) : 0U;
-    body += '}';
-    server.send(200, "application/json", body);
+    server.send(200, "application/json", clockJson());
+  });
+  server.on("/api/network/tools",HTTP_GET,[](){if(authenticate())server.send(200,"application/json",networkToolsJson());});
+  server.on("/api/time",HTTP_POST,[](){
+    if(!authenticate())return;uint32_t epoch=0;JsonDocument d;String result;
+    if(!strictU32(server.arg("utc_epoch"),epoch)){server.send(400,"text/plain","UTC epoch required");return;}
+    d["utc_epoch"]=epoch;
+    const bool ok=setBoardClock(d["utc_epoch"],result);
+    server.send(ok?200:409,ok?"application/json":"text/plain",result);
+  });
+  server.on("/api/network/tools",HTTP_POST,[](){
+    if(!authenticate())return;
+    JsonDocument patch;String result;
+    const String raw=server.arg("settings");
+    const bool ok=raw.length()<=1536&&!deserializeJson(patch,raw)&&updateNetworkTools(patch.as<JsonObjectConst>(),result);
+    if(ok)server.send(200,"application/json",result);
+    else {JsonDocument error;error["error"]=result.length()?result:"invalid_settings";String body;serializeJson(error,body);server.send(409,"application/json",body);}
+  });
+  server.on("/api/network/probe",HTTP_POST,[](){
+    if(!authenticate())return;String result;
+    const bool ok=submitNetworkProbe(server.arg("kind"),server.arg("target"),result);
+    if(ok)server.send(202,"application/json",result);
+    else {JsonDocument error;error["error"]=result;String body;serializeJson(error,body);server.send(409,"application/json",body);}
   });
   server.on("/api/wifi/scan", HTTP_GET, []() {
     if (!authenticate()) return;
-    const int count = WiFi.scanNetworks(false, true);
-    String body = F("{\"networks\":[");
-    for (int index = 0; index < count; ++index) {
-      if (index != 0) body += ',';
-      String ssid = WiFi.SSID(index);
-      ssid.replace("\\", "\\\\");
-      ssid.replace("\"", "\\\"");
-      body += F("{\"ssid\":\""); body += ssid;
-      body += F("\",\"rssi\":"); body += WiFi.RSSI(index);
-      body += F(",\"encrypted\":");
-#if defined(ARDUINO_ARCH_ESP32)
-      body += WiFi.encryptionType(index) == WIFI_AUTH_OPEN ? F("false") : F("true");
-#else
-      body += WiFi.encryptionType(index) == ENC_TYPE_NONE ? F("false") : F("true");
-#endif
-      body += '}';
-    }
-    body += F("]}");
-    WiFi.scanDelete();
-    server.send(200, "application/json", body);
+    server.send(200,"application/json",wifiScanJson(server.arg("results")!="true"));
   });
   server.on("/api/mode", HTTP_POST, []() {
     if (!authenticate()) return;
@@ -5149,7 +5194,7 @@ void setup() {
   } // No random identity means remote apply is unavailable, never a reused boot ID.
 #if defined(ARDUINO_ARCH_ESP32)
   sntp_set_time_sync_notification_cb([](struct timeval *) {
-    clockSource="ntp"; ntpObserved=true; lastClockSetAt=millis();
+    ntpSyncPending=true; // SDK TCP/IP task never publishes or edits UI state.
   });
 #else
   settimeofday_cb([](bool sntp) {
@@ -5183,6 +5228,7 @@ void setup() {
   loopMessages.begin(); // PSRAM-backed S3 queue, before any network callback.
   accessConfig.begin(LittleFS, filesystemMounted);
   networkConfig.begin(LittleFS);
+  networkToolsSettings.begin(LittleFS,filesystemMounted);
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_S3_ETHERNET_ENABLED
   ethernetConfig.begin(LittleFS);
 #endif
@@ -5299,6 +5345,7 @@ void setup() {
   // not in the human-facing host or recovery AP name.
   hostname = deviceIdentity.hostname();
 #if PAKAR_NETWORK_ENABLED
+  configureNtp();
   apStarted = networkConfig.configure(hostname.c_str(), kDevelopmentPassword);
   applyEthernetConfig();
   NetworkPath::service();
@@ -5524,7 +5571,6 @@ void loop() {
   if(PAKAR_NETWORK_ENABLED)serviceGameLink(now);
   if (PAKAR_NETWORK_ENABLED && NetworkPath::service()) {
     cloudServices.suspend();
-    ntpConfigured = false;
     PakarConfiguration::changes().applied(PakarConfiguration::Network);
     requestDiscoveryAnnouncement();
   }
@@ -5665,11 +5711,12 @@ void loop() {
   }
   serviceLedBackendChanges();
   serviceConfigurationChanges();
-  if(!remoteFirmware.busy()&&!otaActive&&!otaRebootAt&&!networkApplyPending&&!urbootBusy.get()&&!avrUploadOwner)
+  if(!remoteFirmware.busy()&&!otaActive&&!otaRebootAt&&!networkApplyPending&&!urbootBusy.get()&&!avrUploadOwner&&!artifactReaders)
     networkConfig.service(millis());
   serviceDiscovery();
   configureNtp();
-  if (wifiScanQueued && !remoteFirmware.busy() && !otaActive && !networkApplyPending) {
+  serviceNetworkTools();
+  if (wifiScanQueued && !remoteFirmware.busy() && !otaActive && !networkApplyPending && !artifactReaders) {
     wifiScanQueued = false;
     if (WiFi.scanComplete() != -1) WiFi.scanNetworks(true, true);
   }
@@ -5682,6 +5729,9 @@ void loop() {
   // timing-critical ISP/update transaction. After a failed transaction, cloud
   // diagnostics can reconnect even with Prog armed; mutations remain guarded.
   if (!remoteFirmware.busy() && !otaActive && !otaRebootAt
+#if defined(ARDUINO_ARCH_ESP32)
+      && !networkToolsLease
+#endif
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
       && !passiveAvrRx.snapshot().active
 #endif
@@ -5697,7 +5747,7 @@ void loop() {
   if (!remoteFirmware.busy() && !otaActive && !otaRebootAt && upgradeLifecycle.visual(millis())==PakarUpdate::Visual::None) { serviceSnake(now);serviceStream(); }
   serviceScenePersistence();
   ntfyService.service(NetworkPath::ready(),time(nullptr)>1700000000,
-      remoteFirmware.busy() || otaActive || otaRebootAt || urbootBusy.get() || avrUploadOwner || urbootRawOwned,
+      remoteFirmware.busy() || otaActive || otaRebootAt || urbootBusy.get() || avrUploadOwner || urbootRawOwned || artifactReaders,
       deviceIdentity.hostname(),millis());
   // Cloud socket calls may have waited while the buffered AVR UART received
   // valid replies. Consume those actual frames before evaluating presence;

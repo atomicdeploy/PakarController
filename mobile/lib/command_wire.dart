@@ -10,6 +10,8 @@ import 'command_readback.dart';
 import 'minigame.dart';
 
 const commandNames = {
+  '/api/network/tools': 'configure-network-tools',
+  '/api/network/probe': 'network-probe',
   minigameConfigure: 'minigame-configure',
   minigameControl: 'minigame-control',
   minigameInput: 'minigame-input',
@@ -82,7 +84,9 @@ String commandPacket(
             path == '/api/pixels/corrections/preview' &&
                 item.key == 'configuration'
             ? jsonDecode(item.value)
-            : path == '/api/led/presentation' && item.key == 'settings'
+            : (path == '/api/led/presentation' ||
+                      path == '/api/network/tools') &&
+                  item.key == 'settings'
             ? jsonDecode(item.value)
             : path == '/api/led/preview' &&
                   ['rgb', 'duration_ms'].contains(item.key)

@@ -75,6 +75,7 @@ String shellGet(const ShellProperty &p){
   if(key=="firmware.hash")return ESP.getSketchMD5();
   if(key=="build.date")return F(__DATE__ " " __TIME__);
   if(key=="hostname")return deviceIdentity.hostname();if(key=="label")return deviceIdentity.displayName();
+  if(key=="clock.epoch")return String(static_cast<uint32_t>(time(nullptr)));
   if(key=="version")return BoardCore::BuildInfo::kVersion;if(key=="boot_id")return pcBootId;
   if(key=="uptime")return String(millis()/1000U);if(key=="heap")return String(ESP.getFreeHeap());
   if(key=="avr.online")return avrOnline?F("true"):F("false");
@@ -96,6 +97,11 @@ String shellGet(const ShellProperty &p){
   if(key=="ssh.port")return String(deviceSsh.port());
 #endif
   JsonDocument d;
+  if(String(p.domain)=="network-tools"){
+    networkToolsSettings.append(d.to<JsonObject>());
+    const auto value=d[p.field];if(value.is<bool>())return value.as<bool>()?F("true"):F("false");
+    if(value.is<const char*>())return value.as<String>();return String(value.as<uint32_t>());
+  }
 #if PAKAR_FIRST_WINS_ENABLED
   if(String(p.domain)=="game"){
     if(deserializeJson(d,keySettings.json()))return F("unknown");
@@ -129,6 +135,14 @@ bool shellSet(const String &requestedKey,const String &value,String &result){
   if(String(p->domain)=="shell"){
     JsonDocument patch;if(p->type=='b')patch[p->field]=boolean;else patch[p->field]=number;
     return updateShellConfiguration(patch.as<JsonObjectConst>(),result);
+  }
+  if(String(p->domain)=="network-tools"){
+    JsonDocument patch;
+    if(p->type=='b')patch[p->field]=boolean;else if(p->type=='n')patch[p->field]=number;else patch[p->field]=value;
+    return updateNetworkTools(patch.as<JsonObjectConst>(),result);
+  }
+  if(String(p->domain)=="clock"){
+    JsonDocument patch;patch["utc_epoch"]=number;return setBoardClock(patch["utc_epoch"],result);
   }
   JsonDocument d;
   if(String(p->domain)=="device"){
@@ -172,9 +186,7 @@ void shellResult(DeviceShellSession &s,bool accepted,const String &message){
 void shellTuiDraw(DeviceShellSession &s,bool force=false);
 void shellTuiInput(DeviceShellSession &s,uint8_t ch,bool flushEscape=false);
 String shellWifiScanJson(){
-  JsonDocument d;const int count=WiFi.scanComplete();d["running"]=count==-1;d["complete"]=count>=0;
-  auto rows=d["networks"].to<JsonArray>();for(int i=0;i<count&&i<40;++i){auto row=rows.add<JsonObject>();row["ssid"]=WiFi.SSID(i);row["rssi"]=WiFi.RSSI(i);row["security"]=WiFi.encryptionType(i);}
-  String json;serializeJson(d,json);return json;
+  return wifiScanJson(false);
 }
 
 void executeDeviceShell(DeviceShellSession &s,String line){
@@ -248,6 +260,10 @@ void executeDeviceShell(DeviceShellSession &s,String line){
     s.println(grid.outputJson());
   }else if(verb=="info"||verb=="telemetry"||verb=="firmware"){
     String result;const bool ok=handleMaintenanceShell(verb+(args.length()?" "+args:String()),result);shellResult(s,ok,result);
+  }else if(verb=="clock"){
+    s.println(networkToolsJson());
+  }else if(verb=="dns"||verb=="ping"||verb=="public-ip"||verb=="http-date"){
+    String result;const bool accepted=submitNetworkProbe(verb,args,result);shellResult(s,accepted,result);
   }else if(verb=="network"){
     const auto code=args=="scan"?espPanelSettings.scan():args=="reconnect"?espPanelSettings.reconnect():kUnsupported;
     if(args=="scan-results")s.println(shellWifiScanJson());

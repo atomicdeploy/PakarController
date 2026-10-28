@@ -18,6 +18,8 @@ class String:public std::string {
   String()=default;String(const std::string &s):std::string(s){}
   String& operator=(const char *s){if(s)assign(s);else{std::string{}.swap(*this);++stringNullReleases;}return *this;}
   bool isEmpty()const{return empty();}
+  bool startsWith(const char *s)const{return rfind(s,0)==0;}
+  int indexOf(char c,size_t at=0)const{const auto n=find(c,at);return n==npos?-1:int(n);}
   bool endsWith(const char *s)const{const size_t n=strlen(s);return size()>=n&&compare(size()-n,n,s)==0;}
   String substring(size_t start,size_t end=std::string::npos)const{return substr(start,end==std::string::npos?end:end-start);}
   bool reserve(size_t n){std::string::reserve(n);return true;}
