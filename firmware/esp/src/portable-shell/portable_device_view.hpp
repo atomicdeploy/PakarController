@@ -526,7 +526,14 @@ class DeviceView {
         }
         if (ansi_)
             out.raw("\x1b[90m");
-        out.raw(editing_ ? "Enter save  Esc cancel\r\n" : "Tab pages  Enter edit  Esc back\r\n");
+        if (editing_)
+            out.raw("Enter save  Esc cancel\r\n");
+        else if (width < 60)
+            out.raw(snapshot.unicode ? "\xe2\x86\x91/\xe2\x86\x93 Tab Enter Esc\r\n"
+                                     : "Up/Down Tab Enter Esc\r\n");
+        else
+            out.raw(snapshot.unicode ? "\xe2\x86\x91/\xe2\x86\x93 select  Tab pages  Enter edit  Esc back\r\n"
+                                     : "Up/Down select  Tab pages  Enter edit  Esc back\r\n");
         if (ansi_)
             out.raw("\x1b[0m");
         out.safe(notice_, width - 1);

@@ -232,6 +232,20 @@
       "scope": "full-record",
       "content_sha256": "db92e234768984b620ac7522c6bfc691d92da34a41908a9a050d649ae86227cc",
       "application": "Read complete body, both comments and all review/thread pages (none), and the full canonical four-header/adapters/manifest/tests diff. Finalccc061d passed Build40753870815 and CodeQL40753922292 plus standalone security check. Normal merge da12fde preserves exactly that code tree. No live shell/hardware acceptance or completed Copilot review inferred."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 35,
+      "scope": "full-record",
+      "content_sha256": "88cab724c75a9b2ad5c97f42acf493c70dd581c410c894c08fa6b166687cfd86",
+      "application": "Read full dependency body, bounded complete lock/receipt diff and the complete integration comment; no reviews or threads. Verified crates.io checksum and removed unrelated tempfile/getrandom churn. Finalbabf858 passed Build40760281674, CodeQL40760281681 and standalone security check; normal main merge335755a preserves original bot/source history.495 native tests and full local quality pass. No production deployment or glib advisory dismissal."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 36,
+      "scope": "full-record",
+      "content_sha256": "ef19b3ce2c5c2636da026d02fae5e1b1d66a2acf5f5e9ec0c2ac6588a8215e09",
+      "application": "Read complete canonical source/manifest/ledger diff, body and both coordination comments; no reviews or inline threads. Existing capacities and hardware/authentication owners remain unchanged. Preserve original b793233, owner8aa81bd/9721cb and normal main335755a histories; resolve metadata conflicts by retaining the complete donor inventory and both independent review records. Actual shell suite and21-file source gate pass on combined source; final combined-head CI and physical acceptance remain separate gates."
     }
   ]
 }

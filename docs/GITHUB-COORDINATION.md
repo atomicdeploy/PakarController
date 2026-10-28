@@ -10,7 +10,11 @@ paginated body/comment/review/thread was read, including outdated findings;
 all four current CodeQL threads are resolved. Copilot requests are not claimed
 as completed reviews. No open PR or unmerged local/remote branch remained at
 that checkpoint. Dependabot subsequently opened PR35 for rustls0.23.46;
-its normal merge remains gated on final-head CI and conversation review.
+it merged normally as335755a after finalbabf858 passed Build40760281674,
+CodeQL40760281681 and the standalone finding check. The concurrent canonical
+shell PR36 is consolidated with that merged main; its combined-head CI and
+conversation review remain merge gates. See the current GitHub list rather
+than interpreting a historical zero-PR snapshot as a perpetual status.
 
 Root main was fast-forwarded and the other clean, fully merged PortableShell
 worktree is preserved. Private backups/settings/caches were neither deleted nor

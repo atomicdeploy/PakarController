@@ -95,13 +95,35 @@ is part of this source handoff. Private backups/settings/caches remain local.
 
 ### Subsequent dependency checkpoint (PR35)
 
-Dependabot opened PR35 after both consolidation merges. The reviewed update
+Dependabot opened PR35 after both consolidation merges and it merged normally
+as `335755a79231a278589c534d5977dab5ceff9538`. Final head
+`babf858b97a67b16ac918a6dafe003e23f813e42` passed
+[Build40760281674](https://github.com/atomicdeploy/PakarController/actions/runs/40760281674)
+and [CodeQL40760281681](https://github.com/atomicdeploy/PakarController/actions/runs/40760281681),
+including Windows/Android packages, all S3/AVR profiles and the standalone check.
+All495 native tests and the full quality suite passed locally too. The reviewed update
 changes only rustls0.23.45 to0.23.46 and its verified crates.io checksum;
 incidental tempfile/getrandom resolver churn is removed. The stale Cargo.lock
 donor target binding is refreshed after rereading the actual PuzzleBoard lock
-and checking the bounded dependency diff. Final-head CI and normal merge remain
-required; the preceding successful runs do not certify this new dependency.
+and checking the bounded dependency diff. No security alert was dismissed;
+the distinct Linux glib issue17 remains open.
 No production deployment is included.
+
+### Concurrent shell follow-up (PR36, 2026-10-29)
+
+The owning chat published Ardush-driven shared shell updates as
+`b79323313f4e0fcbda94a23721d99118558c6792` while the TLS checks ran.
+Those changes and merged main335755a are consolidated without rewriting either
+history. Existing prompt/suggestion capacities and formatting defaults remain;
+the optional soft decimal conversion and Unicode selection footer are canonical
+upstream code, not a second local shell fork. The combined source passes the
+actual shell/editor/TUI/authority and TCP/UDP loopback tests and the21-file hash
+gate. Exact combined-head CI and normal merge remain required before handoff.
+
+Read-only Git integrity inspection found no missing/corrupt object. One old
+unreachable amended commit a2aa350 has identical code/workflow to the retained
+main ancestor9f649d3; only documentation sentence ordering differs. Historical
+unreachable objects are not pruned, published blindly or mistaken for live drafts.
 
 ### Remaining issues, not forgotten work
 
