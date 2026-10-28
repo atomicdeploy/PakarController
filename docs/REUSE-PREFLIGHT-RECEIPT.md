@@ -10897,6 +10897,13 @@ f0a8bc68737a3705e37933bef13e003c68b3f26b636e57157322244d6cb511a3.
 APK came from the preserved mixed workspace, including pre-existing signal
 indicator edits; this scoped checkpoint does not claim ownership of those edits.
 
+Rust compatibility follow-up consumes asynchronous Wi-Fi scan receipts without
+clearing the previous SSID list or blocking the command worker. The existing
+peer-stamped Configuration event path schedules one result-only read at a time,
+500 ms apart, with a 15-second UI deadline. The focused native fixture passed for
+pending, completed/deduplicated results, single-read scheduling and timeout/no
+replay. This compiles the native test target, not a deployed Windows app.
+
 No production board, Wi-Fi configuration or cloud-enabled policy was changed.
 No live NTP/DHCP/Internet, SSID/RF, MQTT/remote WebSocket, USB device or tablet
 acceptance is claimed. ASUS access remains deferred by David; do not repeat

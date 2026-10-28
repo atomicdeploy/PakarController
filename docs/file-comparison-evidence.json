@@ -7690,6 +7690,11 @@
           "path": "tests/network_tools_wiring_test.mjs",
           "anchor": "const ntp =",
           "sha256": "f64edc0bf768ea0a67678cea42eb3abfa1e0f3e1eef4b841884fe45d45d7ef6e"
+        },
+        {
+          "path": "desktop/src/device_settings.rs",
+          "anchor": "fn async_wifi_scan_preserves_list_yields_between_reads_and_never_restarts_scan",
+          "sha256": "5bce7f14b9d6225d9aaa660838b8d07f7e14bda364c520a51f1c92e83d302ed6"
         }
       ],
       "omissions": [
@@ -13480,12 +13485,12 @@
         {
           "path": "desktop/src/ui/device_settings.rs",
           "anchor": "fn avr_page(",
-          "sha256": "6988aa130e2f23e44b0b1fbb3f77e7ae4f221babcc4c3ed21ce0726e06c01ed3"
+          "sha256": "c087cbbde3bfc194b6002b10a3b63bb16ac4e253ef33d1a6f951ab2e566a42f6"
         },
         {
           "path": "desktop/src/device_settings.rs",
           "anchor": "pub fn finish_avr(",
-          "sha256": "10318a349cc0e812281b6ef106460774c97a410ee0a30a6afd11ac04424d1a32"
+          "sha256": "5bce7f14b9d6225d9aaa660838b8d07f7e14bda364c520a51f1c92e83d302ed6"
         },
         {
           "path": "libraries/BoardCore/src/PixelCorrections.h",
@@ -13542,7 +13547,7 @@
         {
           "path": "desktop/src/device_settings.rs",
           "anchor": "fn avr_editor_owns_dirty_draft_pending_receipt_and_same_peer_readback()",
-          "sha256": "10318a349cc0e812281b6ef106460774c97a410ee0a30a6afd11ac04424d1a32"
+          "sha256": "5bce7f14b9d6225d9aaa660838b8d07f7e14bda364c520a51f1c92e83d302ed6"
         },
         {
           "path": "tests/pixel_corrections_test.cpp",
@@ -16196,7 +16201,7 @@
           "path": "desktop/src/ui/preferences.rs"
         },
         {
-          "sha256": "6988aa130e2f23e44b0b1fbb3f77e7ae4f221babcc4c3ed21ce0726e06c01ed3",
+          "sha256": "c087cbbde3bfc194b6002b10a3b63bb16ac4e253ef33d1a6f951ab2e566a42f6",
           "anchor": "super::dropdown::ComboBox",
           "path": "desktop/src/ui/device_settings.rs"
         },
@@ -18559,7 +18564,7 @@
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
-          "sha256": "6988aa130e2f23e44b0b1fbb3f77e7ae4f221babcc4c3ed21ce0726e06c01ed3",
+          "sha256": "c087cbbde3bfc194b6002b10a3b63bb16ac4e253ef33d1a6f951ab2e566a42f6",
           "anchor": "pub(crate) fn available("
         },
         {
@@ -23013,7 +23018,7 @@
         {
           "path": "desktop/src/ui/device_settings.rs",
           "anchor": "fn avr_page(",
-          "sha256": "6988aa130e2f23e44b0b1fbb3f77e7ae4f221babcc4c3ed21ce0726e06c01ed3"
+          "sha256": "c087cbbde3bfc194b6002b10a3b63bb16ac4e253ef33d1a6f951ab2e566a42f6"
         },
         {
           "path": "desktop/src/ui/shell.rs",
@@ -23146,12 +23151,12 @@
         {
           "path": "desktop/src/ui/device_settings.rs",
           "anchor": "fn avr_page(",
-          "sha256": "6988aa130e2f23e44b0b1fbb3f77e7ae4f221babcc4c3ed21ce0726e06c01ed3"
+          "sha256": "c087cbbde3bfc194b6002b10a3b63bb16ac4e253ef33d1a6f951ab2e566a42f6"
         },
         {
           "path": "desktop/src/device_settings.rs",
           "anchor": "pub fn finish_avr(",
-          "sha256": "10318a349cc0e812281b6ef106460774c97a410ee0a30a6afd11ac04424d1a32"
+          "sha256": "5bce7f14b9d6225d9aaa660838b8d07f7e14bda364c520a51f1c92e83d302ed6"
         },
         {
           "path": "firmware/esp/src/SceneStore.h",
@@ -23267,7 +23272,7 @@
         {
           "path": "desktop/src/device_settings.rs",
           "anchor": "fn avr_editor_owns_dirty_draft_pending_receipt_and_same_peer_readback()",
-          "sha256": "10318a349cc0e812281b6ef106460774c97a410ee0a30a6afd11ac04424d1a32"
+          "sha256": "5bce7f14b9d6225d9aaa660838b8d07f7e14bda364c520a51f1c92e83d302ed6"
         },
         {
           "path": "tests/scene_store_test.cpp",

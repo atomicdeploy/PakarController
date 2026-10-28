@@ -258,6 +258,21 @@ fn secret(ui: &mut egui::Ui, id: &str, label: &str, stored: bool, value: &mut Se
     });
 }
 fn network_page(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui::Ui, ready: bool) {
+    if draft.scan_pending && app.command_route() == Some(Transport::WiFi) {
+        ui.ctx()
+            .request_repaint_after(std::time::Duration::from_millis(500));
+        let now = std::time::Instant::now();
+        if draft.scan_poll_due(now) {
+            if ready {
+                let _ = app.http_tx.send(HttpCommand::Configuration(
+                    app.endpoint(),
+                    "/api/wifi/scan?results=true",
+                ));
+            } else {
+                draft.scan_retry_at = Some(now + std::time::Duration::from_millis(500));
+            }
+        }
+    }
     if app.command_route() == Some(Transport::Serial) {
         dialog::section(ui, icons::PLUG, "USB network provisioning", |ui| {
             ui.label("USB can provision Wi-Fi, but cannot read saved network settings. This is a NEW provisioning request, not observed device configuration. Verify via HTTP afterward.");
@@ -348,6 +363,8 @@ fn network_page(app: &mut PakarControllerApp, draft: &mut Editor, ui: &mut egui:
                 .clicked()
             {
                 draft.scan_pending = true;
+                draft.scan_retry_at = None;
+                draft.scan_deadline = Some(std::time::Instant::now() + std::time::Duration::from_secs(15));
                 let _ = app.http_tx.send(HttpCommand::Configuration(
                     app.endpoint(),
                     "/api/wifi/scan",
@@ -802,7 +819,6 @@ fn status_rgb_page(
         {
             submit(app, draft, Group::StatusRgb);
         }
-
     });
 }
 fn maintenance_page(

@@ -791,6 +791,9 @@ connections and the app bridge are separate Advanced destinations. The tools
 page preserves unsaved edits, verifies saved readback, listens for WebSocket
 events, and uses bounded read-only result polling for USB/HTTP-only sessions.
 Opening it never starts a probe or applies settings.
+Rust's Wi-Fi editor also consumes asynchronous scan results, preserving its
+previous list until completion. Result-only reads are scheduled 500 ms apart
+with a 15-second deadline; the command worker never sleeps for a scan.
 
 Telnet/framed serial: `clock`, `dns example.com`, `ping 192.168.4.1`,
 `public-ip`, `http-date`. `clock` reads completion results. Typed properties use
