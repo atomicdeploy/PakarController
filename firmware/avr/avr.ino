@@ -571,10 +571,12 @@ void boardKeyGesture(uint8_t bit, KeyEvent event, void *) {
     } else stableInput9 = pressed;
     markStateDirty();
   }
+#if PAKAR_FIRST_WINS_ENABLED
   if(espGameOwned){
     if(event==KeyEvent::Down||event==KeyEvent::Up)pcController.gameInput(bit,event);
     return;
   }
+#endif
   pcController.key(bit, event, 0, millis(), micros());
   if (!pcController.menuActive() && !pcController.espMenuActive() &&
       !frontPanel.captured() && primary)

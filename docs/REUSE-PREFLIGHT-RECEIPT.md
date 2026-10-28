@@ -11207,3 +11207,16 @@ Plan,23 source mappings,50 route bindings and provenance generation pass.
 
 No user scene, correction values, board firmware, USB/UART, network, installed
 apps or credentials were changed. Source handoff is separate from deployment.
+
+The next exact-head CI40750230610 passed Windows (495 tests/package), Android,
+both S3 keycontroller configurations and the RF AVR build, then found a real
+table-role AVR compile error: boardKeyGesture referenced first-wins-only
+espGameOwned outside its feature guard. Read the complete current AVR sketch,
+the Puzzles/Timer Keys.h/.cpp and all three donors' Tasks.h/.cpp; retain their
+shared callback/scheduler contracts. Guard only the ESP-owned key-game branch.
+A fixture compiles the actual extracted callback with both role flags using
+the real KeyEvent header, and checks Down/Up, ninth input, menu/capture gating
+and exclusive game ownership. It first reproduced the missing symbol, then
+passed after the guard. No timeout, debounce, input order or task behavior changes.
+The first guarded SDK attempt correctly refused the stale AVR target hash;
+the same reviewed file bindings are refreshed before rerunning, not bypassed.

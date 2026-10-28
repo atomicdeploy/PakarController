@@ -2503,12 +2503,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -2537,21 +2537,28 @@
       "source_revision": "filesystem-snapshot",
       "verdict": "parity-gap",
       "preserved": [
-        "Read the complete Timer implementation and confirmed byte identity with Puzzles. Its active-low virtual/physical merge, stable-change callback and pressed callback semantics are retained by the current mode-aware AVR input owner."
+        "Read the complete Timer implementation and confirmed byte identity with Puzzles. Its active-low virtual/physical merge, stable-change callback and pressed callback semantics are retained by the current mode-aware AVR input owner.",
+        "Handoff AVR role guard: the shared callback retains table input/menu handling without linking first-wins-only ownership state; keycontroller still forwards Down/Up exclusively while the ESP owns the game. Actual callback is compiled/executed for both role flags; no saved state or input timing changed."
       ],
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void boardKeyGesture("
         }
       ],
-      "proof": [],
+      "proof": [
+        {
+          "path": "tests/key_minigame_integration_test.mjs",
+          "sha256": "ae2a46216f0f3f907965041627cf2566743bd1304035efd2a8e0429cfbbb9dcb",
+          "anchor": "test('actual AVR key callback"
+        }
+      ],
       "omissions": [
         {
           "code": "fixed 50 ms debounce and callback-only press surface",
@@ -2627,7 +2634,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -3264,7 +3271,7 @@
         },
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "821cb2688ee4bff15d5f97bb02e0009e1826696bbdcef3ec9c58f490782f9a89",
+          "sha256": "ae2a46216f0f3f907965041627cf2566743bd1304035efd2a8e0429cfbbb9dcb",
           "anchor": "test('every minigame command"
         }
       ],
@@ -9759,7 +9766,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void resetGame(bool playWelcome = true)"
         },
         {
@@ -10647,7 +10654,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void chooseWinner(uint8_t button)"
         },
         {
@@ -20314,7 +20321,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -20365,7 +20372,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -20418,12 +20425,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -20458,17 +20465,18 @@
       "verdict": "parity-gap",
       "preserved": [
         "Active-low physical plus virtual shift input state and candidate/stable transition tracking; AVR reports releases as dirty state; press handling is mode-specific.",
-        "Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification."
+        "Actual PCController per-key callback/gesture classifier now feeds all nine inputs; no game action waits for click classification.",
+        "Handoff AVR role guard: the shared callback retains table input/menu handling without linking first-wins-only ownership state; keycontroller still forwards Down/Up exclusively while the ESP owns the game. Actual callback is compiled/executed for both role flags; no saved state or input timing changed."
       ],
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -20492,7 +20500,13 @@
       "remaining": [
         "Add input mapping/debounce configuration and bounce/press/release tests; preserve reusable callback capability or record a reviewed alternative contract."
       ],
-      "proof": [],
+      "proof": [
+        {
+          "path": "tests/key_minigame_integration_test.mjs",
+          "sha256": "ae2a46216f0f3f907965041627cf2566743bd1304035efd2a8e0429cfbbb9dcb",
+          "anchor": "test('actual AVR key callback"
+        }
+      ],
       "improvement": ""
     },
     {
@@ -20554,7 +20568,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -20610,7 +20624,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -20666,7 +20680,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22706,7 +22720,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22762,7 +22776,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22818,7 +22832,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22874,7 +22888,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "c77c81186b3c005afcba66400fcfef320e1d335d2e87e7631018ec84be5d6642",
+          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],

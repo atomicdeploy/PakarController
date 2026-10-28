@@ -43,6 +43,14 @@ retry: deterministic transport-loss fixtures retain exact one-START/one-STOP
 checks and verify the failure phase. Current-head CI must be refreshed after
 these changes; previous-head results do not attest the new firmware.
 
+CI40750230610 then built both S3 key configurations, Windows (495 tests and
+package) and Android successfully, but caught a table-role AVR callback using
+the first-wins-only espGameOwned symbol. The callback now guards that branch
+with the same role flag as its declaration. An actual-source compile/dispatch
+fixture reproduces the old failure and passes for both roles after the fix.
+All three table AVR link profiles and RF-enabled keycontroller now build locally,
+with boot-chain verification. Final-head CI remains required after this repair.
+
 Merge only after every required check succeeds and the complete diff and every
 conversation/review-thread page are reviewed. The final synchronization receipt
 is on PR27/issue2; inspect GitHub's current main SHA before pulling. No release,
