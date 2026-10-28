@@ -1,9 +1,66 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {resolve} from 'node:path';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const app=read('firmware/esp/application.ino');
 const service=read('firmware/esp/src/KeyMiniGameService.h');
+test('actual AVR key callback compiles for both roles and preserves their input owners',()=>{
+  const avr=read('firmware/avr/avr.ino');
+  const start=avr.indexOf('void boardKeyGesture('),end=avr.indexOf('void serviceInputs(',start);
+  assert(start>=0&&end>start,'Extract the actual shared callback, not a copied implementation');
+  const fixture=`#include <cassert>
+#include <pccontroller/Keys.h>
+#define _BV(bit) (1U << (bit))
+uint32_t micros(){return 0;}
+uint8_t stableInputs=0;bool stableInput9=false;unsigned dirty=0,actions=0;
+void markStateDirty(){++dirty;}
+void onInputChanged(uint8_t,bool pressed){assert(pressed);++actions;}
+struct Controller {
+  unsigned keys=0,edges=0;bool menu=false,espMenu=false;
+  void key(uint8_t,KeyEvent,uint8_t,uint32_t,uint32_t){++keys;}
+  bool menuActive()const{return menu;}bool espMenuActive()const{return espMenu;}
+#if PAKAR_FIRST_WINS_ENABLED
+  void gameInput(uint8_t,KeyEvent){++edges;}
+#endif
+}pcController;
+struct Panel {bool held=false;bool captured()const{return held;}}frontPanel;
+#if PAKAR_FIRST_WINS_ENABLED
+bool espGameOwned=false;
+#endif
+${avr.slice(start,end)}
+int main(){
+  boardKeyGesture(0,KeyEvent::Down,nullptr);assert(stableInputs==1&&dirty==1&&pcController.keys==1&&actions==1);
+  boardKeyGesture(0,KeyEvent::Up,nullptr);assert(stableInputs==0&&dirty==2&&pcController.keys==2&&actions==1);
+  boardKeyGesture(8,KeyEvent::Down,nullptr);assert(stableInput9&&actions==2);
+  boardKeyGesture(8,KeyEvent::Up,nullptr);assert(!stableInput9&&actions==2);
+  pcController.menu=true;boardKeyGesture(1,KeyEvent::Down,nullptr);assert(actions==2);
+  pcController.menu=false;pcController.espMenu=true;boardKeyGesture(1,KeyEvent::Down,nullptr);assert(actions==2);
+  pcController.espMenu=false;frontPanel.held=true;boardKeyGesture(1,KeyEvent::Down,nullptr);assert(actions==2);
+  frontPanel.held=false;boardKeyGesture(1,KeyEvent::Click,nullptr);assert(actions==2);
+#if PAKAR_FIRST_WINS_ENABLED
+  const auto priorKeys=pcController.keys;espGameOwned=true;
+  boardKeyGesture(2,KeyEvent::Down,nullptr);assert((stableInputs&4)&&pcController.edges==1);
+  boardKeyGesture(2,KeyEvent::Up,nullptr);assert(!(stableInputs&4)&&pcController.edges==2);
+  boardKeyGesture(2,KeyEvent::Click,nullptr);assert(pcController.edges==2&&pcController.keys==priorKeys&&actions==2);
+#else
+  assert(pcController.edges==0&&pcController.keys==8);
+#endif
+}
+`;
+  const directory=resolve('build/native');mkdirSync(directory,{recursive:true});
+  const cpp=resolve(directory,'avr_key_gesture_fixture.cpp'),exe=resolve(directory,'avr_key_gesture_test.exe');
+  let previous;try{previous=readFileSync(cpp,'utf8')}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(previous!==fixture)writeFileSync(cpp,fixture);
+  for(const enabled of [0,1]){
+    const result=spawnSync(process.env.CXX||'g++',['-std=c++17','-O2','-g0','-Wall','-Wextra','-Werror',
+      '-DPAKAR_FIRST_WINS_ENABLED='+enabled,'-I',resolve('tests/access_stubs'),'-I',resolve('libraries/BoardCore/src'),cpp,'-o',exe],{encoding:'utf8',timeout:60000});
+    assert.equal(result.status,0,result.error?.message||result.stderr);
+    const run=spawnSync(exe,[],{encoding:'utf8',timeout:10000});
+    assert.equal(run.status,0,run.error?.message||run.stderr);
+  }
+});
 test('every minigame command is admitted and handled by the existing correlated command path',()=>{
   const admission=app.slice(app.indexOf('const bool supported=command=='),app.indexOf('const bool supported=command==')+1600);
   for(const name of ['minigame-configure','minigame-control','minigame-input']){
