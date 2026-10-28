@@ -10767,3 +10767,71 @@ host-key persistence/reconnect, terminal resize and simultaneous API/UART/LED/TL
 load remain live acceptance gates. The upstream hardware-SHA concurrency warning
 is retained; the SDK was not secretly reconfigured. The existing unrelated AVR
 contract-mapping CI failure remains outside this checkpoint.
+
+## 2026-10-28 ESP peer-relay resolution and bounded-memory checkpoint
+
+User incident: ledcontroller could not resolve keycontroller.local (7.32 s),
+opposite-direction status reads alternated between ~1.3 s success and failures.
+The historical internal minimum of 216 bytes is a warning, not a diagnosed cause.
+Owning acceptance: issues #7 and #2. Game-mode polish remains a separate queued
+request; no completion of that request is claimed here.
+
+Read AGENTS/preflight, bridge-repeater and network-cloud rows plus exact donor
+audit for PCController Tools/Controller/internal/lanresolver/resolver.go. Reread
+that complete actual resolver, resolver_test.go, hostbridge/peer_response.go and
+peer_response_test.go through EOF. Adapt reconnect-sticky successful addresses,
+original Host identity and strict malformed/uncertain command receipts. Retain
+board/boot/compatibility checks, one hop, restricted reads, command expiry and
+no mutation replay. No borrowed discovery record grants ownership.
+
+Source changes: bounded 900ms mDNS for .local (not router DNS), asynchronous
+TCPIP IPv4 DNS with safe object-owned late callbacks, four verified cached
+addresses and four explicitly saved routes. Saved hints are reverified after
+boot, not accepted as authority. Loop-owned staged/readback/rename saves are
+byte-idempotent; observations do not write flash. HTTP and fenced USB share
+the directory/route operations. Same-boot cached GET uses one HTTP request;
+commands still preflight and never retry after dispatch. One lazily allocated
+worker retains the existing 10240-byte stack instead of per-request allocation;
+eight SHA256 fingerprints replace retained raw request bodies. Filtered JSON,
+moved reply storage and mutex-scoped linked JsonString receipt serialization
+avoid unnecessary full-status copies. Admission checks current internal free
+memory and largest block, not PSRAM totals or the historical minimum.
+
+SDK source review found HTTPClient3.3.12 ignores addHeader(Host/User-Agent).
+PinnedClient now overrides only numeric TCP dialing while HTTPClient retains
+the logical hostname; dedicated setUserAgent sets product identity. The fixture
+implements the actual ignored-header behavior and asserts both dial and Host/UA.
+SDK NetworkManager.cpp, NetworkClient.h, HTTPClient.cpp and ESPmDNS.cpp were read
+at the affected functions; no SDK-wide patch or build-flag churn was introduced.
+
+Actual production PeerRelay/PeerRouteStore/PeerLanResolver host fixtures pass:
+failed-mDNS cached reads, cold saved-route identity verification, changed DHCP
+address, untrusted hints/private ranges/self rejection, stale boot/identity,
+auth and HTTP timeout without retargeting, lost/malformed command receipts and
+no replay, receipt/heap limits, 18KB escaped response preservation, late DNS
+callbacks and interrupted route publication. Read-only probe input/timing
+fixtures, host-presentation scheduling, BLE/offline guards, peer fencing and
+script/living-contract tests pass. The initial -Werror misleading-indentation
+failure was corrected; the first SDK attempt correctly stopped on stale PU
+route target hashes. Exact reviewed source/line bindings were refreshed, not
+the guard bypassed. The focused runner is registered in CI quality.
+
+ASUS localhost:8022 refused two read-only SSH probes during this turn. No board
+settings, scene, corrections, cloud state, LEDs, audio or firmware changed.
+Deployment requires the applicable explicit PBX DTMF authorization. Automatic
+peer discovery, continuous peer event subscriptions and fully selectable relayed
+Flutter/Rust/Web devices remain OPEN and continue to advertise false. Real
+bidirectional board latency, current-memory/stack measurements and long soak
+remain unverified; fixtures are not hardware acceptance.
+
+Final ordinary (SSH/SCP excluded) ESP32-S3 SDK build passed twice, including a
+last-source rebuild after the Host/UA correction: program 2,339,691/3,342,336
+bytes, static RAM 139,380/327,680. Raw candidate 2,339,840 bytes, SHA256
+ed86a0c1c01ff2a16f39a0afcd4b414a30db0a63dab050d3d8a1ce8ad0f3f703,
+at build/esp32s3-buffered/esp32s3.ino.bin. Table role, buffered UART, 16MB/OPI,
+both LED drivers with RMT default, acknowledged ISP, status RGB48, optional
+Ethernet and BLE excluded retain this existing candidate profile. No claim of
+matching the unreachable keycontroller's current hardware profile is made.
+Actual async HTTP actor/short-write/final-ACK and USB request/diagnostic receipt
+fixtures also passed. Existing AVR source-mapping CI mismatch remains unrelated
+and unresolved; no all-green CI or installed runtime claim.

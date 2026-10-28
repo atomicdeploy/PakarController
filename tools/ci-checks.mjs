@@ -15,6 +15,7 @@ export const phases={
     ["node", "tests/pc_contract_mapping_test.mjs"],
     ["pwsh", "-File", "tools/test-radio.ps1"],
     ["pwsh", "-File", "tools/test-peer-identity.ps1"],
+    ["pwsh", "-NoProfile", "-File", "tools/test-peer-route.ps1"],
     ["pwsh", "-File", "tests/tool_peer_identity_test.ps1"],
     ["node", "tests/web_peer_version_test.mjs"],
     ["pwsh", "-File", "tools/test-bluetooth.ps1"],

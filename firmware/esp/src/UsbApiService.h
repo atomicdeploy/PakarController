@@ -51,9 +51,14 @@ String maintenanceApi(const String &message,bool physicalUsb) {
   }
   if(request["board_id"].as<String>()!=pcBoardId||request["boot_id"].as<String>()!=pcBootId)return maintenanceApiError("peer_changed");
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  if(method=="GET"&&path=="/api/peers")return peerRelay.directory();
   if(method=="GET"&&path=="/api/peers/result")return peerRelay.snapshot(body["request_id"]|"");
   if(method=="POST"&&path=="/api/peers/request") {
     String outgoing;serializeJson(body,outgoing);return submitPeerRelay(outgoing);
+  }
+  if(method=="POST"&&path=="/api/peers/routes"){
+    if(!maintenanceApiIdle())return maintenanceApiError("maintenance_busy");
+    String outgoing;serializeJson(body,outgoing);return peerRelay.saveRoute(outgoing);
   }
 #endif
   if(physicalUsb&&filesystemInitializationComplete&&method=="POST"&&path=="/api/filesystem/reboot"&&

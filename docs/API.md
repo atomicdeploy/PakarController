@@ -660,7 +660,7 @@ application relay, not NAT, a Wi-Fi extender or a completed mesh.
 
 `POST /api/peers/request` accepts JSON: `request_id` (32 lowercase hex digits),
 `hostname`, destination `board_id`, `boot_id`, `method`, `path`, and optional
-`packet`. Only approved read paths and `POST /api/command` are forwarded. For
+`packet`, and an optional private IPv4 `address` hint. Only approved read paths and `POST /api/command` are forwarded. For
 public `GET /api/peer/info` only, boot_id may be empty to learn the current boot
 of an explicitly identified board. Other calls require that observed boot.
 Commands carry the original JSON packet string with the same request ID,
@@ -673,14 +673,45 @@ clients receive `peer-relay-result` completion notifications. USB maintenance
 API envelopes can use these same request/result routes. Large downstream JSON
 may exceed the existing USB API response limit; no binary USB relay is claimed.
 
-One background job and one hop are allowed. Unexpired IDs cannot be evicted;
-retired results are never resubmitted automatically. DNS resolves a configured
-hostname, the resulting private LAN IP is pinned, and destination board/boot
-headers and identity are checked. No credentials are forwarded; authenticated
+One background job and one hop are allowed. One lazily allocated worker is
+reused; eight receipt fingerprints retain SHA256, not full request bodies.
+Unexpired IDs cannot be evicted; retired results are never resubmitted
+automatically. `.local` uses bounded mDNS directly (900 ms), not router DNS;
+unicast resolution has the same caller deadline and safe late-callback storage.
+A destination's identity-verified address is reused until connect failure,
+then bounded hostname recovery is attempted. Host headers retain the configured
+hostname. An operator-supplied address is only a dial hint: the downstream
+identity must be verified before any command. Cached same-boot GETs need one
+HTTP read, not a redundant identity preflight; POST commands still preflight.
+Identity/auth/HTTP errors never redirect a command and POST is never replayed.
+No credentials are forwarded; authenticated
 destinations reject access normally. This LAN HTTP identity check does not
 provide cryptographic peer authentication. Raw files, firmware writes, general
 URLs and recursive relay endpoints are not admitted.
 
-Pending: persistent trust/routes and discovery, continuous peer events,
+`GET /api/peers` includes saved/observed routes, verification age/boot, current
+internal free/largest-block memory and the separately labeled historical minimum.
+Old low-water marks are not attributed to a cause or presented as current failure.
+Explicit `POST /api/peers/routes` JSON `{ "action": "save", "board_id": "...",
+"hostname": "keycontroller.local" }` saves only a route verified this boot.
+`action: "remove"` removes that saved route and its RAM hint. Four routes fit in
+`/peer-routes.json`; stage/readback/rename publishes changes, and identical saves
+don't write flash. No observed/discovered address is persisted automatically.
+Saved addresses are reverified after reboot; boot IDs are never persisted as
+authority. These routes also work through the fenced USB maintenance API.
+No settings/scene/correction values are rewritten by a route change.
+
+Result receipts include `elapsed_ms`, `resolution_ms`, `http_ms`, `route_source`,
+`address`, and `command_dispatched`. These measure the relay job, not optical
+output or the separate observer/admission/polling latency. The read-only probe
+`node tools/check-peer-relay.mjs --origin http://ledcontroller.local
+--target-hostname keycontroller.local --target-board TARGET_BOARD_ID
+--target-address 192.168.1.201 --samples 3` records both timing scopes without
+LED commands or route persistence. Use the currently observed target address,
+not the example address blindly.
+
+Pending: automatic discovery, continuous peer events and a fully selectable
+relayed device/transport in Flutter/Rust/Web. The endpoint deliberately keeps
+`discovery` and `event_subscription` false until implemented. Also pending:
 BLE-central/ESP-NOW/USB-host adapters, remote TLS peers, and resumable verified
 file/firmware transfer. Existing direct OTA remains the update owner.

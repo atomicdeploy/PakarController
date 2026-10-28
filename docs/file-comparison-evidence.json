@@ -9050,7 +9050,8 @@
       "verdict": "parity-gap",
       "preserved": [
         "Read complete source. Adapt exact request-ID correlation, ambiguous/malformed result as uncertain, consume-before-dispatch and no replay. New SerialCommand::Bridge queues through the sole existing USB owner and returns actual same-sequence ACK plus readback, not queue acceptance.",
-        "Reread source and peer_response_test.go for ESP HTTP peer relay: validate destination board/boot, exact command-result request ID and boolean acceptance; malformed/lost responses remain outcome-uncertain. Explicit target, one hop, eight bounded receipt reservations, no redirects, no automatic command retry. Worker keeps outgoing I/O out of game loop. This is not a completed mesh or physical delivery claim."
+        "Reread source and peer_response_test.go for ESP HTTP peer relay: validate destination board/boot, exact command-result request ID and boolean acceptance; malformed/lost responses remain outcome-uncertain. Explicit target, one hop, eight bounded receipt reservations, no redirects, no automatic command retry. Worker keeps outgoing I/O out of game loop. This is not a completed mesh or physical delivery claim.",
+        "2026-10-28 reread complete peer_response.go and its tests. Retain strict receipt identity and uncertain/no-replay outcomes while replacing per-job task allocation and full raw history with one reusable worker and eight SHA256 fingerprints. Filter downstream JSON envelope to bound heap; read-only connection recovery never replays a POST. Explicit saved-route stage/readback/rename is loop-owned, independently of worker observations. Current and historical internal-memory metrics are distinct; no claimed cause for the historical 216-byte minimum."
       ],
       "targets": [
         {
@@ -9066,7 +9067,12 @@
         {
           "path": "firmware/esp/src/PeerRelay.h",
           "anchor": "class PeerRelay",
-          "sha256": "3f064d0547eace41857811cd3b2f2f5f4d0405904646bb814a64cd270536bc91"
+          "sha256": "2ba3a8b1332dd2cc6c9fd443e080e401ec6a722958c60433542106b38fd4a129"
+        },
+        {
+          "path": "firmware/esp/src/PeerRouteStore.h",
+          "anchor": "class PeerRouteStore",
+          "sha256": "93e58147fbf62072c7a6ce22abe39d0dd2cf3840cd41e70bcdea8c5693889756"
         }
       ],
       "omissions": [
@@ -9086,11 +9092,16 @@
           "path": "desktop/src/usb_table.rs",
           "anchor": "fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback",
           "sha256": "13c191e37a4a881d96fb668c0ccb99fa2f168955e6abb78bb37940a629434042"
+        },
+        {
+          "path": "tests/peer_relay_test.cpp",
+          "anchor": "int main()",
+          "sha256": "324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d"
         }
       ],
       "remaining": [
         "Issue #2: Generic PCController peerRPCSession JSON-RPC/WebSocket/Socket.IO response envelope. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open.",
-        "ESP relay still needs automatic discovery/directory, persistent explicit trust/routes, peer event subscriptions, BLE central, USB host, ESP-NOW, multi-hop loop protection and resumable hash-verified file/firmware delivery. LAN identity pinning is not cryptographic authentication. Destination authentication is never bypassed or delegated implicitly."
+        "ESP relay has explicit persistent verified route metadata and an observed directory in source; automatic discovery, continuous peer events and selectable relayed Flutter/Rust/Web transports remain open, as do BLE central, USB host, ESP-NOW and resumable hash-verified file/firmware delivery. One hop only; LAN identity pinning is not cryptographic authentication. Destination authentication is never bypassed or delegated implicitly. Hardware deployment and bidirectional latency/heap acceptance remain open."
       ]
     },
     {
@@ -12665,7 +12676,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401"
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -13167,12 +13178,12 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401"
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
           "anchor": "explicit AsyncHttpService(uint16_t port) : native_(port) {}",
-          "sha256": "dcd0e23c89924263fdfca757e53618601e2d7fac2c9b3cc200cac572f7feb716"
+          "sha256": "646e7e4df17e61feb4db3ce3d19b5f9e48329e16d6c190724f4d6f5621fdc499"
         }
       ],
       "omissions": [
@@ -13220,12 +13231,12 @@
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
           "anchor": "explicit AsyncHttpService(uint16_t port) : native_(port) {}",
-          "sha256": "dcd0e23c89924263fdfca757e53618601e2d7fac2c9b3cc200cac572f7feb716"
+          "sha256": "646e7e4df17e61feb4db3ce3d19b5f9e48329e16d6c190724f4d6f5621fdc499"
         },
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401"
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d"
         }
       ],
       "omissions": [
@@ -13277,7 +13288,7 @@
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
           "anchor": "AsyncURIMatcher::exact(path)",
-          "sha256": "dcd0e23c89924263fdfca757e53618601e2d7fac2c9b3cc200cac572f7feb716"
+          "sha256": "646e7e4df17e61feb4db3ce3d19b5f9e48329e16d6c190724f4d6f5621fdc499"
         },
         {
           "path": "firmware/esp/src/LoopMessages.h",
@@ -13286,7 +13297,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401",
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13302,7 +13313,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401"
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -14685,7 +14696,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401",
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -15115,7 +15126,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401",
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15440,7 +15451,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401",
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d",
           "anchor": "bool authenticate()"
         },
         {
@@ -17856,7 +17867,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "321a8dd77f7b015cd5c3315dfc9ef58f6cf444abf09f1f922c3702288fc17667",
+          "sha256": "41070ef3f4e480e6e052728d11a41bfc22fa748d64c726ffd6ce510b17c3bf78",
           "anchor": "export function runChecks"
         },
         {
@@ -18337,7 +18348,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401",
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
@@ -23052,7 +23063,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401",
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -23335,7 +23346,7 @@
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
-          "sha256": "dcd0e23c89924263fdfca757e53618601e2d7fac2c9b3cc200cac572f7feb716",
+          "sha256": "646e7e4df17e61feb4db3ce3d19b5f9e48329e16d6c190724f4d6f5621fdc499",
           "anchor": "AsyncURIMatcher::exact(path)"
         },
         {
@@ -23589,7 +23600,7 @@
         {
           "path": "libraries/BoardCore/src/PeerRoutePolicy.h",
           "anchor": "inline bool hostname",
-          "sha256": "079ccdb652af2f7138312fa6cfe8ae5906d325adc9a9deea3911708fe550f394"
+          "sha256": "4b785df2ec881c20c3c89cb9e0e88811f0c74b6859608f1fa880b54b6f5f226b"
         }
       ],
       "omissions": [
@@ -23730,6 +23741,7 @@
       "verdict": "parity-gap",
       "preserved": [
         "Actual complete donor resolver and tests read from canonical PCController; adapted successful-address caching, retaining URL hostname/HTTP Host/TLS SNI rather than replacing the public identity with an IP.",
+        "2026-10-28 reread resolver.go and resolver_test.go through EOF for ESP-to-ESP recovery. Adapt its reconnect-sticky successful address to a four-entry board+hostname+boot-verified cache. .local explicitly uses SDK mdns_query_a with a 900ms budget; unicast uses TCPIP-owned asynchronous IPv4 DNS and object-owned late callbacks instead of unbounded getaddrinfo. Explicit saved-route hints are reverified after reboot. HTTP Host remains the configured hostname; no cache/discovery record grants authorization or causes command replay.",
         "Flutter HTTP and WebSocket share one resolver. TCP connect failures may trigger bounded read-only relookup but retain the last successful address; actual DNS SocketException/empty answer invalidates it. HTTP/auth/timeout failures do not evict or trigger discovery/replay. Cached route data never grants board/boot ownership.",
         "Actual complete resolver reread at unchanged source hash for measured ASUS .local latency. A separate bounded32-host native cache accepts only actual response TCP remote_addr after valid board/boot and requested-hostname checks, retains URL Host/SNI, never trusts advertised IP and never grants command ownership. Fresh no-idle-pool clients reuse verified routing. Only typed dial/resolution failures mark a retained hint for later relookup; HTTP/auth/body timeouts do not discard it. Successful verified TCP replacement clears the bounded lookup mark; no mutation is replayed.",
         "Actual pinned tungstenite0.30 TLS source was inspected for original-URI SNI and normal root verification. Native WS now dials numeric endpoints or the same actual-TCP cache (including verified configured DNS aliases; .local labels still match the board). A missing hint waits quietly for the existing selected HTTP worker: no duplicate WS HTTP/DNS runtime or resolver thread. TCP timeout and absolute TLS/HTTP-upgrade deadline precede handshake; selected-route revocation is checked on each IO. Both Plain and Rustls use bounded runtime reads. Actual loopback seeding/Host, empty-cache/no-socket, mismatch/revocation and deadline fixtures cover this adaptation; TLS validation and physical LAN remain separate proof.",
@@ -23765,6 +23777,11 @@
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
           "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c"
+        },
+        {
+          "path": "firmware/esp/src/PeerLanResolver.h",
+          "anchor": "class PeerLanResolver",
+          "sha256": "2413d89e26403aae1a9a528c60da09acf4ea5079067b8c1183e7e6c4d8f41546"
         }
       ],
       "omissions": [
@@ -23797,6 +23814,11 @@
           "path": "desktop/src/peer_http.rs",
           "anchor": "fn local_verified_address_override_preserves_http_hostname_and_explicit_port",
           "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50"
+        },
+        {
+          "path": "tests/peer_relay_test.cpp",
+          "anchor": "int main()",
+          "sha256": "324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d"
         }
       ],
       "improvement": "Session-sticky routing plus hostname-first durable same-board recovery; authentication and generic HTTP failures never grant discovery or mutation replay authority."
@@ -23832,7 +23854,7 @@
         }
       ],
       "remaining": [
-        "Focused Flutter fixtures pass; actual phone/LAN, physical color and audible melody acceptance remain open."
+        "Focused Flutter fixtures pass; actual phone/LAN, physical color and audible melody acceptance remain open. ESP relay/cache/route-store fixtures cover cached reuse with failed mDNS, changed DHCP address, saved-route re-verification, wrong identity/boot, private-address validation, command no-replay, memory/receipt limits, safe late DNS callbacks and interrupted filesystem publication. Actual bidirectional board latency and heap/long-soak acceptance are still pending."
       ],
       "proof": [
         {
@@ -23859,6 +23881,11 @@
           "path": "mobile/test/configuration_event_transport_test.dart",
           "sha256": "4c48e1641b05832a0c0fd5945a9a63e080b8563515f00970f03bb7fcdee9dd08",
           "anchor": "void main()"
+        },
+        {
+          "path": "tests/peer_relay_test.cpp",
+          "anchor": "int main()",
+          "sha256": "324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d"
         }
       ],
       "improvement": "Adds session routing and identity-fenced durable recovery, trusted-CA TLS fixtures and no mutation replay."
@@ -23923,7 +23950,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401",
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24004,7 +24031,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401"
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -24265,7 +24292,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401",
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24341,7 +24368,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "f173893481148cefe553a06fe0132bdc56a261d34de9269fa82093831f1ac401"
+          "sha256": "e26749c59cb641283aff0707805bffc834174a3fab7274b75c9b61628425b32d"
         }
       ],
       "omissions": [

@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {relayReadEnvelope} from '../tools/check-peer-relay.mjs';
+const input={id:'10000000000000000000000000000000',hostname:'keycontroller.local',board:'esp32s3-b81f3fbb0684',path:'/api/peer/info'};
+assert.deepEqual(relayReadEnvelope(input),{request_id:input.id,hostname:input.hostname,board_id:input.board,boot_id:'',method:'GET',path:input.path});
+assert.equal(relayReadEnvelope({...input,address:'192.168.1.201'}).address,'192.168.1.201');
+for(const address of ['8.8.8.8','169.254.169.254','127.0.0.1','192.168.1.201:80','192.168.01.2','192.168.1.255','192.168.1.0','192.168.1.256'])assert.throws(()=>relayReadEnvelope({...input,address}));
+assert.throws(()=>relayReadEnvelope({...input,path:'/api/command'}));
+assert.throws(()=>relayReadEnvelope({...input,path:'/api/status'}));
+assert.throws(()=>relayReadEnvelope({...input,hostname:'http://evil.example'}));
+assert.equal(relayReadEnvelope({...input,path:'/api/status',boot:input.id}).method,'GET');
+console.log('Read-only peer relay probe hints, identity and route limits passed');

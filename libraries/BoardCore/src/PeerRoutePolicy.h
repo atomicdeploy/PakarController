@@ -24,6 +24,21 @@ inline bool privateAddress(uint8_t a,uint8_t b,uint8_t c,uint8_t d) {
   (void)c;
   return d!=0&&d!=255&&(a==10||(a==172&&b>=16&&b<=31)||(a==192&&b==168));
 }
+inline bool privateIpv4(const char *s) {
+  if(!s||!*s)return false;
+  uint8_t bytes[4]{};
+  for(unsigned i=0;i<4;++i){
+    unsigned value=0,digits=0;
+    while(*s>='0'&&*s<='9'){
+      if(++digits>3||(digits>1&&value==0))return false;
+      value=value*10+unsigned(*s++-'0');if(value>255)return false;
+    }
+    if(!digits)return false;
+    bytes[i]=uint8_t(value);
+    if(i<3){if(*s++!='.')return false;}else if(*s)return false;
+  }
+  return privateAddress(bytes[0],bytes[1],bytes[2],bytes[3]);
+}
 inline bool hexId(const char *s) {
   if(!s||strlen(s)!=32)return false;
   bool nonzero=false;

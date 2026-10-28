@@ -3979,7 +3979,15 @@ void registerApi() {
     if(authenticate())server.send(200,"application/json",peerRelay.snapshot(server.arg("request_id")));
   });
   server.on("/api/peers",HTTP_GET,[](){
-    if(authenticate())server.send(200,"application/json",F("{\"transports\":[\"http-lan\"],\"max_hops\":1,\"explicit_target\":true,\"automatic_retry\":false,\"discovery\":false,\"event_subscription\":false,\"firmware_transfer\":false,\"file_transfer\":false,\"persistent_routes\":false}"));
+    if(authenticate())server.send(200,"application/json",peerRelay.directory());
+  });
+  server.on("/api/peers/routes",HTTP_POST,[](){
+    if(!authenticate())return;
+    if(peerRelayLease||otaActive||otaRebootAt||remoteFirmware.busy()||urbootBusy.get()||programmingLatched||
+        networkApplyPending||cloudApplyPending||avrUploadOwner||artifactReaders){
+      server.send(409,"application/json",F("{\"accepted\":false,\"error\":\"maintenance_busy\"}"));return;
+    }
+    server.send(200,"application/json",peerRelay.saveRoute(server.jsonBody()));
   });
 #endif
   server.on("/api/panel",HTTP_GET,[](){
@@ -5166,6 +5174,9 @@ void setup() {
   const bool filesystemMounted = SystemPlatform::mountFilesystem();
   captureBootFilesystemTelemetry(filesystemMounted);
   userFiles.begin(LittleFS,filesystemMounted);
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  peerRelay.begin(LittleFS,filesystemMounted);
+#endif
 #if PAKAR_MICROSD_ENABLED
   sdUserFiles.begin(SD_MMC,PakarStorage::mount());
 #endif

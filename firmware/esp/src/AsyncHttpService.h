@@ -159,7 +159,7 @@ class AsyncHttpService {
       request->send(503, "text/plain", F("Request queue is full; retry shortly"));
     },nullptr,[](AsyncWebServerRequest *request,uint8_t *data,size_t length,size_t index,size_t total){
       if((request->url()!=F("/api/cells/assignments")&&request->url()!=F("/api/cells/lock")&&
-          request->url()!=F("/api/peers/request")&&request->url()!=F("/api/maintenance/request")) ||
+          request->url()!=F("/api/peers/request")&&request->url()!=F("/api/peers/routes")&&request->url()!=F("/api/maintenance/request")) ||
           request->contentType()!=F("application/json") || !total || total>4096 || index>total || length>total-index)return;
       if(!index && !request->_tempObject){
         auto *body=static_cast<JsonBody*>(malloc(sizeof(JsonBody)+total));
