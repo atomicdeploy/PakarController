@@ -10192,7 +10192,7 @@
       "targets": [
         {
           "path": "desktop/Cargo.lock",
-          "sha256": "1628906a2dfa32184b70a12be6104efa8da733e31c45a5db2a4ad27c27ba9f8a",
+          "sha256": "5db30a66eec5474a07fe5c9cfabb39cbbc35e6d4c6ac12450c26202849b61e0e",
           "anchor": "name = \"tungstenite\""
         }
       ],
@@ -16685,7 +16685,7 @@
         },
         {
           "path": "docs/GITHUB-COORDINATION.md",
-          "sha256": "9ca5c47d5e27cab9b0fd4ac45832c270c56bd33c509c805286c9e6a39e431846",
+          "sha256": "536d8178757144e3edc145cb212a7731c2eb30e5f7582680cbe2a149fde1fc0e",
           "anchor": "# Conversation-aware integration"
         }
       ],

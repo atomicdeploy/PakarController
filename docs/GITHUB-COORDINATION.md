@@ -1,6 +1,25 @@
 # Conversation-aware integration
 
-## Handoff consolidation (supersedes all historical branch/status snapshots)
+## Main consolidation checkpoint (2026-10-28)
+
+PR27 and PR34 are merged normally as e47b230 and da12fde. Final main has the
+exact code tree of ccc061d, which passed Build40753870815, CodeQL40753922292
+and the standalone finding check. Parent8102f04 separately passed all checks.
+All original checkpoints are preserved as main ancestors. Every PR diff and
+paginated body/comment/review/thread was read, including outdated findings;
+all four current CodeQL threads are resolved. Copilot requests are not claimed
+as completed reviews. No open PR or unmerged local/remote branch remained at
+that checkpoint. Dependabot subsequently opened PR35 for rustls0.23.46;
+its normal merge remains gated on final-head CI and conversation review.
+
+Root main was fast-forwarded and the other clean, fully merged PortableShell
+worktree is preserved. Private backups/settings/caches were neither deleted nor
+published. The final handoff/inventory update is metadata-only with separate
+post-merge CI. Issue2 and all hardware, donor and installed-runtime gates remain
+open; no production device/client was contacted or changed for this handoff.
+See docs/HANDOFF.md for exact hashes, run links and remaining issues.
+
+## Earlier handoff consolidation (historical)
 
 PRs #21–#24 are merged. Main merge f4259db preserves the exact code tree of
 c1d2dd17, which passed Build 40508742014 and CodeQL 40508742015, including the
