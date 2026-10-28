@@ -615,8 +615,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Read the complete source diff, body and coordination comment; no reviews or inline threads existed at audit. Four exact shared headers pin PortableShell 10b7d294; prior command/authentication/hardware owners remain intact. Focused shell/loopback and source gates passed before merging current main 335755a normally. Current combined-head CI and physical acceptance remain separate gates."
     },
     {
       "repository": "atomicdeploy/PCController",

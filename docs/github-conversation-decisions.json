@@ -239,6 +239,13 @@
       "scope": "full-record",
       "content_sha256": "88cab724c75a9b2ad5c97f42acf493c70dd581c410c894c08fa6b166687cfd86",
       "application": "Read full dependency body, bounded complete lock/receipt diff and the complete integration comment; no reviews or threads. Verified crates.io checksum and removed unrelated tempfile/getrandom churn. Finalbabf858 passed Build40760281674, CodeQL40760281681 and standalone security check; normal main merge335755a preserves original bot/source history.495 native tests and full local quality pass. No production deployment or glib advisory dismissal."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 36,
+      "scope": "full-record",
+      "content_sha256": "6f8c382ac65355491581ca48a1f8ba315b2dd3b2af067ee98e12584b4a33c802",
+      "application": "Read the complete source diff, body and coordination comment; no reviews or inline threads existed at audit. Four exact shared headers pin PortableShell 10b7d294; prior command/authentication/hardware owners remain intact. Focused shell/loopback and source gates passed before merging current main 335755a normally. Current combined-head CI and physical acceptance remain separate gates."
     }
   ]
 }
