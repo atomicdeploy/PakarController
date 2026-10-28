@@ -301,17 +301,6 @@ mirroring is not muted by this physical-board preference.
 | POST | `/api/scene/save` | explicitly flush the current semantic scene;200 `saved:true` confirms verified commit,503 requires inspection of status, never an automatic replay |
 | POST | `/api/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
 | POST | `/api/audio` | form `cue` from peer-acknowledged `audio_cues`, including `attention` and donor welcome variations; 202 means queued, not playback completion |
-
-Fire is an explicit global animation in both static-grouped and effects output
-modes. Selecting `fire` again restarts from a cold/black frame. On table builds
-its two-dimensional heat field follows the staggered logical layout, then the
-saved logical-to-physical mapping, custom group lengths and pixel corrections.
-`fire_rotation` rotates the flame direction (0° up,90° right,180° down,270° left),
-not cell identities. This preference lives in `/presentation.json`; existing
-palettes default to0°. Changing direction restarts Fire only if it is active;
-reading status never restarts it. Group colors/states and correction tables are
-not rewritten. The same `state-presentation` command/settings object is available
-through the existing WebSocket, MQTT and encapsulated USB API command paths.
 | POST | `/api/display` | `value=-999..9999`, scheduled `text`, or `release=true`; see below |
 | POST | `/api/outputs` | form `mask=0..255` for direct 74HC595 diagnostics |
 | GET | `/api/network` | AP/station state without returning credentials |
@@ -328,6 +317,17 @@ through the existing WebSocket, MQTT and encapsulated USB API command paths.
 | GET, POST | `/api/avr/contracts` | capability/contract inspection or queued PCController operation; RESET is decimal `opcode=53&payload_hex=00` |
 | GET, DELETE | `/api/avr/contracts/result` | inspect or explicitly consume the correlated terminal receipt; never replay an uncertain reset/write |
 | GET, POST | `/update` | authenticated async ESP self-OTA form/upload; optional file `MD5` preceding the firmware file |
+
+Fire is an explicit global animation in both static-grouped and effects output
+modes. Selecting `fire` again restarts from a cold/black frame. On table builds
+its two-dimensional heat field follows the staggered logical layout, then the
+saved logical-to-physical mapping, custom group lengths and pixel corrections.
+`fire_rotation` rotates the flame direction (0° up,90° right,180° down,270° left),
+not cell identities. This preference lives in `/presentation.json`; existing
+palettes default to0°. Changing direction restarts Fire only if it is active;
+reading status never restarts it. Group colors/states and correction tables are
+not rewritten. The same `state-presentation` command/settings object is available
+through the existing WebSocket, MQTT and encapsulated USB API command paths.
 
 UDP port 7890 accepts bounded `PKAR` chunks **without authentication**;
 use only on a trusted LAN. The authenticated WebSocket is preferred.
