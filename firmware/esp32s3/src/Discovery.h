@@ -50,7 +50,8 @@ class Discovery {
       String value;
       size_t write(uint8_t byte) override { value += static_cast<char>(byte); return 1; }
     } output;
-    output.value.reserve(2048); ssdp_.schema(output);
+    if(!output.value.reserve(2048))return String();
+    ssdp_.schema(output);
     const int body = output.value.indexOf("\r\n\r\n");
     return body >= 0 ? output.value.substring(body + 4) : String();
   }

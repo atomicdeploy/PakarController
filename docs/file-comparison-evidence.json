@@ -5829,7 +5829,7 @@
         },
         {
           "path": "firmware/esp/src/WebAccess.h",
-          "sha256": "314ca16a853e550f62f71211c3607e1c27d5c9c488484f7168eb27ec85e45ca2",
+          "sha256": "774b524f4cd81c003e4139d0bb6cf3353d987674bbfb49d7a1b989ee2a232294",
           "anchor": "BoardCore::DiagnosticText::encodeHex(bytes"
         },
         {
@@ -7600,7 +7600,7 @@
         },
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "df7e866c85b061a7b01babd6974ec37a71d25ae52e31c4e1c5ccedb327587154",
+          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2",
           "anchor": "mdnsReady_ = startDiscoveryMdns("
         },
         {
@@ -12665,7 +12665,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -13167,7 +13167,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -13225,7 +13225,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
         }
       ],
       "omissions": [
@@ -13286,7 +13286,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13302,7 +13302,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -13722,7 +13722,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/WebAccess.h",
-          "sha256": "314ca16a853e550f62f71211c3607e1c27d5c9c488484f7168eb27ec85e45ca2",
+          "sha256": "774b524f4cd81c003e4139d0bb6cf3353d987674bbfb49d7a1b989ee2a232294",
           "anchor": "class WebAccess"
         },
         {
@@ -13749,7 +13749,7 @@
         },
         {
           "path": "tests/web_access_fence_test.cpp",
-          "sha256": "4bf15126c6e9ba945863583757fc8dbe521bddc850487cad08db6b80e7561743",
+          "sha256": "a6d3b4d5a9fd3703c6265d093acaa21bd2cb17a30cda92ba9b4e18848e322a72",
           "anchor": "// Auth-off does not mean loss"
         },
         {
@@ -13799,7 +13799,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/WebAccess.h",
-          "sha256": "314ca16a853e550f62f71211c3607e1c27d5c9c488484f7168eb27ec85e45ca2",
+          "sha256": "774b524f4cd81c003e4139d0bb6cf3353d987674bbfb49d7a1b989ee2a232294",
           "anchor": "class WebAccess"
         },
         {
@@ -13826,7 +13826,7 @@
         },
         {
           "path": "tests/web_access_fence_test.cpp",
-          "sha256": "4bf15126c6e9ba945863583757fc8dbe521bddc850487cad08db6b80e7561743",
+          "sha256": "a6d3b4d5a9fd3703c6265d093acaa21bd2cb17a30cda92ba9b4e18848e322a72",
           "anchor": "// Auth-off does not mean loss"
         },
         {
@@ -14243,6 +14243,11 @@
           "path": "tests/ethernet_discovery_test.mjs",
           "sha256": "84cd26938282eb3adfecec5c9464f29c817c280caf2236e96b62fd52949569f2",
           "anchor": "Ethernet discovery/build source integration checks passed"
+        },
+        {
+          "path": "tests/upnp_description_test.mjs",
+          "sha256": "733ee296c2c7f106a398d297581a80acc09481f99acd9f8dc4b1444793824729",
+          "anchor": "Actual UPnP schema: role PNG bytes/dimensions/depth"
         }
       ],
       "improvement": "",
@@ -14256,6 +14261,7 @@
         "Constructor/destructor/begin/end/update/readLine/readKeyValue/serviceEnabled",
         "postNotifyALive/Update/postResponse overloads/post/send every queue/dedup/eviction/time/identity/packet/error branch",
         "sendNotifyByebye/sendAllByebye/clearQueue/leaveJoinedInterfaces/interfaceForRemote/printXmlEscaped/schema",
+        "2026-10-28 complete donor reread: schema XML escaping adapted into shared UpnpDescription; UPnP 1.1 ordering/configId and actual role PNG replace URLBase and missing icon metadata. Live lifecycle/interoperability still open.",
         "handleClient every topology/membership/retry/M-SEARCH/header/ST/due-queue branch; activeInterfaceIP and every setter",
         "Exact function dispositions and generic remaining work: docs/PU850-PARITY.md Fresh runtime and shell section review, 2026-10-19."
       ],
@@ -14267,13 +14273,28 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/SsdpDevice.cpp",
-          "sha256": "c05031ff074885374295d471878742ef2f785c6591786246e5023454118f78b9",
+          "sha256": "25ffe3de9548501ec275174edbff3d9295ec1733fbea6f0fd288e4b284dc357c",
           "anchor": "void SsdpDevice::post("
         },
         {
           "path": "firmware/esp32s3/src/SsdpDevice.cpp",
-          "sha256": "c05031ff074885374295d471878742ef2f785c6591786246e5023454118f78b9",
+          "sha256": "25ffe3de9548501ec275174edbff3d9295ec1733fbea6f0fd288e4b284dc357c",
           "anchor": "void SsdpDevice::schema(Print &client) const"
+        },
+        {
+          "path": "firmware/esp/src/UpnpDescription.h",
+          "sha256": "c037418dca2cc7631c04f06d9dc51b4267d86aabe25d61bde4422a5430234639",
+          "anchor": "template<class Output> void description("
+        },
+        {
+          "path": "firmware/esp/src/BoardIconAsset.h",
+          "sha256": "38856c8b4f954c2cbd9043ea2c66e311ad4736984d95ee4dde9d6bf7a8d13000",
+          "anchor": "static const uint8_t kBoardIconPng[] PROGMEM"
+        },
+        {
+          "path": "tools/generate-board-icon-asset.mjs",
+          "sha256": "fa6093635fbbc333fe87fb1b6733453147950bc2bc2e23c10d9c7b39d9b9f078",
+          "anchor": "const variants=[];"
         },
         {
           "path": "firmware/esp32s3/src/SsdpUdp.h",
@@ -14324,7 +14345,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/SsdpDevice.h",
-          "sha256": "09da08b4765186ff4549e6552ecda1791ba38369de57eb8af038e4771db85c60",
+          "sha256": "11297a36d29bade8c44c67ce9bb9f805429c633d0f1f6164cfb2c2f9667291da",
           "anchor": "class SsdpDevice {"
         }
       ],
@@ -14362,12 +14383,12 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "df7e866c85b061a7b01babd6974ec37a71d25ae52e31c4e1c5ccedb327587154",
+          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2",
           "anchor": "class Discovery {"
         },
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "df7e866c85b061a7b01babd6974ec37a71d25ae52e31c4e1c5ccedb327587154",
+          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2",
           "anchor": "String xmlDescription() const {"
         }
       ],
@@ -14409,7 +14430,7 @@
       "targets": [
         {
           "path": "firmware/esp32s3/src/Discovery.h",
-          "sha256": "df7e866c85b061a7b01babd6974ec37a71d25ae52e31c4e1c5ccedb327587154",
+          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2",
           "anchor": "SsdpDevice ssdp_;"
         }
       ],
@@ -14664,7 +14685,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -15094,7 +15115,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15414,12 +15435,12 @@
         },
         {
           "path": "firmware/esp/src/WebAccess.h",
-          "sha256": "314ca16a853e550f62f71211c3607e1c27d5c9c488484f7168eb27ec85e45ca2",
+          "sha256": "774b524f4cd81c003e4139d0bb6cf3353d987674bbfb49d7a1b989ee2a232294",
           "anchor": "bool peerAllowed("
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
           "anchor": "bool authenticate()"
         },
         {
@@ -15613,7 +15634,7 @@
         },
         {
           "path": "tests/web_access_fence_test.cpp",
-          "sha256": "4bf15126c6e9ba945863583757fc8dbe521bddc850487cad08db6b80e7561743",
+          "sha256": "a6d3b4d5a9fd3703c6265d093acaa21bd2cb17a30cda92ba9b4e18848e322a72",
           "anchor": "Real async queue + real fence recheck"
         },
         {
@@ -15797,7 +15818,7 @@
         },
         {
           "path": "tests/web_access_fence_test.cpp",
-          "sha256": "4bf15126c6e9ba945863583757fc8dbe521bddc850487cad08db6b80e7561743",
+          "sha256": "a6d3b4d5a9fd3703c6265d093acaa21bd2cb17a30cda92ba9b4e18848e322a72",
           "anchor": "Real async queue + real fence recheck"
         },
         {
@@ -16618,7 +16639,7 @@
         },
         {
           "path": "firmware/esp/src/WebAccess.h",
-          "sha256": "314ca16a853e550f62f71211c3607e1c27d5c9c488484f7168eb27ec85e45ca2",
+          "sha256": "774b524f4cd81c003e4139d0bb6cf3353d987674bbfb49d7a1b989ee2a232294",
           "anchor": "ApiPolicy::numberedRoute"
         }
       ],
@@ -17835,7 +17856,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "93382bd9d48a759c51a93932e0b990c90f3dc81b0b476a4bbdd9d849112bbfdf",
+          "sha256": "8c9eb8293e72734611f38cc35365ea84116a32550ea2dc86538b3754ed588a9b",
           "anchor": "export function runChecks"
         },
         {
@@ -18316,7 +18337,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
@@ -18695,7 +18716,7 @@
       "targets": [
         {
           "path": "tools/generate-branding.mjs",
-          "sha256": "c4d0ab1f747b9b73d05fef2171e504fc3612e1a4b3b8bb35d929d885500e43a9",
+          "sha256": "816544b2525d3c9210a586b8c2c5d59ed6c51fab8ca4bda27fbf2edbdd451367",
           "anchor": "Pakar embeds it for the standalone ESP surface"
         },
         {
@@ -18796,7 +18817,7 @@
       "targets": [
         {
           "path": "tools/generate-branding.mjs",
-          "sha256": "c4d0ab1f747b9b73d05fef2171e504fc3612e1a4b3b8bb35d929d885500e43a9",
+          "sha256": "816544b2525d3c9210a586b8c2c5d59ed6c51fab8ca4bda27fbf2edbdd451367",
           "anchor": "'FAVICON':"
         },
         {
@@ -22984,7 +23005,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -23854,7 +23875,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -23935,7 +23956,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -24161,7 +24182,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6",
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24237,7 +24258,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "e38db2aa339b62013b68b5ee79edc314458012c91610b22177f5cddcc3d3b9a6"
+          "sha256": "987966f64ce078f7b3ddd644ce496eab9d2d466c59d2b1bc323aefb33882726d"
         }
       ],
       "omissions": [
@@ -24838,7 +24859,7 @@
         {
           "path": "firmware/esp32s3/src/Discovery.h",
           "anchor": "bool netbiosReady() const",
-          "sha256": "df7e866c85b061a7b01babd6974ec37a71d25ae52e31c4e1c5ccedb327587154"
+          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2"
         },
         {
           "path": "firmware/esp32s3/src/Lldp.h",
@@ -24927,7 +24948,7 @@
         {
           "path": "firmware/esp32s3/src/Discovery.h",
           "anchor": "bool netbiosReady() const",
-          "sha256": "df7e866c85b061a7b01babd6974ec37a71d25ae52e31c4e1c5ccedb327587154"
+          "sha256": "4856c4f6c62db7cfac79b4f3e030dabdf3808f24b305ad4d50e360f1a5b4bff2"
         },
         {
           "path": "firmware/esp32s3/src/Lldp.h",

@@ -24,6 +24,9 @@ from `/api/auth/info` and do not ask for credentials when it is false. Enable
 **Require authentication** in Device access to protect HTTP routes and `/ws`
 with browser sessions or explicit Basic credentials. `/`, `/description.xml`
 and `/api/auth/info` are public reads; `/login` accepts a form POST.
+Discovery clients can also GET/HEAD `/board-icon.png` without signing in;
+`/description.xml` advertises the matching table/key PNG and presentation URL.
+See [UPnP discovery](UPNP.md) for metadata, interface behavior and verification.
 Local HTTP and Telnet are not encrypted; never expose them directly to the Internet.
 The recovery AP Wi-Fi password is independent of the device login.
 See `ACCESS.md` for persistence, CLI/TUI, native editor and physical USB recovery.

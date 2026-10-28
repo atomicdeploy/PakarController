@@ -10619,3 +10619,39 @@ tests plus Check/Release, and canonical Web command/DOM tests pass. Flutter APK,
 Rust EXE and final paired ESP/AVR firmware candidates are built, not installed.
 Per-mode physical feedback remains tracked on issue #32. Concurrent SSH work is
 preserved independently. No production board or running app was modified.
+
+## SSDP board icons and UPnP description, 2026-10-28
+
+Issues #19/#10, parent #2; existing PR #27. Consulted lan-link-discovery,
+network-cloud, donor-audit and build-storage. Reread complete PU850 SSDP.cpp/.h,
+SSDPDevice.cpp/.h and NetDiscovery.cpp/.h at 431104072952f694a35b3a83c19f13fbb098ca5b.
+Retained the bounded delayed/de-duplicated SSDP queue and interface owner.
+Adapted its actual streaming XML escaper into one shared description renderer;
+did not substitute the donor's experimental NetDiscovery loop. Compared the
+description against the UPnP 1.1 architecture and Basic:1 device template.
+
+The existing table/key/generic PNG masters now produce flash-resident binary
+HTTP assets, selected by board role with actual dimensions/depth/strong ETag.
+Public GET/HEAD /board-icon.png uses the existing ACK-safe static asset service.
+Description metadata is escaped and ordered; configId binds identity/artwork;
+relative icon/presentation paths replace URLBase so clients retain the LOCATION
+interface/port. No phantom SOAP/GENA service or router port mapping is advertised.
+The retained ESP8266 description shares rendering; its unfinished release build
+is not certified by this pass.
+
+tools/test-upnp.ps1 passes compiled actual-schema fixtures for all three roles,
+byte-for-byte PNG checks, XML parsing/order/config identity and relative URLs.
+WebAccess public GET/HEAD/denied-write fixtures and existing async HTTP short-write,
+HEAD/304/ETag/backpressure tests pass. Ethernet discovery integration and script
+tooling tests pass. CI quality now invokes the combined UPnP regression wrapper.
+SDK build initially caught Arduino's relocated-source include lookup; project-root
+includes correct that integration defect. Final SDK result is recorded on GitHub.
+
+A read-only gateway SSDP/IGD probe found no gateway IGD response; unrelated media
+renderer announcements were not treated as router acceptance. No router mutation,
+port mapping, board setting, firmware deployment or LED/audio command occurred.
+ASUS SSH refused access; actual board icon fetch/rendering, wire discovery and
+lifecycle/router interoperability remain open. This is not UPnP certification.
+The pre-existing CI failure at pc_contract_mapping_test (AVR target hash) is
+separate from this source checkpoint. Concurrent SSH/native/mobile work is left
+unstaged rather than folded into this change.

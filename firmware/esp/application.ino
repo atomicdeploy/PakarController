@@ -113,6 +113,8 @@
 #endif
 #include "src/DeviceIdentity.h"
 #include "src/ApplicationIdentity.h"
+#include "src/BoardIconAsset.h"
+#include "src/UpnpDescription.h"
 #include "src/BusyLine.h"
 #include "src/TelnetShell.h"
 #include "src/WebUiCompressed.h"
@@ -4023,6 +4025,9 @@ void registerApi() {
   server.native().on(AsyncURIMatcher::exact("/app-icon.png"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
     serveStaticAsset(request,"image/png",kWebAppPng,sizeof(kWebAppPng),kStaticIconEtag);
   });
+  server.native().on(AsyncURIMatcher::exact("/board-icon.png"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
+    serveStaticAsset(request,"image/png",kBoardIconPng,sizeof(kBoardIconPng),kBoardIconEtag);
+  });
   server.native().on(AsyncURIMatcher::exact("/sw.js"), HTTP_GET|HTTP_HEAD, [](AsyncWebServerRequest *request) {
     serveStaticAsset(request,"text/javascript; charset=utf-8",kWebWorker,sizeof(kWebWorker)-1,kStaticWorkerEtag);
   });
@@ -4183,19 +4188,20 @@ void registerApi() {
     grid.setPhysicalMapping(cellMapping.physical, LedGrid::kCells);
     server.send(200, "application/json", F("{\"updated\":true}"));
   });
-  server.on("/description.xml", HTTP_GET, []() {
+  server.on("/description.xml", HTTP_GET|HTTP_HEAD, []() {
 #if defined(ARDUINO_ARCH_ESP32)
-    server.send(200, "text/xml", s3Discovery.xmlDescription()); return;
+    const String xml=s3Discovery.xmlDescription();
+    if(!xml.length()){server.send(503,"text/plain","Description unavailable");return;}
+    server.send(200, "text/xml; charset=utf-8", xml); return;
 #else
-    String xml = F("<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>");
-    auto escaped = [](const char *input) { String s(input); s.replace("&","&amp;");s.replace("<","&lt;");s.replace(">","&gt;");s.replace("\"","&quot;");s.replace("'","&apos;");return s; };
-    xml += escaped(deviceIdentity.displayName());
-    xml += F("</friendlyName><manufacturer>AtomicDeploy</manufacturer><modelName>"); xml += escaped(APP_NAME);
-    xml += F("</modelName><UDN>uuid:");
-    char uuid[37]; snprintf(uuid, sizeof(uuid), "38323636-4558-4dda-9188-cda0e6%06x", ESP.getChipId()); xml += uuid;
-    xml += F("</UDN><presentationURL>http://"); xml += hostname;
-    xml += F(".local/</presentationURL></device></root>");
-    server.send(200, "text/xml", xml);
+    class XmlOutput:public Print {public:String value;size_t write(uint8_t byte) override{value+=char(byte);return 1;}} output;
+    if(!output.value.reserve(2048)){server.send(503,"text/plain","Description unavailable");return;}
+    char uuid[37],serial[9];snprintf(uuid,sizeof(uuid),"38323636-4558-4dda-9188-cda0e6%06x",ESP.getChipId());snprintf(serial,sizeof(serial),"%08X",ESP.getChipId());
+    const char* identity[]={"relative-icon-description",deviceIdentity.displayName(),APP_NAME,BoardCore::BuildInfo::kVersion,kBoardIconEtag};
+    PakarDiscovery::description(output,{"urn:schemas-upnp-org:device:Basic:1",deviceIdentity.displayName(),"AtomicDeploy","https://github.com/atomicdeploy",APP_NAME,
+      BoardCore::BuildInfo::kVersion,"https://github.com/atomicdeploy/PakarController",serial,uuid,"/",kBoardIconWidth,kBoardIconHeight,kBoardIconDepth,
+      PakarDiscovery::configId(identity,sizeof(identity)/sizeof(*identity))});
+    server.send(200,"text/xml; charset=utf-8",output.value);
 #endif
   });
   server.on("/api/time", HTTP_GET, []() {

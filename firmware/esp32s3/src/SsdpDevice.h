@@ -165,6 +165,7 @@ private:
 	IPAddress interfaceForRemote(IPAddress remote) const;
 
 	void send(ssdp_send_parameters_t *parameters);
+	void refreshConfigId();
 
 protected:
 	SsdpUdp *m_server = nullptr;
