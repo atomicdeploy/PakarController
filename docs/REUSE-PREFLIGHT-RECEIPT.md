@@ -118,7 +118,6 @@ not replace them. The firmware cache is rebuilt with the unchanged keycontroller
 hardware profile, GPIO fallback and included runtime RMT, BLE/SSH disabled.
 
 
-
 ## Host Wi-Fi join and management (issue #31)
 
 Read the complete actual PCController Android DiscoveryChannel.kt, verified
@@ -10672,6 +10671,38 @@ The nested map/rules scroll regions remain cramped when both are expanded at
 720px height; layout refinement and phone/tablet/RTL acceptance remain open.
 This is rendered fixture evidence, not production hardware acceptance.
 
+## Native SSH side-task, 2026-10-27 — issue #33
+
+Consulted device-shell and exact donor-audit PU Shell.cpp routing. Reread the
+pinned PU Shell.cpp/Shell.h/Telnet.cpp and the portable-shell command/VT100
+sources. SSH reuses DeviceShellSession, inputDeviceShell, the shared TUI,
+descriptor setters and owner commands; cryptography is not reimplemented.
+LibSSH-ESP32 5.10.0 uses libssh 0.11.5. Its public-domain samplesshd bind/auth/
+channel flow and key API were read; demo credentials, password logging, network
+setup, SPIFFS formatting and echo loop are deliberately not imported. See SSH.md.
+
+Arduino CLI's proxy HEAD request failed. Its existing exact-download cache was
+populated with curl's successful HTTPS GET only after the official registry
+SHA-256 matched; the normal pinned CLI install then completed. No proxy/security
+configuration was changed. The optional transport uses a worker, bounded queues,
+boot-local tokens/security revisions, persistent unique host key and mandatory
+SSH login, even when HTTP auth is disabled. USB/Telnet remain separate owners.
+
+Focused policy, actual settings-store-with-NVS-double and real-libssh-public-API
+declaration compilation checks pass. Existing actual shell service tests pass
+for S3/ESP8266, including the new preauthenticated transport initializer path.
+The first SSH-enabled descriptor fixture exposed its old fixed property count;
+the fixture now accounts explicitly for the two gated properties and checks
+their types/private flags. This is not an encrypted SSH session or target link.
+
+The canonical S3 build Plan first rejected the changed dependency-pin evidence;
+only reviewed SSH-affected target identities were rebound. It then stopped at
+the concurrently edited LedGrid.cpp donor binding (esp32WS2811 source mapping).
+That unrelated work and the shared application/build-profile additions are
+preserved, not overwritten or certified by this task. Full enabled/disabled
+target builds, OpenSSH login, host-key stability, memory/TLS/LED coexistence and
+device deployment remain pending. No production board was flashed or actuated.
+
 ## Board-owned key minigames, 2026-10-28 — issue #32
 
 Read the complete ControllerBoardMini/Puzzles/Puzzles.ino donor and adapted its
@@ -10701,6 +10732,108 @@ tests plus Check/Release, and canonical Web command/DOM tests pass. Flutter APK,
 Rust EXE and final paired ESP/AVR firmware candidates are built, not installed.
 Per-mode physical feedback remains tracked on issue #32. Concurrent SSH work is
 preserved independently. No production board or running app was modified.
+
+### Windows selected-device taskbar artwork — 2026-10-28
+
+The current winit Windows set_window_icon path updates ICON_SMALL only; its
+separate set_taskbar_icon owns ICON_BIG. Pakar's egui viewport update therefore
+changed the caption but left the taskbar on the executable icon. Read the entire
+current Pealayer src/platform/window_icons.rs (SHA256
+63bbaa244728a2fb4bd53ad5c35f7ff4b95790e70358d47c34ae704ea79d4a4e), its
+branding apply path, and the complete taskbar_preview::bitmap dependency function.
+Adapted the actual owned alpha HICON pair, window subclass, DPI refresh, disposal
+and both hidden-window tests into desktop/src/platform/windows_window_icons.rs.
+The existing synchronize_context peer-branding change now calls this root HWND
+path as well as retaining the egui/tray consumers. Stable AppUserModelID and
+pinned launcher artwork are not rewritten. No board changes are involved.
+
+tools/build-desktop.ps1 -Mode Test -TestFilter windows_window_icons -Jobs 8
+passed both real Win32 tests (both slots, DPI sizes, 32-bit bitmaps, replacement,
+destruction and borrowed-handle survival). node tests/branding_test.mjs passed.
+The initial build gate required rereview of shell.rs: its only change is the new
+native icon call; dropdown, table, menu and status functions/anchors are intact.
+Their existing exact target hashes and the GDI feature-only Cargo change were
+rebound without promoting unrelated donor behavior. The guarded Release build
+passed and tools/stage-desktop.ps1 -Probe verified/staged the candidate at the
+existing outputs/PakarController/staging/PakarController.exe location, SHA256
+1efe869b32ab3f6523f2ca3839723c0187e38448edd63bce6bdc6a7ae3291ff2.
+No installed/running app was replaced. Actual Explorer taskbar appearance remains
+acceptance after installation; the successful tests inspect the real Win32 slots.
+
+Global comparison-report regeneration currently stops on the concurrently stale
+ControllerBoardMini/Puzzles|Puzzles.ino proof tests/key_minigame_integration_test.mjs.
+This side fix does not certify or overwrite that unrelated review. Preserve the
+ongoing SSH/minigame work, reconcile its proof, then regenerate the shared reports
+before publishing. The new native-icon mapping lives in the same evidence ledger.
+
+## 2026-10-28 - Box interaction, menu geometry and connection toasts
+
+Scope is the native box menu/trigger, Arrange boxes control, per-board workspace
+preference and connection notifications. Read actual Pealayer 5b3d5c1 control
+geometry fix, layout.rs card-owned context-popup/action sections and existing
+shared dropdown/dialog helpers; layout.rs remains only a section review, not a
+new whole-file parity claim. Retain the inherited stroke width and explicit
+Button font; the Arrange toggle now paints a fixed inside border and fixed text
+origin. AGENTS.md now requires response/text-origin regression checks across
+states, palettes, density and fractional DPI, not static screenshots alone.
+
+Bound the box popup to 220 content pixels instead of inheriting the designer
+canvas. Persist Trigger on click per board/application workspace (old snapshots
+still default to selection-only). Both painted groups share the card's input
+target; blocked explicit clicks now report why nothing was sent. Legacy button
+presses use the common acknowledged action owner for USB/WS instead of a separate
+post call site. Connection OS toasts now carry the known ESP/AVR status without
+copying arbitrary peer responses, URLs or credentials into notifications.
+
+tools/build-desktop.ps1 -Mode Test -TestFilter key_boxes -Jobs 8 passed all 11
+tests, including both illumination/indicator click targets, exactly one command,
+blocked clicks, bounded popup width at 448/1200/2400-wide viewports, selection and
+drag non-actuation. node tests/key_game_web_test.mjs passed the existing Web
+main-box/read-only/pending/peer guards. Flutter's shared gameCommand route already
+handles tap plus a concrete blocking reason; no mobile source edits were made
+by this side fix.
+
+Further native geometry/notification/workspace tests and the final Release
+package are not yet verified: a subsequent guarded invocation stopped on the
+concurrently edited mobile/lib/table_workspace.dart target hash in the existing
+PCController session.go review. The mobile focused test wrapper reached analysis
+but stopped on five findings in concurrently edited key_box_designer.dart,
+minigame_panel.dart and table_workspace.dart, before running output_panel tests.
+Preserve those edits; their owner must finish/review them before rerunning the
+guarded checks. These results do not assert installed ASUS/Android or physical
+button/LED acceptance. No running app, board, scene or production setting was
+changed. The earlier staged executable does not include this later source fix.
+
+## Flutter keycontroller designer, 2026-10-28
+
+Read the complete unchanged PCController ActivityStrip at
+`f00ed672c1f72f1a66fb65cff1cfe0a89dea5f7b6222f154db00a7c52c2e1a82`.
+Reread Pealayer layout.rs hardware_channel_drag_handle, finish_hardware_channel_card,
+hardware_channel_drop_target and effect_library_card_header for fixed action
+gutters, grab-offset preservation and color-only hover. This is a scoped read,
+not a completed full-file comparison of that large donor. The shared
+KeyBoxDesigner uses the existing imported WorkspaceHeader/Badge/menu helpers,
+dual observed-RGB circular groups, local multi-selection and bounded group drag.
+It is shared by minigames and first-wins rather than replacing either command
+owner. Existing positions are retained; key selection joins the same per-board
+workspace snapshot. No new board setting or output command is sent on opening,
+selecting or arranging.
+
+Phone large-text layout and bottom-sheet checks initially exposed clipping;
+bounded Flexible text and a scrollable action sheet resolve those concrete
+failures. Analyzer now passes. Four designer tests, eight minigame tests and
+thirteen OutputPanel tests pass, including input ACK/release serialization,
+duplicate prevention, disabled reasons and stale-peer sheet rejection. The
+production-hold APK build passes; SHA256
+`e347a2c9f3d2e733d118c349ff48301185f1b363477ae4d0c817928b0b9841cd`.
+The existing donor ledger's affected mobile target/proof hashes are refreshed.
+Report generation encounters a separate stale Puzzles.ino reference to
+tests/key_minigame_integration_test.mjs; its owning review is not certified by
+this UI change. The SM-X906B installation is complete and its base.apk hash
+matches the candidate. Connected live and Arrange screens were captured and
+visually inspected; Arrange opened/closed without changing box positions or
+sending game commands. Wireless ADB responded. David's visual acceptance remains
+open; synthetic captures are renderer evidence only.
 
 ## SSDP board icons and UPnP description, 2026-10-28
 
@@ -10973,3 +11106,51 @@ No board flash/reboot, output, Wi-Fi/cloud policy, tablet or Windows deployment
 is authorized or performed by this upload task. Encrypted ESP login/transfers,
 worst-case live heap, persistent identity and TLS/LED coexistence remain open.
 ASUS access is still deferred; no repeated access prompts or policy workarounds.
+
+## 2026-10-28 - GitHub handoff reconciliation (#27, #26, #11)
+
+User explicitly requested all remaining local work reviewed, published and merged.
+Inventory found one feature branch, no stash/second worktree, and pending native
+taskbar/notification, mobile signal-widget and related provenance changes. These
+were preserved and reviewed, including the complete Pealayer window_icons.rs,
+taskbar_preview bitmap dependency, and PCController workspace_chrome.dart.
+Both real Win32 icon fixtures and the rest of the 495 native tests pass. Flutter
+analysis passes; its four signal-widget tests initially exposed a 13-pixel menu
+overflow. Flexible labels fix that overflow, and the rerun passes all four cases.
+No installed app or production board was changed by this reconciliation.
+
+Fresh complete Pakar conversation enumeration found PR27 alone open, with three
+unresolved CodeQL threads. Read its body, every comment, review and thread,
+including outdated state. Two guide-checker path check/reopen findings are fixed
+using the actual descriptor ownership pattern from the fully reread PCController
+repository-policy.mjs; guide, linked-file and anchor bytes share their opened
+file, with finally-close and per-invocation snapshot reuse. Missing, empty,
+directory and malformed references still fail. The script-body syntax fixture
+now accepts upper-case SCRIPT tags, explicitly not an HTML sanitization API.
+
+Current-head CI40740222299 also failed the old AVR source certificate. Reread the
+complete current runtime header/implementation, donor MacroQueue.h/.cpp and
+FrontPanelModel.h, plus the epoch/macro/input/companion-loss tests. Rebind the four
+affected source-mapping records and actual anchors; do not modify firmware to
+satisfy stale certificates. All23 mappings and the full audio/PC contract suite
+pass. The quality run next exposed an obsolete update-presenter assertion; it
+now asserts both game-countdown coexistence AND update priority. The actual
+update lifecycle/OTA/AVR presenter fixtures pass. Only these reviewed test hashes
+are rebound in the existing donor ledger. No blanket parity completion claimed.
+
+Global reports are regenerated from the combined reviewed workspace, retaining
+the previously unpublished owner records: 430 comparisons,4302 pending,310 gaps.
+Complete remaining quality/CI and final PR diff review are pending at this
+checkpoint, not waived by the focused successes. Physical/device acceptance,
+unfinished ESP8266 support and the glib dependency issue remain separate.
+
+The next complete-quality pass exposed three older fixture assumptions, not
+firmware regressions: DNS recovery is now preceded by safe first-boot TCP/IP
+initialization; table extraction must find its end marker after its own start,
+not the earlier minigame output editor; static-group wording no longer assumes
+six LEDs when custom group sizes exist. Assertions now inspect those exact
+owners and retain their negative/readback checks. All three focused suites
+pass. CodeQL then requested forgiving closing-tag extraction; the minigame
+syntax fixture now uses the already-reviewed web_app_contract_test extraction,
+including upper-case and ignored closing attributes. No sanitizer is exposed.
+The complete final quality rerun remains separate, not implied by these tests.

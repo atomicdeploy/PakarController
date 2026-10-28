@@ -131,7 +131,7 @@ set({capabilities:manifest(['leds']),led_output:{enabled:false}});now+=8001;run(
 set({capabilities:manifest(['leds']),led_output:{enabled:true,mode:'static'}});
 const modeControl=nodes.get('ledOutputModeControl'),modeSelect=nodes.get('ledOutputMode'),rainbowButton=nodes.get('rainbowTest');
 assert(modeControl&&!modeControl.hidden);assert.equal(modeControl.parentElement,ledCard);
-assert.equal(modeSelect.value,'static');assert.match(nodes.get('ledOutputModeHint').textContent,/six matching pixels.*Rainbow test animates explicitly/);
+assert.equal(modeSelect.value,'static');assert.match(nodes.get('ledOutputModeHint').textContent,/Static groups: matching pixels.*Rainbow and Fire animate when selected/);
 modeSelect.value='effects';const modePending=modeSelect.onchange();
 assert.equal(modeSelect.value,'static','Draft mode is not observed output');assert(modeSelect.disabled&&rainbowButton.disabled);
 assert.equal(sent.at(-1).path,'/api/led/output');assert.deepEqual({...sent.at(-1).values},{mode:'effects'});

@@ -271,7 +271,8 @@ assert.match(loop,/serviceSemanticPanel\(millis\(\)\)/,'Main loop owns presentat
 assert.match(background,/serviceUpgrade\(\);[\s\S]*serviceSemanticPanel\(millis\(\)\)/,'Cooperative maintenance also samples the same presenter');
 assert.doesNotMatch(info,/serviceSemanticPanel\(|sendToAvr\(/,'Async upload callbacks may publish progress, never perform UART presentation');
 assert.match(panelService,/updating&&upgradeLifecycle\.known\(\)\?upgradeLifecycle\.percent\(\):-1/,'Unknown stages stay indeterminate');
-assert.match(panelService,/semanticPanel\.persistent\(updating,text\)/,'Measured update state has priority over ordinary notices');
+assert.match(panelService,/semanticPanel\.persistent\(updating\|\|gameCountdown,text\)/,'Measured updates and active game countdowns retain the persistent presenter');
+assert.match(panelService,/if\(!updating&&miniReady\(\)&&miniGame\.view\(\)\.timed&&miniGame\.running\(\)\)gameCountdown=miniPanel\(text,now\)/,'A game countdown must never replace measured update progress');
 assert.match(panelService,/urbootRawOwned\|\|programmingLatched\|\|avrUploadOwner\|\|avrCaptured\|\|[\s\S]*semanticPanel\.manualActive\(now\)/,'Raw UART, Prog, uploads and manual owners inhibit automatic leases');
 assert.match(panelService,/semanticPanel\.frame\(now,tm1637DetectionKnown\(\)&&tm1637Ack,inhibited,payload\)/,'Fresh observed TM1637 ACK gates admission');
 assert.match(panelService,/if\(updating&&avrMaintenancePanel\)payload\[4\]\|=0x04U/,'Menu override requires the actual AVR acknowledgement');

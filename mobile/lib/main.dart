@@ -23,6 +23,7 @@ import 'table_workspace.dart';
 import 'table_viewport.dart';
 import 'connection_preferences.dart';
 import 'header_controls.dart';
+import 'signal_indicator.dart';
 import 'automatic_board_connection.dart';
 import 'discovery.dart';
 import 'device_registry.dart';
@@ -4263,9 +4264,6 @@ class StatusBar extends StatelessWidget {
             if (status!.json['station_connected'] == true &&
                 status!.stationIp.isNotEmpty)
               status!.stationIp,
-            if (status!.json['station_connected'] == true &&
-                status!.rssi != null)
-              '${status!.rssi} dBm',
           ].join(' · ');
     // Keep the donor workspace chrome's 48px touch target, not 48px plus
     // another 16px of footer padding. Safe insets belong to the workspace.
@@ -4345,6 +4343,9 @@ class StatusBar extends StatelessWidget {
                 ),
               ),
             ],
+            if (status?.json['station_connected'] == true &&
+                status?.rssi != null)
+              SignalIndicator(rssi: status!.rssi!, onConnection: onConnection),
             if (commandFailed)
               SizedBox.square(
                 dimension: 48,

@@ -5,6 +5,8 @@ pub mod notifications;
 #[cfg(windows)]
 pub mod windows_desktop;
 #[cfg(windows)]
+pub mod windows_window_icons;
+#[cfg(windows)]
 pub mod windows_jump_list;
 #[cfg(windows)]
 pub mod windows_notifications;

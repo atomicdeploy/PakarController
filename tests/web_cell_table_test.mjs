@@ -29,7 +29,10 @@ assert(!nativeTable.includes('fill = blend(fill, v.selection.bg_fill'));
 assert(nativeShell.includes('if search.changed() { self.apply_cell_search_selection(); }'));
 assert(compact(nativeShell).includes('ifself.sync_cell_selection_search(){ctx.request_repaint();}'));
 const script=source.match(/<script>([\s\S]*?)<\/script>/)[1];
-const cellCode=script.slice(script.indexOf('let selectedCells='),script.indexOf('for(let i=0;i<8;i++)'));
+const cellStart=script.indexOf('let selectedCells=');
+const cellEnd=script.indexOf('for(let i=0;i<8;i++)',cellStart);
+assert(cellStart>=0&&cellEnd>cellStart,'Select the table-owned block, not the earlier game output editor');
+const cellCode=script.slice(cellStart,cellEnd);
 assert(cellCode.length>5000);
 let document;
 function element(tag='div') {

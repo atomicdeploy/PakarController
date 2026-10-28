@@ -23,6 +23,10 @@ pub struct Desktop {
     busy: Option<bool>,
 }
 impl Desktop {
+    pub fn set_icon(&self, icon: &eframe::egui::IconData) -> Result<(), String> {
+        super::windows_window_icons::apply(self.hwnd.0 as isize, icon)
+    }
+
     pub fn new(context: &eframe::CreationContext<'_>) -> Result<Self, String> {
         use raw_window_handle::{HasWindowHandle, RawWindowHandle};
         let handle = context.window_handle().map_err(|e| e.to_string())?;
