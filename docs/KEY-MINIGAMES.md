@@ -59,6 +59,35 @@ The actual KeyMiniGameSettings parser/store also has a native fault fixture in
 patches leave every policy unchanged, save/readback preserves wiring, identical
 saves do not write, and a failed rename retains the previous configuration.
 
+### Ready source candidates (2026-10-29)
+
+Source eaf1c3d plus settings fault fixtures 93a9a37, published in PR37. Local
+ESP32-S3 and AVR builds pass; native game tests 6/6, Flutter analysis and game
+tests 12/12, all-mode/exclusion core tests, actual settings persistence,
+panel/audio fixtures and isolated Web tests pass. Full/onboard Web builds use
+the same source and revision 4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb.
+
+| Candidate | SHA-256 |
+| --- | --- |
+| ESP32-S3 application (2,407,568 bytes) | `88211d73b356444e6b2ae35f5b6a1768f5741c2c0bbfee14ca003aab989aeeab` |
+| AVR + Urboot (32,768 bytes) | `fa3d01739769b43401be7d11b23b8d3546fde120a0394d1a669bac390ec14782` |
+| Production-hold Android APK (64,385,613 bytes) | `ba7a160f9e57e82faf407e315505b8cd33534bfcecb2fa4a0a853716164c41ae` |
+
+The S3 compile profile is first-wins, buffered UART, keycontroller hostname,
+16 MB flash/OPI PSRAM, disabled BLE initialization, both LED drivers and optional
+Ethernet. This source build does not assert electrical ISP verification or
+overwrite saved per-board settings. AVR is first-wins/buffered with RF. Static
+build usage: S3 2,407,415/3,342,336 bytes flash and 128,012 bytes static RAM;
+AVR 29,862/32,384 bytes flash and 1,654/2,048 bytes SRAM (394 bytes headroom).
+These are build figures, not runtime free-heap/stack or physical measurements.
+
+No candidate was installed, and no board or production app was contacted.
+Deployment must inventory the actual target/profile, preserve saved settings
+and backups, obtain the applicable production approval, and install the paired
+AVR update for idle-only timer audio. Optical/acoustic and boot/reconnect tests
+remain open. GitHub's full CI/package jobs were still running at this receipt;
+no CI completion or merge is inferred from local builds.
+
 ## Transport and persistence
 
 Use the existing `/api/command` correlated envelope over WebSocket, HTTP or USB,
