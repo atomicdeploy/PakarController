@@ -1,34 +1,230 @@
 {
   "scope": "Only explicit manually reviewed bodies and conversation records or comment scopes, hash-bound to the full collected record. A full-record conversation review does not certify a PR code diff or readiness to merge. Source-code import completion remains in the existing file ledger.",
   "records": [
-    {"repository":"atomicdeploy/PakarController","number":25,"scope":"full-record","content_sha256":"7bc8df2ff872d71e18b55432d9fa4bee22b36a59ba4f511299510005d4f957e9","application":"Read the complete owner-directed legacy scope and measured RAM/flash checklist; no comments/reviews/threads. ESP32-S3+AVR are release targets, legacy source/tooling preserved. Current ESP8266 full-image linking and physical/OTA acceptance remain explicitly unfinished; no limits enlarged and no device flashed."},
-    {"repository":"atomicdeploy/PakarController","number":21,"content_sha256":"aaea95d5c7ff9d00b93a30730567b651574ff793f780f290add48378275ad4f6","scope":"full-record","application":"Complete dependency conversation/diff and unchanged post-merge body reviewed. Original workflow head is preserved by d112e02 and normal PR24 merge f4259db; GitHub confirms merged. Exact consolidated c1d2dd17 Build40508742014 and security checks pass. No permission/trust boundary was loosened, and source synchronization is not deployment."},
-    {"repository":"atomicdeploy/PakarController","number":22,"content_sha256":"f8f27cb070a7488cf203ac9a9fc79b57f3c371d1a5f2a3890a1940b58ffd6b06","scope":"full-record","application":"Complete dependency conversation/diff and unchanged post-merge body reviewed; GitHub confirms merged through 1c1fb59 and PR24. Original ancestry and mdns-sd0.21.6 retained. Explicitly deferred eframe0.37 because dock/icon/theme expose egui0.36 types; coherent0.36.2 and mixed-family negative guards remain. Final c1d2dd17 native tests/package pass. This is not an enabled0.37 migration or runtime deployment."},
-    {"repository":"atomicdeploy/PakarController","number":23,"content_sha256":"88a8ff704f1eee1b84ed986781d5d87077496a8cf718cd5377371267ea56e382","scope":"full-record","application":"Complete manifest/lock diff, release body and integration conversation reviewed; GitHub confirms merged through d9bdae7 and PR24. Original ancestry and archive4/MQTT/XML7 retained, with raw compressed stream, bounded inflate/CRC and namespaceUri adaptations. Final c1d2dd17 Android analysis/tests/APK pass. No tablet replacement or physical acceptance is inferred."},
-    {"repository":"atomicdeploy/PakarController","number":24,"content_sha256":"13efb63ca141bb6bb5aa5e2e45895b40b729e64b11a9f23f798e34d6a7751bf5","scope":"full-record","application":"Complete consolidation conversation, six integration comments, all review summaries and seven resolved threads reviewed including final merged state and receipt. Candidate/report descriptor reads, exclusive fixture creation, script extraction and post-peer backup rehash are fixed; remaining intentional-transfer/test dispositions are scoped. Exact c1d2dd17 Build40508742014, CodeQL40508742015 and standalone finding check pass. Normal main merge f4259db preserves original source/dependency/temporary heads; all four PRs are merged and verified-merged branches removed. Copilot requests were rejected, not completed reviews. ESP8266 remains unfinished issue25; issues2/3 and physical/donor acceptance remain open. Follow-up metadata CI is separate from verified application code."},
-    {"repository":"atomicdeploy/PakarController","number":18,"content_sha256":"08fd3e1171d8f9af714a275eab5f861591492820e3c95c2b461f8aba66f8518a","scope":"full-record","application":"Read complete dependency diff, body, the integration comment, and every paginated review/thread record (none). Exact dependency head 106f403e8236901ac44561204cf60ce9357f05cd passed checks; normal merge 71d8f0f5153718fa4f6593ff95ca47b3a9574073. No completed Copilot review claimed. Current integrated Rust release and 214 tests passed independently; dependency CI is not current-tree deployment or physical acceptance."},
-{"repository":"ToghrolTP/pealayer","number":70,"scope":"full-record","content_sha256":"86215abf829277045fbf6e9dcb1f7c0f8ee0ca350a8fbf5515b489d609458c6e","application":"Keep private artwork overrides private; distinguish build resource stamping before signing from live contextual icon configuration. Existing shared Pakar artwork retained; complete transition/configuration and resource-manifest acceptance remains pending. Conversation read is not code-diff or donor deployment acceptance."},
-{"repository":"ToghrolTP/pealayer","number":78,"scope":"full-record","content_sha256":"b1fbabb7478e222856db36543561c7c0703d810956455f15e8a0806fcda036bd","application":"Branding updates must be transition/config-revision driven rather than cloning full configuration each frame; advance the revision even when artwork resolves unchanged. Generic Pakar frame/config performance remains pending, not certified by donor focused tests or CPU receipts."},
-{"repository":"ToghrolTP/pealayer","number":87,"scope":"full-record","content_sha256":"21a2477692b58834ba5535bf916eda301aec6b69421cde5d3e18cc46c44e30d2","application":"Move native commands, device results and authoritative snapshots to App::logic so hidden/minimized windows process them without painting. Live Pakar reproduced the missing contract and actual donor lifecycle slice is adapted. Preserve preferences drafts and authority/ACK semantics; configurable generic disconnect safety remains pending. Media scrubbing and timeline intrinsic cue business are excluded, not generic effect timing. Full source file and physical timing remain unverified."},
-{"repository":"ToghrolTP/pealayer","number":102,"scope":"full-record","content_sha256":"a5d6a365150c19e56ba98a7f6d179333c1d4420c3cb862670b7cdd3d63300edc","application":"Share root/wrapper/SVG button centering including portaled dialogs, avoid inline baseline spacer and per-transport geometry overrides; retain semantic colors, RTL order and commands. Pakar Web/native/mobile button parity and actual phone/tablet screenshots remain pending; donor builds and responsive checks are not our pixels."},
-{"application":"Palette roles and typography must map to the live resolved theme, not replace host styling; preserve specialized inputs and distinguish source/theme fixtures from human visual acceptance. Pakar existing palette gate retained; broad Elegance/contract parity still pending. Conversation review only, not a PR diff certificate.","scope":"full-record","content_sha256":"58753dad44b149e4d7c2481a76de82930010663d9472a748771189e40a76ac95","number":108,"repository":"ToghrolTP/pealayer"},
-{"application":"Keep panel controls under Workspace/Panels and contextual empty-workspace guidance, not duplicate a Window menu. Pakar existing workspace controls retained; complete ordered-profile/menu persistence remains pending. Conversation review is not a complete source import.","scope":"full-record","content_sha256":"5ac91c140c0233f9624c34bf02672791780addd1399d7e9c2cd23b0e88c4a26c","number":117,"repository":"ToghrolTP/pealayer"},
-{"application":"RTL right alignment must occupy a content-height row; hidden channels must not reserve synthetic space. Native geometry should cover theme/scale/narrow combinations and real menu interaction. Pakar full Hardware Monitor channel/disclosure contract remains pending; no media or donor deployment acceptance borrowed.","scope":"full-record","content_sha256":"fa207a0b8aff7feacd2018f4939c2a463bef9c2772cfaf823b2b57e8fa4ad21e","number":127,"repository":"ToghrolTP/pealayer"},
-{"application":"Actual complete dropdown/color modules and icon hooks now imported with full-width stable rows, keyboard/search ownership, Custom palette and bounded temporary recents. Retain donor tests; native Pakar execution and deployed capture must be independently verified. Complete Preferences/System accent and broader surface parity remain pending; no whole application equivalence.","scope":"full-record","content_sha256":"3df6c6ce6dfa09f1d9c936b559187e3536693c75219ce5e7e75e0e45f21d3104","number":130,"repository":"ToghrolTP/pealayer"},
-{"application":"Reachable host and acknowledged physical board are distinct identities and readiness states; keep truthful offline controls and no inferred peripheral data. Pakar existing ACK/capability gates retained; full bridge adapter and physical reconnect acceptance remain pending. Copilot quota notice is not a review or proof of cleared findings.","scope":"full-record","content_sha256":"0aadce3cada2e4ea5f096ca147f3d9314fb47ae075eca9be06a0d1cec6522b52","number":422,"repository":"atomicdeploy/PCController"},
-{"application":"Batch newest status at the paint boundary while preserving ordered bounded telemetry samples; discard stale callbacks on transport replacement/disposal. Stable recovery script revalidation and content-hashed asset caching must remain separate. Pakar generic lifecycle/reducer and service-worker parity remain pending; do not copy public generation selectors or hand-merge generated bundles.","scope":"full-record","content_sha256":"ea1322a24aa30467c876493cac68a5a5e75561542c75eb3af399b2b8777e0efc","number":460,"repository":"atomicdeploy/PCController"},
-{"application":"Disconnected recovery must have one authoritative lifecycle/retry/reason presentation, not duplicate filler or low-level identity dumps. Pakar current repeated offline HTTP/WS errors remain an explicit issue8 gap; preserve detailed identity in diagnostics and apply actual donor code before claiming fixed. No acceptance borrowed from donor deployment.","scope":"full-record","content_sha256":"260ac5c65835703d51082240c58c3bece6c55ac7cba3db73b9c6e384c14be46b","number":568,"repository":"atomicdeploy/PCController"},
-{"application":"Keep partial seven-segment authority distinct from exact full panel; low-rate authority edges should push snapshots to every subscriber, while high-rate segments use compact patches. Existing Pakar per-peripheral ACK gates retained; actual cross-client push reducer and board proof remain pending. Read body and both physical/browser acceptance comments, not the code diff.","scope":"full-record","content_sha256":"083e9c2ef11a66bbbe504b3bdf74cd00f39c0ce896ffe6f226990b7d7bc84541","number":596,"repository":"atomicdeploy/PCController"},
-    {"repository":"ToghrolTP/pealayer","number":56,"content_sha256":"b37c535aa97d1974b74386d446fe83ba1ae46faa196dc5c5998795c953e8f52c","scope":"full-record","application":"One dialog renderer/state model across embedded/native hosts, failure fallback preserving preference and drafts, shared validation/focus/localization/actions. Generic dialog migration remains useful and pending in Pakar issues4/5/8; do not duplicate controls or treat native creation failure as permission to erase settings. This issue review is not an imported renderer."},
-    {"repository":"atomicdeploy/PCController","number":53,"content_sha256":"90fdae7e3db1490902484dfa6e8e6b1e722d3f7c9f1e70dee9de8136ee254781","scope":"full-record","application":"Controller-owned present-device discovery and board HELLO are authoritative; a secondary Win32_SerialPort inventory is incomplete and must not veto programming. Current Pakar lazy serialport inventory and explicit connected capabilities retained; SetupAPI identity enrichment/provider disagreement regressions and physical reconnect remain pending on issues6/10."},
-    {"scope":"full-record","application":"Reread current full body and all six comments after content hash drift, not the source diff. Explicit empty recorder selection, exact publish ACK, unrelated draft preservation, finite repeat and last-valid catalogue remain useful pending Pakar contracts; media/timeline business stays excluded. Newly added atomic bulk selection preserves unselected draft steps and resets stale index ownership on replacement/reorder. Do not erase old repeated operations to satisfy a new contract, bypass a command-tool smoke denial or borrow previous CI/runtime/physical acceptance. Current-head Windows passing checks do not resolve the recorded lifecycle failure or paired production semantics; PR remains with its owner.","number":142,"content_sha256":"cf0cb6c6523c08c14e827b22c5a9ba2ddce3d9d6a8bd473ab852107ffd93d049","repository":"ToghrolTP/pealayer"},
-    {"repository":"ToghrolTP/pealayer","number":143,"content_sha256":"be1a45834f046070671cc1f42eb6b7a71f6aa0e8cbad0dfddcaff122f0a7b22c","scope":"full-record","application":"Runtime build/capture/readiness are separate, and a prior ACK is not current preview authority. Apply to the actual Pakar production receipt: exact executable/PID/capture/settings checked, offline board truth retained, caret/error/shell gaps recorded, no physical or all-green release claim. Private user state is not published. Documentation conversation review only, not donor code-diff review."},
-    {"repository":"ToghrolTP/pealayer","number":55,"content_sha256":"99713be7ca57cac54320e45f40f825c1e2feedc14e4331d6e1beb2cd1e2edfc4","scope":"review-comments","reviewed_comment_ids":[4165413758,4165413871],"application":"Read both unresolved Copilot thread bodies. Keep authentication/origin and correlated error/durable completion as explicit independent gates. Full PR/body/remaining conversation is not certified read from these two comments; do not resolve donor threads."},
-    {"repository":"atomicdeploy/PCController","number":212,"content_sha256":"cc8cf59ec2a5896deae90a83d7b1adf5be55e4788bcc13845d67dbf602cbd236","scope":"review-comments","reviewed_comment_ids":[3769993081,3769993093],"application":"Read both unresolved CodeQL thread bodies. Worker message controls must verify origin/sender before cache/lifecycle mutation. The earlier no-worker note is historical: canonical Pakar web/sw.js now restricts shell GETs to same origin and has no message-control handler. This does not certify full donor PWA import, complete PR/body review or cleared donor findings; do not resolve donor threads."},
-    {"repository":"ToghrolTP/pealayer","number":27,"content_sha256":"1f09b33f82cd342de7fe431945ecc5416880d3d4f069abb78572cca5cde74280","scope":"full-record","application":"Contextual board identity, OS-discovered ports, no examples, no inferred capabilities. Existing Pakar context/identity gates retained. History, build branding and full physical/screenshot acceptance still require source comparison; not certified from this issue."},
-    {"repository":"atomicdeploy/PCController","number":291,"content_sha256":"2a3e6d917042bc5b7d5c4b584224b92d353f120f4cdb33c474a8e6672f8a2015","scope":"full-record","application":"Shared scroll/cancel-safe instant and hold gesture semantics remain pending for all Pakar surfaces. Ordinary click controls are not equivalent to this primitive."},
-    {"repository":"atomicdeploy/PCController","number":357,"content_sha256":"b54f41b365394ed472765e41a79ab78e28278e3e24adb04cce3a8d4284cf3196","scope":"full-record","application":"Preserve reachable firmware/settings/rollback and dry-run inspection. Existing single warm cache/debug-only pruning retained, but full product artifact retention across CLI/TUI/API/Web and housekeeping remains pending."},
-    {"repository":"atomicdeploy/PCController","number":552,"content_sha256":"75fddbedc7efbfd1a606aa4b15afe8122ae7d6251fcc848d43811a540c3d7631","scope":"full-record","application":"Do not equate ACK with final actuator state. Settings and maintenance already verify readback/ownership; equivalent live output confirmation across all Pakar commands remains pending."},
-    {"repository":"atomicdeploy/PCController","number":595,"content_sha256":"a7111cad374cdcb69c0344ac6f5b2feef1e97de22815ae24eeaff66484a387e0","scope":"full-record","application":"Preserve partial segment authority separately from full front-panel state; existing individual ACK gates retained. Generic event/sequence/gap reducer and multi-client physical acceptance remain pending."}
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 25,
+      "scope": "full-record",
+      "content_sha256": "7bc8df2ff872d71e18b55432d9fa4bee22b36a59ba4f511299510005d4f957e9",
+      "application": "Read the complete owner-directed legacy scope and measured RAM/flash checklist; no comments/reviews/threads. ESP32-S3+AVR are release targets, legacy source/tooling preserved. Current ESP8266 full-image linking and physical/OTA acceptance remain explicitly unfinished; no limits enlarged and no device flashed."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 21,
+      "content_sha256": "aaea95d5c7ff9d00b93a30730567b651574ff793f780f290add48378275ad4f6",
+      "scope": "full-record",
+      "application": "Complete dependency conversation/diff and unchanged post-merge body reviewed. Original workflow head is preserved by d112e02 and normal PR24 merge f4259db; GitHub confirms merged. Exact consolidated c1d2dd17 Build40508742014 and security checks pass. No permission/trust boundary was loosened, and source synchronization is not deployment."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 22,
+      "content_sha256": "f8f27cb070a7488cf203ac9a9fc79b57f3c371d1a5f2a3890a1940b58ffd6b06",
+      "scope": "full-record",
+      "application": "Complete dependency conversation/diff and unchanged post-merge body reviewed; GitHub confirms merged through 1c1fb59 and PR24. Original ancestry and mdns-sd0.21.6 retained. Explicitly deferred eframe0.37 because dock/icon/theme expose egui0.36 types; coherent0.36.2 and mixed-family negative guards remain. Final c1d2dd17 native tests/package pass. This is not an enabled0.37 migration or runtime deployment."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 23,
+      "content_sha256": "88a8ff704f1eee1b84ed986781d5d87077496a8cf718cd5377371267ea56e382",
+      "scope": "full-record",
+      "application": "Complete manifest/lock diff, release body and integration conversation reviewed; GitHub confirms merged through d9bdae7 and PR24. Original ancestry and archive4/MQTT/XML7 retained, with raw compressed stream, bounded inflate/CRC and namespaceUri adaptations. Final c1d2dd17 Android analysis/tests/APK pass. No tablet replacement or physical acceptance is inferred."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 24,
+      "content_sha256": "13efb63ca141bb6bb5aa5e2e45895b40b729e64b11a9f23f798e34d6a7751bf5",
+      "scope": "full-record",
+      "application": "Complete consolidation conversation, six integration comments, all review summaries and seven resolved threads reviewed including final merged state and receipt. Candidate/report descriptor reads, exclusive fixture creation, script extraction and post-peer backup rehash are fixed; remaining intentional-transfer/test dispositions are scoped. Exact c1d2dd17 Build40508742014, CodeQL40508742015 and standalone finding check pass. Normal main merge f4259db preserves original source/dependency/temporary heads; all four PRs are merged and verified-merged branches removed. Copilot requests were rejected, not completed reviews. ESP8266 remains unfinished issue25; issues2/3 and physical/donor acceptance remain open. Follow-up metadata CI is separate from verified application code."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 18,
+      "content_sha256": "08fd3e1171d8f9af714a275eab5f861591492820e3c95c2b461f8aba66f8518a",
+      "scope": "full-record",
+      "application": "Read complete dependency diff, body, the integration comment, and every paginated review/thread record (none). Exact dependency head 106f403e8236901ac44561204cf60ce9357f05cd passed checks; normal merge 71d8f0f5153718fa4f6593ff95ca47b3a9574073. No completed Copilot review claimed. Current integrated Rust release and 214 tests passed independently; dependency CI is not current-tree deployment or physical acceptance."
+    },
+    {
+      "repository": "ToghrolTP/pealayer",
+      "number": 70,
+      "scope": "full-record",
+      "content_sha256": "86215abf829277045fbf6e9dcb1f7c0f8ee0ca350a8fbf5515b489d609458c6e",
+      "application": "Keep private artwork overrides private; distinguish build resource stamping before signing from live contextual icon configuration. Existing shared Pakar artwork retained; complete transition/configuration and resource-manifest acceptance remains pending. Conversation read is not code-diff or donor deployment acceptance."
+    },
+    {
+      "repository": "ToghrolTP/pealayer",
+      "number": 78,
+      "scope": "full-record",
+      "content_sha256": "b1fbabb7478e222856db36543561c7c0703d810956455f15e8a0806fcda036bd",
+      "application": "Branding updates must be transition/config-revision driven rather than cloning full configuration each frame; advance the revision even when artwork resolves unchanged. Generic Pakar frame/config performance remains pending, not certified by donor focused tests or CPU receipts."
+    },
+    {
+      "repository": "ToghrolTP/pealayer",
+      "number": 87,
+      "scope": "full-record",
+      "content_sha256": "21a2477692b58834ba5535bf916eda301aec6b69421cde5d3e18cc46c44e30d2",
+      "application": "Move native commands, device results and authoritative snapshots to App::logic so hidden/minimized windows process them without painting. Live Pakar reproduced the missing contract and actual donor lifecycle slice is adapted. Preserve preferences drafts and authority/ACK semantics; configurable generic disconnect safety remains pending. Media scrubbing and timeline intrinsic cue business are excluded, not generic effect timing. Full source file and physical timing remain unverified."
+    },
+    {
+      "repository": "ToghrolTP/pealayer",
+      "number": 102,
+      "scope": "full-record",
+      "content_sha256": "a5d6a365150c19e56ba98a7f6d179333c1d4420c3cb862670b7cdd3d63300edc",
+      "application": "Share root/wrapper/SVG button centering including portaled dialogs, avoid inline baseline spacer and per-transport geometry overrides; retain semantic colors, RTL order and commands. Pakar Web/native/mobile button parity and actual phone/tablet screenshots remain pending; donor builds and responsive checks are not our pixels."
+    },
+    {
+      "application": "Palette roles and typography must map to the live resolved theme, not replace host styling; preserve specialized inputs and distinguish source/theme fixtures from human visual acceptance. Pakar existing palette gate retained; broad Elegance/contract parity still pending. Conversation review only, not a PR diff certificate.",
+      "scope": "full-record",
+      "content_sha256": "58753dad44b149e4d7c2481a76de82930010663d9472a748771189e40a76ac95",
+      "number": 108,
+      "repository": "ToghrolTP/pealayer"
+    },
+    {
+      "application": "Keep panel controls under Workspace/Panels and contextual empty-workspace guidance, not duplicate a Window menu. Pakar existing workspace controls retained; complete ordered-profile/menu persistence remains pending. Conversation review is not a complete source import.",
+      "scope": "full-record",
+      "content_sha256": "5ac91c140c0233f9624c34bf02672791780addd1399d7e9c2cd23b0e88c4a26c",
+      "number": 117,
+      "repository": "ToghrolTP/pealayer"
+    },
+    {
+      "application": "RTL right alignment must occupy a content-height row; hidden channels must not reserve synthetic space. Native geometry should cover theme/scale/narrow combinations and real menu interaction. Pakar full Hardware Monitor channel/disclosure contract remains pending; no media or donor deployment acceptance borrowed.",
+      "scope": "full-record",
+      "content_sha256": "fa207a0b8aff7feacd2018f4939c2a463bef9c2772cfaf823b2b57e8fa4ad21e",
+      "number": 127,
+      "repository": "ToghrolTP/pealayer"
+    },
+    {
+      "application": "Actual complete dropdown/color modules and icon hooks now imported with full-width stable rows, keyboard/search ownership, Custom palette and bounded temporary recents. Retain donor tests; native Pakar execution and deployed capture must be independently verified. Complete Preferences/System accent and broader surface parity remain pending; no whole application equivalence.",
+      "scope": "full-record",
+      "content_sha256": "3df6c6ce6dfa09f1d9c936b559187e3536693c75219ce5e7e75e0e45f21d3104",
+      "number": 130,
+      "repository": "ToghrolTP/pealayer"
+    },
+    {
+      "application": "Reachable host and acknowledged physical board are distinct identities and readiness states; keep truthful offline controls and no inferred peripheral data. Pakar existing ACK/capability gates retained; full bridge adapter and physical reconnect acceptance remain pending. Copilot quota notice is not a review or proof of cleared findings.",
+      "scope": "full-record",
+      "content_sha256": "0aadce3cada2e4ea5f096ca147f3d9314fb47ae075eca9be06a0d1cec6522b52",
+      "number": 422,
+      "repository": "atomicdeploy/PCController"
+    },
+    {
+      "application": "Batch newest status at the paint boundary while preserving ordered bounded telemetry samples; discard stale callbacks on transport replacement/disposal. Stable recovery script revalidation and content-hashed asset caching must remain separate. Pakar generic lifecycle/reducer and service-worker parity remain pending; do not copy public generation selectors or hand-merge generated bundles.",
+      "scope": "full-record",
+      "content_sha256": "ea1322a24aa30467c876493cac68a5a5e75561542c75eb3af399b2b8777e0efc",
+      "number": 460,
+      "repository": "atomicdeploy/PCController"
+    },
+    {
+      "application": "Disconnected recovery must have one authoritative lifecycle/retry/reason presentation, not duplicate filler or low-level identity dumps. Pakar current repeated offline HTTP/WS errors remain an explicit issue8 gap; preserve detailed identity in diagnostics and apply actual donor code before claiming fixed. No acceptance borrowed from donor deployment.",
+      "scope": "full-record",
+      "content_sha256": "260ac5c65835703d51082240c58c3bece6c55ac7cba3db73b9c6e384c14be46b",
+      "number": 568,
+      "repository": "atomicdeploy/PCController"
+    },
+    {
+      "application": "Keep partial seven-segment authority distinct from exact full panel; low-rate authority edges should push snapshots to every subscriber, while high-rate segments use compact patches. Existing Pakar per-peripheral ACK gates retained; actual cross-client push reducer and board proof remain pending. Read body and both physical/browser acceptance comments, not the code diff.",
+      "scope": "full-record",
+      "content_sha256": "083e9c2ef11a66bbbe504b3bdf74cd00f39c0ce896ffe6f226990b7d7bc84541",
+      "number": 596,
+      "repository": "atomicdeploy/PCController"
+    },
+    {
+      "repository": "ToghrolTP/pealayer",
+      "number": 56,
+      "content_sha256": "b37c535aa97d1974b74386d446fe83ba1ae46faa196dc5c5998795c953e8f52c",
+      "scope": "full-record",
+      "application": "One dialog renderer/state model across embedded/native hosts, failure fallback preserving preference and drafts, shared validation/focus/localization/actions. Generic dialog migration remains useful and pending in Pakar issues4/5/8; do not duplicate controls or treat native creation failure as permission to erase settings. This issue review is not an imported renderer."
+    },
+    {
+      "repository": "atomicdeploy/PCController",
+      "number": 53,
+      "content_sha256": "90fdae7e3db1490902484dfa6e8e6b1e722d3f7c9f1e70dee9de8136ee254781",
+      "scope": "full-record",
+      "application": "Controller-owned present-device discovery and board HELLO are authoritative; a secondary Win32_SerialPort inventory is incomplete and must not veto programming. Current Pakar lazy serialport inventory and explicit connected capabilities retained; SetupAPI identity enrichment/provider disagreement regressions and physical reconnect remain pending on issues6/10."
+    },
+    {
+      "scope": "full-record",
+      "application": "Reread current full body and all six comments after content hash drift, not the source diff. Explicit empty recorder selection, exact publish ACK, unrelated draft preservation, finite repeat and last-valid catalogue remain useful pending Pakar contracts; media/timeline business stays excluded. Newly added atomic bulk selection preserves unselected draft steps and resets stale index ownership on replacement/reorder. Do not erase old repeated operations to satisfy a new contract, bypass a command-tool smoke denial or borrow previous CI/runtime/physical acceptance. Current-head Windows passing checks do not resolve the recorded lifecycle failure or paired production semantics; PR remains with its owner.",
+      "number": 142,
+      "content_sha256": "cf0cb6c6523c08c14e827b22c5a9ba2ddce3d9d6a8bd473ab852107ffd93d049",
+      "repository": "ToghrolTP/pealayer"
+    },
+    {
+      "repository": "ToghrolTP/pealayer",
+      "number": 143,
+      "content_sha256": "be1a45834f046070671cc1f42eb6b7a71f6aa0e8cbad0dfddcaff122f0a7b22c",
+      "scope": "full-record",
+      "application": "Runtime build/capture/readiness are separate, and a prior ACK is not current preview authority. Apply to the actual Pakar production receipt: exact executable/PID/capture/settings checked, offline board truth retained, caret/error/shell gaps recorded, no physical or all-green release claim. Private user state is not published. Documentation conversation review only, not donor code-diff review."
+    },
+    {
+      "repository": "ToghrolTP/pealayer",
+      "number": 55,
+      "content_sha256": "99713be7ca57cac54320e45f40f825c1e2feedc14e4331d6e1beb2cd1e2edfc4",
+      "scope": "review-comments",
+      "reviewed_comment_ids": [
+        4165413758,
+        4165413871
+      ],
+      "application": "Read both unresolved Copilot thread bodies. Keep authentication/origin and correlated error/durable completion as explicit independent gates. Full PR/body/remaining conversation is not certified read from these two comments; do not resolve donor threads."
+    },
+    {
+      "repository": "atomicdeploy/PCController",
+      "number": 212,
+      "content_sha256": "cc8cf59ec2a5896deae90a83d7b1adf5be55e4788bcc13845d67dbf602cbd236",
+      "scope": "review-comments",
+      "reviewed_comment_ids": [
+        3769993081,
+        3769993093
+      ],
+      "application": "Read both unresolved CodeQL thread bodies. Worker message controls must verify origin/sender before cache/lifecycle mutation. The earlier no-worker note is historical: canonical Pakar web/sw.js now restricts shell GETs to same origin and has no message-control handler. This does not certify full donor PWA import, complete PR/body review or cleared donor findings; do not resolve donor threads."
+    },
+    {
+      "repository": "ToghrolTP/pealayer",
+      "number": 27,
+      "content_sha256": "1f09b33f82cd342de7fe431945ecc5416880d3d4f069abb78572cca5cde74280",
+      "scope": "full-record",
+      "application": "Contextual board identity, OS-discovered ports, no examples, no inferred capabilities. Existing Pakar context/identity gates retained. History, build branding and full physical/screenshot acceptance still require source comparison; not certified from this issue."
+    },
+    {
+      "repository": "atomicdeploy/PCController",
+      "number": 291,
+      "content_sha256": "2a3e6d917042bc5b7d5c4b584224b92d353f120f4cdb33c474a8e6672f8a2015",
+      "scope": "full-record",
+      "application": "Shared scroll/cancel-safe instant and hold gesture semantics remain pending for all Pakar surfaces. Ordinary click controls are not equivalent to this primitive."
+    },
+    {
+      "repository": "atomicdeploy/PCController",
+      "number": 357,
+      "content_sha256": "b54f41b365394ed472765e41a79ab78e28278e3e24adb04cce3a8d4284cf3196",
+      "scope": "full-record",
+      "application": "Preserve reachable firmware/settings/rollback and dry-run inspection. Existing single warm cache/debug-only pruning retained, but full product artifact retention across CLI/TUI/API/Web and housekeeping remains pending."
+    },
+    {
+      "repository": "atomicdeploy/PCController",
+      "number": 552,
+      "content_sha256": "75fddbedc7efbfd1a606aa4b15afe8122ae7d6251fcc848d43811a540c3d7631",
+      "scope": "full-record",
+      "application": "Do not equate ACK with final actuator state. Settings and maintenance already verify readback/ownership; equivalent live output confirmation across all Pakar commands remains pending."
+    },
+    {
+      "repository": "atomicdeploy/PCController",
+      "number": 595,
+      "content_sha256": "a7111cad374cdcb69c0344ac6f5b2feef1e97de22815ae24eeaff66484a387e0",
+      "scope": "full-record",
+      "application": "Preserve partial segment authority separately from full front-panel state; existing individual ACK gates retained. Generic event/sequence/gap reducer and multi-client physical acceptance remain pending."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 27,
+      "scope": "full-record",
+      "content_sha256": "73ea652466fdce87a6fc4b6a672ca1ff6362d09f36d3a0ad990fd8207c42de65",
+      "application": "Read the complete current PR body, twelve top-level comments, seven review summaries and all four paginated threads including outdated state and fix replies. Descriptor reads and trusted-script extraction findings are fixed without suppression; current-head CodeQL workflow and standalone check pass. All local client work is published;495 native and869 Flutter tests plus full quality pass. SDK/Windows/Android CI and complete accumulated code-diff review remain merge gates, not waived by conversation review. No completed Copilot review or production acceptance claimed."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 17,
+      "scope": "full-record",
+      "content_sha256": "aa8bfc3ad41850be2d28245cad031017e44d49335d8170ddf7a01bcb4d512626",
+      "application": "Read full advisory issue and fresh Dependabot alert1. glib0.18.5 remains via default Linux GTK3/AppIndicator; forced0.20 breaks its type family. Actual pinned tray-icon0.26.1 now exposes GTK-free KSNI with menu snapshots, worth a separate Linux compiled/runtime migration. No dependency, tray feature, platform or security alert was silently removed or dismissed."
+    }
   ]
 }

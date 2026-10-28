@@ -29,6 +29,10 @@ test('remote holds expire and game settings never save from the frame loop',()=>
   const loop=service.slice(service.indexOf('void serviceMiniGame'),service.indexOf('bool miniPanel'));
   assert.doesNotMatch(loop,/\.save\(|LittleFS|delay\(/);
   assert.match(service,/if\(!next\.save\(LittleFS\)\)/);
+  const configure=service.slice(service.indexOf('if(command=="minigame-configure")'),service.indexOf('}else if(command=="minigame-control")'));
+  assert.match(configure,/#if defined\(ARDUINO_ARCH_ESP32\)[\s\S]*ScopedLedFlashPause pause;\s+if\(!pause\)\{result=F\("led_flash_guard_busy"\);return false;\}\s+#endif\s+if\(!next\.save\(LittleFS\)\)/,
+    'Persistent configuration shares the LED flash fence; refusal cannot mutate the game');
+  assert(configure.indexOf('if(!pause)')<configure.indexOf('miniSettings=next;'));
   assert.match(service,/miniPhysicalHeld\|miniRemoteHeld/);
 });
 test('countdown presentation keeps update progress priority and shared effects',()=>{

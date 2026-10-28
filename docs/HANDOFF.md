@@ -8,6 +8,60 @@ publishing source is not a new hardware deployment or complete feature acceptanc
 
 ## Verified GitHub integration
 
+### Current consolidation: PR #27
+
+The current handoff continues through PR #27, rather than the historical
+PR21-24 checkpoint below. Its published reconciliation commits are
+`378016eeb91dffea64b38d29d7a64bfb18270668` and
+`89b4a6f8ae36cdf7c9e27ba181931aa7fa831e8c`. All previously uncommitted native
+taskbar/notification and Flutter signal-display work is included, together with
+the reviewed provenance records; no stash or extra worktree owns source.
+
+Local verification: all495 native tests, Flutter analyzer and869 Flutter tests
+(three explicitly skipped), full `node tools/ci-checks.mjs quality`, source-version agreement and the
+generated comparison report pass. The signal menu's discovered overflow is
+fixed. Four CodeQL findings were fixed without suppressions: descriptor-owned
+documentation reads and forgiving trusted-script syntax extraction. Current
+PR-head security checks pass; SDK/Windows/Android CI is recorded separately on
+the PR. Do not infer a green final build from this local-test receipt.
+
+The subsequent minigame configuration fix acquires the common LED flash-write
+guard before saving; refusal preserves live state. CI's Ethernet fixture now
+declares/tests the shared artifact-reader lease and runs in the earlier quality
+phase too. Core/integration, enabled/disabled Ethernet fixtures and guarded S3
+build Plan pass. Final firmware linking remains a CI gate, not a Plan claim.
+
+Merge only after every required check succeeds and the complete diff and every
+conversation/review-thread page are reviewed. The final synchronization receipt
+is on PR27/issue2; inspect GitHub's current main SHA before pulling. No release,
+tag, installed app replacement, firmware flash/reset or production output action
+is part of this source handoff. Private backups/settings/caches remain local.
+
+### Remaining issues, not forgotten work
+
+Use GitHub's open-issue list as authority, not historical counts in old receipts.
+Issue2 is the production umbrella; source/fixture/build evidence never closes
+its physical gates. Current work is grouped as follows:
+
+| Scope | Tracking and next acceptance |
+|---|---|
+| Controls/corrections/host presentation | #26: installed-client and acoustic latency acceptance; native correction USB parity remains unfinished. |
+| Keycontroller games | #32: all ten source modes are included by default, but each mode still needs David's LED/audio/display/output feedback on the approved running build. |
+| Shell and file transfer | #28/#29/#33: managed public files, shared shell and opt-in SSH/SCP/SFTP/FTP exist; encrypted ESP sessions, host-key persistence, memory/TLS/LED coexistence and optional storage hardware are not accepted from host fixtures. Services remain excluded/default-disabled unless explicitly opted in. |
+| Network/peers/cloud | #7/#10/#31: clock/async scan/diagnostics and verified-IP relay recovery exist; automatic peer discovery, continuous subscriptions and fully selectable bridged devices remain incomplete. Actual LAN/Internet/OS join tests are separate. |
+| Hidden Snake | #30: external host app and hidden launchers exist; board engine remains opt-in/excluded from current builds and keycontroller. Preserve the normal scene on exit; actual cross-client sound/control acceptance remains open. |
+| Optional hardware | #19/#20: W5500/TFT/BLE coexistence and exact electrical/module/runtime acceptance remain open. Do not infer another board's ISP wiring from ledcontroller's verified build profile. |
+| Native/mobile/Web polish | #4/#5/#8: current source is not full visual, Explorer, background/reconnect or hardware acceptance. Keep one canonical Web source/entrypoint and explicit size-only build flags. |
+| Provenance/build/repository | #3/#9/#11/#16: 430 hash-bound comparisons,4302 pending and310 known gaps. Continue actual donor reads; no blanket parity claim. CI/package/API policy evidence stays separate from deployment. |
+| Dependency security | #17: glib0.18.5 remains in the default Linux AppIndicator dependency chain. Upstream tray-icon0.26.1 now has a GTK-free KSNI/menu-snapshot backend worth evaluating with actual Linux compilation and runtime coverage; no unsafe forced glib upgrade or tray removal was made. |
+| Preserved legacy | #25: ESP8266 source is retained but its full image still exceeds physical budgets; S3+AVR remain the release targets. |
+
+ASUS access was deferred by David pending his next instructions. Do not repeat
+tunnel prompts, switch host networks or contact/actuate production boards merely
+to finish this Git handoff. Production approval rules in AGENTS.md still apply.
+
+### Earlier main integration (historical)
+
 PRs #21–#24 are merged. Normal merge
 `f4259db186464aae8d2aeb080e3368acf084ad0c` has the exact source tree of
 `c1d2dd17d479dc4ab259d8785b995ddd7db5de41`, which passed every required build,
@@ -49,8 +103,9 @@ Pull the repository's `main` branch only after the synchronization receipt confi
 its final commit. Use the canonical build wrappers and existing dependency pins;
 do not copy another machine's build caches, settings or executable into source.
 Review `AGENTS.md`, `docs/REUSE-PREFLIGHT.md`, `docs/WEB-PARITY.json` and issue 2
-before continuing. The Web live-preview lease helper is staged and tested, but is
-not yet embedded or wired to controls.
+before continuing. PR27 wires the correction-preview leases into the real
+clients; this is no longer an unwired helper. See #26 for transport and physical
+acceptance limits, and preserve the board's existing saved correction addresses.
 
 ## Local-only data deliberately not published
 

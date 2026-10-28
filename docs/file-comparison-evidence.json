@@ -3242,7 +3242,7 @@
         },
         {
           "path": "firmware/esp/src/KeyMiniGameService.h",
-          "sha256": "c73c99a7533a3e202a466f5595e01b816c54cea90c08198959e01c1eb863e194",
+          "sha256": "ba5aaf72a17e63252cd994a2a99ef936633425274932a9f90cac90834d11a87f",
           "anchor": "void serviceMiniGame"
         }
       ],
@@ -3264,7 +3264,7 @@
         },
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "97dd25ba175d370427bab2083c1359196a95dd6e8b4ad5c4711b75e385403065",
+          "sha256": "821cb2688ee4bff15d5f97bb02e0009e1826696bbdcef3ec9c58f490782f9a89",
           "anchor": "test('every minigame command"
         }
       ],
@@ -17990,7 +17990,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "41070ef3f4e480e6e052728d11a41bfc22fa748d64c726ffd6ce510b17c3bf78",
+          "sha256": "185205c24d8ebf5fbd4b26499841843093544c3f1f626310d901f0f41c229c07",
           "anchor": "export function runChecks"
         },
         {
@@ -23717,7 +23717,7 @@
         },
         {
           "path": "tests/ethernet_management_test.cpp",
-          "sha256": "831f71b7b3f4e357bb3efd751ae8a087212fd990492fa47596f110c5a4ddc1ad",
+          "sha256": "7c17e3d485afaccfa6a723ca4d97adba33fbf9bebf3d8d706fe86ea5887afa9a",
           "anchor": "int main()"
         },
         {
@@ -23728,7 +23728,7 @@
         {
           "path": "tests/ethernet_management_test.cpp",
           "anchor": "auto offline=snapshot(ethernetStatusJson());",
-          "sha256": "831f71b7b3f4e357bb3efd751ae8a087212fd990492fa47596f110c5a4ddc1ad"
+          "sha256": "7c17e3d485afaccfa6a723ca4d97adba33fbf9bebf3d8d706fe86ea5887afa9a"
         },
         {
           "path": "tests/ethernet_live_tool_test.mjs",

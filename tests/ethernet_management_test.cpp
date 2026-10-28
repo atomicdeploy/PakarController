@@ -12,6 +12,7 @@ EthernetConfigStore ethernetConfig;
 struct RemoteFixture {bool active=false;bool busy()const{return active;}} remoteFirmware;
 bool otaActive=false,avrUploadOwner=false,programmingLatched=false;
 bool networkApplyPending=false,cloudApplyPending=false,ethernetApplyOnly=false;
+unsigned artifactReaders=0;
 bool apStarted=true;
 uint32_t otaRebootAt=0,networkApplyAt=0,cloudApplyAt=0;
 struct CloudFixture {
@@ -123,6 +124,9 @@ int main() {
     *busy=true;assert(!update("{\"dhcp\":false}",result));*busy=false;
   }
   otaRebootAt=1;assert(!update("{\"dhcp\":false}",result));otaRebootAt=0;
+  const auto beforeReadLease=filesystem.files.at("/ethernet.bin")->bytes;
+  artifactReaders=1;assert(!update("{\"dhcp\":false}",result));artifactReaders=0;
+  assert(filesystem.files.at("/ethernet.bin")->bytes==beforeReadLease);
   assert(!ethernetApplyOnly);
   assert(update("{\"enabled\":false,\"lldp_enabled\":false,\"lldp_receive\":true}",result));applyReceiptConsumed();
   auto services=snapshot(ethernetConfigurationJson());
