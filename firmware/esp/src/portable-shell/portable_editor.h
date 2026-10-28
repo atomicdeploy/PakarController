@@ -11,6 +11,18 @@
 #ifndef PS_EDITOR_HISTORY
 #define PS_EDITOR_HISTORY 8
 #endif
+#ifndef PS_EDITOR_PROMPT_BYTES
+#define PS_EDITOR_PROMPT_BYTES 49
+#endif
+#ifndef PS_EDITOR_SUGGEST_BYTES
+#define PS_EDITOR_SUGGEST_BYTES 80
+#endif
+#ifndef PS_EDITOR_PROMPT_STYLE
+#define PS_EDITOR_PROMPT_STYLE "\x1b[1;32m"
+#endif
+#if PS_EDITOR_PROMPT_BYTES < 6 || PS_EDITOR_SUGGEST_BYTES < 2
+#error "Prompt needs >=6 bytes and suggestion storage >=2"
+#endif
 #if PS_EDITOR_CAPACITY < 32 || PS_EDITOR_HISTORY < 1
 #error "Event editor requires capacity >=32 and history >=1"
 #endif
@@ -25,7 +37,7 @@ enum {
 typedef const char *(*ps_editor_candidate)(void *, size_t);
 typedef struct {
     char command[PS_EDITOR_CAPACITY + 1], history[PS_EDITOR_HISTORY][PS_EDITOR_CAPACITY + 1];
-    char draft[PS_EDITOR_CAPACITY + 1], prompt[49], suggestion[80];
+    char draft[PS_EDITOR_CAPACITY + 1], prompt[PS_EDITOR_PROMPT_BYTES], suggestion[PS_EDITOR_SUGGEST_BYTES];
     size_t next, count, offset, draft_cursor, cursor;
     unsigned char escape, attribute, escape_bytes, echo, cr_pending, overflow, ansi, upper;
 } ps_editor;
@@ -75,7 +87,7 @@ static inline void ps_editor_prompt(ps_editor *s, ps_terminal_write write, void 
     if (!s->echo)
         return;
     if (s->ansi)
-        ps_term_emit(write, ctx, "\x1b[1;32m");
+        ps_term_emit(write, ctx, PS_EDITOR_PROMPT_STYLE);
     ps_term_emit(write, ctx, s->prompt);
     ps_term_emit(write, ctx, "> ");
     if (s->ansi)

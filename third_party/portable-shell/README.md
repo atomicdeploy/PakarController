@@ -2,12 +2,20 @@
 
 ## Canonical components (current integration)
 
-PortableShell commit `52c5f7f94581806109e30f5c1ffd6c74ff5bff40` now owns the
+PortableShell commit `10b7d29469690822d8ee687a6d27a36977e9c194` now owns the
 shared C Telnet/terminal primitives, C event editor, thin C++ callback facade
 and optional snapshot/action device view. The exact four headers are compiled
 from `firmware/esp/src/portable-shell/`; `source.json` binds their upstream paths,
 commit and SHA-256. CI rejects drift. Do not patch that slice independently:
 change atomicdeploy/portable-shell first, then review and update this pin.
+
+This pin includes the Ardush AVR/STM32 integration: configurable prompt and
+suggestion storage, optional shift/subtract decimal formatting and a contextual
+Unicode navigation footer. Pakar keeps its existing capacities and native
+formatting default. The new in-place tokenizer and asynchronous cursor probe
+remain available upstream; they are not copied into Pakar without a call site.
+`tools/test-shell.ps1` and the 21-entry source/hash gate pass for this update.
+Actual firmware CI and device acceptance remain separate gates.
 
 `TelnetShell.h`, `ShellTui.h` and the Terminal binding in `PortableShellCore.h`
 are thin adapters. Pakar retains command metadata, authentication, property

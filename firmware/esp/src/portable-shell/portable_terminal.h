@@ -11,6 +11,25 @@
 #include <string.h>
 #endif
 typedef void (*ps_terminal_write)(void *, const unsigned char *, size_t);
+/* Optional shift/subtract decimal division for MCUs without hardware divide.
+ * Keeps compiler division helpers out of the small header-only profile. The
+ * default lets the host compiler choose its native implementation. */
+#ifndef PS_TERMINAL_SOFT_DIV10
+#define PS_TERMINAL_SOFT_DIV10 0
+#endif
+static inline unsigned ps_div10(unsigned value, unsigned *remainder) {
+#if PS_TERMINAL_SOFT_DIV10
+    unsigned quotient = 0, rest = 0, bits = (unsigned)(sizeof(unsigned) * 8);
+    while (bits) {
+        --bits; rest = (rest << 1) | ((value >> bits) & 1u);
+        quotient <<= 1;
+        if (rest >= 10) { rest -= 10; quotient |= 1u; }
+    }
+    *remainder = rest; return quotient;
+#else
+    *remainder = value % 10; return value / 10;
+#endif
+}
 /* Small bounded renderer formatter, not a printf replacement: only %u, %02u,
  * %s and %% are supported. Returns the full required byte count. */
 static inline size_t ps_terminal_format(char *out, size_t capacity, const char *format, ...) {
@@ -31,8 +50,9 @@ static inline size_t ps_terminal_format(char *out, size_t capacity, const char *
                 value = va_arg(args, unsigned);
                 n = 0;
                 do {
-                    digits[n++] = (char)('0' + value % 10);
-                    value /= 10;
+                    unsigned remainder;
+                    value = ps_div10(value, &remainder);
+                    digits[n++] = (char)('0' + remainder);
                 } while (value);
                 while (n < width)
                     digits[n++] = '0';
@@ -142,8 +162,9 @@ static inline size_t ps_decimal(char *out, unsigned value) {
     char digits[10];
     size_t n = 0, i;
     do {
-        digits[n++] = (char)('0' + value % 10);
-        value /= 10;
+        unsigned remainder;
+        value = ps_div10(value, &remainder);
+        digits[n++] = (char)('0' + remainder);
     } while (value);
     for (i = 0; i < n; ++i)
         out[i] = digits[n - 1 - i];

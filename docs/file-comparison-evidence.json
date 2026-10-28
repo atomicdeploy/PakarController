@@ -611,7 +611,7 @@
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
           "anchor": "class DeviceView",
-          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991"
+          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694"
         },
         {
           "path": "firmware/esp/src/ShellLabels.h",
@@ -2953,7 +2953,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
           "anchor": "class DeviceView"
         }
       ],
@@ -21689,7 +21689,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
           "anchor": "class DeviceView"
         },
         {
@@ -21752,12 +21752,12 @@
         },
         {
           "path": "firmware/esp/src/portable-shell/portable_terminal.h",
-          "sha256": "cb4c730a516b496b4a6daf8f4d03e2cec15a5b68e0654a44fd2f24531456ddeb",
+          "sha256": "4b95ce09b9a7bc4c2e5d7e3076d9a5257bed84e2ff2d63d5309841f9bc4d6ee9",
           "anchor": "static inline size_t ps_terminal_text"
         },
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
           "anchor": "class DeviceView"
         },
         {
@@ -26077,17 +26077,17 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_terminal.h",
-      "sha256": "cb4c730a516b496b4a6daf8f4d03e2cec15a5b68e0654a44fd2f24531456ddeb",
-      "source_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "sha256": "4b95ce09b9a7bc4c2e5d7e3076d9a5257bed84e2ff2d63d5309841f9bc4d6ee9",
+      "source_revision": "10b7d29469690822d8ee687a6d27a36977e9c194",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Exact canonical component bytes, compared through EOF against PortableShell commit 52c5f7f94581806109e30f5c1ffd6c74ff5bff40. Pakar uses adapters; no independently maintained parser/editor/view copy. Preserves hidden input, bounded memory, history classification, capability/stale-field checks and external command ownership. Native shell and TCP loopback fixtures pass; diagnostics remain compile-selectable."
+        "Exact canonical header at 10b7d29469690822d8ee687a6d27a36977e9c194. Ardush-driven configurable prompt/suggestion storage, optional software decimal division and Unicode navigation footer are retained. Existing default capacities, hidden input, Telnet framing, secret drafts, action validation and application-owned routing remain unchanged."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_terminal.h",
-          "sha256": "cb4c730a516b496b4a6daf8f4d03e2cec15a5b68e0654a44fd2f24531456ddeb",
+          "sha256": "4b95ce09b9a7bc4c2e5d7e3076d9a5257bed84e2ff2d63d5309841f9bc4d6ee9",
           "anchor": "static inline int ps_telnet_feed"
         }
       ],
@@ -26106,17 +26106,17 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_editor.h",
-      "sha256": "a88fc73d10a37770f531d3029d7466f3e6470a9bdcf16f5d3661cff976198c63",
-      "source_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "sha256": "cb0067ca358c9c86cd64727681186014cff0ce18b17edcfb48521ce75a0f9a0b",
+      "source_revision": "10b7d29469690822d8ee687a6d27a36977e9c194",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Exact canonical component bytes, compared through EOF against PortableShell commit 52c5f7f94581806109e30f5c1ffd6c74ff5bff40. Pakar uses adapters; no independently maintained parser/editor/view copy. Preserves hidden input, bounded memory, history classification, capability/stale-field checks and external command ownership. Native shell and TCP loopback fixtures pass; diagnostics remain compile-selectable."
+        "Exact canonical header at 10b7d29469690822d8ee687a6d27a36977e9c194. Ardush-driven configurable prompt/suggestion storage, optional software decimal division and Unicode navigation footer are retained. Existing default capacities, hidden input, Telnet framing, secret drafts, action validation and application-owned routing remain unchanged."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_editor.h",
-          "sha256": "a88fc73d10a37770f531d3029d7466f3e6470a9bdcf16f5d3661cff976198c63",
+          "sha256": "cb0067ca358c9c86cd64727681186014cff0ce18b17edcfb48521ce75a0f9a0b",
           "anchor": "static inline int ps_editor_feed"
         }
       ],
@@ -26136,11 +26136,11 @@
       "origin": "portable-shell",
       "path": "include/portable_shell_editor.hpp",
       "sha256": "2596f4e070331aeef24c444c7234767f218f9e8ee0fd966b30efa4c0613c4ee5",
-      "source_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "source_revision": "10b7d29469690822d8ee687a6d27a36977e9c194",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Exact canonical component bytes, compared through EOF against PortableShell commit 52c5f7f94581806109e30f5c1ffd6c74ff5bff40. Pakar uses adapters; no independently maintained parser/editor/view copy. Preserves hidden input, bounded memory, history classification, capability/stale-field checks and external command ownership. Native shell and TCP loopback fixtures pass; diagnostics remain compile-selectable."
+        "Exact canonical header at 10b7d29469690822d8ee687a6d27a36977e9c194. Ardush-driven configurable prompt/suggestion storage, optional software decimal division and Unicode navigation footer are retained. Existing default capacities, hidden input, Telnet framing, secret drafts, action validation and application-owned routing remain unchanged."
       ],
       "targets": [
         {
@@ -26164,17 +26164,17 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_device_view.hpp",
-      "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
-      "source_revision": "52c5f7f94581806109e30f5c1ffd6c74ff5bff40",
+      "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
+      "source_revision": "10b7d29469690822d8ee687a6d27a36977e9c194",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Exact canonical component bytes, compared through EOF against PortableShell commit 52c5f7f94581806109e30f5c1ffd6c74ff5bff40. Pakar uses adapters; no independently maintained parser/editor/view copy. Preserves hidden input, bounded memory, history classification, capability/stale-field checks and external command ownership. Native shell and TCP loopback fixtures pass; diagnostics remain compile-selectable."
+        "Exact canonical header at 10b7d29469690822d8ee687a6d27a36977e9c194. Ardush-driven configurable prompt/suggestion storage, optional software decimal division and Unicode navigation footer are retained. Existing default capacities, hidden input, Telnet framing, secret drafts, action validation and application-owned routing remain unchanged."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "b4bcd81690dcbaa19eb4b4d645b000e63508ea558e0aa473471fdd0d4e427991",
+          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
           "anchor": "class DeviceView"
         }
       ],
