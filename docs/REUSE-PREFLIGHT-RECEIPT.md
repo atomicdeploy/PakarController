@@ -11220,3 +11220,17 @@ and exclusive game ownership. It first reproduced the missing symbol, then
 passed after the guard. No timeout, debounce, input order or task behavior changes.
 The first guarded SDK attempt correctly refused the stale AVR target hash;
 the same reviewed file bindings are refreshed before rerunning, not bypassed.
+
+## Concurrent shell pin and handoff (2026-10-29)
+
+PR36 changed the canonical component pin and integration README, but comparison
+generation refused its old README target bindings. Consulted portable-shell
+again, read the complete current integration guide and changed canonical code,
+and reviewed all nine affected source dispositions (including the actual donor
+ignore policy). The21-file source gate verifies the retained historical snapshot
+and four current components; no historical source/omission was reclassified.
+The guide still distinguishes inert reference code, actual application owners,
+source fixtures and pending hardware acceptance. Refresh only these README
+target bindings, retain their existing anchors/dispositions, regenerate/check the
+same reports and run the actual shell suite on the TLS-consolidated candidate.
+No separate implementation, device mutation or guard bypass is introduced.
