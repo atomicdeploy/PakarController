@@ -681,7 +681,10 @@ unicast resolution has the same caller deadline and safe late-callback storage.
 A destination's identity-verified address is reused until connect failure,
 then bounded hostname recovery is attempted. Host headers retain the configured
 hostname. An operator-supplied address is only a dial hint: the downstream
-identity must be verified before any command. Cached same-boot GETs need one
+identity must be verified before any command. After a cached connection fails,
+a different supplied hint can recover a DHCP change even when mDNS is unavailable;
+it receives a fresh identity probe before the requested read or command.
+Cached same-boot GETs need one
 HTTP read, not a redundant identity preflight; POST commands still preflight.
 Identity/auth/HTTP errors never redirect a command and POST is never replayed.
 No credentials are forwarded; authenticated

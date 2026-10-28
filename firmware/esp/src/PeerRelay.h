@@ -88,12 +88,20 @@ class PeerRelay {
     if(!slot)return error("peer_receipts_full");
     // Free internal RAM and its largest block, not PSRAM/global historical
     // minimum, determine whether HTTP response + worker can be admitted now.
+    // The first stack allocation can split a 31KB block into ~21KB. Requiring
+    // the *maximum* 24KB response block forever would then lock out ordinary
+    // 10KB status reads. Admission reserves minimum working space; the actual
+    // Content-Length allocation is checked before reading any response bytes.
+    const size_t minimumBlock=worker_?4096:12288;
     if(heap_caps_get_free_size(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT)+response_.length()<70000||
-       heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT)<24577)return error("peer_relay_low_memory");
+       heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT)<minimumBlock)return error("peer_relay_low_memory");
     if(!worker_&&xTaskCreate(worker,"pakar-peer",10240,this,1,&worker_)!=pdPASS)return error("worker_unavailable");
     slot->id=id;memcpy(slot->digest,digest,sizeof(digest));slot->at=millis();
     id_=id;host_=host;board_=board;boot_=boot;path_=path;packet_=packet;self_=self;hint_=hint;
-    command_=command;response_="";failure_="";code_=0;phase_="queued";verified_=false;started_=millis();
+    // Arduino String's empty-string assignment retains its large allocation.
+    // A null assignment uses its checked invalidate path, releasing the retired
+    // receipt buffer we credited above before starting another network read.
+    command_=command;response_=static_cast<const char*>(nullptr);failure_="";code_=0;phase_="queued";verified_=false;started_=millis();
     elapsed_=resolutionMs_=httpMs_=0;address_="";routeSource_="";commandDispatched_=false;
     busy_=true;
     xTaskNotifyGive(worker_);
@@ -134,7 +142,7 @@ class PeerRelay {
     d["response_verified"]=verified_;d["http_status"]=code_;d["error"]=failure_;
     // Serialization finishes under mutex_: link the immutable response rather
     // than allocating a second full status string in ArduinoJson's pool.
-    d["response"]=JsonString(response_.c_str(),response_.length(),true);
+    d["response"]=JsonString(response_.length()?response_.c_str():"",response_.length(),true);
     d["address"]=address_;d["route_source"]=routeSource_;d["elapsed_ms"]=busy()?uint32_t(millis()-started_):elapsed_;
     d["resolution_ms"]=resolutionMs_;d["http_ms"]=httpMs_;d["command_dispatched"]=commandDispatched_;
     d["accepted"]=id_.length()>0&&failure_.isEmpty();String s;const size_t bytes=measureJson(d);
@@ -163,7 +171,8 @@ class PeerRelay {
     http.addHeader("X-Pakar-Via",self_); // Metadata only, never downstream authority.
     const char *headers[]={"X-Pakar-Board","X-Pakar-Boot"};http.collectHeaders(headers,2);
     if(post) {
-      String form="packet=";const char hex[]="0123456789ABCDEF";
+      String form;if(!form.reserve(7+packet_.length()*3)){http.end();return String();}
+      form="packet=";const char hex[]="0123456789ABCDEF";
       for(size_t i=0;i<packet_.length();++i){uint8_t c=packet_[i];form+='%';form+=hex[c>>4];form+=hex[c&15];}
       http.addHeader("Content-Type","application/x-www-form-urlencoded");
       {std::lock_guard<std::mutex> lock(mutex_);commandDispatched_=true;}
@@ -218,10 +227,16 @@ class PeerRelay {
       // destinations on HTTP rejection, identity mismatch or after a POST.
       if((code==HTTPC_ERROR_CONNECTION_REFUSED||code==HTTPC_ERROR_NOT_CONNECTED||code==HTTPC_ERROR_CONNECTION_LOST)&&
           cached.length()&&uint32_t(millis()-started_)<3500U){
-        if(resolve())body=fetch("/api/peer/info",false);
+        bool found=resolve();
+        // A caller may have observed a new DHCP address while mDNS is down.
+        // It is only an identity-probe candidate, never POST replay authority.
+        if(!found&&hint_.length()&&hint_!=cached&&ip.fromString(hint_)&&allowed(ip)){
+          found=true;source="address-hint";
+        }
+        if(found)body=fetch("/api/peer/info",false);
         else errorText="peer_lan_resolution_failed";
       }
-      const bool identityRead=!directRead||source=="hostname";
+      const bool identityRead=!directRead||source!="verified-cache";
       if(errorText.isEmpty()){
         const bool parsed=!deserializeJson(reply,body,DeserializationOption::Filter(filter))&&reply.is<JsonObject>();
         if(!fenced||!parsed)errorText=code==401||code==403?"peer_authentication_required":"peer_response_unavailable";
@@ -245,7 +260,8 @@ class PeerRelay {
       }
     }
     std::lock_guard<std::mutex> lock(mutex_);
-    if(verified)response_=std::move(body);else response_="";
+    if(verified)response_=std::move(body);else response_=static_cast<const char*>(nullptr);
+    packet_=static_cast<const char*>(nullptr);
     failure_=errorText;code_=code;verified_=verified;phase_=verified?"complete":"failed";
     elapsed_=uint32_t(millis()-started_);resolutionMs_=resolution;httpMs_=httpTime;address_=ip.toString();routeSource_=source;
     busy_=false;

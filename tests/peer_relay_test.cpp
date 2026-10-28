@@ -17,7 +17,11 @@ String envelope(const char *path="/api/peer/info",const char *hint="",bool comma
 }
 String info(){JsonDocument d;d["application"]="PakarController";d["version"]="0.2.8";d["board_id"]=board;d["boot_id"]=boot;return encode(d);}
 void add(const String &body,int code=200){TestReply reply;reply.body=body;reply.code=code;replies.push_back(reply);}
-JsonDocument run(PeerRelay &relay,const String &raw){auto receipt=json(relay.submit(raw,self));assert(receipt["accepted"]==true);runRelayWorker();assert(replies.empty());return json(relay.snapshot());}
+JsonDocument run(PeerRelay &relay,const String &raw){
+  const unsigned released=stringNullReleases;auto receipt=json(relay.submit(raw,self));assert(receipt["accepted"]==true);
+  assert(stringNullReleases==released+1&&receipt["response"].is<const char*>()&&receipt["response"]=="");
+  runRelayWorker();assert(replies.empty());return json(relay.snapshot());
+}
 void clean(){requests.clear();replies.clear();mdnsCalls=0;mdnsAddress=0xc901a8c0;freeInternal=100000;largestInternal=40000;}
 void stickyAndPersistent(){
   clean();fs::FS fs;PeerRelay relay;relay.begin(fs,true);const unsigned priorTasks=taskCreates;
@@ -74,7 +78,7 @@ void connectRecoveryAndNoReplay(){
 void memoryAndExpiry(){
   clean();PeerRelay relay;freeInternal=69999;
   assert(json(relay.submit(envelope(),self))["error"]=="peer_relay_low_memory");
-  freeInternal=100000;largestInternal=24000;
+  freeInternal=100000;largestInternal=12000;
   assert(json(relay.submit(envelope(),self))["error"]=="peer_relay_low_memory");
   largestInternal=31732; // Actual incident's largest block is sufficient.
   for(unsigned i=0;i<8;++i){add(info());assert(run(relay,envelope())["response_verified"]==true);}
@@ -105,6 +109,21 @@ void resolverLateCallback(){
   ip_addr_t late{};dnsCallback("keycontroller",&late,dnsArg);dnsDeferred=false;
   assert(resolver.lookup("another-host",ip)&&dnsHost=="another-host"&&ip.toString()=="192.168.1.201");
 }
+void changedHintDuringDnsOutage(){
+  clean();PeerRelay relay;add(info());run(relay,envelope());mdnsAddress=0;
+  add("",-1);add(info());add("{}");
+  auto next=run(relay,envelope("/api/status","192.168.1.203"));
+  assert(next["response_verified"]==true&&next["route_source"]=="address-hint"&&next["address"]=="192.168.1.203");
+  assert(requests[requests.size()-2].url=="http://keycontroller.local/api/peer/info");
+  assert(requests.back().address=="192.168.1.203"&&requests.back().method=="GET");
+}
+void stackFragmentationDoesNotLockOutReads(){
+  clean();largestInternal=31732;simulateStackAllocation=true;
+  PeerRelay relay;add(info());assert(run(relay,envelope())["response_verified"]==true);
+  assert(largestInternal==21492);add("{}");assert(run(relay,envelope("/api/status"))["response_verified"]==true);
+  largestInternal=4095;assert(json(relay.submit(envelope(),self))["error"]=="peer_relay_low_memory");
+  simulateStackAllocation=false;
+}
 void persistenceFaults(){
   fs::FS fs;PeerRouteStore store;store.begin(fs,true);
   PeerRouteStore::Route route{"keycontroller.local",board,"192.168.1.201"};
@@ -118,4 +137,4 @@ void persistenceFaults(){
   PeerRouteStore corrupt;corrupt.begin(fs,true);assert(corrupt.at(0).board.isEmpty());
   PeerRouteStore unavailable;unavailable.begin(fs,false);assert(String(unavailable.update(route,false))=="volume_unavailable");
 }
-int main(){stickyAndPersistent();hintsAndIdentity();connectRecoveryAndNoReplay();memoryAndExpiry();errorsAndLargeReceipt();resolverLateCallback();persistenceFaults();puts("Actual ESP peer relay/cache/route-store/DNS fixtures passed; not LAN or physical acceptance");}
+int main(){stickyAndPersistent();hintsAndIdentity();connectRecoveryAndNoReplay();memoryAndExpiry();errorsAndLargeReceipt();resolverLateCallback();changedHintDuringDnsOutage();stackFragmentationDoesNotLockOutReads();persistenceFaults();puts("Actual ESP peer relay/cache/route-store/DNS fixtures passed; not LAN or physical acceptance");}

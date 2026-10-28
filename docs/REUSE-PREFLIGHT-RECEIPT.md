@@ -10835,3 +10835,25 @@ matching the unreachable keycontroller's current hardware profile is made.
 Actual async HTTP actor/short-write/final-ACK and USB request/diagnostic receipt
 fixtures also passed. Existing AVR source-mapping CI mismatch remains unrelated
 and unresolved; no all-green CI or installed runtime claim.
+
+### Relay edge-case follow-up
+
+Source follow-up adds a different caller-observed IP as an identity-probe
+candidate after cached connect failure plus failed hostname lookup, never as
+POST retry authority. Preallocates form bytes once. The injected stack-allocation
+fixture proves a 31732-byte largest block becoming 21492 does not permanently
+lock out subsequent status reads; actual response allocation remains checked.
+SDK WString.cpp reread found empty assignment retains capacity, including empty
+move assignment. Explicit null assignment invokes its invalidate/free path for
+retired responses and completed command packets; queued response stays a JSON
+string, not null. Fixtures exercise that actual release branch.
+
+Final source SDK build passed: program 2,339,923/3,342,336 bytes, static RAM
+139,380/327,680. Raw candidate 2,340,064 bytes; SHA256
+f18721c3387951fdce2738e1fa166031c3cead60c868ecc5b79298c4b924107c.
+This supersedes the pre-edge-case ed86a0c1 candidate above, in the same canonical
+build path/profile. Actual relay fixtures and source/script/fence guards pass.
+Run 40714319535 confirms the existing AVR mapping mismatch is still the CI
+failure; no check bypass or broad unrelated code review is claimed. David said
+he will restore ASUS access after additional requests: no repeated access prompt,
+deployment, board actuation or new network configuration was attempted.

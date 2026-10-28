@@ -2458,7 +2458,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `desktop/src/bridge.rs:110 [UTF8-LF sha256=a05278f91cf4fe82a4043e4c746422f265b07d070c29c892677211db8af2b2d5; anchor=pub struct Runtime]`.
 - Target: `desktop/src/usb_table.rs:590 [UTF8-LF sha256=13c191e37a4a881d96fb668c0ccb99fa2f168955e6abb78bb37940a629434042; anchor=pub struct Intent]`.
-- Target: `firmware/esp/src/PeerRelay.h:19 [UTF8-LF sha256=2ba3a8b1332dd2cc6c9fd443e080e401ec6a722958c60433542106b38fd4a129; anchor=class PeerRelay]`.
+- Target: `firmware/esp/src/PeerRelay.h:19 [UTF8-LF sha256=b59e020b680b3d726e8bed915ecf73ba8ae79d7fcaf6ce2ca435429c1582b0db; anchor=class PeerRelay]`.
 - Target: `firmware/esp/src/PeerRouteStore.h:9 [UTF8-LF sha256=93e58147fbf62072c7a6ce22abe39d0dd2cf3840cd41e70bcdea8c5693889756; anchor=class PeerRouteStore]`.
 - Retained: Read complete source. Adapt exact request-ID correlation, ambiguous/malformed result as uncertain, consume-before-dispatch and no replay. New SerialCommand::Bridge queues through the sole existing USB owner and returns actual same-sequence ACK plus readback, not queue acceptance.
 - Retained: Reread source and peer_response_test.go for ESP HTTP peer relay: validate destination board/boot, exact command-result request ID and boolean acceptance; malformed/lost responses remain outcome-uncertain. Explicit target, one hop, eight bounded receipt reservations, no redirects, no automatic command retry. Worker keeps outgoing I/O out of game loop. This is not a completed mesh or physical delivery claim.
@@ -2466,7 +2466,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Generic PCController peerRPCSession JSON-RPC/WebSocket/Socket.IO response envelope`. Disposition: **pending**. Reason: Pakar uses its existing living /api/command and board/boot/deadline contract, not an unimplemented promise of generic PCController RPC compatibility. Full manager.go route/authority/transport adapters remain pending review.
 - Test-code evidence: `desktop/src/bridge.rs:2179 [UTF8-LF sha256=a05278f91cf4fe82a4043e4c746422f265b07d070c29c892677211db8af2b2d5; anchor=fn bridge_network_repeater_confirms_upstream_usb_readback_and_preserves_both_hops]`.
 - Test-code evidence: `desktop/src/usb_table.rs:842 [UTF8-LF sha256=13c191e37a4a881d96fb668c0ccb99fa2f168955e6abb78bb37940a629434042; anchor=fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback]`.
-- Test-code evidence: `tests/peer_relay_test.cpp:121 [UTF8-LF sha256=324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d; anchor=int main()]`.
+- Test-code evidence: `tests/peer_relay_test.cpp:140 [UTF8-LF sha256=30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2; anchor=int main()]`.
 - Remaining: Issue #2: Generic PCController peerRPCSession JSON-RPC/WebSocket/Socket.IO response envelope. Core native USB/network command sharing has source/socket fixtures; actual ASUS/LAN/Android/physical acceptance and full opaque firmware/binary streaming forwarding remain open.
 - Remaining: ESP relay has explicit persistent verified route metadata and an observed directory in source; automatic discovery, continuous peer events and selectable relayed Flutter/Rust/Web transports remain open, as do BLE central, USB host, ESP-NOW and resumable hash-verified file/firmware delivery. One hop only; LAN identity pinning is not cryptographic authentication. Destination authentication is never bypassed or delegated implicitly. Hardware deployment and bidirectional latency/heap acceptance remain open.
 
@@ -2544,7 +2544,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `desktop/src/peer_http.rs:1110 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority]`.
 - Test-code evidence: `mobile/test/network_route_recovery_test.dart:11 [UTF8-LF sha256=e353a06b0fab6f9dd84cc7ce24aee1a5e8517c6e179b3975826f6adaa52f951f; anchor=void main()]`.
 - Test-code evidence: `mobile/test/configuration_event_transport_test.dart:9 [UTF8-LF sha256=4c48e1641b05832a0c0fd5945a9a63e080b8563515f00970f03bb7fcdee9dd08; anchor=void main()]`.
-- Test-code evidence: `tests/peer_relay_test.cpp:121 [UTF8-LF sha256=324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d; anchor=int main()]`.
+- Test-code evidence: `tests/peer_relay_test.cpp:140 [UTF8-LF sha256=30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2; anchor=int main()]`.
 - Scoped advantage: Adds session routing and identity-fenced durable recovery, trusted-CA TLS fixtures and no mutation replay.
 - Remaining: Focused Flutter fixtures pass; actual phone/LAN, physical color and audible melody acceptance remain open. ESP relay/cache/route-store fixtures cover cached reuse with failed mDNS, changed DHCP address, saved-route re-verification, wrong identity/boot, private-address validation, command no-replay, memory/receipt limits, safe late DNS callbacks and interrupted filesystem publication. Actual bidirectional board latency and heap/long-soak acceptance are still pending.
 
@@ -2570,7 +2570,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `mobile/test/lan_resolver_transport_test.dart:12 [UTF8-LF sha256=bf4a46ca2ce7a9639b66bd7c03f9ecd57065b58a2d7fb2cc5e8f6a0edc3f637e; anchor=void main()]`.
 - Test-code evidence: `mobile/test/selection_batch_network_test.dart:19 [UTF8-LF sha256=41eb7d501bf707974913ef8d1813b0e18d841b85266c032778acd15848f09dc3; anchor=test(]`.
 - Test-code evidence: `desktop/src/peer_http.rs:1199 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn local_verified_address_override_preserves_http_hostname_and_explicit_port]`.
-- Test-code evidence: `tests/peer_relay_test.cpp:121 [UTF8-LF sha256=324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d; anchor=int main()]`.
+- Test-code evidence: `tests/peer_relay_test.cpp:140 [UTF8-LF sha256=30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2; anchor=int main()]`.
 - Scoped advantage: Session-sticky routing plus hostname-first durable same-board recovery; authentication and generic HTTP failures never grant discovery or mutation replay authority.
 - Remaining: Verify physical Android DNS-SD/mDNS resolution, reconnect/DHCP change, TLS hostname identity and retained discovery records under real network loss. Preserve explicit Disconnect and identity fencing.
 

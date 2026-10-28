@@ -9067,7 +9067,7 @@
         {
           "path": "firmware/esp/src/PeerRelay.h",
           "anchor": "class PeerRelay",
-          "sha256": "2ba3a8b1332dd2cc6c9fd443e080e401ec6a722958c60433542106b38fd4a129"
+          "sha256": "b59e020b680b3d726e8bed915ecf73ba8ae79d7fcaf6ce2ca435429c1582b0db"
         },
         {
           "path": "firmware/esp/src/PeerRouteStore.h",
@@ -9096,7 +9096,7 @@
         {
           "path": "tests/peer_relay_test.cpp",
           "anchor": "int main()",
-          "sha256": "324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d"
+          "sha256": "30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2"
         }
       ],
       "remaining": [
@@ -23818,7 +23818,7 @@
         {
           "path": "tests/peer_relay_test.cpp",
           "anchor": "int main()",
-          "sha256": "324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d"
+          "sha256": "30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2"
         }
       ],
       "improvement": "Session-sticky routing plus hostname-first durable same-board recovery; authentication and generic HTTP failures never grant discovery or mutation replay authority."
@@ -23885,7 +23885,7 @@
         {
           "path": "tests/peer_relay_test.cpp",
           "anchor": "int main()",
-          "sha256": "324821b6207fc1f00a70d30a931bcfa97f3b4fdb28b1ba560b399a54c7d7fa6d"
+          "sha256": "30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2"
         }
       ],
       "improvement": "Adds session routing and identity-fenced durable recovery, trusted-CA TLS fixtures and no mutation replay."
