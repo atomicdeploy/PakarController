@@ -8,6 +8,30 @@ publishing source is not a new hardware deployment or complete feature acceptanc
 
 ## Verified GitHub integration
 
+### Final source handoff (2026-10-29)
+
+PR27, PR34, PR35 and PR36 are normally merged. Main code checkpoint
+`b752b4c15e5f7fdfa3cecbcf6f9e33a882743670` has the identical tree of
+`224dd2a56d96399606177f93a1b37290e19f1f1e`, which passed every required job in
+[Build40765000068](https://github.com/atomicdeploy/PakarController/actions/runs/40765000068)
+and [CodeQL40765000034](https://github.com/atomicdeploy/PakarController/actions/runs/40765000034),
+including the standalone finding check. Windows tests/package, Android analysis/
+tests/APK, all S3/AVR profiles, contracts/resources/Web/ledger and platform tooling
+pass. Draft release publication was skipped; no release/tag or deployment.
+
+All complete diffs and paginated bodies/comments/reviews/threads were reviewed.
+Original and concurrent source/repair heads are main ancestors. At final review,
+GitHub has zero open PRs, no local/remote branch tip is unmerged, both worktrees
+are clean and no stash hides work. Root main is fast-forwarded; the other owner's
+merged worktree is preserved. Only the verified-merged temporary root branch and
+deleted remote-tracking refs were removed. Four TLS alerts closed; the distinct
+Linux glib issue #17 remains open. All 22 product/acceptance issues remain tracked.
+
+This final receipt/conversation refresh changes documentation/audit metadata
+only. Its post-merge CI is separate from the fully verified code checkpoint
+above; no firmware/client implementation, saved instance settings or private
+backups changed. Read GitHub's current main SHA when pulling this receipt.
+
 ### Completed main consolidation (2026-10-28)
 
 PR27 merged normally as `e47b230d1791d3bf4186f3b48d5690436b5b4f98`;
@@ -101,7 +125,7 @@ as `335755a79231a278589c534d5977dab5ceff9538`. Final head
 [Build40760281674](https://github.com/atomicdeploy/PakarController/actions/runs/40760281674)
 and [CodeQL40760281681](https://github.com/atomicdeploy/PakarController/actions/runs/40760281681),
 including Windows/Android packages, all S3/AVR profiles and the standalone check.
-All495 native tests and the full quality suite passed locally too. The reviewed update
+All 495 native tests and the full quality suite passed locally too. The reviewed update
 changes only rustls0.23.45 to0.23.46 and its verified crates.io checksum;
 incidental tempfile/getrandom resolver churn is removed. The stale Cargo.lock
 donor target binding is refreshed after rereading the actual PuzzleBoard lock
@@ -117,12 +141,14 @@ Those changes and merged main335755a are consolidated without rewriting either
 history. Existing prompt/suggestion capacities and formatting defaults remain;
 the optional soft decimal conversion and Unicode selection footer are canonical
 upstream code, not a second local shell fork. The combined source passes the
-actual shell/editor/TUI/authority and TCP/UDP loopback tests and the21-file hash
-gate. Exact combined-head CI and normal merge remain required before handoff.
+actual shell/editor/TUI/authority and TCP/UDP loopback tests and the 21-file hash
+gate. Final head 224dd2a passed complete Build40765000068, CodeQL40765000034 and
+the standalone check; normal merge b752b4c preserves both histories. Its complete
+body, both comments and every review/thread page (none) were reread before merge.
 
 Read-only Git integrity inspection found no missing/corrupt object. One old
 unreachable amended commit a2aa350 has identical code/workflow to the retained
-main ancestor9f649d3; only documentation sentence ordering differs. Historical
+main ancestor 9f649d3; only documentation sentence ordering differs. Historical
 unreachable objects are not pruned, published blindly or mistaken for live drafts.
 
 ### Remaining issues, not forgotten work

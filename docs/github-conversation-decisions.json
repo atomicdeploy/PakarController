@@ -244,8 +244,8 @@
       "repository": "atomicdeploy/PakarController",
       "number": 36,
       "scope": "full-record",
-      "content_sha256": "ef19b3ce2c5c2636da026d02fae5e1b1d66a2acf5f5e9ec0c2ac6588a8215e09",
-      "application": "Read complete canonical source/manifest/ledger diff, body and both coordination comments; no reviews or inline threads. Existing capacities and hardware/authentication owners remain unchanged. Preserve original b793233, owner8aa81bd/9721cb and normal main335755a histories; resolve metadata conflicts by retaining the complete donor inventory and both independent review records. Actual shell suite and21-file source gate pass on combined source; final combined-head CI and physical acceptance remain separate gates."
+      "content_sha256": "f8a69b3118fe3e935d0b4f03d96cc22210f127bf8aa71a017da4c2267d75e5ef",
+      "application": "Read complete source/manifest/generated-ledger diff, complete body, both coordination comments and all review/thread pages (none), including unchanged final merged conversation. Four canonical headers independently match upstream10b7d294 hashes/byte counts. Both concurrent source/repair histories and complete814-record inventory are preserved. Final224dd2a passed Build40765000068, CodeQL40765000034 and standalone finding check; normal main merge b752b4c has exactly that tree. No completed Copilot review or device acceptance claimed; final receipt-only main CI is separate."
     }
   ]
 }

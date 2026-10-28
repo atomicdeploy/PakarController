@@ -11234,3 +11234,9 @@ source fixtures and pending hardware acceptance. Refresh only these README
 target bindings, retain their existing anchors/dispositions, regenerate/check the
 same reports and run the actual shell suite on the TLS-consolidated candidate.
 No separate implementation, device mutation or guard bypass is introduced.
+
+Final Git HTTPS refresh timed out before fetching the last merge. Inspected the
+coordination procedure and verified GitHub's current main SHA; a bounded narrow
+HTTP/1.1 fetch then succeeded without disabling TLS checks. Fast-forwarded local
+main and verified its entire tree equals the accepted PR head before cleanup.
+Never treated the failed fetch's stale origin/main ref as the final handoff.

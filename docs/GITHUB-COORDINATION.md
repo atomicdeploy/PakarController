@@ -1,5 +1,20 @@
 # Conversation-aware integration
 
+## Final handoff (2026-10-29)
+
+PRs #27, #34, #35 and #36 are normally merged. Main code checkpoint b752b4c has
+exactly the tree of 224dd2a, which passed Build40765000068, CodeQL40765000034 and the
+standalone finding check, including Windows/Android packages and all S3/AVR
+profiles. Complete diffs and all paginated conversations were reviewed. The
+final refreshed inventory retains all 814 records; fetching never promotes unread
+records. Copilot requests are not claimed as completed reviews.
+
+At this checkpoint there are zero open PRs, no unmerged local/remote branch tips,
+no stash or dirty source. The other owner's merged worktree and private state
+are preserved. Final receipt-only metadata has separate post-merge CI. Issue2,
+the remaining product/donor/hardware gates and Linux glib issue17 stay open.
+See HANDOFF.md and the current GitHub main identity before continuing elsewhere.
+
 ## Main consolidation checkpoint (2026-10-28)
 
 PR27 and PR34 are merged normally as e47b230 and da12fde. Final main has the
@@ -12,8 +27,8 @@ as completed reviews. No open PR or unmerged local/remote branch remained at
 that checkpoint. Dependabot subsequently opened PR35 for rustls0.23.46;
 it merged normally as335755a after finalbabf858 passed Build40760281674,
 CodeQL40760281681 and the standalone finding check. The concurrent canonical
-shell PR36 is consolidated with that merged main; its combined-head CI and
-conversation review remain merge gates. See the current GitHub list rather
+shell PR36 was consolidated with that merged main and subsequently merged as
+recorded above. See the current GitHub list rather
 than interpreting a historical zero-PR snapshot as a perpetual status.
 
 Root main was fast-forwarded and the other clean, fully merged PortableShell
