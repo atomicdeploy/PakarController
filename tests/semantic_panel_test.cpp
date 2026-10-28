@@ -50,6 +50,19 @@ int main() {
   assert(overload.dropped()==24&&overload.historyCount()==8);
   assert(overload.history(0).id==33&&overload.history(7).id==40);
   assert(overload.pop(event)&&event.id==25);
+  Presenter animated;
+  const uint8_t rawSegments[4]={0,0,8,0};
+  animated.restingSegments(true,rawSegments);
+  assert(animated.frame(0,true,false,frame)&&frame[4]==0x20&&!memcmp(frame+8,rawSegments,4));
+  animated.admitted(0,frame);assert(!animated.frame(1,true,false,frame));
+  animated.post(Mode,"rEAd",0,100);
+  assert(animated.frame(100,true,false,frame)&&frame[4]==0&&!memcmp(frame+8,"rEAd",4));
+  animated.persistent(true,"P050");
+  assert(animated.frame(200,true,false,frame)&&frame[4]==0&&!memcmp(frame+8,"P050",4));
+  animated.persistent(false,nullptr);
+  assert(animated.frame(2100,true,false,frame)&&frame[4]==0x20);
+  animated.restingSegments(false,nullptr);
+  assert(animated.frame(2200,true,false,frame)&&frame[4]==0);
   unsigned count=1;while(overload.pop(event))++count;assert(count==16);
   std::cout<<"Semantic panel: finite notices, once/blank marquee, priorities, blink phases, manual leases, rollover, bounded events and admission passed.\n";
 }

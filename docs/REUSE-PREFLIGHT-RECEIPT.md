@@ -11240,3 +11240,41 @@ coordination procedure and verified GitHub's current main SHA; a bounded narrow
 HTTP/1.1 fetch then succeeded without disabling TLS checks. Fast-forwarded local
 main and verified its entire tree equals the accepted PR head before cleanup.
 Never treated the failed fetch's stale origin/main ref as the final handoff.
+
+## Keycontroller boot and PuzzleBoard timer presentation (2026-10-29)
+
+Consulted firmware-hardware, games-streaming, donor-audit/PuzzleBoard.ino and
+audio-attention. Read PuzzleBoard's MODE_RESET waitCounter, countdown/colon,
+beepOff and multiplex helpers, and the actual PCController LocalLib/TonePlayer
+header/implementation. The donor's exact bottom-first 12-step/100 ms animation
+now has a TM1637 active-high adapter in BoardCore/GamePanelFeedback.h. Retain
+A4/DIO and A5/CLK, bounded display admission and notice/menu/update ownership;
+do not copy the incompatible active-low shift-register pin map or blocking beeps.
+
+The same existing audio ring gains idle-only atomic admission (action8, explicit
+HELLO audio bit2); it rejects timer ticks during notes, flash cues or prefill.
+No extra AVR queue/RAM allocation, audio-rate interrupt, legacy stop-and-beep
+fallback or missed-tick replay. Silent mode remains authoritative. Persistent
+boot policy defaults to first available/Press to win, retains saved wiring and
+uses one fresh-round admission only after AVR ownership is confirmed. An
+interrupted link does not trigger another boot round.
+
+Scope-reviewed diffs in the existing shared files leave their unrelated donor
+routes/anchors unchanged; rebind only these changed target/proof bytes in the
+existing ledger. Add exact helper/proof references to the PuzzleBoard mapping,
+without promoting physical or remaining donor acceptance. The first Git refresh
+timed out; candidate work starts from the verified prior clean a66d3a8 checkpoint,
+not an assumption that a failed fetch refreshed origin/main. No production
+board, GPIO, ASUS, tablet or PBX action is part of this source task.
+
+Candidate checks caught the new native control in the read-only status scope;
+moved it into the existing per-peer settings Draft and retained the imported
+Pealayer ComboBox/DropdownUiExt geometry. Removed only this pass's unrelated
+whole-crate rustfmt changes and restored their original evidence bindings.
+The Web generation gate correctly rejected an edited packaging header; moved
+the diff to canonical web/index.html and regenerated all assets through
+build-web.mjs. Browser dependency lookup reused the bundled Playwright via
+load_workspace_dependencies/NODE_PATH, without installing another package or
+contacting a board. The first DOM run lacked NODE_PATH; the corrected isolated
+browser fixture passes. A later narrow HTTPS fetch succeeded and verified
+origin/main remains a66d3a8. No failed check was disabled or bypassed.

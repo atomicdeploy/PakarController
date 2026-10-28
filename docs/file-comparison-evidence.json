@@ -1402,7 +1402,7 @@
         {
           "path": "web/index.html",
           "anchor": "function renderAssignmentTools(",
-          "sha256": "783ffe5a5dbe4b96c898cb896437247749f29bb8c8d2fecbb9659d5fae243b27"
+          "sha256": "4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb"
         }
       ],
       "proof": [
@@ -2503,12 +2503,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -2543,19 +2543,19 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void boardKeyGesture("
         }
       ],
       "proof": [
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "ae2a46216f0f3f907965041627cf2566743bd1304035efd2a8e0429cfbbb9dcb",
+          "sha256": "1e1883b4b934bba41c25939d1cfaa59acf033cc9d537f7a03cf0826178242df8",
           "anchor": "test('actual AVR key callback"
         }
       ],
@@ -2634,7 +2634,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -2709,19 +2709,19 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
+          "sha256": "c102c4d0a789f9d19e8c94db92001caf489beca04e65dead01186d91998c2cde",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -2755,19 +2755,19 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
+          "sha256": "c102c4d0a789f9d19e8c94db92001caf489beca04e65dead01186d91998c2cde",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -3244,12 +3244,12 @@
         },
         {
           "path": "firmware/esp/src/KeyMiniGameSettings.h",
-          "sha256": "e4f135174b37a402278acc041f222a0b78a7e35821606c394d812ccaae1fb274",
+          "sha256": "1688f38c4bd15d14ba56bc7a2e41297034d6e3eb1d41554158092669010014c5",
           "anchor": "struct KeyMiniGameSettings"
         },
         {
           "path": "firmware/esp/src/KeyMiniGameService.h",
-          "sha256": "ba5aaf72a17e63252cd994a2a99ef936633425274932a9f90cac90834d11a87f",
+          "sha256": "4245bc41e0a131b6e6f2549f4bec4817b4bc51b9c5da743eae1371e9730e1837",
           "anchor": "void serviceMiniGame"
         }
       ],
@@ -3266,12 +3266,12 @@
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "4423bb677d1993a4f100f09a9224adaa785311fd0846664bc6e068177f12ad73",
+          "sha256": "d2b57769a1ad667ae39b642c3a44114a4be2480772d5cbff42b52a3c7bc3d1b9",
           "anchor": "static void toggle()"
         },
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "ae2a46216f0f3f907965041627cf2566743bd1304035efd2a8e0429cfbbb9dcb",
+          "sha256": "1e1883b4b934bba41c25939d1cfaa59acf033cc9d537f7a03cf0826178242df8",
           "anchor": "test('every minigame command"
         }
       ],
@@ -3400,7 +3400,7 @@
         },
         {
           "path": "mobile/lib/minigame_panel.dart",
-          "sha256": "1dff5f107041785a88a2fef722811be5d3b2a5eba5db16c156ed3b207103cfd4",
+          "sha256": "ad11aa9c271162f7452c465b532ec72289f8fcb9a62c03564cbe99d989dcfab5",
           "anchor": "class MiniGamePanel"
         },
         {
@@ -7515,12 +7515,12 @@
         },
         {
           "path": "firmware/esp/src/SemanticPanel.h",
-          "sha256": "8cd5384e86c8201e42d6d80b96eacd84668bcb3a7ee88bacef5addb4be1bc958",
+          "sha256": "9a2f348fe8b4c7f754fdba89d2a72022babc5c17364541b1a3e243e3247e0632",
           "anchor": "class Presenter"
         },
         {
           "path": "firmware/esp/src/SemanticPanelService.h",
-          "sha256": "6cdc2690d8fa3f256eeecdec93bc58c726d937c60abb6ca1420d364a09916584",
+          "sha256": "0f8eaadc387507630b1cdf2ab05941aa131677f483856303f943a9479d95d5f5",
           "anchor": "void serviceSemanticPanel("
         }
       ],
@@ -7537,7 +7537,7 @@
         },
         {
           "path": "tests/semantic_panel_test.cpp",
-          "sha256": "b98bbbbe5a90a2e216edd74fb3244f804d769c60483869a484caac65ecb58343",
+          "sha256": "24f15644080821c8ee821f8d9851a07ed22557c637714a32b9f0a5b5bd4188bd",
           "anchor": "int main()"
         }
       ],
@@ -8764,7 +8764,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function firmwareUpdateObservation(s)"
         }
       ],
@@ -9525,7 +9525,8 @@
       "verdict": "parity-gap",
       "preserved": [
         "Read all 1223 donor lines through EOF. Preserved its 12-step four-digit perimeter animation, active-low input/relay service concepts, temporary status colors, valid/error audio distinction, serial input diagnostics and cooperative service intent.",
-        "The target uses board-confirmed A4/DIO and A5/CLK TM1637, one mode-aware shift-register owner, nonblocking tone queue and framed UART; the perimeter animation is a bounded semantic state rather than an always-running idle distraction."
+        "The target uses board-confirmed A4/DIO and A5/CLK TM1637, one mode-aware shift-register owner, nonblocking tone queue and framed UART; the perimeter animation is a bounded semantic state rather than an always-running idle distraction.",
+        "2026-10-29: Adapt MODE_RESET waitCounter exactly: bottom-left across, right C/B, top backwards, left F/E; 100 ms per step, active-high TM1637. Optional Ready animation uses existing semantic priorities. Active timed games have disposable idle-only second/minute audio; fresh boot selection is configurable, first available/Press to win by default. No new physical acceptance."
       ],
       "targets": [
         {
@@ -9545,8 +9546,23 @@
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "void TonePlayer::update(uint32_t now)"
+        },
+        {
+          "path": "libraries/BoardCore/src/GamePanelFeedback.h",
+          "sha256": "10e31abc341049f2d118394b9279a55ea9ac6e4887b14f7e9cded471758c670d",
+          "anchor": "inline void puzzlePanelSegments"
+        },
+        {
+          "path": "firmware/esp/src/KeyMiniGameSettings.h",
+          "sha256": "1688f38c4bd15d14ba56bc7a2e41297034d6e3eb1d41554158092669010014c5",
+          "anchor": "bootLast=false"
+        },
+        {
+          "path": "firmware/esp/src/KeyMiniGameService.h",
+          "sha256": "4245bc41e0a131b6e6f2549f4bec4817b4bc51b9c5da743eae1371e9730e1837",
+          "anchor": "if(miniBootPending)"
         }
       ],
       "proof": [
@@ -9559,6 +9575,21 @@
           "path": "tests/key_input_order_test.cpp",
           "sha256": "fc1b99ef668cae2692a3317df5c345b544f702207f85646b5e88871c0ce2292a",
           "anchor": "shifted==0x5a"
+        },
+        {
+          "path": "tests/key_minigame_test.cpp",
+          "sha256": "d2b57769a1ad667ae39b642c3a44114a4be2480772d5cbff42b52a3c7bc3d1b9",
+          "anchor": "static void panelFeedback()"
+        },
+        {
+          "path": "tests/semantic_panel_test.cpp",
+          "sha256": "24f15644080821c8ee821f8d9851a07ed22557c637714a32b9f0a5b5bd4188bd",
+          "anchor": "Presenter animated"
+        },
+        {
+          "path": "tests/tone_player_test.cpp",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
+          "anchor": "uint8_t tick[]"
         }
       ],
       "omissions": [
@@ -9699,7 +9730,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "kCueWelcome40Led"
         },
         {
@@ -9766,7 +9797,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void resetGame(bool playWelcome = true)"
         },
         {
@@ -10505,7 +10536,7 @@
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "void TonePlayer::update(uint32_t now)"
         }
       ],
@@ -10522,7 +10553,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -10582,7 +10613,7 @@
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "void TonePlayer::update(uint32_t now)"
         }
       ],
@@ -10599,7 +10630,7 @@
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.update(start+270)"
         }
       ],
@@ -10654,7 +10685,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void chooseWinner(uint8_t button)"
         },
         {
@@ -10734,7 +10765,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const uint16_t durations[kCueCount]",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -10773,7 +10804,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const uint16_t durations[kCueCount]",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -12806,7 +12837,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da"
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -12851,7 +12882,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function upgradeObservation(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         }
       ],
       "omissions": [
@@ -12976,7 +13007,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         }
       ],
       "proof": [
@@ -13066,7 +13097,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         }
       ],
       "proof": [
@@ -13156,7 +13187,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         }
       ],
       "proof": [
@@ -13246,7 +13277,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         }
       ],
       "proof": [
@@ -13308,7 +13339,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da"
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -13366,7 +13397,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da"
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
         }
       ],
       "omissions": [
@@ -13427,7 +13458,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da",
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13443,7 +13474,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da"
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -13558,7 +13589,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -13590,7 +13621,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -13699,14 +13730,14 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         }
       ],
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -13878,7 +13909,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -13955,7 +13986,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -14777,7 +14808,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function statusRgbOutput"
         }
       ],
@@ -14826,7 +14857,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da",
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -14911,7 +14942,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function acceptStatusRgb("
         }
       ],
@@ -15256,7 +15287,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da",
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15385,7 +15416,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -15581,7 +15612,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da",
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
           "anchor": "bool authenticate()"
         },
         {
@@ -16826,7 +16857,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function connectWs()"
         }
       ],
@@ -16935,7 +16966,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -17027,7 +17058,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -17199,7 +17230,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function connectWs()"
         }
       ],
@@ -17302,7 +17333,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -17398,7 +17429,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -17483,7 +17514,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -17677,12 +17708,12 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "783ffe5a5dbe4b96c898cb896437247749f29bb8c8d2fecbb9659d5fae243b27",
+          "sha256": "4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb",
           "anchor": "function renderLedBackendControl(anchor){"
         },
         {
           "path": "web/index.html",
-          "sha256": "783ffe5a5dbe4b96c898cb896437247749f29bb8c8d2fecbb9659d5fae243b27",
+          "sha256": "4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb",
           "anchor": "function waitForLedBackend("
         }
       ],
@@ -17865,7 +17896,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -18297,7 +18328,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function statusRgbOutput"
         },
         {
@@ -18478,12 +18509,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da",
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function peerAvailability("
         }
       ],
@@ -18673,7 +18704,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         }
       ],
       "omissions": [
@@ -18732,7 +18763,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -18872,7 +18903,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -18882,7 +18913,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -18963,7 +18994,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -19673,12 +19704,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
+          "sha256": "c102c4d0a789f9d19e8c94db92001caf489beca04e65dead01186d91998c2cde",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "startsAt = stepEndsAt_"
         },
         {
@@ -19704,7 +19735,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -19731,18 +19762,18 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.setMuted(false)"
         },
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -19767,7 +19798,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "fifteen finite cues",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         }
       ],
       "improvement": "Tested late-loop and wraparound timing without cumulative melody-length drift; initialized default construction; validation at enqueue; mute changes publish immediately; unmute no longer restarts an interrupted note."
@@ -19784,12 +19815,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
+          "sha256": "c102c4d0a789f9d19e8c94db92001caf489beca04e65dead01186d91998c2cde",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -19816,12 +19847,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -19843,12 +19874,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
+          "sha256": "c102c4d0a789f9d19e8c94db92001caf489beca04e65dead01186d91998c2cde",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "startsAt = stepEndsAt_"
         },
         {
@@ -19874,7 +19905,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -19911,18 +19942,18 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.setMuted(false)"
         },
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -19947,7 +19978,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "fifteen finite cues",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/attention_cues_test.cpp",
@@ -19969,12 +20000,12 @@
       "targets": [
         {
           "path": "firmware/avr/TonePlayer.h",
-          "sha256": "d8fb0cfc7a73a9c10bc378d85426fda01894c9991dc827ef9ed0cb5a72357c98",
+          "sha256": "c102c4d0a789f9d19e8c94db92001caf489beca04e65dead01186d91998c2cde",
           "anchor": "bool enqueue"
         },
         {
           "path": "firmware/avr/TonePlayer.cpp",
-          "sha256": "c9397c220a51caac48ea06e6b700a74ee3b5cfd98f1eda5e3e4288274ea6f2e6",
+          "sha256": "6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1",
           "anchor": "startsAt = stepEndsAt_"
         }
       ],
@@ -20001,12 +20032,12 @@
       "proof": [
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.update(start+270)"
         },
         {
           "path": "tests/tone_player_test.cpp",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f",
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42",
           "anchor": "player.setMuted(false)"
         }
       ],
@@ -20321,7 +20352,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -20372,7 +20403,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "display.serviceBrightness("
         }
       ],
@@ -20425,12 +20456,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -20471,12 +20502,12 @@
       "targets": [
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void serviceInputs("
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "void boardKeyGesture("
         }
       ],
@@ -20503,7 +20534,7 @@
       "proof": [
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "ae2a46216f0f3f907965041627cf2566743bd1304035efd2a8e0429cfbbb9dcb",
+          "sha256": "1e1883b4b934bba41c25939d1cfaa59acf033cc9d537f7a03cf0826178242df8",
           "anchor": "test('actual AVR key callback"
         }
       ],
@@ -20568,7 +20599,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "constexpr uint16_t kShiftPeriodMs = PAKAR_FIRST_WINS_ENABLED ? 1 : 5"
         }
       ],
@@ -20624,7 +20655,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -20680,7 +20711,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -21993,7 +22024,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -22098,7 +22129,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "/* Fixed manager slots:"
         },
         {
@@ -22329,7 +22360,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c",
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -22720,7 +22751,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22776,7 +22807,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22832,7 +22863,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -22888,7 +22919,7 @@
         },
         {
           "path": "firmware/avr/avr.ino",
-          "sha256": "3e2e53d2f972d36b109ce5c0d9b9651cba22126b7c36a72273444d859058c7d5",
+          "sha256": "537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370",
           "anchor": "cancelDeferredReset(); // A previously ACKed reset"
         }
       ],
@@ -23256,7 +23287,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da",
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -23287,7 +23318,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -23383,7 +23414,7 @@
         {
           "path": "tests/tone_player_test.cpp",
           "anchor": "const auto beforeMute",
-          "sha256": "2ab3f2e840d3b62a25f7da2a5bcdfb9b4c887eb70d022c7691649251049c650f"
+          "sha256": "d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42"
         },
         {
           "path": "tests/pc_contract_test.cpp",
@@ -24153,7 +24184,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da",
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24234,7 +24265,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da"
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -24495,7 +24526,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da",
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24571,7 +24602,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "9c01e9952d691509428c94a694864b4cda59bec94cfb3c43c4252fdf749824da"
+          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
         }
       ],
       "omissions": [
@@ -24734,7 +24765,7 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "783ffe5a5dbe4b96c898cb896437247749f29bb8c8d2fecbb9659d5fae243b27",
+          "sha256": "4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb",
           "anchor": "function workspaceDiagnosticDraft()"
         },
         {
@@ -25065,7 +25096,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function createWorkspaceStorage",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         },
         {
           "path": "assets/web/device-settings.js",
@@ -25119,7 +25150,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function workspaceSettingsRecord",
-          "sha256": "e81644ad10bac36fe1c35e07af8c7fe4b6537f9f4b48b2c82aaac682de97ea7c"
+          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
         }
       ],
       "proof": [

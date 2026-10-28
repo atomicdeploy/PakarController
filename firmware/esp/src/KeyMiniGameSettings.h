@@ -2,12 +2,14 @@
 #include <ArduinoJson.h>
 #include <FS.h>
 #include <KeyMiniGame.h>
+#include <GamePanelFeedback.h>
 
 // Same stage/readback/rename transaction as KeyGameSettings. No implicit format,
 // no instance migration, and no per-frame persistence or round replay on boot.
 struct KeyMiniGameSettings {
   using Game=BoardCore::KeyMiniGame;
   Game::Config value;
+  bool bootLast=false, segmentAnimation=true, timerBeeps=true, timerAlternateTones=true;
   static const char *outputName(Game::OutputSource s){
     constexpr const char *names[]={"disabled","active","success","failure","held","latched","winner","lost"};
     return s<=Game::KeyLost?names[s]:"disabled";
@@ -16,6 +18,18 @@ struct KeyMiniGameSettings {
   bool patch(JsonVariantConst v){
     if(!v.is<JsonObjectConst>())return false;
     auto next=value;
+    bool last=bootLast,animation=segmentAnimation,beeps=timerBeeps,alternate=timerAlternateTones;
+    if(!v["boot_mode"].isUnbound()){
+      if(!v["boot_mode"].is<const char*>())return false;
+      const char *policy=v["boot_mode"];
+      if(strcmp(policy,"first")&&strcmp(policy,"last"))return false;
+      last=!strcmp(policy,"last");
+    }
+    for(const auto name:{"segment_animation","timer_beeps","timer_alternate_tones"})
+      if(!v[name].isUnbound()&&!v[name].is<bool>())return false;
+    if(!v["segment_animation"].isUnbound())animation=v["segment_animation"];
+    if(!v["timer_beeps"].isUnbound())beeps=v["timer_beeps"];
+    if(!v["timer_alternate_tones"].isUnbound())alternate=v["timer_alternate_tones"];
     if(!v["mode"].isUnbound()){
       Game::Mode mode;if(!v["mode"].is<const char*>()||!Game::parse(v["mode"],mode))return false;
       if(mode!=next.mode){const auto mask=next.enabledMask;next=Game::Config::defaults(mode);next.enabledMask=mask;
@@ -53,10 +67,12 @@ struct KeyMiniGameSettings {
       }
     }
     if(!next.valid())return false;
-    value=next;return true;
+    value=next;bootLast=last;segmentAnimation=animation;timerBeeps=beeps;timerAlternateTones=alternate;return true;
   }
   void json(JsonObject out)const{
     const auto &c=value;out["mode"]=Game::name(c.mode);out["limit_ms"]=c.limitMs;
+    out["boot_mode"]=bootLast?"last":"first";out["segment_animation"]=segmentAnimation;
+    out["timer_beeps"]=timerBeeps;out["timer_alternate_tones"]=timerAlternateTones;
     out["warning_ms"]=c.warningMs;out["urgent_ms"]=c.urgentMs;out["penalty_ms"]=c.penaltyMs;
     out["window_ms"]=c.windowMs;out["show_ms"]=c.showMs;out["gap_ms"]=c.gapMs;
     out["feedback_ms"]=c.feedbackMs;out["rounds"]=c.rounds;out["sequence_length"]=c.sequenceLength;

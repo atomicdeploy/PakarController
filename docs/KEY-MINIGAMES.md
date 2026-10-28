@@ -19,10 +19,40 @@ and outputs. Opening any client panel does not start or reset gameplay.
 | toggle | Toggle, latch or momentary button state | None |
 
 Press-to-win is the initial default. Configure/reset enters Ready. Puzzles require
-Start; press-to-win/toggle may start on their first input. Pause preserves time.
+Start except for the explicitly selected boot restoration below;
+press-to-win/toggle may start on their first input. Pause preserves time.
 Matching pairs needs two or more boxes: an odd enabled count sits the highest box
 out without changing its saved enabled setting. Reaction times measure ESP receipt
 time, not independently measured electrical latency.
+
+## Power-up and seven-segment feedback
+
+Game settings in Flutter, Rust and Web expose these persistent options through
+the existing `minigame-configure` command (also available over framed USB):
+
+| Setting | Default | Behavior |
+| --- | --- | --- |
+| `boot_mode` | `first` | Select Press to win (or first compiled mode); `last` selects the last configured mode. Start a **fresh** puzzle only after AVR ownership is acknowledged. Never restore a winner, elapsed timer or held input. |
+| `segment_animation` | `true` | PuzzleBoard's 12-step, 100 ms perimeter animation while Ready; notices, countdowns, menus, manual capture and maintenance retain priority. |
+| `timer_beeps` | `true` | During active timed play: a 35 ms tick each elapsed second; an 80/60/80 ms caution double-beep at each elapsed minute. Untimed Press to win and Toggle remain quiet. |
+| `timer_alternate_tones` | `true` | Odd seconds 1047 Hz, even seconds 880 Hz. Disabled uses 880 Hz every second. Minute caution uses 659 Hz. |
+
+Boot selection is RAM-only; saved box enablement, palette, effects, wiring and
+last-mode settings are not rewritten at boot. First-game selection retains
+explicit settings if that mode was already selected, including an opted-in
+timer. Later ownership loss pauses gameplay and requires explicit Resume;
+it does not trigger boot restoration again. Settings edits do not auto-start.
+
+Timer cues require the paired AVR's HELLO audio bit2 (`timer_beeps_supported`
+in minigame status). Audio stream action8 has the same packed finite-note
+payload as action7, but rejects with Busy while audio or a prefill owns the
+player. A tick never interrupts a melody, overrides Silent, retries on rejection
+or catches up after a stall/pause. The minute cue is buffered as one local
+timeline, not timed using separate network requests. No extra AVR tone queue
+or hardware pins are introduced; TM1637 remains A4/DIO and A5/CLK.
+
+Source/fixture evidence is not an audible or optical test. This candidate still
+needs paired ESP/AVR installation and human display/audio feedback.
 
 ## Transport and persistence
 

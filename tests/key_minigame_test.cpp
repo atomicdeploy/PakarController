@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstdio>
 #include <KeyMiniGame.h>
+#include <GamePanelFeedback.h>
 using Game=BoardCore::KeyMiniGame;
 using Config=Game::Config;
 static void tap(Game &g,uint8_t key,uint32_t now){assert(g.input(key,true,now));assert(g.input(key,false,now+1));}
@@ -170,7 +171,42 @@ static void wrongPairFeedback(){
   g.tick(now+c.mismatchMs);assert(g.phase()==Game::Input);g.styles(s);
   assert(s[(a-1)*2].rgb==0&&s[(b-1)*2].rgb==0);
 }
+static void panelFeedback(){
+  uint8_t pixels[4];
+  constexpr uint8_t digit[]={0,1,2,3,3,3,3,2,1,0,0,0};
+  constexpr uint8_t segment[]={8,8,8,8,4,2,1,1,1,1,32,16};
+  for(uint8_t step=0;step<12;++step){
+    BoardCore::puzzlePanelSegments(step*100U,pixels);
+    for(uint8_t i=0;i<4;++i)assert(pixels[i]==(digit[step]==i?segment[step]:0));
+  }
+  BoardCore::puzzlePanelSegments(1200,pixels);assert(pixels[0]==8&&pixels[1]==0);
+  auto c=Game::Config::defaults(Game::PressToWin);c.enabledMask=3;
+  assert(BoardCore::bootGameConfig(c,false).mode==Game::PressToWin);
+#ifndef TEST_EXCLUDED_MODES
+  c=Game::Config::defaults(Game::Simon);c.enabledMask=3;c.outputs[0]={Game::KeyHeld,2};
+  const auto first=BoardCore::bootGameConfig(c,false),last=BoardCore::bootGameConfig(c,true);
+  assert(first.mode==Game::PressToWin&&!first.limitMs&&first.enabledMask==3&&first.outputs[0].key==2);
+  assert(last.mode==Game::Simon&&last.sequenceLength==8);
+  Game fresh;assert(fresh.configure(first,0));assert(fresh.phase()==Game::Ready&&!fresh.view().timed);
+  assert(fresh.input(1,true,1)&&fresh.view().winner==1);
+#endif
+  using T=BoardCore::GameTimerFeedback;T t;
+  assert(t.update(true,0,120000,true,true)==T::None);
+  for(uint32_t ms=50;ms<=61000;ms+=50){
+    const auto cue=t.update(true,ms,120000-ms,true,true);
+    assert(cue==(ms%1000?T::None:ms==60000?T::Minute:(ms/1000)%2?T::SecondOdd:T::SecondEven));
+  }
+  assert(t.update(true,65000,55000,true,true)==T::None); // No catch-up burst.
+  assert(t.update(false,65000,55000,true,true)==T::None);
+  assert(t.update(true,66000,54000,true,true)==T::None); // Resume baseline.
+  assert(t.update(true,0,120000,true,true)==T::None); // New round.
+  for(uint32_t ms=50;ms<1000;ms+=50)t.update(true,ms,120000-ms,true,true);
+  assert(t.update(true,1000,119000,true,false)==T::SecondEven);
+  assert(t.update(true,2000,118000,false,true)==T::None);
+  assert(t.update(true,3000,0,true,true)==T::None);
+}
 int main(){
+  panelFeedback();
 #ifdef TEST_EXCLUDED_MODES
   static_assert(Game::compiledMask()==1,"Only press-to-win should be compiled");
   Game g;auto c=config(Game::Toggle);assert(!g.configure(c,0));

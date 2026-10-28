@@ -118,6 +118,29 @@ void main() {
       expect(commandPeerMatches(null, null, null), isFalse);
     },
   );
+  test('Boot and timer presentation settings are strict optional fields', () {
+    final game = miniStatus().peer.minigame!;
+    expect(
+      game.command(minigameConfigure, {
+        'settings': jsonEncode({
+          'boot_mode': 'last',
+          'segment_animation': true,
+          'timer_beeps': true,
+          'timer_alternate_tones': false,
+        }),
+      }),
+      isNotNull,
+    );
+    for (final patch in [
+      {'boot_mode': 'resume-winner'},
+      {'timer_beeps': 1},
+    ]) {
+      expect(
+        () => game.command(minigameConfigure, {'settings': jsonEncode(patch)}),
+        throwsFormatException,
+      );
+    }
+  });
   test('Intro and arpeggio settings are typed, bounded and optional', () {
     final snapshot = miniStatus().peer.minigame!;
     final fields = {

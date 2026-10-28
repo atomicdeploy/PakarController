@@ -165,7 +165,13 @@ class MiniGameSnapshot {
         } else {
           valid = switch (entry.key) {
             'mode' => modes.containsKey(value),
-            'hard' || 'intro_enabled' || 'color_arpeggio' => value is bool,
+            'hard' ||
+            'intro_enabled' ||
+            'color_arpeggio' ||
+            'segment_animation' ||
+            'timer_beeps' ||
+            'timer_alternate_tones' => value is bool,
+            'boot_mode' => const ['first', 'last'].contains(value),
             'toggle_kind' => const ['toggle', 'latch', 'press'].contains(value),
             'outputs' => validOutputs(value),
             _ => false,

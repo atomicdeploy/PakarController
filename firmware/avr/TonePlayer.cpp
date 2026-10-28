@@ -152,8 +152,8 @@ uint8_t TonePlayer::stream(const uint8_t *p,uint8_t n) {
   if(n<5)return 3;
   const uint8_t action=p[0];
   const uint16_t id=p[1]|uint16_t(p[2])<<8,offset=p[3]|uint16_t(p[4])<<8;
-  if(action>7||!id||(action!=1&&action!=6&&action!=7&&n!=5))return 3;
-  if(action==7){
+  if(action>8||!id||(action!=1&&action!=6&&action!=7&&action!=8&&n!=5))return 3;
+  if(action==7||action==8){
     // Atomic finite cue: validate every step before replacing any active audio.
     // This reuses the existing circular queue and local absolute deadlines.
     if(offset||n<=5||(n-5)%4||(n-5)/4>MAX_TONES)return 3;
@@ -162,6 +162,8 @@ uint8_t TonePlayer::stream(const uint8_t *p,uint8_t n) {
       if(!ms||ms>5000||(hz&&(hz<20||hz>20000)))return 3;
     }
     if(muted_||id==streamId_)return 6;
+    // Optional timer feedback is disposable and never owns/replaces a stream.
+    if(action==8&&(isBusy()||streamState_==1))return 5;
     stop();streamId_=id;streamOffset_=(n-5)/4;streamFinal_=true;
     for(uint8_t at=5;at<n;at+=4)enqueue(p[at]|uint16_t(p[at+1])<<8,p[at+2]|uint16_t(p[at+3])<<8);
     streamState_=2;return 0;

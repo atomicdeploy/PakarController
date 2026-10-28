@@ -20,6 +20,9 @@ try{
     async function post(path,data){calls.push({path,...data});if(data.settings){if(data.settings.mode)Object.assign(state.minigame.settings,{limit_ms:data.settings.mode==='toggle'?0:60000,window_ms:1200,show_ms:500,gap_ms:200,feedback_ms:240});Object.assign(state.minigame.settings,data.settings);state.minigame.mode=state.minigame.settings.mode;}renderKeyGame();return true}
     ${code}
     renderKeyGame();`});
+  await page.evaluate(()=>{
+    Object.assign(state.minigame.settings,{boot_mode:'first',segment_animation:true,timer_beeps:true,timer_alternate_tones:true});renderKeyGame();
+  });
   assert.equal(await page.evaluate(()=>calls.length),0);
   assert.equal(await page.locator('[data-mini-mode] option').count(),3,'Only the board catalog is rendered');
   assert.equal(await page.locator('[data-mini-action=start]').isDisabled(),true);
@@ -29,6 +32,10 @@ try{
   await page.locator('[data-key="1"]').click();
   assert.equal(await page.evaluate(()=>calls[1].action),'tap');
   await page.locator('[data-minigame] summary').click();
+  assert.equal(await page.locator('[name=boot_mode]').inputValue(),'first');
+  assert(await page.locator('[name=timer_beeps]').isChecked());
+  await page.locator('[name=boot_mode]').selectOption('last');
+  await page.locator('[name=timer_alternate_tones]').uncheck();
   await page.locator('[data-mini-form] [name=limit_ms]').fill('45000');
   await page.evaluate(()=>{state.minigame.elapsed_ms=123;renderKeyGame()});
   assert.equal(await page.locator('[data-mini-form] [name=limit_ms]').inputValue(),'45000','Status does not erase the local draft');
@@ -38,6 +45,8 @@ try{
   await page.locator('[data-mini-form] [type=submit]').click();
   assert.deepEqual(await page.evaluate(()=>calls.at(-1).settings.outputs[0]),{source:'held',key:2});
   assert.equal(await page.evaluate(()=>calls.at(-1).settings.limit_ms),45000);
+  assert.equal(await page.evaluate(()=>calls.at(-1).settings.boot_mode),'last');
+  assert.equal(await page.evaluate(()=>calls.at(-1).settings.timer_alternate_tones),false);
   await page.locator('[data-mini-choice]').click();
   assert.equal(await page.locator('[role=menuitemcheckbox] small').count(),3,'Each mode has a second-line description');
   assert.equal(await page.locator('[role=menuitemcheckbox] svg').count(),3,'Each mode has a vector icon');

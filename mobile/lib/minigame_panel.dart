@@ -642,6 +642,29 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
               children: [
                 const Text('Saving resets the game to Ready.'),
                 const SizedBox(height: 16),
+                if (const ['first', 'last'].contains(draft['boot_mode']))
+                  DropdownButtonFormField<String>(
+                    initialValue: draft['boot_mode'] as String,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Game on power-up',
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'first',
+                        child: Text('Press to win (first available game)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'last',
+                        child: Text('Last configured game · fresh round'),
+                      ),
+                    ],
+                    onChanged: saving
+                        ? null
+                        : (value) {
+                            if (value != null) change('boot_mode', value);
+                          },
+                  ),
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
@@ -681,6 +704,9 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
                 for (final entry in {
                   'intro_enabled': 'Reveal colors and notes before play',
                   'color_arpeggio': 'Arpeggio color notes',
+                  'segment_animation': 'Ready display · perimeter animation',
+                  'timer_beeps': 'Timer · second ticks and minute warning',
+                  'timer_alternate_tones': 'Timer · alternate odd/even tones',
                 }.entries)
                   if (draft[entry.key] is bool &&
                       (entry.key != 'intro_enabled' ||

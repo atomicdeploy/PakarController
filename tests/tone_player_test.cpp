@@ -102,7 +102,17 @@ int main() {
   player.update(210);assert(player.activeFrequencyHz()==784);
   player.update(310);assert(!player.isBusy());
   finite[7]=55;assert(player.stream(finite,sizeof(finite))==0);
+  uint8_t tick[]={8,0,128,0,0,112,3,35,0};
+  assert(player.stream(tick,sizeof(tick))==5); // Cannot cut the active arpeggio.
+  player.update(400);assert(player.activeFrequencyHz()==523);
   player.stop();assert(!player.isBusy());
+  assert(player.stream(tick,sizeof(tick))==0);player.update(500);
+  assert(player.activeFrequencyHz()==880);player.update(535);assert(!player.isBusy());
+  assert(player.stream(tick,sizeof(tick))==6); // No duplicate tick replay.
+  beginStream[1]=9;assert(player.stream(beginStream,5)==0);
+  ++tick[1];assert(player.stream(tick,sizeof(tick))==5); // Silent prefill still owns audio.
+  player.stop();player.setMuted(true);
+  assert(player.stream(tick,sizeof(tick))==6);player.setMuted(false);
   using namespace BoardCore::Protocol;
   const uint16_t durations[kCueCount] = {530,450,410,300,1080,450,400,600,100,5750,300,300,520,590,240};
   CueTimeline timelines[kCueCount];

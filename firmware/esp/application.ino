@@ -272,6 +272,8 @@ bool avrMiniGames=false,avrMiniOwned=false;
 uint16_t miniPhysicalHeld=0,miniRemoteHeld=0;
 uint16_t miniEpoch=1,avrMiniEpoch=0,miniEpochSent=0;
 bool miniResumeAfterFence=false;
+bool miniBootPending=true;
+BoardCore::GameTimerFeedback miniTimerFeedback;
 uint16_t miniFenceNote=0;
 uint32_t miniFenceAt=0;
 bool miniCommand(JsonObjectConst request,String &result);
@@ -296,7 +298,7 @@ uint16_t keyMaskSentValue=0;
 bool avrGameMelodies=false,keyAudioApplied=false;
 bool avrRemotePress=false;
 bool avrAudioStream=false,audioStreamWaiting=false,audioStreamReceived=false;
-bool avrFlashAudio=false,avrAtomicAudio=false,gameAudioPending=false,gameAudioAck=false;
+bool avrFlashAudio=false,avrAtomicAudio=false,avrIdleAudio=false,gameAudioPending=false,gameAudioAck=false;
 uint8_t gameAudioSequence=0,gameAudioError=0;
 uint32_t gameAudioSentAt=0;
 uint8_t audioStreamSequence=0,audioStreamReply[8]={};
@@ -3650,6 +3652,7 @@ void onAvrFrame(const BoardCore::Protocol::Frame &frame, void *) {
     avrAudioStream=frame.payloadLength>=19 && frame.payload[18]==1;
     avrFlashAudio=frame.payloadLength>=21 && (frame.payload[20]&1);
     avrAtomicAudio=frame.payloadLength>=21 && (frame.payload[20]&2);
+    avrIdleAudio=frame.payloadLength>=21 && (frame.payload[20]&4);
     avrTelemetryKnown = false;
     avrResetTelemetryKnown = false;
     avrVersionKnown = frame.payloadLength >= 9 &&
@@ -5281,6 +5284,8 @@ void setup() {
       if(miniSettings.value.valid())break;
     }
   }
+  // Select once at boot without writing the saved last-mode configuration.
+  miniSettings.value=BoardCore::bootGameConfig(miniSettings.value,miniSettings.bootLast);
   miniGame.configure(miniSettings.value,millis());grid.setGamePresentation(&miniLayer);
   miniEpoch=uint16_t(micros())|1U;
 #endif

@@ -90,7 +90,15 @@ pub fn settings(text: &str, game: &Value) -> Result<Value, String> {
             "mode" => value
                 .as_str()
                 .is_some_and(|id| modes(game).iter().any(|(known, _)| *known == id)),
-            "hard" | "intro_enabled" | "color_arpeggio" => value.is_boolean(),
+            "hard"
+            | "intro_enabled"
+            | "color_arpeggio"
+            | "segment_animation"
+            | "timer_beeps"
+            | "timer_alternate_tones" => value.is_boolean(),
+            "boot_mode" => value
+                .as_str()
+                .is_some_and(|v| matches!(v, "first" | "last")),
             "toggle_kind" => value
                 .as_str()
                 .is_some_and(|v| matches!(v, "toggle" | "latch" | "press")),
@@ -678,9 +686,36 @@ fn panel(
                             });
                         }
                     }
+                    if let Some(policy) = draft.edited["boot_mode"].as_str() {
+                        let mut policy = policy.to_owned();
+                        dialog::setting_row(ui, icons::POWER, "Game on power-up", None, |ui| {
+                            ComboBox::from_id_salt("boot-game")
+                                .selected_text(if policy == "last" {
+                                    "Last configured game"
+                                } else {
+                                    "First available game"
+                                })
+                                .show_ui(ui, |ui| {
+                                    ui.dropdown_value(
+                                        &mut policy,
+                                        "first".into(),
+                                        "Press to win (first available game)",
+                                    );
+                                    ui.dropdown_value(
+                                        &mut policy,
+                                        "last".into(),
+                                        "Last configured game · fresh round",
+                                    );
+                                });
+                        });
+                        draft.edited["boot_mode"] = json!(policy);
+                    }
                     for (field, label) in [
                         ("intro_enabled", "Reveal colors and notes before play"),
                         ("color_arpeggio", "Arpeggio color notes"),
+                        ("segment_animation", "Ready display · perimeter animation"),
+                        ("timer_beeps", "Timer · second ticks and minute warning"),
+                        ("timer_alternate_tones", "Timer · alternate odd/even tones"),
                     ] {
                         if field == "intro_enabled"
                             && !matches!(selected.as_str(), "color-match" | "memory-pairs")
@@ -840,7 +875,8 @@ mod tests {
         serde_json::from_value(json!({"board_id":"fixture","boot_id":"boot",
             "capabilities":{"role":"first-wins"},"minigame":{"ready":true,"revision":1,
             "mode":"future-game","phase":"ready","available_modes":[{"id":"future-game","label":"Future game"}],
-            "settings":{"mode":"future-game","warning_ms":10000,"urgent_ms":3000,"rounds":5}}})).unwrap()
+            "settings":{"mode":"future-game","warning_ms":10000,"urgent_ms":3000,"rounds":5,
+                "boot_mode":"first","segment_animation":true,"timer_beeps":true,"timer_alternate_tones":true}}})).unwrap()
     }
     #[test]
     fn minigame_catalog_and_partial_settings_are_board_owned() {
@@ -848,6 +884,9 @@ mod tests {
         assert_eq!(modes(&s.minigame), vec![("future-game", "Future game")]);
         assert!(settings(r#"{"mode":"future-game"}"#, &s.minigame).is_ok());
         assert!(settings(r#"{"mode":"simon"}"#, &s.minigame).is_err());
+        assert!(settings(r#"{"boot_mode":"last","segment_animation":true,"timer_beeps":true,"timer_alternate_tones":false}"#, &s.minigame).is_ok());
+        assert!(settings(r#"{"boot_mode":"resume-winner"}"#, &s.minigame).is_err());
+        assert!(settings(r#"{"timer_beeps":1}"#, &s.minigame).is_err());
         assert!(settings(r#"{"warning_ms":2000}"#, &s.minigame).is_err());
         assert_eq!(
             settings(r#"{"rounds":7}"#, &s.minigame).unwrap(),

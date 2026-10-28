@@ -103,3 +103,16 @@ test('countdown presentation keeps update progress priority and shared effects',
   assert.match(service,/resultCue=kCueIncorrect/);
   assert.match(service,/resultCue=keySettings\.winnerCue/);
 });
+test('boot restoration is once-only and timer cues cannot preempt AVR audio',()=>{
+  const settings=read('firmware/esp/src/KeyMiniGameSettings.h'),tone=read('firmware/avr/TonePlayer.cpp');
+  assert.match(app,/miniSettings\.value=BoardCore::bootGameConfig\(miniSettings\.value,miniSettings\.bootLast\)/);
+  assert.match(service,/if\(miniBootPending\)\{miniBootPending=false/);
+  assert(service.indexOf('if(!miniReady())')<service.indexOf('if(miniBootPending)'));
+  assert.match(service,/miniTimerFeedback\.update\(miniGame\.running\(\)&&v\.timed/);
+  assert.match(service,/!tone&&!successCue&&avrIdleAudio/);
+  assert.match(tone,/if\(action==8&&\(isBusy\(\)\|\|streamState_==1\)\)return 5/);
+  for(const field of ['boot_mode','segment_animation','timer_beeps','timer_alternate_tones']){
+    assert(settings.includes(`out["${field}"]`));
+    for(const file of ['mobile/lib/minigame.dart','mobile/lib/minigame_panel.dart','desktop/src/minigame.rs','firmware/esp/src/WebUi.h'])assert(read(file).includes(field),file+': '+field);
+  }
+});
