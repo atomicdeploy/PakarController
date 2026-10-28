@@ -46,6 +46,7 @@ if(appFixture){
     if(interactiveFixture)status.capabilities.acknowledged_features.push('command-ack',...(contextProfile==='table'?['cell-batch','cell-lock']:[]));
   }
   status.state_presentation={enabled:false,fade_ms:350,pulse_ms:1200,ring_ms:800,chase_ms:1200,states:{idle:{rgb:16777215,motion:0},won:{rgb:65280,motion:2},lost:{rgb:16711680,motion:1},off:{rgb:0,motion:0}}};
+  if(contextProfile==='table')status.state_presentation.fire_rotation=0;
   if(status.capabilities&&process.argv.includes('--peripherals')){
     status.capabilities.acknowledged_features.push('buzzer','display');
     Object.assign(status,{avr_online:true,tm1637_ack:true,tm1637_brightness:5,audio_cues:['welcome','winner','attention']});
@@ -96,6 +97,10 @@ function fixtureCommand(packet){
     case 'state-presentation': {
       const settings=packet.settings;
       if(!settings||typeof settings!=='object')throw Error('invalid_settings');
+      if('fire_rotation' in settings){
+        if(contextProfile!=='table'||![0,90,180,270].includes(settings.fire_rotation))throw Error('invalid_rotation');
+        status.state_presentation.fire_rotation=settings.fire_rotation;
+      }
       for(const key of ['fade_ms','pulse_ms','ring_ms','chase_ms'])if(key in settings){if(!Number.isInteger(settings[key])||settings[key]<0||settings[key]>65535)throw Error('invalid_timing');status.state_presentation[key]=settings[key];}
       if('enabled' in settings)status.state_presentation.enabled=settings.enabled===true;
       for(const [key,value] of Object.entries(settings.states||{})){

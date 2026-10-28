@@ -12,6 +12,7 @@ struct StateAppearance {
   } states[4] = {{0xffffff}, {0xff0000}, {0}, {0x00ff00}};
   bool enabled = false, neighbors = true, invert = false, diagonal = false;
   uint16_t pulseMs = 700, ringMs = 900, chaseMs = 1800, fadeMs = 300;
+  uint16_t fireRotation = 0;
   static const char *name(uint8_t state) {
     switch(state) {
       case Protocol::kCellIdle: return "idle";
@@ -32,6 +33,7 @@ struct StateAppearance {
     return false;
   }
   bool valid() const {
+    if(fireRotation>270 || fireRotation%90) return false;
     if (pulseMs<100 || pulseMs>10000 || ringMs<100 || ringMs>20000 ||
         chaseMs<100 || chaseMs>20000 || fadeMs>10000) return false;
     for (const auto &style:states) if(style.rgb>0xffffff || style.motion>KeyPresentation::SharedChase) return false;

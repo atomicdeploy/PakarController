@@ -108,7 +108,6 @@
   "Effects": "جلوه‌ها",
   "Rainbow test": "آزمایش رنگین‌کمان",
   "LED driver: {driver}": "راه‌انداز LED: {driver}",
-  "Static cells: six matching pixels. Rainbow test animates explicitly.": "خانه‌های ثابت: شش پیکسل هم‌رنگ. آزمایش رنگین‌کمان، پویانمایی را فعال می‌کند.",
   "Effects: animated output enabled explicitly.": "جلوه‌ها: خروجی متحرک فعال شده است.",
   "Logical cell {id}": "خانهٔ منطقی {id}",
   "Collapse or expand {panel}": "جمع یا باز کردن {panel}",
@@ -301,5 +300,11 @@
   "Rule preview": "پیش‌نمایش قاعده",
   "Send black to this address. Later pixels keep their positions.": "این نشانی خاموش می‌شود و پیکسل‌های بعدی در جای خود می‌مانند.",
   "Skip this value. Following values move one address earlier; the last address is black.": "این مقدار حذف می‌شود؛ مقدارهای بعدی یک نشانی جلو می‌آیند و نشانی آخر خاموش می‌شود.",
-  "Move this pixel and all following values. Positive moves later; negative moves earlier. Empty addresses are black.": "این پیکسل و مقدارهای پس از آن جابه‌جا می‌شوند؛ مثبت به عقب و منفی به جلو. نشانی‌های خالی خاموش می‌شوند."
+  "Move this pixel and all following values. Positive moves later; negative moves earlier. Empty addresses are black.": "این پیکسل و مقدارهای پس از آن جابه‌جا می‌شوند؛ مثبت به عقب و منفی به جلو. نشانی‌های خالی خاموش می‌شوند.",
+  "Fire direction": "جهت شعله",
+  "0° · Up": "۰° · بالا",
+  "90° · Right": "۹۰° · راست",
+  "180° · Down": "۱۸۰° · پایین",
+  "270° · Left": "۲۷۰° · چپ",
+  "Static groups: matching pixels. Rainbow and Fire animate when selected.": "گروه‌های ثابت: پیکسل‌های هم‌رنگ. رنگین‌کمان و آتش با انتخاب متحرک می‌شوند."
 }

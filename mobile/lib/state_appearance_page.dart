@@ -136,6 +136,31 @@ class _StateAppearancePageState extends State<StateAppearancePage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (observed.peer.tableSelection &&
+              const [0, 90, 180, 270].contains(presentation['fire_rotation']))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: DropdownButtonFormField<int>(
+                key: ValueKey('fire-direction:${presentation['fire_rotation']}'),
+                initialValue: presentation['fire_rotation'] as int,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Fire direction',
+                  prefixIcon: Icon(Icons.local_fire_department_outlined),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 0, child: Text('0° · Up')),
+                  DropdownMenuItem(value: 90, child: Text('90° · Right')),
+                  DropdownMenuItem(value: 180, child: Text('180° · Down')),
+                  DropdownMenuItem(value: 270, child: Text('270° · Left')),
+                ],
+                onChanged: busy || !samePeer ? null : (value) {
+                  if (value != null && value != presentation['fire_rotation']) {
+                    patch({'fire_rotation': value});
+                  }
+                },
+              ),
+            ),
           SwitchListTile(
             title: const Text('Extended effects'),
             value: presentation['enabled'] == true,

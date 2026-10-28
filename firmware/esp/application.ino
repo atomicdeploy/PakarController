@@ -3074,7 +3074,7 @@ bool handleCloudCommand(const String &message, String &result) {
     KeyGameSettings keys=keySettings;
     // The key role has its own per-group controls. A shared palette patch must
     // not silently destroy those overrides or accept table-only motion.
-    if(next.value.diagonal || next.value.states[kCellIdle].motion!=BoardCore::KeyPresentation::Solid ||
+    if(next.value.fireRotation || next.value.diagonal || next.value.states[kCellIdle].motion!=BoardCore::KeyPresentation::Solid ||
        next.value.ringMs<400 || next.value.ringMs>3000){result=F("unsupported_key_presentation");return false;}
     keys.idleRgb=next.value.states[kCellIdle].rgb;keys.winRgb=next.value.states[kCellWon].rgb;keys.loseRgb=next.value.states[kCellLost].rgb;
     keys.extendedEffects=next.value.enabled;keys.chasePeriodMs=next.value.ringMs;

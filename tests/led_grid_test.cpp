@@ -64,6 +64,40 @@ void rainbowClockCadence(){
  assert(stationary.pattern()==LedGrid::kPatternNone && rgb(stationary)==still);
  pixelTestNow=savedNow;
 }
+void matrixFireRendering(){
+ const auto savedNow=pixelTestNow;
+ const auto rgb=[](const LedGrid &g){const auto f=g.pixelFrameJson();return f.substr(f.find("\"rgb\":\"")+7,LedGrid::kPixels*6);};
+ const String black(LedGrid::kPixels*6,'0');
+ uint8_t mapping[80];for(uint8_t i=0;i<80;++i)mapping[i]=BoardCore::TableCellMapping::physicalForLogical(i+1);
+ for(bool grouped:{true,false})for(uint16_t rotation:{0,90,180,270}){
+  LedGrid grid;grid.begin();grid.setPhysicalMapping(mapping,80);grid.setStaticMode(grouped);
+  BoardCore::StateAppearance appearance;appearance.fireRotation=rotation;
+  assert(grid.configureAppearance(appearance));assert(grid.setPattern(LedGrid::kPatternFire));
+  pixelTestNow+=1000;grid.service(pixelTestNow);assert(rgb(grid)==black);
+  const uint32_t start=pixelTestNow;BoardCore::MatrixFire<20,8> expected;expected.restart(rotation);expected.advance(start);
+  for(unsigned tick=1;tick<=32;++tick){
+   pixelTestNow=start+tick*16;assert(grid.needsRender(pixelTestNow));grid.service(pixelTestNow);expected.advance(pixelTestNow);
+   const auto frame=rgb(grid);
+   for(uint8_t cell=0;cell<80;++cell){
+    const uint8_t heat=expected.sample(2*(cell%10)+(cell/10)%2,cell/10);
+    const uint16_t physical=mapping[cell]-1;
+    const char hex[]="0123456789abcdef";
+    String color;color+=hex[heat>>4];color+=hex[heat&15];color+="0000"; // Host HeatColor double.
+    for(unsigned pixel=0;pixel<6;++pixel)assert(frame.substr((physical*6+pixel)*6,6)==color);
+    assert(grid.state(cell+1)==BoardCore::Protocol::kCellWhite);
+   }
+  }
+  assert(rgb(grid)!=black);
+  const auto frame=rgb(grid);grid.service(pixelTestNow);assert(rgb(grid)==frame); // No synthetic step per render.
+  assert(grid.setPattern(LedGrid::kPatternFire));grid.service(pixelTestNow);assert(rgb(grid)==black); // Same-effect replay.
+  grid.setPattern(LedGrid::kPatternNone);grid.setPattern(LedGrid::kPatternFire);grid.service(pixelTestNow);assert(rgb(grid)==black);
+ }
+ LedGrid grid;grid.begin();auto layout=grid.groupLayout();uint8_t counts[80]{};counts[0]=3;counts[1]=9;
+ assert(layout.configure(counts,9));assert(grid.configureGroups(layout));
+ grid.setPattern(LedGrid::kPatternFire);grid.service(++pixelTestNow);pixelTestNow+=16;grid.service(pixelTestNow);
+ assert(grid.groupLayout().count(1)==3&&grid.groupLayout().count(2)==9); // Never normalize user groups.
+ pixelTestNow=savedNow;
+}
 void cloudAnimationProgress(){
  const auto savedNow=pixelTestNow;
  LedGrid grid;pixelTestNow=10;grid.begin();grid.setPattern(LedGrid::kPatternRainbow);
@@ -170,6 +204,7 @@ void repeatedFadeKeepsDeadline(){
  pixelTestNow=savedNow;
 }
 int main(){
+ matrixFireRendering();
   hostPresentationComposition();
  repeatedFadeKeepsDeadline();
  semanticAppearance();
@@ -199,8 +234,8 @@ int main(){
  const auto fireFrame=grid.pixelFrameJson();const auto fireAt=fireFrame.find("\"rgb\":\"")+7;
  pixelTestNow+=1000;assert(grid.needsRender(pixelTestNow));grid.service(pixelTestNow);
  frame=grid.pixelFrameJson();
- assert(frame.substr(frame.find("\"rgb\":\"")+7,LedGrid::kPixels*6)==fireFrame.substr(fireAt,LedGrid::kPixels*6));
- assert(grid.pattern()==LedGrid::kPatternFire); // Maintenance is not an animation tick.
+ assert(frame.substr(frame.find("\"rgb\":\"")+7,LedGrid::kPixels*6)!=fireFrame.substr(fireAt,LedGrid::kPixels*6));
+ assert(grid.pattern()==LedGrid::kPatternFire); // Explicit Fire animates in static grouped mode too.
  grid.setPattern(LedGrid::kPatternRainbow);grid.service(++pixelTestNow);
  frame=grid.pixelFrameJson();staticAt=frame.find("\"rgb\":\"")+7;
  for(unsigned i=1;i<6;++i)assert(frame.substr(staticAt,6)==frame.substr(staticAt+i*6,6));

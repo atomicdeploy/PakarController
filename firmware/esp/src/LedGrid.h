@@ -13,6 +13,7 @@
 #include <GameRole.h>
 #include <KeyPresentation.h>
 #include <StateAppearance.h>
+#include <MatrixFire.h>
 #include <CellBatch.h>
 #include <TableCellMapping.h>
 #include <PixelDiagnostic.h>
@@ -206,7 +207,7 @@ class LedGrid {
   uint32_t transitionAt_[kCells] = {};
   bool transitioning_[kCells] = {};
   uint8_t transitionEffects_[kCells] = {};
-  uint8_t heat_[kPixels] = {};
+  BoardCore::MatrixFire<PAKAR_TABLE_SELECTION?20:1,PAKAR_TABLE_SELECTION?8:kPixels> fire_;
   uint8_t states_[kCells] = {};
   BoardCore::StateAppearance appearance_;
   BoardCore::CellBatch previewSelection_;

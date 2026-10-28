@@ -51,6 +51,7 @@ export const phases={
     ["node", "tests/s3_pin_mapping_test.mjs"],
     ["node", "tests/s3_platform_wiring_test.mjs"],
     ["pwsh", "-File", "tools/test-led-pipeline.ps1"],
+    ["pwsh", "-File", "tools/test-matrix-fire.ps1"],
     ["node", "tests/esp32_ws2811_reuse_test.mjs"],
     ["pwsh", "-File", "tools/test-led-rmt-ring.ps1"],
     ["node", "tests/web_workspace_test.mjs"],

@@ -296,9 +296,21 @@ mirroring is not muted by this physical-board preference.
 | POST | `/api/snake/direction` | form `value=up|right|down|left`; opposite turns are rejected |
 | POST | `/api/brightness` | form `value=1..255` |
 | POST | `/api/effect` | form `value=none|rainbow|fire|cell-chase`; chase visits logical80 down to1,750ms each, once, on white |
+| POST | `/api/led/presentation` | partial `settings` JSON, e.g. `{"fire_rotation":180}`; table rotation accepts0,90,180,270 degrees, saved per board and returned in `state_presentation` |
 | POST | `/api/scene/save` | explicitly flush the current semantic scene;200 `saved:true` confirms verified commit,503 requires inspection of status, never an automatic replay |
 | POST | `/api/buzzer` | form `frequency=20..12000`, `duration_ms=1..5000` |
 | POST | `/api/audio` | form `cue` from peer-acknowledged `audio_cues`, including `attention` and donor welcome variations; 202 means queued, not playback completion |
+
+Fire is an explicit global animation in both static-grouped and effects output
+modes. Selecting `fire` again restarts from a cold/black frame. On table builds
+its two-dimensional heat field follows the staggered logical layout, then the
+saved logical-to-physical mapping, custom group lengths and pixel corrections.
+`fire_rotation` rotates the flame direction (0° up,90° right,180° down,270° left),
+not cell identities. This preference lives in `/presentation.json`; existing
+palettes default to0°. Changing direction restarts Fire only if it is active;
+reading status never restarts it. Group colors/states and correction tables are
+not rewritten. The same `state-presentation` command/settings object is available
+through the existing WebSocket, MQTT and encapsulated USB API command paths.
 | POST | `/api/display` | `value=-999..9999`, scheduled `text`, or `release=true`; see below |
 | POST | `/api/outputs` | form `mask=0..255` for direct 74HC595 diagnostics |
 | GET | `/api/network` | AP/station state without returning credentials |

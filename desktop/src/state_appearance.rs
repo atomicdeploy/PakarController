@@ -13,6 +13,7 @@ pub fn parse(text: &str) -> Result<Value, String> {
     for (key, value) in fields {
         let valid = match key.as_str() {
             "enabled" | "neighbors" | "invert" | "diagonal" => value.is_boolean(),
+            "fire_rotation" => value.as_u64().is_some_and(|n| matches!(n, 0 | 90 | 180 | 270)),
             "fade_ms" => value.as_u64().is_some_and(|n| n <= 10000),
             "pulse_ms" => value.as_u64().is_some_and(|n| (100..=10000).contains(&n)),
             "ring_ms" | "chase_ms" => value.as_u64().is_some_and(|n| (100..=20000).contains(&n)),
@@ -58,6 +59,20 @@ pub fn controls(ui: &mut egui::Ui, current: &Value, table: bool) -> Option<Value
 
 fn controls_inner(ui: &mut egui::Ui, current: &Value, table: bool) -> Option<Value> {
     let mut patch = None;
+    // Readback or opening this menu is not an effect-selection intent.
+    if let Some(saved) = current["fire_rotation"].as_u64().filter(|n| table && matches!(n, 0 | 90 | 180 | 270)) {
+        let mut rotation = saved;
+        dialog::setting_row(ui, icons::FIRE, "Fire direction", None, |ui| {
+            crate::ui::dropdown::ComboBox::from_id_salt("fire-direction")
+                .width(ui.available_width().clamp(100.0, 220.0))
+                .selected_text(fire_direction(rotation))
+                .show_ui(ui, |ui| {for angle in [0, 90, 180, 270] {
+                    ui.dropdown_value(&mut rotation, angle, fire_direction(angle));
+                }});
+        });
+        if rotation != saved { patch = Some(json!({"fire_rotation": rotation})); }
+        ui.add_space(8.0);
+    }
     let mut enabled = current["enabled"].as_bool()?;
     if ui
         .checkbox(&mut enabled, "Extended state effects")
@@ -180,6 +195,9 @@ fn controls_inner(ui: &mut egui::Ui, current: &Value, table: bool) -> Option<Val
         }
     }
     patch
+}
+fn fire_direction(rotation: u64) -> &'static str {
+    match rotation {90 => "90° · Right", 180 => "180° · Down", 270 => "270° · Left", _ => "0° · Up"}
 }
 pub fn preview_controls(ui: &mut egui::Ui, ids: &str) -> Option<Vec<(String, String)>> {
     ui.scope(|ui| {
@@ -321,7 +339,7 @@ mod tests {
             "idle":{"rgb":16777215,"motion":0},"won":{"rgb":65280,"motion":2},
             "lost":{"rgb":16711680,"motion":1},"off":{"rgb":0,"motion":0}},
             "fade_ms":250,"pulse_ms":900,"ring_ms":900,"chase_ms":1800,
-            "neighbors":true,"invert":false,"diagonal":true});
+            "neighbors":true,"invert":false,"diagonal":true,"fire_rotation":180});
         for width in [220.0, 280.0, 380.0, 640.0] {
             for table in [false, true] {
                 let context = egui::Context::default();
@@ -359,6 +377,11 @@ mod tests {
     }
     #[test]
     fn validates_and_compares_only_requested_fields() {
+        for angle in [0, 90, 180, 270] {
+            let patch = parse(&format!(r#"{{"fire_rotation":{angle}}}"#)).unwrap();
+            assert!(matches(&patch, &json!({"fire_rotation":angle,"enabled":false})));
+            assert!(!matches(&patch, &json!({"fire_rotation":(angle+90)%360})));
+        }
         let p = parse(r#"{"states":{"lost":{"rgb":255}},"enabled":true}"#).unwrap();
         assert!(matches(
             &p,
@@ -373,6 +396,9 @@ mod tests {
             r#"{"ring_ms":0}"#,
             r#"{"enabled":1}"#,
             r#"{"states":{"lost":{"motion":4}}}"#,
+            r#"{"fire_rotation":45}"#,
+            r#"{"fire_rotation":360}"#,
+            r#"{"fire_rotation":"90"}"#,
         ] {
             assert!(parse(invalid).is_err());
         }

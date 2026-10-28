@@ -46,6 +46,7 @@ CRGB LedGrid::colorFor(BoardCore::Protocol::CellState state) const {
 
 bool LedGrid::configureAppearance(const BoardCore::StateAppearance &value) {
   if(!value.valid())return false;
+  if(value.fireRotation!=appearance_.fireRotation)fire_.restart(value.fireRotation);
   appearance_=value;
   if(PAKAR_TABLE_SELECTION)for(uint8_t i=0;i<kCells;++i){
     current_[i]=target_[i]=colorFor(static_cast<BoardCore::Protocol::CellState>(states_[i]));
@@ -194,6 +195,7 @@ void LedGrid::setRedLock(bool enabled) {
 }
 
 bool LedGrid::setPattern(Pattern pattern) {
+  if(pattern>kPatternCellChase)return false;
   if(redLock_&&pattern==kPatternCellChase)return false;
   retirePresentation();
   keyWinner_=0;
@@ -206,6 +208,7 @@ bool LedGrid::setPattern(Pattern pattern) {
   }
   staging_ = false;
   changePattern(pattern,"explicit-pattern");
+  if(pattern==kPatternFire)fire_.restart(appearance_.fireRotation);
   if(pattern==kPatternCellChase){
     chaseStep_=1;chaseFirstFrame_=true;chaseAt_=millis();renderChaseStep(chaseStep_);
   }
@@ -276,7 +279,7 @@ bool LedGrid::needsRender(uint32_t now) const {
   if(pattern_==kPatternCellChase)return dirty_ ||
     (chaseStep_<kCells && static_cast<uint32_t>(now-chaseAt_)>=kChaseIntervalMs) ||
     static_cast<uint32_t>(now-lastFrameAt_)>=1000U;
-  if (dirty_ || pattern_ == kPatternRainbow ||
+  if (dirty_ || pattern_ == kPatternRainbow || pattern_ == kPatternFire ||
       (pattern_ == kPatternCellChase && chaseStep_<kCells && static_cast<uint32_t>(now-chaseAt_)>=kChaseIntervalMs) ||
       (!staticMode_ && pattern_ != kPatternNone && pattern_ != kPatternCellChase)) return true;
   // A strip can power up after the ESP's first frame, or miss that frame.
@@ -309,8 +312,9 @@ void LedGrid::service(uint32_t now) {
     if(dirty_ || presentationAnimated() || (diagnosticActive_ && diagnosticOptions_.animated()) || static_cast<uint32_t>(now-lastFrameAt_)>=1000U)showStaged();
     return;
   }
-  if (staticMode_ && !dirty_ && pattern_ != kPatternRainbow) {
-    // Resend the already-published complete buffer, never advance fire/fades.
+  if (staticMode_ && !dirty_ && pattern_ != kPatternRainbow && pattern_ != kPatternFire) {
+    // Resend the already-published static scene. Explicit global animations
+    // still run; static mode only keeps the pixels within a group identical.
     if (presentationAnimated() || (diagnosticActive_ && diagnosticOptions_.animated()) || static_cast<uint32_t>(now-lastFrameAt_)>=1000U) showStaged();
     return;
   }
@@ -455,18 +459,18 @@ void LedGrid::renderPattern(uint32_t now) {
       break;
     }
     case kPatternFire:
-      for (uint16_t i = 0; i < kPixels; ++i) {
-        heat_[i] = qsub8(heat_[i], random8(0, 3));
+      fire_.advance(now);
+      for(uint8_t cell=0;cell<kCells;++cell){
+        const uint8_t physical=physicalCells_[cell];
+        if(!physical||physical>kCells)continue;
+        const uint16_t first=groupLayout_.start(physical),count=groupLayout_.count(physical);
+        // Same staggered 20 x 8 half-cell coordinates as table selection.
+        // Custom group counts and the user's physical permutation stay intact.
+        const uint16_t x=PAKAR_TABLE_SELECTION?2*(cell%10)+(cell/10)%2:0;
+        const uint16_t y=PAKAR_TABLE_SELECTION?cell/10:first;
+        for(uint16_t pixel=0;pixel<count;++pixel)
+          pixels_[first+pixel]=HeatColor(fire_.sample(x,PAKAR_TABLE_SELECTION?y:y+pixel));
       }
-      for (uint16_t i = kPixels - 1; i >= 2; --i) {
-        heat_[i] = static_cast<uint8_t>((heat_[i - 1] + heat_[i - 2] +
-                                         heat_[i - 2]) / 3);
-      }
-      if (random8() < 120) {
-        const uint8_t spark = random8(min<uint16_t>(7, kPixels));
-        heat_[spark] = qadd8(heat_[spark], random8(160, 255));
-      }
-      for (uint16_t i = 0; i < kPixels; ++i) pixels_[i] = HeatColor(heat_[i]);
       break;
     default:
       break;

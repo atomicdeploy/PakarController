@@ -1,5 +1,61 @@
 # Donor-first preflight receipt
 
+## Cold-start matrix Fire and runtime direction, 2026-10-28 (issue #26)
+
+Reconsulted led-benchmark, games-streaming and the PCController AddressableLeds
+donor-audit rows. Reread both complete AddressableLeds sources at b0111ae0;
+stage/compose/show ownership stays in the existing renderer. No AVR transport,
+pin timing, alternate framebuffer sender or blocking delay is copied.
+Read the installed FastLED3.10.6 Fire2012.ino and FireMatrix.h completely:
+original-byte SHA256 respectively
+14eb8ece1707c8bd472d64df6b49d0b24e52cc42a20229f9172000535f858cec and
+994200db3111be15424bb04a57f3e9125402fb5b86f624f63f3f98dddf12b622.
+Retained Fire2012's cool/diffuse/ignite/HeatColor structure; adapted lateral
+diffusion and full-base ignition to the real staggered20x8 half-cell geometry.
+FireMatrix's matrix-coordinate separation informs orientation; its100x100
+buffers, compiler UI, palettes and Perlin dependencies are not imported.
+The donor MIT notice is retained in docs/licenses/FastLED-MIT.txt.
+
+Found two regressions: retained heat on explicit re-selection, and the grouped
+static service guard freezing Fire after its first frame. Fire now publishes
+a cold frame on every explicit selection, then advances on a rollover-safe
+16ms simulation clock with bounded catch-up, independently of output cadence.
+Both existing GPIO/RMT paths receive the same full mapped frame. Semantic cell
+states, custom group lengths and correction rules are not rewritten. The table
+heat field uses160 bytes rather than the old480-byte cable heat buffer.
+
+The existing validated presentation patch/store owns fire_rotation in degrees.
+It persists independently of the unchanged binary scene record; omitted fields
+keep their values, old palettes default to0, and failed saves do not apply.
+Web, Flutter and Rust expose only observed table support, send partial patches
+through their existing command owners, and adopt confirmed live readback.
+0/180 cover opposite sides;90/270 provide the other matrix orientations.
+Reading status or opening a panel does not select or restart Fire.
+
+Actual renderer/scene/queue/stress fixtures pass. New simulation/settings tests
+cover cold replay, all rotations, full-width ignition, cadence/rollover,
+transactional failure, no-op saves and unrelated scene/correction preservation.
+Table/key-role and variable-group renderer fixtures pass. Corrected a pre-existing
+route assertion: managed public-file writes already exist; private/raw settings
+remain gated. Web command/readback/mount/backend and single-source asset checks
+pass. Flutter analysis and3 focused widget tests pass;3 Rust appearance tests
+pass. The isolated Web preview was visually inspected and accepted180-degree
+memory-only readback. It is not a real board or optical acceptance.
+
+Final incremental ESP32-S3 table-selection SDK build passes in the canonical
+buffered cache: program2,325,955/3,342,336 bytes and static RAM138,436/327,680.
+The16MB/OPI candidate includes GPIO and RMT-DMA, RMT fresh-board default,
+GPIO48 status RGB, acknowledged ISP and optional Ethernet; BLE and optional
+SSH/SCP are excluded. Existing saved preferences still win over build defaults.
+build/esp32s3-buffered/esp32s3.ino.bin SHA256:
+4a1b345d687b805c3b2c515a56176eb96513233baae6c91eaaf7d12bc8e3906c.
+Full/onboard Web assets match revision889acc3167ad48184249846b114f6011d6ac35d8ad347fda83aa19762aed4a42
+(152,981 gzip bytes). Screenshot: build/ui-evidence/fire-rotation-20261028/web-direction.png.
+No board was flashed, reset, reconfigured or actuated for this task. Real cold
+ignition, rotation and smoothness on the480-pixel table remain an approved
+hardware test. The pre-existing PcControllerRuntime.h SOURCE-MAPPING.json
+certificate failure was reproduced and remains a separate CI acceptance gate.
+
 ## Device terminal polish and Simon default, 2026-10-28 (issue #29 / #32)
 
 Reconsulted device-shell, terminal-ui, PU850 Shell.cpp donor-audit and

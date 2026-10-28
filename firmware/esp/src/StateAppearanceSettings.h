@@ -17,6 +17,9 @@ struct StateAppearanceSettings {
         if(key=="enabled")next.enabled=v.as<bool>();
         else if(key=="neighbors")next.neighbors=v.as<bool>();
         else if(key=="diagonal")next.diagonal=v.as<bool>();else next.invert=v.as<bool>();
+      }else if(key=="fire_rotation"){
+        if(!v.is<uint16_t>())return false;
+        next.fireRotation=v.as<uint16_t>();
       }else if(key=="pulse_ms"||key=="ring_ms"||key=="chase_ms"||key=="fade_ms"){
         if(!v.is<uint16_t>())return false;
         if(key=="pulse_ms")next.pulseMs=v.as<uint16_t>();
@@ -49,6 +52,7 @@ struct StateAppearanceSettings {
   String json()const{
     JsonDocument d;d["enabled"]=value.enabled;d["neighbors"]=value.neighbors;d["invert"]=value.invert;d["diagonal"]=value.diagonal;
     d["pulse_ms"]=value.pulseMs;d["ring_ms"]=value.ringMs;d["chase_ms"]=value.chaseMs;d["fade_ms"]=value.fadeMs;
+    d["fire_rotation"]=value.fireRotation;
     for(uint8_t i=0;i<4;++i){auto s=d["states"][BoardCore::StateAppearance::name(i)].to<JsonObject>();
       s["rgb"]=value.states[i].rgb;s["motion"]=value.states[i].motion;}
     String out;serializeJson(d,out);return out;
@@ -59,7 +63,8 @@ struct StateAppearanceSettings {
   }
   bool save(fs::FS &fs)const{
     const String data=json();auto old=fs.open("/presentation.json","r");
-    if(old&&old.readString()==data)return true;old.close();
+    if(old&&old.readString()==data)return true;
+    old.close();
     auto f=fs.open("/presentation.pending","w");if(!f)return false;
     const bool written=f.print(data)==data.length();f.close();if(!written)return false;
     f=fs.open("/presentation.pending","r");const bool exact=f&&f.readString()==data;f.close();

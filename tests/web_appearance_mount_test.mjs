@@ -16,6 +16,7 @@ class Node {
   set innerHTML(value){for(const match of value.matchAll(/<(\w+)[^>]*\bid="([^"]+)"[^>]*>/g)){const n=new Node(match[1]);n.id=match[2];this.appendChild(n);}}
   appendChild(n){assert(n instanceof Node);n.parentElement=this;this.children.push(n);return n;}
   append(...items){for(const n of items)this.appendChild(n);}
+  prepend(n){n.parentElement=this;this.children.unshift(n);}
   add(n){this.appendChild(n);}
   querySelector(s){return ids.get(s.slice(1))??null;}
   querySelectorAll(){return [...ids.values()].filter(n=>['input','select','button'].includes(n.tagName));}
@@ -26,6 +27,7 @@ const context=vm.createContext({document:{createElement:t=>new Node(t),createTex
   getElementById:id=>ids.get(id),querySelector:s=>s==='.layout'&&present?layout:null,activeElement:null},
   currentPeer:()=>({has:()=>true,role:'first-wins'}),state:{state_presentation:{enabled:true,states:{won:{rgb:0x00ff00,motion:2}}}},
   presentationBusy:false,authenticated:true,peerHttp:{writable:()=>true},saveStateAppearance(){},temporaryStateColor(){},
+  uiTr:text=>text,setUiText:(node,text)=>{node.textContent=text;},
   bulkState:{querySelector:()=>true},Option:function(text,value){return Object.assign(new Node('option'),{textContent:text,value});}});
 vm.runInContext(code,context);
 present=false;vm.runInContext('renderStateAppearance()',context);assert.equal(layout.children.length,0);
@@ -35,4 +37,19 @@ const motion=ids.get('stateMotion-won');assert.equal(motion.value,'2');context.d
 context.state.state_presentation.states.won.motion=1;vm.runInContext('renderStateAppearance()',context);
 assert.equal(motion.value,'1','Focused dropdown must reflect confirmed external changes');
 assert.equal(layout.children.length,1,'Reconnect does not duplicate a panel');
+assert(ids.get('fireDirectionField').hidden,'Keycontroller does not expose a matrix rotation');
+context.currentPeer=()=>({has:()=>true,role:'table-selection'});
+context.state.state_presentation.fire_rotation=0;
+vm.runInContext('renderStateAppearance()',context);
+assert.equal(ids.get('fireDirectionField').hidden,false);
+assert.equal(ids.get('fireDirection').value,'0');
+const sent=[];context.saveStateAppearance=patch=>sent.push(patch);
+ids.get('fireDirection').value='180';ids.get('fireDirection').onchange();
+assert.equal(sent.length,1);assert.equal(sent[0].fire_rotation,180);
+assert.equal(ids.get('fireDirection').value,'0','Keep actual direction until the board acknowledges');
+context.state.state_presentation.fire_rotation=180;
+vm.runInContext('renderStateAppearance()',context);assert.equal(ids.get('fireDirection').value,'180');
+assert.equal(sent.length,1,'Readback never replays the effect');
+delete context.state.state_presentation.fire_rotation;
+vm.runInContext('renderStateAppearance()',context);assert(ids.get('fireDirectionField').hidden,'Older firmware stays compatible');
 console.log('Delayed appearance mount after Studio, reconnect and focused live dropdown passed');
