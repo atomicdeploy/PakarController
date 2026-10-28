@@ -56,7 +56,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         }
       ],
       "proof": [
@@ -91,7 +91,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         }
       ],
       "proof": [
@@ -131,7 +131,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         }
       ],
       "proof": [
@@ -171,7 +171,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         }
       ],
       "proof": [
@@ -206,7 +206,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         },
         {
           "path": "firmware/esp/src/PortableShellCore.h",
@@ -245,7 +245,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         }
       ],
       "proof": [
@@ -280,7 +280,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         }
       ],
       "proof": [
@@ -315,7 +315,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         }
       ],
       "proof": [
@@ -403,7 +403,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682"
+          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
         },
         {
           "path": "tools/telnet-shell.mjs",

@@ -4216,7 +4216,7 @@ Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. O
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8`.
 
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Retained: Inspected Git mode 120000 and target '.' at the pinned revision; accounted for without creating a recursive reference.
 - Omitted/replaced code: `CodeQL root symlink to '.'`. Disposition: **not-applicable**. Reason: Environment-specific analysis marker is not shell code; recreating it would introduce self-referential source traversal.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e; anchor=const source=]`.
@@ -4226,7 +4226,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `b7abe7efbbcb839e230ceb828522604b59f4faaf7b28b697aecb4c9df9f77fe0`.
 
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Retained: Build/editor artifact exclusions retained in the exact reference snapshot; Pakar keeps its existing repository ignore policy.
 - Omitted/replaced code: `Global wildcard ignores`. Disposition: **replaced**. Reason: Applying *.exe, *.a and IDE exclusions repo-wide would hide tracked recovery/test assets and existing project policies.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e; anchor=const source=]`.
@@ -4236,7 +4236,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `7dd7e6e515634cc0c81ff1b1528ad5f0e5c29631417c427d50916a0de132224f`.
 
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Retained: Read complete historical claims; retained verbatim as donor history, not imported as Pakar release certification.
 - Omitted/replaced code: `Complete/security/performance claims`. Disposition: **replaced**. Reason: Source inspection shows placeholders and allocation in history/parser; an old claim of zero alerts cannot establish current safety.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e; anchor=const source=]`.
@@ -4247,7 +4247,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `eafe52b90f65b56c32fedbc846463be5c4472994eb2584d3d260c64bbc2f4e35`.
 
 - Target: `firmware/esp/src/ShellProperties.h:12 [UTF8-LF sha256=7a6cb87cf78a769be09ac82a5d3d3b3912f485b36d98a6676b5320d8b54ed0fa; anchor=struct ShellProperty]`.
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Retained: Read all API/parameter/transport guidance; retained source documentation with corrected integration guidance.
 - Omitted/replaced code: `Raw-pointer parameter binding and advertised editable TUI`. Disposition: **replaced**. Reason: Pakar validates durable settings through owner APIs and has a genuinely interactive staged TUI; no second unsafe parameter owner.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e; anchor=const source=]`.
@@ -4269,7 +4269,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `543e25c4d9c5a99ed9b7d225f33d984f05f5efd61e2bd43e68be75eec22aebf1`.
 
 - Target: `tools/device-shell.ps1:2 [UTF8-LF sha256=4e197e3502eb6ef40d2a3df7bdde97ed3c05140c97e06e3d07426232732a9c55; anchor=param(]`.
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Target: `tools/telnet-shell.mjs:49 [UTF8-LF sha256=85d7ea67800b3ea887d9515b37760a5bca81a4a1827afaffe415fb627869f812; anchor=export function connectShell]`.
 - Retained: Read complete termios raw-mode sample and parameter setup; existing host shell tool retained.
 - Retained: Completed the host-side TCP/stdin path with hostname resolution, incremental Telnet negotiation, backpressure, bounded batch deadlines, hidden interactive authentication, terminal cleanup and no command replay. Actual loopback tests cover success/rejection/auth-required/timeout and interactive disconnect. Existing framed USB and board-side Telnet/TUI remain the real owners.
@@ -4296,7 +4296,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `d024ffc22f99a7c9f50fa68bbaf02b0e722d68b0edaf39512454643e6f1986e2`.
 
 - Target: `firmware/esp/src/ShellService.h:192 [UTF8-LF sha256=e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a; anchor=void executeDeviceShell]`.
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Retained: Read each asserted requirement and reconciled against actual donor code rather than trusting completion checkmarks.
 - Omitted/replaced code: `Thread-safe variable and full editor completeness claims`. Disposition: **replaced**. Reason: No synchronization exists for raw pointers; editor only prints and waits. Existing loop ownership and staged TUI retained.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e; anchor=const source=]`.
@@ -4374,7 +4374,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `b00e51aca5e080d2fcb8734e9a4779dc917e8df2f38730cca2e82e4ad08184aa`.
 
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Target: `firmware/esp/src/PortableShellCore.h:17 [UTF8-LF sha256=23ec970b7349e0eb29fbc420e5e8973461f46d0c4be70c141e0ee0bacbf6ace7; anchor=struct Command]`.
 - Retained: MIT copyright and complete license retained with original source; derived header points to this notice.
 - No production-code omission claimed for this reviewed file.
@@ -4386,7 +4386,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `e9d0814b7f08de2a7f53d004192a60cb329652e7b745bdee379144373cb26f4f`.
 
 - Target: `tools/test-shell.ps1:8 [UTF8-LF sha256=9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075; anchor=foreach($taskName]`.
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Retained: Read full targets and retained upstream build recipe as reference. Tests integrated into the existing guarded native runner.
 - Omitted/replaced code: `Separate donor make clean/install/uninstall and -g profile`. Disposition: **replaced**. Reason: No second build cache or uncontrolled system installation; existing cross-platform canonical low-write test/build wrappers remain authoritative.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e; anchor=const source=]`.
@@ -4396,7 +4396,7 @@ Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b4
 
 Verdict: **equivalent-behavior**. Revision: `67c5dcb8a63f4055cbdaf02e9ff271c53b46410d`. Original-byte SHA-256: `f7228b81aa68c7553cd67100da5c77abe97a8e1ad086e756cdb79c1783cfdcd2`.
 
-- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=227084761ec1729d7f28f4868b44d5709e07d6f608c94ef831851e785e586682; anchor=# Portable Shell source integration]`.
+- Target: `third_party/portable-shell/README.md:1 [UTF8-LF sha256=8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311; anchor=# Portable Shell source integration]`.
 - Retained: Read entire requested branch README, including API examples and completed plan. Useful capabilities mapped to actual compiled owners.
 - Omitted/replaced code: `Production-ready/comprehensive claims and example server instructions`. Disposition: **replaced**. Reason: Examples and tests do not implement promised transport/editor behaviors; integration guide records inspected limitations explicitly.
 - Test-code evidence: `tests/portable_shell_source_test.mjs:5 [UTF8-LF sha256=e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e; anchor=const source=]`.

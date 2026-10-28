@@ -232,6 +232,13 @@
       "scope": "full-record",
       "content_sha256": "db92e234768984b620ac7522c6bfc691d92da34a41908a9a050d649ae86227cc",
       "application": "Read complete body, both comments and all review/thread pages (none), and the full canonical four-header/adapters/manifest/tests diff. Finalccc061d passed Build40753870815 and CodeQL40753922292 plus standalone security check. Normal merge da12fde preserves exactly that code tree. No live shell/hardware acceptance or completed Copilot review inferred."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 36,
+      "scope": "full-record",
+      "content_sha256": "6f8c382ac65355491581ca48a1f8ba315b2dd3b2af067ee98e12584b4a33c802",
+      "application": "Read the complete source diff, body and coordination comment; no reviews or inline threads existed at audit. Four exact shared headers pin PortableShell 10b7d294; prior command/authentication/hardware owners remain intact. Focused shell/loopback and source gates passed before merging current main 335755a normally. Current combined-head CI and physical acceptance remain separate gates."
     }
   ]
 }
