@@ -166,14 +166,17 @@ template<uint16_t Groups,uint16_t Pixels> class HostPresentationStore {
     JsonDocument record;encode(record.to<JsonObject>(),layer);record["revision"]=revision;record["checksum"]=checksum(layer,revision);
     String bytes;const size_t expected=measureJson(record);bytes.reserve(expected);
     if(serializeJson(record,bytes)!=expected)return "presentation_encode_failed";
-    auto file=fs_->open("/presentation.pending","w");if(!file)return "presentation_stage_failed";
-    const bool written=file.print(bytes)==bytes.length();file.close();file=fs_->open("/presentation.pending","r");
+    auto file=fs_->open(stagingPath(),"w");if(!file)return "presentation_stage_failed";
+    const bool written=file.print(bytes)==bytes.length();file.close();file=fs_->open(stagingPath(),"r");
     const bool verified=written&&file&&file.size()==bytes.length()&&file.readString()==bytes;file.close();
     if(!verified)return "presentation_verify_failed";
-    if(!fs_->rename("/presentation.pending",path()))return "presentation_commit_failed";
+    if(!fs_->rename(stagingPath(),path()))return "presentation_commit_failed";
     model.savedRevision=revision;error_=nullptr;return nullptr;
   }
   static int hex(char c){return c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:c>='A'&&c<='F'?c-'A'+10:-1;}
-  static const char *path(){return "/presentation.json";}
+  // StateAppearanceSettings already owns /presentation.json and its staging
+  // file. Never parse, migrate or overwrite that independent palette record.
+  static const char *path(){return "/host-presentation.json";}
+  static const char *stagingPath(){return "/host-presentation.pending";}
   fs::FS *fs_=nullptr;uint32_t nextLease_=0;const char *error_=nullptr;
 };

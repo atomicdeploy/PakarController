@@ -1,4 +1,5 @@
 #include "HostPresentationStore.h"
+#include "StateAppearanceSettings.h"
 #include <PixelGroupLayout.h>
 #include <CommandReceipts.h>
 #include <cassert>
@@ -9,7 +10,15 @@ struct Rgb {uint8_t r,g,b;Rgb(uint8_t r=0,uint8_t g=0,uint8_t b=0):r(r),g(g),b(b
   bool operator==(const Rgb&o)const{return r==o.r&&g==o.g&&b==o.b;}};
 static JsonDocument parse(const char *bytes){JsonDocument doc;assert(!deserializeJson(doc,bytes));return doc;}
 int main(){
-  fs::FS fs;Store store;Layout layout;store.begin(fs,true,100);
+  fs::FS fs;Store store;Layout layout;
+  // Two production stores share LittleFS, not a filename or staging owner.
+  const std::string appearance=R"({"enabled":true,"pulse_ms":900,"states":{"won":{"rgb":1193046,"motion":1}}})";
+  const std::string appearancePending="unrelated appearance staging bytes";
+  fs.files["/presentation.json"]=std::make_shared<std::string>(appearance);
+  fs.files["/presentation.pending"]=std::make_shared<std::string>(appearancePending);
+  StateAppearanceSettings palette;assert(palette.load(fs));
+  store.begin(fs,true,100);
+  assert(store.json().find("storage_error")==String::npos);
   const std::string corrections=R"({"revision":31,"enabled":true,"rules":[{"index":4,"shift":-1,"enabled":true}]})";
   const std::string scene="opaque pre-existing scene bytes"; // Unrelated owners are never parsed or rewritten.
   fs.files["/pixel-corrections.json"]=std::make_shared<std::string>(corrections);
@@ -86,5 +95,15 @@ int main(){
   for(auto layer:{&worst.model.saved,&worst.model.temporary})for(auto &s:layer->entries){s.enabled=true;s.rgb=0xffffff;s.periodMs=10000;s.effect=decltype(worst)::Model::Rainbow;s.invert=true;}
   assert(worst.json(true).length()<7168);
   assert(*fs.files.at("/pixel-corrections.json")==corrections&&*fs.files.at("/scene.bin")==scene);
+  assert(*fs.files.at("/presentation.json")==appearance);
+  assert(*fs.files.at("/presentation.pending")==appearancePending);
+  StateAppearanceSettings paletteReboot;assert(paletteReboot.load(fs));
+  assert(paletteReboot.value.states[BoardCore::Protocol::kCellWon].rgb==0x123456);
+  assert(paletteReboot.value.pulseMs==900);
+  const auto hostBytes=*fs.files.at("/host-presentation.json");
+  paletteReboot.value.pulseMs=950;assert(paletteReboot.save(fs));
+  assert(*fs.files.at("/host-presentation.json")==hostBytes);
+  Store hostReboot;hostReboot.begin(fs,true,300);
+  assert(hostReboot.model.saved.enabled&&hostReboot.model.saved.entries[0].rgb==65280);
   puts("Host presentation: atomic saved/leased layers, wraparound expiry, owner/revision fencing, full-frame bounds, shared effects, variable groups and USB budget passed.");
 }

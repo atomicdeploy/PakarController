@@ -568,6 +568,23 @@
       "application": "Not evaluated; fetching does not certify an import or resolution."
     },
     {
+      "repository": "atomicdeploy/PakarController",
+      "number": 34,
+      "kind": "pull_request",
+      "title": "Replace local terminal forks with canonical PortableShell components",
+      "url": "https://github.com/atomicdeploy/PakarController/pull/34",
+      "state": "open",
+      "content_sha256": "085d3ccd3c0e1cdb748b1243c9ad36d7e0a74656cdf57e44a0ba4e38280cb79d",
+      "comments": 0,
+      "reviews": 0,
+      "threads": 0,
+      "unresolved_threads": [],
+      "copilot_messages": 0,
+      "copilot_quota_notices": 0,
+      "read_state": "pending",
+      "application": "Not evaluated; fetching does not certify an import or resolution."
+    },
+    {
       "repository": "atomicdeploy/PCController",
       "number": 1,
       "kind": "issue",

@@ -26,6 +26,32 @@ backend successfully verified the same remote; no certificate checks were
 removed. Subsequent GitHub CLI requests worked normally. Source was preserved
 throughout the connection failure; a failed lookup was never reported as a push.
 
+## Handoff review: independent presentation storage, 2026-10-28 (#26)
+
+Full source review found HostPresentationStore and StateAppearanceSettings both
+owned `/presentation.json` and `/presentation.pending`. The actual combined-store
+fixture reproduced the collision: a valid palette was treated as damaged host
+presentation storage, and a persistent host save could overwrite its bytes.
+Reconsulted games-streaming and pixel-group-layout; reread the actual PCController
+Project/SettingsStore.h/.cpp, including explicit EEPROM-region overlap assertions,
+validated load and unchanged-write ownership, plus both Pakar stores in full.
+
+Host layers now use distinct `/host-presentation.json` and staging paths, keeping
+the existing validated close/readback/rename implementation. There is no guessed
+migration or automatic write on load. The regression uses both actual production
+store types and verifies bidirectional independence through save, failed rename
+and reboot, including untouched palette staging, correction and scene bytes.
+This is source/fixture evidence only; no production filesystem was contacted.
+
+CI 40745265472 next exposed the passive-RX fixture's 10ms preflight race on Linux:
+the test could time out before START, then misleadingly report "Uncertain start
+retried" because its count was zero. Read the complete actual capture helper,
+shared serial-wire owner, RX/network fixtures and PU850's C++ integration test.
+Only the RX fixture changes: deterministic EOF after queued replies, a 1000ms
+preflight allowance, and exact failure-phase checks. One START/cleanup STOP and
+no repeated STOP assertions remain. The shared network fixture still exercises
+actual deadline expiry. Production serial timeouts and retry policy are unchanged.
+
 ## Cold-start matrix Fire and runtime direction, 2026-10-28 (issue #26)
 
 Reconsulted led-benchmark, games-streaming and the PCController AddressableLeds

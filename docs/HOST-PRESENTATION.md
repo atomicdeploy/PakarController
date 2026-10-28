@@ -62,6 +62,10 @@ result is not permission to retry with a new ID. Existing auth/maintenance apply
 close/readback/atomic rename. Identical saves skip writes. `saved_revision` is
 the durable revision; `revision` also counts volatile changes. Failed saves leave
 the old live/durable layer intact. No scene or correction file is rewritten.
+The record and staging file are `/host-presentation.json` and
+`/host-presentation.pending`. The existing `/presentation.json` remains owned
+exclusively by state colors/effects. No ambiguous old record is automatically
+migrated or erased; existing palette, scene and correction bytes stay untouched.
 
 `lifetime:temporary` requires TTL250–10000 ms. Acquisition returns `lease_id`;
 renew/edit/release must use that lease and owner. A different client cannot steal
