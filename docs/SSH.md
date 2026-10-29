@@ -61,11 +61,37 @@ validators and maintenance exclusion are reused. `help`, `status`, `get`,
 `set`, `watch on`, `tui`, game controls and the other existing commands apply
 according to board capabilities. SSH bytes do not contain Telnet negotiation.
 
-The initial implementation provides **one interactive SSH session/channel**.
-PTY dimensions and resize requests are bounded. Arbitrary exec requests
-(`ssh host cmd`), agent forwarding and port forwarding are rejected. Use an
-interactive terminal and type commands there. Separately built SCP accepts
-only its exact file commands; separately built SFTP accepts only `sftp`.
+There is **one authenticated SSH session/channel** for shell, exec or transfer.
+PTY dimensions and resize requests are bounded. Host commands use the same
+device-command dispatcher as interactive SSH, Telnet and framed USB:
+
+```sh
+ssh <configured-device-user>@keycontroller.local status
+ssh <configured-device-user>@keycontroller.local 'get hostname'
+ssh <configured-device-user>@keycontroller.local 'beep 880 100'
+ssh -t <configured-device-user>@keycontroller.local tui
+# `edit` is also a direct TUI alias. Use -tt when forcing PTY allocation.
+```
+
+One exec request carries one printable-ASCII device command, at most 128 bytes.
+It is not `/bin/sh`: pipes, chaining, expansions and host programs are not
+interpreted. Exec without a PTY emits no welcome banner, editor echo or prompt,
+and starts without ANSI color. After the result drains, the channel reports
+exit status 0 for an accepted command, 1 for command/validation/maintenance
+failure. A queued AVR operation is acceptance, not proof of physical completion;
+use the normal live state/event APIs for its outcome. An invalid request rejected
+before channel start or a disconnected transport may produce OpenSSH's own
+failure status instead. Closing host stdin does not discard an accepted result.
+
+Direct `tui`/`edit` requires a PTY; without one it returns an actionable error
+and nonzero status. With a PTY it remains interactive, accepts navigation and
+window changes, and closes SSH when the TUI is exited (Esc or Ctrl-C outside
+an edit). Opening it alone does not start a game or alter outputs. A normal
+`ssh -t HOST` still opens the interactive command prompt instead. Single-command
+session settings such as `watch on` end with that command; use an interactive
+session for ongoing watches. Agent/port forwarding and extra channels remain
+rejected. Separately built SCP accepts only its exact file commands; separately
+built SFTP accepts only `sftp`.
 
 ## Optional SCP uploads/downloads and SFTP
 
@@ -75,7 +101,8 @@ Both are excluded by default. Add `-S3Sftp` (`PAKAR_SFTP_ENABLED=1`) for SFTP,
 which also requires `-S3Ssh`. The portable build wrapper accepts `--s3-ssh
 --s3-scp --s3-sftp` as well. Transfers share the SSH listener/authentication and session limit;
 it creates no additional port. `/api/ssh` reports `scp_download` separately from
-`scp_upload`, `sftp`, `ftp` and arbitrary `exec` support.
+`scp_upload`, `sftp`, `ftp` and device-command `exec` support. It also reports
+`exec_max_bytes` and `exec_tui_requires_pty`.
 
 Files published through the existing Files workspace/API can be downloaded:
 
@@ -238,6 +265,13 @@ socket nonblocking: the pinned library's `ssh_bind_set_blocking` alone changes
 only a flag and cannot prevent a select/accept race from blocking revocation.
 These checks and an SDK link are not a real encrypted board login, hardware
 coexistence or deployment. Those remain issue #33 acceptance gates.
+
+The exec regression fixtures compile the actual transport connection/pump and
+the actual shared command dispatcher/SSH loop against libssh queue/transport
+doubles. They cover immediate stdin EOF, short writes/backpressure, exactly-once
+dispatch, rejection/exit status, credential revocation, non-PTY output, direct
+TUI/alias entry, resize and exit, in both table and keycontroller roles. No
+encrypted ESP login or live deployment is inferred from these host fixtures.
 
 Protocol references: [SFTP v3 wire format](https://datatracker.ietf.org/doc/html/draft-ietf-secsh-filexfer-02),
 [FTP RFC 959](https://www.rfc-editor.org/rfc/rfc959),

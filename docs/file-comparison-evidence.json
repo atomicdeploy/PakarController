@@ -166,7 +166,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
         },
         {
           "path": "third_party/portable-shell/README.md",
@@ -357,7 +357,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
@@ -449,7 +449,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -504,7 +504,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
         }
       ],
       "proof": [
@@ -546,7 +546,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -606,7 +606,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
         },
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
@@ -668,7 +668,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -728,7 +728,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a"
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
         }
       ],
       "proof": [
@@ -6411,7 +6411,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
           "anchor": "void serviceShellRemoteQuery()"
         },
         {
@@ -21038,7 +21038,8 @@
         "PU ShellSession transport/editor separation, insertion/shift/backspace/delete, CSI/SS3 arrows/home/end, Ctrl-C/Ctrl-L and split CR-LF/CR-NUL behavior are adapted in instance-owned TelnetParser/LineEditor.",
         "Generic parameter lookup/read-only enforcement and dispatch now map to ShellProperty descriptors, typed shellSet and the existing Pakar command/configuration owners; the same descriptors feed the device TUI.",
         "Session-owned prompt-safe watch summaries use redrawEvent without losing the draft/cursor. Utilities clear/cls, echo, hex and upper/noupper are present; bounded eight-entry history adds recall without retaining classified secrets.",
-        "Raw serial ownership is replaced by an additive boot-bound COBS shell channel: explicit token, contiguous nonwrapping input sequence, duplicate-byte ACK without redispatch, and immutable output windows consumed only by matching ACK."
+        "Raw serial ownership is replaced by an additive boot-bound COBS shell channel: explicit token, contiguous nonwrapping input sequence, duplicate-byte ACK without redispatch, and immutable output windows consumed only by matching ACK.",
+        "Issue #33 SSH exec reuses the same authenticated loop-owned DeviceShellSession/executeDeviceShell dispatcher. Bounded single commands have prompt-free output, nonzero failures and drained exit status despite stdin EOF; PTY tui/edit launches and exits the shared TUI directly, retaining resize, maintenance and security-revision fences. No operating-system shell or second command catalogue is introduced."
       ],
       "targets": [
         {
@@ -21058,7 +21059,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5c389a6579d59cadf6db2e921de6094652977811c3beb0ca118b1bf3d778561c",
+          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -21068,13 +21069,18 @@
         },
         {
           "path": "firmware/esp/src/SshShellBinding.h",
-          "sha256": "cc8826e98ce85dddfa6e3ed4a34854124f477fdf658f410b2f97be99e875891e",
+          "sha256": "a0333d0b81ed2196be82d6ce9e8e643789366f578b65d71a6e2490892382a560",
           "anchor": "void serviceSshShell()"
         },
         {
           "path": "firmware/esp32s3/src/SshTransport.h",
-          "sha256": "326288f1c74218a3dc68ed3f3561bcf7ca579eec97e771c7a8a6ffbbfe8b8301",
+          "sha256": "988641dc923aafab5ec72ce909067455c44faf468bb241d5b15b3bac1bba33d8",
           "anchor": "class SshTransport {"
+        },
+        {
+          "path": "firmware/esp32s3/src/SshPolicy.h",
+          "sha256": "ba8a8f5807e07e52a88e4098d6a2ae7d915d9547f4a0e3b25e6700669c10aab2",
+          "anchor": "inline size_t commandLength("
         },
         {
           "path": "firmware/esp32s3/src/ScpDownload.h",
@@ -21164,8 +21170,23 @@
           "anchor": "int main()"
         },
         {
+          "path": "tests/ssh_exec_transport_test.cpp",
+          "sha256": "615435469fa43f155f61ee84ce5f9fa847503a1f1d36360e963a24949b11a680",
+          "anchor": "Actual SSH exec transport:"
+        },
+        {
+          "path": "tests/ssh_exec_binding_test.cpp",
+          "sha256": "8d5b45f3825a81c91f8af77a263d87c37a4a53ec4f1399fca73f2490df9bbba0",
+          "anchor": "Actual SSH shell exec binding/dispatcher:"
+        },
+        {
+          "path": "tests/ssh_exec_binding_test.mjs",
+          "sha256": "8ad3023d3de3232cb50377d3aa81cf1f58b0f7e80c05ad97145d73346483bbb2",
+          "anchor": "SSH exec production markers changed"
+        },
+        {
           "path": "tests/ssh_policy_test.cpp",
-          "sha256": "4d6e33842b9108763776e1aab04261235adc0abd2a70cbfeadcc43a7c470822e",
+          "sha256": "4e8b5abdd817ca1ecc2f3aaba1dfa8186acc125529e997a340a940f8cb73a73c",
           "anchor": "int main()"
         },
         {
@@ -21205,7 +21226,7 @@
         },
         {
           "path": "tools/test-ssh.ps1",
-          "sha256": "c71f2dd61de2d59712f0ab8e8609219bfe3acf56c93700aea343b026da745798",
+          "sha256": "fc5bdf619662059e9373a54c608e3661aa9906f3f0a4e8cf5b5e36eeed5599e4",
           "anchor": "Actual FTP socket binding fixture"
         }
       ],
@@ -21281,7 +21302,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5c389a6579d59cadf6db2e921de6094652977811c3beb0ca118b1bf3d778561c",
+          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -21390,7 +21411,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21487,7 +21508,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21580,12 +21601,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5c389a6579d59cadf6db2e921de6094652977811c3beb0ca118b1bf3d778561c",
+          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
           "anchor": "shellGet(property)"
         },
         {
@@ -21698,12 +21719,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5c389a6579d59cadf6db2e921de6094652977811c3beb0ca118b1bf3d778561c",
+          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
           "anchor": "shellGet(property)"
         },
         {
@@ -21792,7 +21813,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "5c389a6579d59cadf6db2e921de6094652977811c3beb0ca118b1bf3d778561c",
+          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
           "anchor": "struct ShellTuiSnapshot"
         }
       ],
@@ -21860,7 +21881,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "e682a7089635b353b63c6b55718b973d3df8c99bec3b7de85ac576f6d6d08e5a",
+          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
           "anchor": "void closeDeviceShells()"
         },
         {

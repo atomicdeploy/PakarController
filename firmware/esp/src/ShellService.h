@@ -38,6 +38,7 @@ struct DeviceShellSession : public Print {
   uint32_t lastInput=0,lastDrain=0,escapeAt=0;
   uint32_t accessRevision=0;
   bool authenticated=false,closing=false,fault=false,color=true,watch=false,upper=false,unicode=true,alternateScreen=false;
+  bool commandOnly=false,terminal=true;uint8_t exitStatus=0;
   size_t write(uint8_t byte) override{return write(&byte,1);}
   size_t write(const uint8_t *bytes,size_t size) override {
     if(fault||output.length()+size>8192U){fault=true;return 0;}
@@ -167,6 +168,7 @@ bool shellSet(const String &requestedKey,const String &value,String &result){
   String json;serializeJson(d,json);return handleCloudCommand(json,result);
 }
 void shellPrompt(DeviceShellSession &s){
+  if(s.commandOnly)return;
   s.editor.setPrompt(deviceIdentity.hostname(),s.color&&s.parser.ansi());
   s.editor.prompt([&](const uint8_t *p,size_t n){s.write(p,n);});
 }
@@ -176,7 +178,9 @@ void shellSafePrint(DeviceShellSession &s,const String &message){
   }
 }
 void shellResult(DeviceShellSession &s,bool accepted,const String &message){
+  if(!accepted)s.exitStatus=1;
   if(message.length()+s.output.length()+128U>8192U){
+    s.exitStatus=1;
     s.println(F("ERR Response exceeds terminal window; use the JSON API for the full snapshot"));return;
   }
   if(s.color)s.print(accepted?F("\x1b[32m"):F("\x1b[31m"));
@@ -190,6 +194,8 @@ String shellWifiScanJson(){
 }
 
 void executeDeviceShell(DeviceShellSession &s,String line){
+  s.exitStatus=0;
+  if(!s.authenticated||!accessConfig.ready()||s.accessRevision!=accessConfig.securityRevision()){s.exitStatus=1;s.closing=true;return;}
   line.trim();if(!line.length()){shellPrompt(s);return;}
   if(s.output.length()>1024U){shellResult(s,false,F("Terminal busy; drain output before another command"));shellPrompt(s);return;}
   const int space=line.indexOf(' ');String verb=space<0?line:line.substring(0,space);
@@ -200,7 +206,10 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   const bool query=command->readOnly||((verb=="firmware"||verb=="game")&&args=="status");
   if(shellBusy()&&!query){shellResult(s,false,F("Maintenance active; command not dispatched"));shellPrompt(s);return;}
   if(verb=="exit"||verb=="quit"){s.println(F("Goodbye."));s.closing=true;return;}
-  if(verb=="tui"){s.alternateScreen=s.color&&s.parser.ansi();if(s.alternateScreen)s.print(F("\x1b[?1049h"));s.tui.begin(s.color&&s.parser.ansi());shellTuiDraw(s,true);return;}
+  if(verb=="tui"){
+    if(s.commandOnly&&!s.terminal){shellResult(s,false,F("TUI requires a terminal; use ssh -t HOST tui"));return;}
+    s.alternateScreen=s.color&&s.parser.ansi();if(s.alternateScreen)s.print(F("\x1b[?1049h"));s.tui.begin(s.color&&s.parser.ansi());shellTuiDraw(s,true);return;
+  }
   if(verb=="help"||verb=="?"){
     PakarShell::renderHelp([&](const uint8_t* p,size_t n){s.write(p,n);},PAKAR_FIRST_WINS_ENABLED,s.color&&s.parser.ansi(),s.unicode,s.parser.columns());
   }else if(verb=="properties"||verb=="get"){
@@ -308,10 +317,12 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   }
   if(!s.closing&&!s.tui.active())shellPrompt(s);
 }
-void initializeDeviceShell(DeviceShellSession &s,bool telnet,bool transportAuthenticated=false){
+void initializeDeviceShell(DeviceShellSession &s,bool telnet,bool transportAuthenticated=false,bool commandOnly=false){
+  s.commandOnly=commandOnly;
   s.accessRevision=accessConfig.securityRevision();
   s.authenticated=accessConfig.ready()&&(transportAuthenticated||!accessConfig.enabled());s.color=shellSettings.color();s.lastInput=s.lastDrain=millis();
   if(telnet)s.parser.greet([&](const uint8_t *p,size_t n){s.write(p,n);});
+  if(commandOnly)return; // SSH exec has no banner, password prompt or editor echo.
   if(s.color)s.print(F("\x1b[1;32m"));s.print(APP_NAME);s.print(F(" @ "));s.print(deviceIdentity.hostname());
   if(s.color)s.print(F("\x1b[0m"));s.println();
   s.editor.setEcho(s.authenticated);if(s.authenticated)shellPrompt(s);else s.print(F("Password: "));
@@ -519,14 +530,14 @@ void serviceDeviceShells(){
       if(serialShell&&serialShell->authenticated&&serialShell->watch&&!serialShell->tui.active()&&serialShell->output.length()<1024U)
         serialShell->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){serialShell->write(p,n);});
 #if PAKAR_SSH_ENABLED
-      if(sshShell&&sshShell->watch&&!sshShell->tui.active()&&sshShell->output.length()<1024U)
+      if(sshShell&&!sshShell->closing&&sshShell->watch&&!sshShell->tui.active()&&sshShell->output.length()<1024U)
         sshShell->editor.redrawEvent(observed.c_str(),[&](const uint8_t *p,size_t n){sshShell->write(p,n);});
 #endif
     }
     for(auto &slot:telnetSessions)if(slot&&slot->authenticated&&slot->tui.active()&&slot->output.length()<1024U)shellTuiDraw(*slot);
     if(serialShell&&serialShell->authenticated&&serialShell->tui.active()&&serialShell->output.length()<1024U)shellTuiDraw(*serialShell);
 #if PAKAR_SSH_ENABLED
-    if(sshShell&&sshShell->tui.active()&&sshShell->output.length()<1024U)shellTuiDraw(*sshShell);
+    if(sshShell&&!sshShell->closing&&sshShell->tui.active()&&sshShell->output.length()<1024U)shellTuiDraw(*sshShell);
 #endif
   }
 }

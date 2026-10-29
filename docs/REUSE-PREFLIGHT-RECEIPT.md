@@ -1,5 +1,51 @@
 # Donor-first preflight receipt
 
+## SSH single-command and direct TUI entry, 2026-10-29 (#33)
+
+Consulted ssh-transport plus exact PU850 donor-audit LocalLib/Shell.cpp/.h rows
+at 4311040; read their complete session/dispatch code. Preserved the adapted
+session-owned output and shared dispatcher instead of adding another command
+catalogue or an OS shell. Inspected the pinned LibSSH-ESP32 5.10.0 command-request
+parser, channel exit-status and close/EOF implementations. No PortableShell
+vendored editor or concurrent shell integration checkout was overwritten.
+
+Ordinary SSH exec was rejected while SCP exec was accepted. Added a bounded
+128-byte command event after SSH authentication, preserving token/security
+revision and maintenance guards. Non-PTY commands omit prompt/banner/echo,
+report nonzero command failures, drain results before exit status, and survive
+host stdin EOF. PTY tui/edit uses the same TUI, resize and input owner; exit
+closes the exec channel rather than opening a second interactive shell.
+
+New fixtures exercise actual production functions with host transport/queue
+and peripheral doubles in both roles. Initial fixture compilation exposed
+Windows libssh dllimport and the host `eof` symbol; the test now selects the
+library's documented static API declarations and uses inputEof. The actual
+DeviceView exit API and ArduinoJson String writer were used rather than
+inventing an end method. No production validation was relaxed. Test results
+and final SDK link are recorded with the checkpoint; encrypted board login,
+live memory/LED coexistence and deployment remain issue #33 acceptance gates.
+
+Final verification: tools/test-ssh.ps1 passed command/policy/NVS fixtures,
+production transport API compilation with transfers included/excluded, both
+role-specific actual shell/SSH/TUI bindings, public-file adapters and real
+OpenSSH transfer clients over stdio doubles. tools/test-shell.ps1 passed the
+existing editor/navigation, framed USB, authority, production session and
+TCP/UDP loopbacks. Comparison generation/check and the living-contract guard
+passed. A standalone optional guard was first called by the wrong filename;
+the canonical tools/check-living-contract.mjs was then run successfully.
+
+Canonical SDK build passed: ESP32-S3 keycontroller, buffered UART, 16 MiB/OPI,
+both LED backends, BLE initialization excluded, W5500/acknowledged ISP and all
+four optional SSH/SCP/SFTP/FTP services included. It reused the existing cache
+with 12 workers; changing the resolved dependency list rebuilt vendor objects.
+The actual application object was compiled after the final source changes.
+Raw image is 2,734,096 bytes / 3,342,336-byte OTA slot (81.80%); static RAM
+136,436 bytes is not measured free heap. SHA-256:
+6715191bb505fcc587673e0c37c102619ff35d719d79f1e96507882dc0b02ed1.
+No board, Android or desktop deployment, listener enable, reboot or actuator
+test occurred. Existing runtime opt-ins and all default-off build flags remain
+unchanged. The image is a build candidate, not encrypted/live SSH acceptance.
+
 ## PortableShell component consolidation, 2026-10-28 (issue #29)
 
 Read portable-shell, device-shell, terminal-ui and donor-audit mappings; read the

@@ -3,6 +3,7 @@ param([string]$LibSshPath=(Join-Path ([Environment]::GetFolderPath('MyDocuments'
 $ErrorActionPreference='Stop'
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-shell -Summary | Out-Null
 $taskRoot=Split-Path -Parent $PSScriptRoot
+$taskJson=Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Arduino/libraries/ArduinoJson/src'
 if(-not(Test-Path -LiteralPath (Join-Path $LibSshPath 'libssh/server.h'))){throw 'Install pinned LibSSH-ESP32 before the explicit API compile check'}
 $taskProperties=Get-Content -LiteralPath (Join-Path (Split-Path $LibSshPath -Parent) 'library.properties') -Raw
 if($taskProperties -notmatch '(?m)^version=5\.10\.0\s*$'){throw 'This compile check requires the reviewed LibSSH-ESP32 5.10.0 pin'}
@@ -12,6 +13,13 @@ New-Item -ItemType Directory -Force -Path (Split-Path $taskOutput -Parent)|Out-N
 if($LASTEXITCODE){throw 'SSH policy fixture compilation failed'}
 & $taskOutput
 if($LASTEXITCODE){throw 'SSH policy fixture failed'}
+$taskExecOutput=Join-Path $taskRoot 'build/native/ssh_exec_transport_test.exe'
+& g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -Wno-misleading-indentation -Wno-deprecated-declarations '-I' (Join-Path $taskRoot 'tests/ssh_stubs') '-I' (Join-Path $taskRoot 'libraries/BoardCore/src') '-I' $LibSshPath (Join-Path $taskRoot 'tests/ssh_exec_transport_test.cpp') -o $taskExecOutput
+if($LASTEXITCODE){throw 'Actual SSH exec transport fixture compilation failed'}
+& $taskExecOutput
+if($LASTEXITCODE){throw 'Actual SSH exec transport fixture failed'}
+Push-Location $taskRoot
+try { & node tests/ssh_exec_binding_test.mjs --arduino-json $taskJson; if($LASTEXITCODE){throw 'Actual SSH exec shell binding fixture failed'} } finally {Pop-Location}
 $taskScpOutput=Join-Path $taskRoot 'build/native/scp_download_test.exe'
 & g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror (Join-Path $taskRoot 'tests/scp_download_test.cpp') -o $taskScpOutput
 if($LASTEXITCODE){throw 'SCP state fixture compilation failed'}
@@ -31,7 +39,6 @@ $taskSettingsOutput=Join-Path $taskRoot 'build/native/ssh_settings_test.exe'
 if($LASTEXITCODE){throw 'Actual SSH settings fixture compilation failed'}
 & $taskSettingsOutput
 if($LASTEXITCODE){throw 'Actual SSH settings fixture failed'}
-$taskJson=Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Arduino/libraries/ArduinoJson/src'
 $taskBindingOutput=Join-Path $taskRoot 'build/native/ssh_scp_binding_test.exe'
 & g++ -std=c++17 -O2 -g0 -Wall -Wextra -Werror -Wno-misleading-indentation '-I' (Join-Path $taskRoot 'tests/file_stubs') '-I' (Join-Path $taskRoot 'tests/access_stubs') '-I' $taskJson '-I' (Join-Path $taskRoot 'firmware/esp/src') (Join-Path $taskRoot 'tests/ssh_scp_binding_test.cpp') -o $taskBindingOutput
 if($LASTEXITCODE){throw 'Actual SCP/public file binding compilation failed'}

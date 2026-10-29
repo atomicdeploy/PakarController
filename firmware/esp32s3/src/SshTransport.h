@@ -30,8 +30,8 @@ namespace PakarS3 {
 // deliberately do not import demo credentials, logging, WiFi setup or echo loop.
 class SshTransport {
  public:
-  enum Kind:uint8_t {Open,Input,Resize,Output,Close,FileRead,FileWrite,Sftp};
-  struct Packet {uint32_t token=0,revision=0;uint16_t width=80,height=24;uint8_t kind=Input,size=0;uint8_t bytes[SshPolicy::packetBytes]{};};
+  enum Kind:uint8_t {Open,Input,Resize,Output,Close,FileRead,FileWrite,Sftp,Exec,InputEnd};
+  struct Packet {uint32_t token=0,revision=0;uint16_t width=80,height=24;uint8_t kind=Input,size=0;bool pty=false;uint8_t bytes[SshPolicy::packetBytes]{};};
   enum Error:uint8_t {None,Settings,Memory,HostKey,Bind,Transport};
   bool begin(){
     Preferences p;if(!p.begin("pakar-ssh",false)){error_=Settings;return false;}
@@ -128,7 +128,7 @@ class SshTransport {
     if(result!=SSH_OK||!current(c))return;
     bool authenticated=false,shell=false;unsigned failures=0;ssh_channel channel=nullptr;
     uint16_t width=80,height=24;started=millis();
-    char fileName[65]{};uint8_t fileKind=Open;
+    char fileName[65]{},command[SshPolicy::packetBytes+1]{};uint8_t fileKind=Open;bool pty=false;
     while(current(c)&&ssh_is_connected(session)&&!SshPolicy::expired(millis(),started,SshPolicy::loginMs)&&!shell){
       ssh_message message=ssh_message_get(session);
       if(!message){vTaskDelay(pdMS_TO_TICKS(5));continue;}
@@ -145,7 +145,7 @@ class SshTransport {
         if(!accepted)ssh_message_auth_set_methods(message,SSH_AUTH_METHOD_PASSWORD);
       }else if(authenticated&&type==SSH_REQUEST_CHANNEL_OPEN&&subtype==SSH_CHANNEL_SESSION&&!channel){channel=ssh_message_channel_request_open_reply_accept(message);accepted=channel;}
       else if(authenticated&&channel&&type==SSH_REQUEST_CHANNEL&&ssh_message_channel_request_channel(message)==channel){
-        if(subtype==SSH_CHANNEL_REQUEST_PTY){width=SshPolicy::columns(ssh_message_channel_request_pty_width(message));height=SshPolicy::rows(ssh_message_channel_request_pty_height(message));ssh_message_channel_request_reply_success(message);accepted=true;}
+        if(subtype==SSH_CHANNEL_REQUEST_PTY){width=SshPolicy::columns(ssh_message_channel_request_pty_width(message));height=SshPolicy::rows(ssh_message_channel_request_pty_height(message));ssh_message_channel_request_reply_success(message);accepted=true;pty=true;}
         else if(subtype==SSH_CHANNEL_REQUEST_SHELL){ssh_message_channel_request_reply_success(message);accepted=shell=true;}
 #if PAKAR_SCP_ENABLED
         else if(subtype==SSH_CHANNEL_REQUEST_EXEC&&ScpDownload::command(ssh_message_channel_request_command(message),fileName,sizeof(fileName))){
@@ -159,6 +159,11 @@ class SshTransport {
           ssh_message_channel_request_reply_success(message);accepted=shell=true;fileKind=Sftp;
         }
 #endif
+        else if(subtype==SSH_CHANNEL_REQUEST_EXEC){
+          const char* text=ssh_message_channel_request_command(message);
+          const size_t length=SshPolicy::commandLength(text);
+          if(length){memcpy(command,text,length);ssh_message_channel_request_reply_success(message);accepted=shell=true;fileKind=Exec;}
+        }
       }
       if(!accepted)ssh_message_reply_default(message);ssh_message_free(message);
       vTaskDelay(1); // Authentication floods must not starve the core's idle/WDT task.
@@ -166,9 +171,9 @@ class SshTransport {
     }
     if(shell&&current(c)&&nextToken_!=UINT32_MAX){
       const uint32_t token=++nextToken_;active_=token;closeToken_=0;finishToken_=0;
-      Packet opening;opening.kind=Open;opening.token=token;opening.revision=c.revision;opening.width=width;opening.height=height;
-      if(fileKind!=Open){opening.kind=fileKind;opening.size=strlen(fileName);memcpy(opening.bytes,fileName,opening.size);}
-      if(enqueue(opening))pump(session,channel,token);
+      Packet opening;opening.kind=Open;opening.token=token;opening.revision=c.revision;opening.width=width;opening.height=height;opening.pty=pty;
+      if(fileKind!=Open){const char* text=fileKind==Exec?command:fileName;opening.kind=fileKind;opening.size=strlen(text);memcpy(opening.bytes,text,opening.size);}
+      if(enqueue(opening))pump(session,channel,token,fileKind==Exec);
       active_=0;
     }
     if(channel){
@@ -183,9 +188,12 @@ class SshTransport {
     // Global login-rate bound is on this worker, never the application loop.
     if(!authenticated)vTaskDelay(pdMS_TO_TICKS(1000));
   }
-  void pump(ssh_session session,ssh_channel channel,uint32_t token){
-    Packet pending;bool hasPending=false;size_t offset=0;uint32_t lastInput=millis(),lastDrain=millis();
-    while(current(config_)&&active()==token&&closeToken_.load()!=token&&ssh_is_connected(session)&&ssh_channel_is_open(channel)&&!ssh_channel_is_eof(channel)){
+  void pump(ssh_session session,ssh_channel channel,uint32_t token,bool exec=false){
+    Packet pending;bool hasPending=false,inputEnded=false;size_t offset=0;uint32_t lastInput=millis(),lastDrain=millis();
+    while(current(config_)&&active()==token&&closeToken_.load()!=token&&ssh_is_connected(session)&&ssh_channel_is_open(channel)){
+      // `ssh host status </dev/null` sends input EOF immediately. That is not
+      // cancellation of the accepted command or its queued output/exit status.
+      if(!exec&&ssh_channel_is_eof(channel))break;
       if(SshPolicy::expired(millis(),lastInput,SshPolicy::idleMs))break;
       // Reject extra channels, exec/subsystems and forwarding. Only the one
       // authenticated shared shell is supported; resize remains bounded.
@@ -198,11 +206,12 @@ class SshTransport {
         }
         if(!accepted)ssh_message_reply_default(message);ssh_message_free(message);
       }
-      if(uxQueueSpacesAvailable(inbound_)){
+      if(!inputEnded&&uxQueueSpacesAvailable(inbound_)){
         Packet input;input.token=token;input.revision=config_.revision;
         const int n=ssh_channel_read_nonblocking(channel,input.bytes,sizeof(input.bytes),0);
         if(n>0){input.size=n;lastInput=millis();if(!enqueue(input))break;}
         else if(n==SSH_ERROR)break;
+        else if(exec&&ssh_channel_is_eof(channel)){input.kind=InputEnd;if(!enqueue(input))break;inputEnded=true;}
       }
       if(!hasPending&&xQueueReceive(outbound_,&pending,0)==pdTRUE){
         hasPending=SshPolicy::admitted(pending.token,token,pending.revision,config_.revision);offset=0;lastDrain=millis();

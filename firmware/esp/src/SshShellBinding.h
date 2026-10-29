@@ -10,7 +10,8 @@ String sshStatusJson(){
   JsonDocument d;d["built"]=true;d["enabled"]=deviceSsh.enabled();d["port"]=deviceSsh.port();
   d["listening"]=deviceSsh.listening();d["sessions"]=deviceSsh.active()?1:0;d["session_limit"]=1;
   d["authentication_required"]=true;d["authentication"]="password";d["interactive_shell"]=true;
-  d["sftp"]=bool(PAKAR_SFTP_ENABLED);d["forwarding"]=false;d["exec"]=false;
+  d["sftp"]=bool(PAKAR_SFTP_ENABLED);d["forwarding"]=false;d["exec"]=true;
+  d["exec_max_bytes"]=PakarS3::SshPolicy::packetBytes;d["exec_tui_requires_pty"]=true;
   d["scp_download"]=bool(PAKAR_SCP_ENABLED);d["scp_upload"]=bool(PAKAR_SCP_ENABLED);d["ftp"]=bool(PAKAR_FTP_ENABLED);
   if(PAKAR_SCP_ENABLED){d["scp_namespace"]="/user/";d["scp_max_file_bytes"]=128*1024;}
   if(PAKAR_SFTP_ENABLED){d["sftp_namespace"]="/user/";d["sftp_max_file_bytes"]=128*1024;d["sftp_max_write_bytes"]=32768;}
@@ -47,10 +48,18 @@ void serviceSshShell(){
   for(unsigned events=0;events<4&&inputBudget;++events){
     if(!pending){if(!deviceSsh.receive(packet))break;pending=true;offset=0;}
     if(!PakarS3::SshPolicy::admitted(packet.token,deviceSsh.active(),packet.revision,revision)){pending=false;continue;}
-    if(packet.kind==PakarS3::SshTransport::Open){
+    if(packet.kind==PakarS3::SshTransport::Open||packet.kind==PakarS3::SshTransport::Exec){
       sshShell.reset(new(std::nothrow) DeviceShellSession);sshShellToken=packet.token;
       if(!sshShell){deviceSsh.close(packet.token);pending=false;continue;}
-      initializeDeviceShell(*sshShell,false,true);sshShell->parser.size(packet.width,packet.height);
+      const bool exec=packet.kind==PakarS3::SshTransport::Exec;
+      initializeDeviceShell(*sshShell,false,true,exec);sshShell->parser.size(packet.width,packet.height);
+      if(exec){
+        auto&s=*sshShell;s.terminal=packet.pty;s.color=packet.pty&&shellSettings.color();
+        String line;if(packet.size<=sizeof(packet.bytes))line.concat(reinterpret_cast<const char*>(packet.bytes),packet.size);
+        if(line.length()!=packet.size||!PakarS3::SshPolicy::commandLength(line.c_str()))shellResult(s,false,F("Invalid SSH command"));
+        else executeDeviceShell(s,line);
+        if(!s.tui.active())s.closing=true;
+      }
 #if PAKAR_SCP_ENABLED || PAKAR_SFTP_ENABLED
     }else if(packet.kind==PakarS3::SshTransport::FileWrite||packet.kind==PakarS3::SshTransport::Sftp){
       sshShell.reset();sshShellToken=0;resetSshTransfer();sshTransferToken=packet.token;sshTransferRevision=packet.revision;
@@ -68,7 +77,11 @@ void serviceSshShell(){
       if(!sshScp.ready&&!sshScp.failed)break; // Retain initial ACK until metadata is checked.
       if(sshScp.ready&&!sshScp.finished)for(unsigned i=0;i<packet.size;++i)sshScp.download.input(packet.bytes[i]);
 #endif
-    }else if(sshShell&&sshShellToken==packet.token){
+    }else if(sshShell&&sshShellToken==packet.token&&!sshShell->closing){
+      if(packet.kind==PakarS3::SshTransport::InputEnd){
+        if(sshShell->alternateScreen)sshShell->print(F("\x1b[0m\x1b[?1049l"));
+        sshShell->alternateScreen=false;sshShell->closing=true;
+      }
       if(packet.kind==PakarS3::SshTransport::Resize){sshShell->parser.size(packet.width,packet.height);if(sshShell->tui.active())shellTuiDraw(*sshShell,true);}
       else if(packet.kind==PakarS3::SshTransport::Input){
         // Retain the rest of a packet across loop turns, without replay. Match
@@ -87,12 +100,13 @@ void serviceSshShell(){
   serviceSshTransfer();
 #endif
   if(sshShell){auto&s=*sshShell;
-    if(terminalInput&&s.tui.active()&&s.output.length()<4096U)shellTuiDraw(s);
-    if(s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>60)shellTuiInput(s,0,true);
-    if(s.fault||uint32_t(millis()-s.lastInput)>1800000U||(s.output.length()&&uint32_t(millis()-s.lastDrain)>30000U))s.closing=true;
+    if(!s.closing&&terminalInput&&s.tui.active()&&s.output.length()<4096U)shellTuiDraw(s);
+    if(!s.closing&&s.tui.active()&&s.tui.escapePending()&&uint32_t(millis()-s.escapeAt)>60)shellTuiInput(s,0,true);
+    if(s.fault||uint32_t(millis()-s.lastInput)>1800000U||(s.output.length()&&uint32_t(millis()-s.lastDrain)>30000U)){s.closing=true;s.exitStatus=1;}
+    if(s.commandOnly&&!s.tui.active())s.closing=true;
     const size_t count=min<size_t>(PakarS3::SshPolicy::packetBytes,s.output.length());
     if(count&&deviceSsh.output(sshShellToken,s.accessRevision,reinterpret_cast<const uint8_t*>(s.output.c_str()),count)){s.output.remove(0,count);s.lastDrain=millis();}
-    if(s.closing&&!s.output.length())deviceSsh.finish(sshShellToken);
+    if(s.closing&&!s.output.length())deviceSsh.finish(sshShellToken,s.exitStatus);
   }
   const uint16_t port=deviceSsh.listening()?deviceSsh.port():0;
   if(port!=sshAnnouncedPort){sshAnnouncedPort=port;startDiscovery();}
