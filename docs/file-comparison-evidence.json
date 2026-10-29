@@ -56,7 +56,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         }
       ],
       "proof": [
@@ -91,7 +91,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         }
       ],
       "proof": [
@@ -131,7 +131,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         }
       ],
       "proof": [
@@ -171,7 +171,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         }
       ],
       "proof": [
@@ -206,7 +206,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         },
         {
           "path": "firmware/esp/src/PortableShellCore.h",
@@ -245,7 +245,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         }
       ],
       "proof": [
@@ -280,7 +280,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         }
       ],
       "proof": [
@@ -315,7 +315,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         }
       ],
       "proof": [
@@ -403,7 +403,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "ffd563de6518771738a45241bac0e97ed521ffb3c8c28784f9e08303d8ae16d0"
+          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -611,7 +611,7 @@
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
           "anchor": "class DeviceView",
-          "sha256": "c81e98ec59f2d709498af28a3d60b4e3c259c15ff35398baa546444afc2c4d77"
+          "sha256": "f6affb6e7da8d2d0a3f80d695bf4f0f4e8683c91a21a99744e1bb1dd6975dc00"
         },
         {
           "path": "firmware/esp/src/ShellLabels.h",
@@ -2953,14 +2953,14 @@
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "c81e98ec59f2d709498af28a3d60b4e3c259c15ff35398baa546444afc2c4d77",
+          "sha256": "f6affb6e7da8d2d0a3f80d695bf4f0f4e8683c91a21a99744e1bb1dd6975dc00",
           "anchor": "class DeviceView"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "assert(output.size()<=PS_DEVICE_VIEW_FRAME_BYTES)"
         }
       ],
@@ -20960,7 +20960,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "491b6efe3ad746cbf3b89d95e42906281469a8ae3b93dfac49b113b007b049ff",
+          "sha256": "09ccff54ca61a00b9e4d1306e1acf81c6837c62e917cf0f84a1ff3a470cdc58e",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -21052,7 +21052,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Unchanged Enter is not a write."
         },
         {
@@ -21183,7 +21183,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "491b6efe3ad746cbf3b89d95e42906281469a8ae3b93dfac49b113b007b049ff",
+          "sha256": "09ccff54ca61a00b9e4d1306e1acf81c6837c62e917cf0f84a1ff3a470cdc58e",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -21220,7 +21220,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Unchanged Enter is not a write."
         },
         {
@@ -21487,7 +21487,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "491b6efe3ad746cbf3b89d95e42906281469a8ae3b93dfac49b113b007b049ff",
+          "sha256": "09ccff54ca61a00b9e4d1306e1acf81c6837c62e917cf0f84a1ff3a470cdc58e",
           "anchor": "shellGet(property)"
         },
         {
@@ -21524,7 +21524,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Readonly never emits Set."
         },
         {
@@ -21605,7 +21605,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "491b6efe3ad746cbf3b89d95e42906281469a8ae3b93dfac49b113b007b049ff",
+          "sha256": "09ccff54ca61a00b9e4d1306e1acf81c6837c62e917cf0f84a1ff3a470cdc58e",
           "anchor": "shellGet(property)"
         },
         {
@@ -21632,7 +21632,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Readonly never emits Set."
         },
         {
@@ -21689,29 +21689,29 @@
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "c81e98ec59f2d709498af28a3d60b4e3c259c15ff35398baa546444afc2c4d77",
+          "sha256": "f6affb6e7da8d2d0a3f80d695bf4f0f4e8683c91a21a99744e1bb1dd6975dc00",
           "anchor": "class DeviceView"
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "491b6efe3ad746cbf3b89d95e42906281469a8ae3b93dfac49b113b007b049ff",
+          "sha256": "09ccff54ca61a00b9e4d1306e1acf81c6837c62e917cf0f84a1ff3a470cdc58e",
           "anchor": "struct ShellTuiSnapshot"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "private\\trefresh"
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Async observation cannot repaint draft."
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "rows[0].editable=false"
         }
       ],
@@ -21757,7 +21757,7 @@
         },
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "c81e98ec59f2d709498af28a3d60b4e3c259c15ff35398baa546444afc2c4d77",
+          "sha256": "f6affb6e7da8d2d0a3f80d695bf4f0f4e8683c91a21a99744e1bb1dd6975dc00",
           "anchor": "class DeviceView"
         },
         {
@@ -21784,7 +21784,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "0f4bbc3e3938ffc7ecd242cc6860af09373ade39d2f6bc08cf15de77ffab135a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "never-render-this"
         },
         {
@@ -26078,11 +26078,11 @@
       "origin": "portable-shell",
       "path": "include/portable_terminal.h",
       "sha256": "356dea61f6096e06a6328691d8f919c2dc582086f2234714cf5efbb4ffef79e1",
-      "source_revision": "1235d4965ab9944be276807e31d6ef0298b9f280",
+      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 1235d4965ab9944be276807e31d6ef0298b9f280. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26099,7 +26099,7 @@
         },
         {
           "path": "tests/shell_workspace_test.cpp",
-          "sha256": "aaeabc9b8df2ad99e5dcaaf552cb076a6346a04030cffcd9d7a983d2c6e2cb47",
+          "sha256": "f01ddddbb8eb688f370d6fe8bb9282214e236947860efc5be35e4f555338a1fe",
           "anchor": "Actual workspace binding"
         }
       ],
@@ -26112,11 +26112,11 @@
       "origin": "portable-shell",
       "path": "include/portable_editor.h",
       "sha256": "1187b7714998afaa5a045f333c50ce3081de846c6c9b0d9b41b8186723bb48ea",
-      "source_revision": "1235d4965ab9944be276807e31d6ef0298b9f280",
+      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 1235d4965ab9944be276807e31d6ef0298b9f280. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26133,7 +26133,7 @@
         },
         {
           "path": "tests/shell_workspace_test.cpp",
-          "sha256": "aaeabc9b8df2ad99e5dcaaf552cb076a6346a04030cffcd9d7a983d2c6e2cb47",
+          "sha256": "f01ddddbb8eb688f370d6fe8bb9282214e236947860efc5be35e4f555338a1fe",
           "anchor": "Actual workspace binding"
         }
       ],
@@ -26146,11 +26146,11 @@
       "origin": "portable-shell",
       "path": "include/portable_shell_editor.hpp",
       "sha256": "9bf1a3b590217b8b1cc6562fbd681f9a71af9d761f057ac10585f597d3e11ff5",
-      "source_revision": "1235d4965ab9944be276807e31d6ef0298b9f280",
+      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 1235d4965ab9944be276807e31d6ef0298b9f280. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26167,7 +26167,7 @@
         },
         {
           "path": "tests/shell_workspace_test.cpp",
-          "sha256": "aaeabc9b8df2ad99e5dcaaf552cb076a6346a04030cffcd9d7a983d2c6e2cb47",
+          "sha256": "f01ddddbb8eb688f370d6fe8bb9282214e236947860efc5be35e4f555338a1fe",
           "anchor": "Actual workspace binding"
         }
       ],
@@ -26179,17 +26179,17 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_device_view.hpp",
-      "sha256": "c81e98ec59f2d709498af28a3d60b4e3c259c15ff35398baa546444afc2c4d77",
-      "source_revision": "1235d4965ab9944be276807e31d6ef0298b9f280",
+      "sha256": "f6affb6e7da8d2d0a3f80d695bf4f0f4e8683c91a21a99744e1bb1dd6975dc00",
+      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 1235d4965ab9944be276807e31d6ef0298b9f280. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "c81e98ec59f2d709498af28a3d60b4e3c259c15ff35398baa546444afc2c4d77",
+          "sha256": "f6affb6e7da8d2d0a3f80d695bf4f0f4e8683c91a21a99744e1bb1dd6975dc00",
           "anchor": "class DeviceView"
         }
       ],
@@ -26201,7 +26201,7 @@
         },
         {
           "path": "tests/shell_workspace_test.cpp",
-          "sha256": "aaeabc9b8df2ad99e5dcaaf552cb076a6346a04030cffcd9d7a983d2c6e2cb47",
+          "sha256": "f01ddddbb8eb688f370d6fe8bb9282214e236947860efc5be35e4f555338a1fe",
           "anchor": "Actual workspace binding"
         }
       ],
@@ -26214,11 +26214,11 @@
       "origin": "portable-shell",
       "path": "include/portable_style.h",
       "sha256": "d86b758b8d8509667ee5e8a49b9ab8319b8961b32923f89b89ea3d23e3db0e11",
-      "source_revision": "1235d4965ab9944be276807e31d6ef0298b9f280",
+      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 1235d4965ab9944be276807e31d6ef0298b9f280. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26235,7 +26235,7 @@
         },
         {
           "path": "tests/shell_workspace_test.cpp",
-          "sha256": "aaeabc9b8df2ad99e5dcaaf552cb076a6346a04030cffcd9d7a983d2c6e2cb47",
+          "sha256": "f01ddddbb8eb688f370d6fe8bb9282214e236947860efc5be35e4f555338a1fe",
           "anchor": "Actual workspace binding"
         }
       ],
@@ -26247,17 +26247,17 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_device_table.hpp",
-      "sha256": "558d7198b1704749a7e9257ac831ae0efa65d2173afb837761cf67ef5b2eb759",
-      "source_revision": "1235d4965ab9944be276807e31d6ef0298b9f280",
+      "sha256": "e3a3bbfeaff9cdb20f50d63c29d884e0a115b65ae0ee1513fde21c962813b2ad",
+      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 1235d4965ab9944be276807e31d6ef0298b9f280. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_table.hpp",
-          "sha256": "558d7198b1704749a7e9257ac831ae0efa65d2173afb837761cf67ef5b2eb759",
+          "sha256": "e3a3bbfeaff9cdb20f50d63c29d884e0a115b65ae0ee1513fde21c962813b2ad",
           "anchor": "renderTable"
         }
       ],
@@ -26269,7 +26269,7 @@
         },
         {
           "path": "tests/shell_workspace_test.cpp",
-          "sha256": "aaeabc9b8df2ad99e5dcaaf552cb076a6346a04030cffcd9d7a983d2c6e2cb47",
+          "sha256": "f01ddddbb8eb688f370d6fe8bb9282214e236947860efc5be35e4f555338a1fe",
           "anchor": "Actual workspace binding"
         }
       ],

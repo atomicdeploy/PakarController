@@ -77,7 +77,7 @@ int main(){
   game.begin();game.feed('\t',keys,action);game.feed('\t',keys,action);
   assert(game.page()==T::Game&&action.type==T::Action::None);
   output.clear();assert(game.render(keys,write));assert(output.find("\xe2\x95\xad\xe2\x94\x80 ")!=std::string::npos);
-  assert(output.find("1-9 press box")!=std::string::npos&&output.size()<PS_DEVICE_VIEW_FRAME_BYTES);
+  assert(output.find("1-9 press")!=std::string::npos&&output.size()<PS_DEVICE_VIEW_FRAME_BYTES);
   assert(game.feed('1',keys,action)&&action.type==T::Action::Press&&action.index==1);
   assert(!game.feed('3',keys,action)&&action.type==T::Action::None);
   assert(game.feed('r',keys,action)&&action.type==T::Action::Reset);

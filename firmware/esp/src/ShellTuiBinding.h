@@ -2,11 +2,14 @@
 // One descriptor/validator owner for TUI, get/set and JSON management.
 struct ShellTuiSnapshot {
   String values[16];PakarShell::ShellTui::Row rows[16];uint8_t cells[80]{};
+  uint32_t cellColors[80]{};
   uint8_t groupCounts[LedGrid::kCells]{};uint16_t groupStarts[LedGrid::kCells]{};
   PakarShell::ShellTui::Snapshot view;
   explicit ShellTuiSnapshot(DeviceShellSession &session){
     using T=PakarShell::ShellTui;
     view.title=deviceIdentity.hostname();view.rows=rows;view.cellStates=cells;
+    view.cellColors=cellColors;view.cellStaggered=true;
+    static const char *const cellNames[]={"Idle","Lost","Off","Won"};view.cellStateNames=cellNames;
     view.columns=session.parser.columns();view.lines=session.parser.rows();view.unicode=session.unicode;
     view.terminalSettings=true;
     view.cloudSettings=true;
@@ -65,10 +68,23 @@ struct ShellTuiSnapshot {
       if(!strcmp(list[i],"led.brightness")){rows[i].minimum=1;rows[i].maximum=255;rows[i].meter=true;}
       if(strstr(list[i],".port")){rows[i].minimum=1;rows[i].maximum=65535;}
       static const char *const networkModes[]={"station","ap","both"},*const ledModes[]={"static","effects"};
+      static const char *const networkLabels[]={"Wi-Fi client","Access point","Client + AP"},*const ledLabels[]={"Solid colors","Animated effects"};
       if(!strcmp(list[i],"network.mode")){rows[i].kind=T::Choice;rows[i].choices=networkModes;rows[i].choiceCount=3;}
       if(!strcmp(list[i],"led.mode")){rows[i].kind=T::Choice;rows[i].choices=ledModes;rows[i].choiceCount=2;}
+      if(rows[i].choices==networkModes)rows[i].choiceLabels=networkLabels;
+      if(rows[i].choices==ledModes)rows[i].choiceLabels=ledLabels;
+      if(strstr(list[i],"_ms"))rows[i].unit="ms";
+      if(strstr(list[i],"seconds")||!strcmp(list[i],"uptime"))rows[i].unit="s";
+      if(!strcmp(list[i],"heap")){rows[i].unit="bytes";rows[i].label="Free memory";}
+      if(!strcmp(list[i],"uptime"))rows[i].label="Uptime";
+      if(!strcmp(list[i],"game.auto_reset_ms"))rows[i].label="Auto reset";
+      if(!strcmp(list[i],"game.chase_ms"))rows[i].label="Chase period";
+      if(!strcmp(list[i],"network.observation_seconds"))rows[i].label="Observation interval";
+      if(!strcmp(list[i],"led.rmt")||!strcmp(list[i],"led.dma")){rows[i].onLabel="Available";rows[i].offLabel="Unavailable";}
+      if(!strcmp(list[i],"avr.online")){rows[i].onLabel="Connected";rows[i].offLabel="Offline";}
+      if(!strcmp(list[i],"display.ack")){rows[i].onLabel="Detected";rows[i].offLabel="Not detected";}
     }
-    for(uint8_t i=0;i<80;++i)cells[i]=grid.state(i+1);
+    for(uint8_t i=0;i<80;++i){cells[i]=grid.state(i+1);cellColors[i]=cells[i]<4?grid.appearance().states[cells[i]].rgb:0;}
   }
 };
 void shellTuiDraw(DeviceShellSession &s,bool force){

@@ -7,6 +7,7 @@
 #include <set>
 #include "ShellTui.h"
 #include "ShellProperties.h"
+#include "../libraries/BoardCore/src/StateAppearance.h"
 #define F(x) x
 struct String:std::string {
   using std::string::string;using std::string::operator=;
@@ -26,7 +27,13 @@ namespace LedGrid {constexpr unsigned kCells=80,kPixels=480;}
 unsigned currentFeatures(){return 3;}
 struct Layout {unsigned used()const{return 480;}unsigned revision()const{return 7;}
   uint8_t count(unsigned)const{return 6;}uint16_t start(unsigned id)const{return uint16_t((id-1)*6);}};
-struct Grid {Layout layout;const Layout &groupLayout()const{return layout;}uint8_t state(unsigned)const{return 0;}} grid;
+struct Grid {
+  Layout layout;BoardCore::StateAppearance styles;
+  Grid(){styles.states[0].rgb=0xffeecc;styles.states[1].rgb=0xd82855;styles.states[3].rgb=0x33dd99;}
+  const Layout &groupLayout()const{return layout;}
+  const BoardCore::StateAppearance &appearance()const{return styles;}
+  uint8_t state(unsigned id)const{return uint8_t((id-1)%4);}
+} grid;
 #if PAKAR_FIRST_WINS_ENABLED
 bool avrOnline=true,avrRemotePress=true,keyMaskApplied=true;
 struct KeySettings {unsigned enabledMask=511;} keySettings;
@@ -82,9 +89,13 @@ int main(int argc,char **argv){
   assert(visited.count(V::Game));
 #endif
   while(s.tui.page()!=V::Led)input("\t");
+  {ShellTuiSnapshot matrix(s);assert(matrix.view.cellStaggered);
+    for(unsigned i=0;i<80;++i)assert(matrix.cellColors[i]==grid.appearance().states[grid.state(i+1)].rgb);}
   input("f ");assert(writes==1&&lastKey=="led.enabled"&&lastValue=="false"); // Actual typed row and routed Action.
   input("\x1b[B\x1b[B\r\x15" "200");assert(writes==1&&s.tui.editing());
-  s.output.clear();shellTuiDraw(s,true);assert(s.output.find("\x1b[8;53H")!=std::string::npos);
+  s.output.clear();shellTuiDraw(s,true);assert(s.output.find("\x1b[9;34H")!=std::string::npos);
+  assert(s.output.find("Lighting")!=std::string::npos&&s.output.find("Lighting")==s.output.rfind("Lighting"));
+  assert(s.output.find("Tab pages")==std::string::npos); // Inline editor alone owns keys.
 #ifdef PS_RENDER_FIXTURE
   if(argc==2)capture(s,argv[1],"inline");
 #endif

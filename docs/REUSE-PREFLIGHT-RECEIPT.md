@@ -11287,3 +11287,41 @@ Event-editor Unicode/grapheme input, donor AP configuration/restore semantics an
 full application parity remain open in the existing ledger/issue29. A richer
 source renderer and fixture pictures do not establish universal superiority or
 physical acceptance.
+
+## Contextual matrix correction after user visual review (2026-10-29)
+
+The first rich-table captures still repeated categories and overlapping footer
+hints. User review also correctly questioned cell colors and the rectangular
+layout. Reread PCController Tools/Controller/internal/tui/table.go completely at
+b0111ae0 (SHA256 ecd399e2bf7718f3eb7b62e49f9dd884c0fb179e3d907bd15b238c01d31501e3),
+plus actual LedGrid state/color accessors, StateAppearance, Protocol CellState,
+TableCellMapping and web/modules/table-layout.js. The existing cell renderer
+incorrectly collapsed state3 (won) into gray and ignored configured appearance.
+The canonical view now takes provider RGB/state labels and the paired staggered
+geometry; the application supplies its real StateAppearance colors. Selection
+is a separate marker, not a replacement state color. Configured colors are not
+physical light/driver confirmation. Geometry and arrow neighbors use the same
+20-column paired offset mapping as the Web table, not a guessed wiring order.
+
+Adapt PCController's logical-row/section-line separation into the shared bounded
+view, with grouped headers and optional explicit category columns. Dedicated
+matrix mode has its own viewport and contextual actions. Focus keeps cell/game
+shortcuts out of settings; inline editing hides navigation hints; modal editing
+owns its only Apply/Cancel hint. On/Off glyphs, friendly choices, brightness
+percentages/ranges and units improve values without replacing raw owner keys.
+Unicode dimensions use U+00D7; ASCII remains an explicit alternative.
+
+Native tests cover configured lost/won colors, all80 binding RGB entries,
+staggered neighbor IDs, narrow/ASCII rendering, focus refusal and displayed
+owner rejection. Captures come from the real binding with deterministic doubles;
+all9 pages and inline/dialog/Lumen/One Dark frames are re-rendered with Agave.
+The same production hold applies. PR38 was returned to draft during correction;
+its earlier green jobs do not certify this changed source. Complete final checks
+and separately authorized hardware acceptance remain required.
+
+The GitHub integration returned403 for comment/PR creation. Its read operations
+remain usable; authenticated repository CLI writes were used, with no policy or
+production approval bypass. Compiler errors from a local duplicate layout-counter
+name and misleading indentation were fixed in the canonical renderer before
+repinning; changed native assertions now check grouped/contextual behavior rather
+than preserve the rejected repeated labels.
