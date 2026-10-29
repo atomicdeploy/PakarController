@@ -224,7 +224,7 @@ void executeDeviceShell(DeviceShellSession &s,String line){
          !PakarShell::unsignedNumber(args.substring(split+1).c_str(),100,h)||!s.parser.size(w,h)){
         shellResult(s,false,F("Use terminal size 40..240 16..100"));shellPrompt(s);return;}
     }else if(args.length()){shellResult(s,false,F("Use terminal unicode|color|truecolor on|off, terminal theme violet|red|lumen|onedark, terminal size COLS ROWS"));shellPrompt(s);return;}
-    s.print(F("Terminal "));s.print(s.parser.terminal());s.print(F(" | "));s.print(s.parser.columns());s.print('x');s.print(s.parser.rows());
+    s.print(F("Terminal "));s.print(s.parser.terminal());s.print(F(" | "));s.print(s.parser.columns());s.print(s.unicode?F(" \xc3\x97 "):F(" x "));s.print(s.parser.rows());
     s.print(F(" | Unicode "));s.print(s.unicode?F("on"):F("off"));s.print(F(" | ANSI "));s.println(s.color&&s.parser.ansi()?F("on"):F("off"));
   }else if(verb=="game"){
     String result;JsonDocument d;bool valid=PAKAR_FIRST_WINS_ENABLED;

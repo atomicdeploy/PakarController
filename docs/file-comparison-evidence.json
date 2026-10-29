@@ -56,7 +56,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         }
       ],
       "proof": [
@@ -91,7 +91,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         }
       ],
       "proof": [
@@ -131,7 +131,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         }
       ],
       "proof": [
@@ -166,12 +166,12 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae"
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c"
         },
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         }
       ],
       "proof": [
@@ -206,7 +206,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         },
         {
           "path": "firmware/esp/src/PortableShellCore.h",
@@ -245,7 +245,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         }
       ],
       "proof": [
@@ -280,7 +280,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         }
       ],
       "proof": [
@@ -315,7 +315,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         }
       ],
       "proof": [
@@ -357,7 +357,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae"
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
@@ -403,7 +403,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "aa5376834294d0e93561eee3d1720bf4d08222d18559c8dfc586bbd2cb0e34bb"
+          "sha256": "9328c55b834c03c7c64ba313b49f7b3f6eaff1c45e8b2b87dc2982d7aacd1d6f"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -449,7 +449,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae"
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -504,7 +504,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae"
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c"
         }
       ],
       "proof": [
@@ -546,7 +546,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae"
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -606,7 +606,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae"
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c"
         },
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
@@ -668,7 +668,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae"
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -728,7 +728,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae"
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c"
         }
       ],
       "proof": [
@@ -6361,7 +6361,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae",
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c",
           "anchor": "void serviceShellRemoteQuery()"
         },
         {
@@ -21292,7 +21292,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae",
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21389,7 +21389,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae",
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21482,7 +21482,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae",
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c",
           "anchor": "bool shellSet("
         },
         {
@@ -21600,7 +21600,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae",
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c",
           "anchor": "bool shellSet("
         },
         {
@@ -21762,7 +21762,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "327ef58689cf92a013ca7b5000e7e5c288a71893a12cef0400819e8f8f9157ae",
+          "sha256": "aa0c4c7cf805da52a3842f33fc5588ce2fd022ea801d979a904864eb494c7d4c",
           "anchor": "void closeDeviceShells()"
         },
         {
@@ -26078,11 +26078,11 @@
       "origin": "portable-shell",
       "path": "include/portable_terminal.h",
       "sha256": "356dea61f6096e06a6328691d8f919c2dc582086f2234714cf5efbb4ffef79e1",
-      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
+      "source_revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at f1804eb3261405d702e2ad276f462ba9fd1c13bf. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26112,11 +26112,11 @@
       "origin": "portable-shell",
       "path": "include/portable_editor.h",
       "sha256": "1187b7714998afaa5a045f333c50ce3081de846c6c9b0d9b41b8186723bb48ea",
-      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
+      "source_revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at f1804eb3261405d702e2ad276f462ba9fd1c13bf. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26146,11 +26146,11 @@
       "origin": "portable-shell",
       "path": "include/portable_shell_editor.hpp",
       "sha256": "9bf1a3b590217b8b1cc6562fbd681f9a71af9d761f057ac10585f597d3e11ff5",
-      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
+      "source_revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at f1804eb3261405d702e2ad276f462ba9fd1c13bf. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26180,11 +26180,11 @@
       "origin": "portable-shell",
       "path": "include/portable_device_view.hpp",
       "sha256": "f6affb6e7da8d2d0a3f80d695bf4f0f4e8683c91a21a99744e1bb1dd6975dc00",
-      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
+      "source_revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at f1804eb3261405d702e2ad276f462ba9fd1c13bf. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26214,11 +26214,11 @@
       "origin": "portable-shell",
       "path": "include/portable_style.h",
       "sha256": "d86b758b8d8509667ee5e8a49b9ab8319b8961b32923f89b89ea3d23e3db0e11",
-      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
+      "source_revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at f1804eb3261405d702e2ad276f462ba9fd1c13bf. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
@@ -26247,17 +26247,17 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_device_table.hpp",
-      "sha256": "e3a3bbfeaff9cdb20f50d63c29d884e0a115b65ae0ee1513fde21c962813b2ad",
-      "source_revision": "891dfa234f621794b6b7a2512d4bbb0dfb958bdd",
+      "sha256": "784b6315a407af641060db4f01e4caf92148bf149389b79d5b5e397946c525a2",
+      "source_revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Complete canonical component at 891dfa234f621794b6b7a2512d4bbb0dfb958bdd. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+        "Complete canonical component at f1804eb3261405d702e2ad276f462ba9fd1c13bf. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_table.hpp",
-          "sha256": "e3a3bbfeaff9cdb20f50d63c29d884e0a115b65ae0ee1513fde21c962813b2ad",
+          "sha256": "784b6315a407af641060db4f01e4caf92148bf149389b79d5b5e397946c525a2",
           "anchor": "renderTable"
         }
       ],

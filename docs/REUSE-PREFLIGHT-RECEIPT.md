@@ -11325,3 +11325,14 @@ production approval bypass. Compiler errors from a local duplicate layout-counte
 name and misleading indentation were fixed in the canonical renderer before
 repinning; changed native assertions now check grouped/contextual behavior rather
 than preserve the rejected repeated labels.
+
+Final review removed the narrow-tab header's second navigation hint and changed
+the shell's terminal-size response to Unicode multiplication with an ASCII
+fallback. Canonical component pin f1804eb3261405d702e2ad276f462ba9fd1c13bf.
+The full native shell wrapper passes after that pin. The preceding frozen4f6d1bc
+SDK build passed at2400275 linked program bytes and140156 static RAM bytes;
+its application BIN was2400416 bytes, SHA256
+d34dafd380922c7e7f29a45c3d88761ac4feac0a10e521112a85739e52241d5a.
+The final typography-only follow-up receives a separate build attestation on
+PR38/issue29. Static RAM is not a runtime peak measurement. All historical donor
+records and omissions remain; no production action was taken.
