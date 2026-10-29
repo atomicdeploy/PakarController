@@ -1,7 +1,17 @@
 // Probe/HTTP fixtures only, not an ESP, W5500, multicast or Internet test.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {deviceOrigin,ethernetReady,deviceRequest,checkEthernet} from '../tools/check-ethernet-live.mjs';
+import {deviceOrigin,ethernetReady,deviceRequest,checkEthernet,assertWebUi,maxWebUiBytes} from '../tools/check-ethernet-live.mjs';
+import {gzipSync} from 'node:zlib';
+const richWeb=Buffer.from('<!doctype html><html>'+'.'.repeat(600000)+'</html>');
+assertWebUi({body:richWeb,headers:{}});
+assertWebUi({body:gzipSync(richWeb),headers:{'content-encoding':'gzip'}});
+for(const compressed of [false,true]){
+ const oversized=Buffer.from('<html>'+'.'.repeat(maxWebUiBytes));
+ assert.throws(()=>assertWebUi({body:compressed?gzipSync(oversized):oversized,headers:compressed?{'content-encoding':'gzip'}:{}}));
+}
+assert.throws(()=>assertWebUi({body:Buffer.from('{}'),headers:{}}));
+assert.throws(()=>assertWebUi({body:richWeb,headers:{'content-encoding':'br'}}));
 const status={version:'0.2.8',hostname:'ledboard',board_id:'esp32s3-fixture',boot_id:'a'.repeat(32),http_peer_fencing:true,
   uplink:'ethernet',uplink_ipv4_ready:true,station_connected:false,programming_latch:false,
   capabilities:{board_kind:'controller',hostname:'ledboard',acknowledged_features:['network']},ethernet:{configured:true,initialized:true,link_up:true,ipv4_ready:true,ip:'192.168.50.20'}};
@@ -53,12 +63,15 @@ for(const scenario of ['success','local-only','wrong-interface','wifi-egress','b
 }
 
 // Real loopback HTTP demonstrates socket-peer capture and no redirect replay.
-const paths=[];const server=createServer((req,res)=>{paths.push(req.url);if(req.url.startsWith('/drop?')){req.socket.destroy();return;}res.writeHead(req.url==='/redirect'?302:200,
+const paths=[];const server=createServer((req,res)=>{paths.push(req.url);if(req.url==='/'||req.url==='/large-json'){res.writeHead(200);res.end(richWeb);return;}if(req.url.startsWith('/drop?')){req.socket.destroy();return;}res.writeHead(req.url==='/redirect'?302:200,
   req.url==='/redirect'?{Location:'/unexpected'}:{'Content-Type':'application/json'});res.end('{}')});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 try{
   const origin=new URL('http://localhost:'+server.address().port);
   const result=await deviceRequest(origin,'/status');assert.equal(result.remote,'127.0.0.1');assert.equal(result.body.toString(),'{}');
+  assertWebUi(await deviceRequest(origin,'/'));
+  await assert.rejects(deviceRequest(origin,'/large-json'),error=>
+    error.cause?.message==='Response exceeds bounded probe size'||error.message==='Device response interrupted; no retry');
   assert.equal((await deviceRequest(origin,'/redirect')).status,302);assert(!paths.includes('/unexpected'));
   await assert.rejects(deviceRequest(origin,'/drop?secret=private'),error=>
     error.message==='Device request GET /drop failed (ECONNRESET); no retry' &&

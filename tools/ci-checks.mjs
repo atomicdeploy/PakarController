@@ -5,6 +5,8 @@ import {fileURLToPath} from 'node:url';
 import {createLogger} from './script-console.mjs';
 export const phases={
   "quality": [
+    ["python", "-B", "tests/mqtt_provisioning_test.py"],
+    ["pwsh", "-NoProfile", "-File", "tools/test-cloud-services.ps1"],
     ["node", "tests/resource_report_test.mjs"],
     ["node", "tests/doc_links_test.mjs"],
     ["node", "tools/check-doc-links.mjs"],

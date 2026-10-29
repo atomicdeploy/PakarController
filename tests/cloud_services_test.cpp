@@ -5,6 +5,9 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#if defined(ESP32)
+#include <esp_heap_caps.h>
+#endif
 
 static unsigned dispatches=0,fullSnapshots=0;
 static String dispatched;
@@ -202,7 +205,36 @@ int main(){
   assert(cloudServices.mqttConnectionStats().attempts==wrapAttempts+1);
 #if defined(ESP32)
   assert(cloudConfig.setMqtt(true,true,"broker.local",8883,"","","pakar",true));
-  cloudServices.applyConfiguration();mqtt.connectResult=true;
+  assert(cloudConfig.setWebSocket(false,false,"cloud.local",80,"/ws","",true));
+  cloudServices.applyConfiguration();mqtt.connectResult=false;mqtt.connectDurationMs=321;
+  cloudTestFreeReads=cloudTestLargestReads=0;
+  WiFiClientSecure::errorCode=-32512;WiFiClientSecure::errorText="SSL - allocation failed\r\n\x1b";
+  const auto errorReads=WiFiClientSecure::errorReads;
+  service(true,true,80000,true,false);
+  const auto diagnostic=cloudServices.lastError();
+  assert(diagnostic.find("tls_error -32512 (SSL - allocation failed   )")!=String::npos);
+  assert(diagnostic.find("elapsed_ms 321; internal_free 60000->42000; internal_largest 31000->18000")!=String::npos);
+  assert(diagnostic.length()<320&&WiFiClientSecure::errorReads==errorReads+1);
+  assert(diagnostic.find('\r')==String::npos&&diagnostic.find('\n')==String::npos&&diagnostic.find('\x1b')==String::npos);
+  assert(cloudTestFreeReads==2&&cloudTestLargestReads==2);
+  // Bounded SDK error text, zero/unknown SDK results, and MQTT auth refusals
+  // must not be mistaken for observed TLS allocation/certificate failures.
+  WiFiClientSecure::errorText=String(std::string(400,'x'));cloudServices.applyConfiguration();
+  service(true,true,81000,true,false);
+  assert(cloudServices.lastError().length()<320&&cloudServices.lastError().find(std::string(96,'x'))==String::npos);
+  WiFiClientSecure::errorText="";WiFiClientSecure::errorCode=0;cloudServices.applyConfiguration();
+  service(true,true,82000,true,false);
+  assert(cloudServices.lastError().find("tls_error 0 (no SDK detail)")!=String::npos);
+  mqtt.failedState=4;cloudServices.applyConfiguration();const auto authReads=WiFiClientSecure::errorReads;
+  service(true,true,83000,true,false);
+  assert(cloudServices.lastError()=="MQTT connect failed, state 4"&&WiFiClientSecure::errorReads==authReads);
+  mqtt.failedState=-2;
+  assert(cloudConfig.setMqtt(true,false,"broker.local",1883,"","","pakar",true));
+  cloudServices.applyConfiguration();service(true,true,84000,true,false);
+  assert(cloudServices.lastError()=="MQTT connect failed, state -2"&&WiFiClientSecure::errorReads==authReads);
+  assert(cloudConfig.setMqtt(true,true,"broker.local",8883,"","","pakar",true));
+  assert(cloudConfig.setWebSocket(true,false,"cloud.local",80,"/ws","",true));
+  cloudServices.applyConfiguration();mqtt.connectResult=true;mqtt.connectDurationMs=0;
   service(true,true,100000,true,false);
   assert(mqtt.connected()&&mqtt.client->connectionTimeoutMs==1000); // TLS client's TCP limit also set.
 #endif

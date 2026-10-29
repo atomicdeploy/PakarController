@@ -7,6 +7,7 @@ class PubSubClient {
   inline static PubSubClient *latest=nullptr;
   PubSubClient(){latest=this;}
   Client *client=nullptr;
+  int failedState=-2;
   void (*callback)(char*,uint8_t*,unsigned)=nullptr;
   unsigned connectAttempts=0,loops=0,beginCalls=0,endCalls=0,disconnects=0;
   bool connectResult=true,publishResult=true,bufferResult=true,subscribeResult=true;uint32_t connectDurationMs=0,writeDurationMs=0;unsigned writes=0;
@@ -17,7 +18,7 @@ class PubSubClient {
   bool setBufferSize(uint16_t n){if(!bufferResult)return false;bufferSize=n;return true;}
   void setKeepAlive(unsigned){}void setSocketTimeout(unsigned){}
   void setServer(const char*,unsigned){}void setClient(Client &c){client=&c;}
-  bool connected(){return client&&client->live;}int state(){return connected()?0:-1;}
+  bool connected(){return client&&client->live;}int state(){return connected()?0:failedState;}
   template<class...Args>bool connect(const char *id,Args...){clientIds.emplace_back(id);++connectAttempts;cloudTestMillis+=connectDurationMs;client->live=connectResult;return connectResult;}
   void disconnect(){++disconnects;if(client)client->stop();}
   bool subscribe(const char*){return connected()&&subscribeResult;}

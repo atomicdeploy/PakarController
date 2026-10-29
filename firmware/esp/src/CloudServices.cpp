@@ -5,6 +5,7 @@
 #include <time.h>
 #if defined(ESP32)
 #include <esp_random.h>
+#include <esp_heap_caps.h>
 #include <mbedtls/base64.h>
 #include <mbedtls/sha256.h>
 #else
@@ -246,6 +247,12 @@ void CloudServices::connectMqtt(uint32_t now) {
   }
   const String availability = topic(F("/availability"));
   cooperate();
+#if defined(ESP32)
+  const bool tlsAttempt=cloudConfig.mqttTls();
+  constexpr uint32_t internalCaps=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT;
+  const size_t internalFreeBefore=tlsAttempt?heap_caps_get_free_size(internalCaps):0;
+  const size_t internalLargestBefore=tlsAttempt?heap_caps_get_largest_free_block(internalCaps):0;
+#endif
   const uint32_t startedAt=millis();
   if(mqttConnectionStats_.attempts!=UINT32_MAX)++mqttConnectionStats_.attempts;
   bool connected = false;
@@ -267,6 +274,28 @@ void CloudServices::connectMqtt(uint32_t now) {
   nextMqttAttemptAt_=completedAt+10000U;if(!nextMqttAttemptAt_)nextMqttAttemptAt_=1;
   if (!connected) {
     if(mqttConnectionStats_.failures!=UINT32_MAX)++mqttConnectionStats_.failures;
+#if defined(ESP32)
+    // PubSubClient -2 means its Client::connect failed, not MQTT credential
+    // rejection. Retain the SDK's actual TLS result before any later socket
+    // work; a zero result is not proof of a certificate or memory failure.
+    if(tlsAttempt && mqtt_.state()==-2) {
+      const size_t internalFreeAfter=heap_caps_get_free_size(internalCaps);
+      const size_t internalLargestAfter=heap_caps_get_largest_free_block(internalCaps);
+      char reason[96]={};
+      const int tlsError=secureClient_.lastError(reason,sizeof(reason));
+      reason[sizeof(reason)-1]='\0';
+      for(size_t i=0;reason[i];++i)
+        if(static_cast<unsigned char>(reason[i])<32 || static_cast<unsigned char>(reason[i])>126)reason[i]=' ';
+      char diagnostic[320];
+      snprintf(diagnostic,sizeof(diagnostic),
+          "MQTT connect failed, state %d; tls_error %d (%s); elapsed_ms %lu; internal_free %lu->%lu; internal_largest %lu->%lu",
+          mqtt_.state(),tlsError,reason[0]?reason:"no SDK detail",
+          static_cast<unsigned long>(mqttConnectionStats_.lastDurationMs),
+          static_cast<unsigned long>(internalFreeBefore),static_cast<unsigned long>(internalFreeAfter),
+          static_cast<unsigned long>(internalLargestBefore),static_cast<unsigned long>(internalLargestAfter));
+      lastError_=diagnostic;
+    } else
+#endif
     lastError_ = String(F("MQTT connect failed, state ")) + mqtt_.state();
     cooperate();
     return;

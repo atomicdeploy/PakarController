@@ -3405,7 +3405,8 @@
         "The pending signal footer uses the same bounded Material/InkWell target and theme roles, with local icon/value/both persistence. Full donor ActivityStrip was reread; constrained Flexible popup labels fix the discovered 13px overflow. Four focused widget tests cover menu interactions, restore, RSSI changes and phone/tablet RTL large-text bounds. No network or board mutation is performed.",
         "2026-10-29 issue #32: reread actual ActivityStrip through EOF; adapt its semantic icon surfaces, fixed geometry and bounded text for the board-catalog game picker. Number only advertised modes in board order, retain a distinct game icon, show a muted wrapping second-line description, and scale the reserved row height with accessibility text. Opening remains read-only; selection retains the original correlated configure owner. Installed build 23 was observed with a plain single-line menu; candidate installation and screenshot are tracked separately.",
         "The same game card now has one stable contextual primary action: Start in ready/finished phases, Pause in show/input/feedback and Resume only while paused. Rebuilds and menu opening cannot dispatch a command; the existing peer-bound owner and pending admission are unchanged.",
-        "2026-10-29 requirement audit retains the existing numbered semantic icon/description game picker and contextual action. New widget fixtures exercise the board-supplied 10-second target setting, Color Pattern introduction Off versus Matching Pairs On, editable Simon feedback/steps and narrow settings patches. Settings/hold failures remove only the Dart FormatException type prefix, preserving the board/transport cause and unsaved draft; existing actual command transport tests prove WS-first box control without a preceding HTTP status read. No automatic deployment, fallback replay to another peer or hardware/audio acceptance is inferred."
+        "2026-10-29 requirement audit retains the existing numbered semantic icon/description game picker and contextual action. New widget fixtures exercise the board-supplied 10-second target setting, Color Pattern introduction Off versus Matching Pairs On, editable Simon feedback/steps and narrow settings patches. Settings/hold failures remove only the Dart FormatException type prefix, preserving the board/transport cause and unsaved draft; existing actual command transport tests prove WS-first box control without a preceding HTTP status read. No automatic deployment, fallback replay to another peer or hardware/audio acceptance is inferred.",
+        "Side-conversation picker completion rereads the complete unchanged ActivityStrip donor. Move the existing semantic icon/description row into one shared GameModePicker, retaining the parent's command/peer owner. Measure number width and reserve typography-based two-line row geometry; preserve board order, explicit-only selection, supplied unknown-mode details and read-only opening. Dedicated fixtures cover all eleven entries, phone/tablet/RTL/enlarged text, keyboard and disabled behavior, plus canonical gated captures. These are source/fixture checks, not installed tablet acceptance."
       ],
       "targets": [
         {
@@ -3440,8 +3441,13 @@
         },
         {
           "path": "mobile/lib/minigame_panel.dart",
-          "sha256": "b3eda86b9eab35492dcab4fc65275d3755c6a11556f297187b89f9f359dba4df",
+          "sha256": "d29ded793b4e4ad8dbc5044e840cbf89ac98acd109ebfdf0ca6859f48414f521",
           "anchor": "class MiniGamePanel"
+        },
+        {
+          "path": "mobile/lib/game_mode_picker.dart",
+          "sha256": "4141e2dc271b230c49f5a5d839b5bcad4ba1bb2218913318872b14edfeff8fb5",
+          "anchor": "class GameModePicker"
         },
         {
           "path": "mobile/lib/signal_indicator.dart",
@@ -3509,6 +3515,16 @@
           "path": "mobile/test/minigame_test.dart",
           "sha256": "8df2059bf85d950c14873f8966d26fe8fe851f2e4ab235a89d8f1906d3932b40",
           "anchor": "One contextual transport button follows phase without sending on refresh"
+        },
+        {
+          "path": "mobile/test/game_mode_picker_test.dart",
+          "sha256": "f29ec39d324b1f5cc71cb77a168bb41c8fc474a5e9fa0d124a30f625be8a7853",
+          "anchor": "Every advertised mode has its numbered icon and muted description"
+        },
+        {
+          "path": "mobile/test/game_mode_picker_test.dart",
+          "sha256": "f29ec39d324b1f5cc71cb77a168bb41c8fc474a5e9fa0d124a30f625be8a7853",
+          "anchor": "Phone tablet RTL large-text and bold numbering keep stable geometry"
         }
       ],
       "omissions": [
@@ -3561,7 +3577,7 @@
         },
         {
           "path": "tools/check-ethernet-live.mjs",
-          "sha256": "29e5e90657ea68415c49f947e09561a8750f7998b972e88d689bc6b79c82b08c",
+          "sha256": "69c61ad7a70fc4a49487ad89abb21e855cbda69da46d0b872bc8161f09c6b87c",
           "anchor": "distinctHeaders:response.headersDistinct"
         },
         {
@@ -13424,7 +13440,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9"
+          "sha256": "1158993fe22255b9fdfd218b0c7ead67398741e0e6e7094fcf160f721fcb0efd"
         }
       ],
       "remaining": [
@@ -13477,7 +13493,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9"
+          "sha256": "1158993fe22255b9fdfd218b0c7ead67398741e0e6e7094fcf160f721fcb0efd"
         }
       ],
       "remaining": [
@@ -13594,7 +13610,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9"
+          "sha256": "1158993fe22255b9fdfd218b0c7ead67398741e0e6e7094fcf160f721fcb0efd"
         }
       ],
       "remaining": [
@@ -14730,7 +14746,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "29e5e90657ea68415c49f947e09561a8750f7998b972e88d689bc6b79c82b08c"
+          "sha256": "69c61ad7a70fc4a49487ad89abb21e855cbda69da46d0b872bc8161f09c6b87c"
         },
         {
           "path": "desktop/src/bridge_transfer.rs",
@@ -14779,7 +14795,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9"
+          "sha256": "1158993fe22255b9fdfd218b0c7ead67398741e0e6e7094fcf160f721fcb0efd"
         },
         {
           "path": "desktop/src/bridge_transfer.rs",
@@ -14819,7 +14835,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "29e5e90657ea68415c49f947e09561a8750f7998b972e88d689bc6b79c82b08c"
+          "sha256": "69c61ad7a70fc4a49487ad89abb21e855cbda69da46d0b872bc8161f09c6b87c"
         }
       ],
       "omissions": [
@@ -14838,7 +14854,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9"
+          "sha256": "1158993fe22255b9fdfd218b0c7ead67398741e0e6e7094fcf160f721fcb0efd"
         }
       ]
     },
@@ -18095,7 +18111,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "185205c24d8ebf5fbd4b26499841843093544c3f1f626310d901f0f41c229c07",
+          "sha256": "cf3da4a730886abe9525f51df9893e0ec408e1840b589e4cc2ba4e4479b05c0d",
           "anchor": "export function runChecks"
         },
         {
@@ -22046,7 +22062,7 @@
         },
         {
           "path": "tools/build-mobile.ps1",
-          "sha256": "3d91a7320c7c719cb870fa461fdf2fba799cf1fcebc30805937c32b966e40362",
+          "sha256": "43982d06947af7703e0374aa9092ddd62c032fc0643445c3a21cab87206ef072",
           "anchor": "$taskCache=Get-DirectorySummary"
         }
       ],
@@ -23720,12 +23736,12 @@
         },
         {
           "path": "firmware/esp/src/CloudServices.cpp",
-          "sha256": "88444770a73ac1ed410cdddce847603bf961d30bc7585da1c35bf128766b4901",
+          "sha256": "e74b5fa09c067196d11e6dd6fa54923bbd2cafed2143ed746c9db7e2a5215792",
           "anchor": "void CloudServices::handleCommand("
         },
         {
           "path": "firmware/esp/src/CloudServices.cpp",
-          "sha256": "88444770a73ac1ed410cdddce847603bf961d30bc7585da1c35bf128766b4901",
+          "sha256": "e74b5fa09c067196d11e6dd6fa54923bbd2cafed2143ed746c9db7e2a5215792",
           "anchor": "bool CloudServices::publishMqtt("
         },
         {
@@ -23771,12 +23787,12 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "29e5e90657ea68415c49f947e09561a8750f7998b972e88d689bc6b79c82b08c"
+          "sha256": "69c61ad7a70fc4a49487ad89abb21e855cbda69da46d0b872bc8161f09c6b87c"
         },
         {
           "path": "firmware/esp/src/CloudServices.cpp",
           "anchor": "const uint32_t completedAt=millis()",
-          "sha256": "88444770a73ac1ed410cdddce847603bf961d30bc7585da1c35bf128766b4901"
+          "sha256": "e74b5fa09c067196d11e6dd6fa54923bbd2cafed2143ed746c9db7e2a5215792"
         },
         {
           "path": "firmware/esp/src/FilesystemTelemetry.h",
@@ -23868,7 +23884,7 @@
         },
         {
           "path": "tests/cloud_services_test.cpp",
-          "sha256": "9d73f8c4c8ce53c485644ef67da077be526fd244b51e41534ef784df529d1331",
+          "sha256": "1b91ad923e352d5b9926d8642bb95d1e4e5a1ea46c0da0e53d7c1bb299c2cc56",
           "anchor": "int main()"
         },
         {
@@ -23909,12 +23925,12 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9"
+          "sha256": "1158993fe22255b9fdfd218b0c7ead67398741e0e6e7094fcf160f721fcb0efd"
         },
         {
           "path": "tests/cloud_services_test.cpp",
           "anchor": "A slow failed connect must wait a full interval AFTER completion",
-          "sha256": "9d73f8c4c8ce53c485644ef67da077be526fd244b51e41534ef784df529d1331"
+          "sha256": "1b91ad923e352d5b9926d8642bb95d1e4e5a1ea46c0da0e53d7c1bb299c2cc56"
         },
         {
           "path": "tests/filesystem_telemetry_test.cpp",
@@ -23949,7 +23965,7 @@
         {
           "path": "tools/check-ethernet-live.mjs",
           "anchor": "export async function checkEthernet(",
-          "sha256": "29e5e90657ea68415c49f947e09561a8750f7998b972e88d689bc6b79c82b08c"
+          "sha256": "69c61ad7a70fc4a49487ad89abb21e855cbda69da46d0b872bc8161f09c6b87c"
         },
         {
           "path": "libraries/BoardCore/src/PeerRoutePolicy.h",
@@ -23977,7 +23993,7 @@
         {
           "path": "tests/ethernet_live_tool_test.mjs",
           "anchor": "for(const scenario of [",
-          "sha256": "6a0c0fcb764500ba41a918169306e417cbb94548a872dcccdbc424237bbcf9d9"
+          "sha256": "1158993fe22255b9fdfd218b0c7ead67398741e0e6e7094fcf160f721fcb0efd"
         }
       ],
       "improvement": "Bounded concurrency, request deadlines, no mutation replay, strict-count/all-cell readback and explicit progress checks reject stale or frozen output."

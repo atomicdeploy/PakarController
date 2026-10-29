@@ -1,5 +1,33 @@
 # Donor-first preflight receipt
 
+## Game picker acceptance gaps, side conversation, 2026-10-29 (#32)
+
+Scope is the Flutter game-mode selector, not board deployment or the main
+thread's other work. Read the current selector/tests and actual history: the
+first rich row retained a fixed 64 px height and no number, while 7e013fab added
+numbering and one two-entry test. Read the complete 233-line PCController
+ActivityStrip source at its unchanged recorded hash; retain its themed icon
+surface, bounded text and stable geometry, not a second command owner.
+
+The fixed 26 px number column was not accessibility-safe. The new shared picker
+measures number width, keeps digits LTR in RTL layouts, reserves both title and
+muted description lines, and exposes full labels/descriptions to accessibility
+and tooltips. Only advertised modes appear in board order. Parent ACK/peer
+admission is unchanged; focus, opening and selecting the current mode do not
+start or reconfigure a game. The canonical mobile capture selector additionally
+accepts GameModePhone/GameModeTablet for actual-widget fixture inspection.
+
+Canonical mobile wrappers report no analyzer issues and 33 passing tests:
+22 minigame, four box-designer and seven picker tests. Picker coverage includes
+all 11 advertised entries, 18 phone/tablet/RTL/text-scale combinations, bold
+text, keyboard selection, disabled/unchanged choices, custom modes, description
+fallbacks and closing the old popup on a board change without issuing a command.
+The first fixture run exposed a lazy-list Finder error and a missed-tap warning;
+the fixture now scopes to the actual popup and treats missed taps as failures.
+Expanded phone and tablet actual-widget captures were visually inspected. These
+are local source/fixture results, not installed-device or physical acceptance.
+No APK, running app, board, saved game setting or Git branch is replaced here.
+
 ## SSH single-command and direct TUI entry, 2026-10-29 (#33)
 
 Consulted ssh-transport plus exact PU850 donor-audit LocalLib/Shell.cpp/.h rows
@@ -11563,3 +11591,119 @@ The five shared-dropdown tests also pass, including keyboard focus/navigation,
 search, fixed hover geometry and unrelated-editor arrow ownership.
 Native-only changes require no firmware/APK rebuild or board/client replacement;
 runtime acceptance stays separate from these focused source checks.
+
+## Termux upgrade preflight and interruption (2026-10-29)
+
+David authorized updating both ESP instances through Termux first, followed by
+completion/review/merge of the mixed workspace. Preserve that order; no merge or
+clean-working-tree claim is made while device deployment is blocked. The current
+8022 key was matched against the previously trusted Termux key at5022 without
+replacing ASUS's saved8022 key. Actual Termux/rish inventory found ledcontroller
+on its saved station network, AVR online, no programming latch,480 pixels and
+RMT/DMA active. Keycontroller was absent from hostname resolution and a fresh
+phone Wi-Fi scan; never substitute a guessed device.
+
+The canonical downloader obtained and verified the complete2314752-byte running
+ESP application, but Android denied its final hardlink publication. Retain the
+part file; independent transfer to this PC verified its running-image MD5 and
+SHA256. This is a preserved firmware backup, not successful completion of the
+downloader's final publication or a restore test. Android no-hardlink publication
+still needs a safe exclusive-create/verified-copy fallback and platform tests.
+Correction/group/configuration snapshots remain on the phone; retrieve and
+independently verify them before it leaves. Do not restore historical scene values
+over a user's newer intentional changes.
+
+Actual preflight also rejected the growing compressed root Web UI because its
+decoded body exceeded512KiB. Consult updates-telemetry/network-cloud and the
+exact PCController netpolicy/http_url.go donor row, reading its authority checks,
+PU850 FirmwareTransfer.h/.cpp and PCController UPDATE-PROGRESS.md in full. Keep
+hostname-first same-board/boot/socket binding, auth, ownership, no-replay and
+firmware digest checks. Increase only root HTML's compressed/decoded allowance
+to a bounded1MiB in check-ethernet-live.mjs; all other response limits stay512KiB.
+Loopback tests accept600KB raw/gzip HTML, reject over1MiB/decompression bombs and
+retain the non-root JSON bound. Ethernet-live and updater fixture suites pass;
+these are not device OTA or physical acceptance.
+
+Both current ESP application candidates and pinned manifests were published in
+new immutable HTTPS directories under office.digitalogic.ir/pakarcontroller/
+firmware/esp32s3/, with server-side image/manifest SHA checks and direct200,
+exact Content-Length for the ledcontroller image. This prepares an Internet
+download source, not an installed image or autonomous remote command channel.
+Before the upload started, Termux's SSH connection stopped completing handshakes
+and then refused connections. Known alternate forwards did not answer. No board
+firmware POST, reboot, scene/configuration write or AVR program operation occurred.
+Shared chisel was left intact; only identity-verified owned stalled SCP clients
+were stopped. Restore the phone tunnel and identify keycontroller before either
+upgrade. The existing remote panel still pins an older board identity/topic;
+do not run its historical installer or claim independent remote readiness.
+
+### Same-session deployment continuation
+
+Termux subsequently returned. Retrieve all ledcontroller snapshots onto this PC,
+freshly match its old firmware metadata to the verified backup, and download the
+candidate from the pinned HTTPS artifact. Launch exactly one canonical updater
+under an exclusive marker with a detached private log; no mutation replay on
+SSH loss. Actual local Async HTTP upload took42429ms, total188531ms including
+full2695408-byte SHA256 readback. Same board `esp32s3-907069eaaf34` changed boot
+from `62a8d50390ea3a9237c40df88afdbc87` to
+`664d3dfebef9065a2ae21090a3583fc8`; running hash matches
+`34ed92d994618ed5b7c23ae45ddc470929e6f20d34f25920ad37ed2df465430f`,
+integrity is verified and selected/running OTA slot is VALID. Actual WS proofs
+passed before/after. Independently compare saved correction rules/enabled/revision,
+group counts/starts/overrides and all cell assignments/locks: unchanged. No AVR
+programming or intentional LED-state command was performed. This is firmware and
+state-preservation evidence, not optical/audio or power-loss acceptance.
+
+David confirmed the Dlink router remains online and powered keycontroller back
+on. Its AP then appeared, but not its LAN hostname. Termux joining this AP drops
+the SSH route. A one-shot detached commissioner preserves the identified key
+snapshots before any station patch and requests return to Dlink in its finalizer.
+Its result must be retrieved before a retry; no key firmware upload was launched.
+Do not confuse the absent tunnel with an absent powered board or assert that
+its network mutation succeeded without the saved receipt.
+
+Adapt the existing Mosquitto provisioner with explicit validated device scopes:
+keep the old ledboard default, but create separate private credential files,
+principals, ACL topics and rollback names for ledcontroller/keycontroller. Three
+scope tests pass; register them and the actual cloud-service fixtures in CI.
+Only ledcontroller's broker scope was provisioned so far. Its peer-fenced local
+cloud settings commit received202 and readback confirms saved TLS MQTT policy.
+Actual office probe authenticated/published to the broker, but the board never
+replied and reports MQTT-2: this is NOT successful Internet board management.
+The broker sees TLS EOF before MQTT authentication. Clock is synced. Strict
+server TLS1.2/certificate checks pass; no certificate bypass is justified.
+
+Read the actual installed ESP32 NetworkClientSecure/ssl_client and S3 qio_opi
+sdkconfig. mbedTLS is prebuilt with internal-only allocations and16KiB record
+buffers, so free PSRAM alone is not handshake headroom. Resource pressure is
+plausible with measured57760 internal free/31732 largest, not yet proven. Add
+bounded numeric/text SDK TLS failure, elapsed and pre/post internal heap detail
+to the existing MQTT error only; preserve trust, timeout, ownership and retry
+policy. Both ESP32/ESP8266 cloud fixtures pass, including control-byte sanitation,
+long/unknown SDK detail, plain TCP and MQTT-auth failure distinction. Rebuild
+the standard production profile without opt-in SSH/file-service inclusion flags;
+those sources and the separately verified all-service image remain available.
+Measure its actual live result before declaring the remote path fixed.
+
+Review preparation found three open PRs, not a synchronized final main. Full
+38/39 diffs and paginated conversations were reviewed read-only. Their combined
+terminal source must preserve SSH command-only behavior and theme initialization,
+and the new workspace fixture needs matching session fields. Semantic ledger
+union and combined shell/SSH checks are required before normal merging. No
+merge was performed ahead of the requested board-upgrade ordering.
+
+The host denied cleanup of the test-created
+`tools/__pycache__/provision-mqtt-device.cpython-312.pyc`. Do not reroute the denied
+delete or hide it with ignore rules; user-assisted cleanup remains required.
+The scope test now suppresses bytecode creation, including its CI invocation.
+
+The standard16MiB/OPI/buffered/table/W5500/both-backend recovery build passed:
+2388880 raw application bytes, static RAM140156 (7400 bytes less than the
+all-service table image). SHA256
+`24dfe517a2c8e0fb646bda5a1078b1ca1bff356ef4ca1a401bba1ed7da66f470`.
+Its immutable HTTPS artifact/manifest were independently checked on office;
+this is still a candidate, not another installed image or a live TLS fix.
+Fresh Flutter picker analysis and all seven focused tests also pass. Key
+commissioning confirmed no network API write: phone failed to stay associated
+with the identified AP and requested restoration to Dlink. The later explicit
+join lost SSH again; inspect current phone network before any board retry.
