@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import 'minigame.dart';
+import 'game_mode_picker.dart';
 import 'models.dart';
 import 'workspace_widgets.dart';
 import 'key_box_designer.dart';
@@ -247,59 +248,16 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                     runSpacing: 16,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      SizedBox(
-                        width: 380,
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Game mode',
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 4,
-                            ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              key: const ValueKey('minigame-mode'),
-                              value: snapshot.mode,
-                              isExpanded: true,
-                              itemHeight:
-                                  84 *
-                                  MediaQuery.textScalerOf(context).scale(14) /
-                                  14,
-                              isDense: false,
-                              borderRadius: BorderRadius.circular(16),
-                              items: [
-                                for (final (index, entry)
-                                    in snapshot.modes.entries.indexed)
-                                  DropdownMenuItem(
-                                    value: entry.key,
-                                    child: _GameModeChoice(
-                                      number: index + 1,
-                                      id: entry.key,
-                                      label: entry.value,
-                                      description: snapshot.description(
-                                        entry.key,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                              onChanged: !ready
-                                  ? null
-                                  : (mode) {
-                                      if (mode != null &&
-                                          mode != snapshot.mode) {
-                                        unawaited(
-                                          send(minigameConfigure, {
-                                            'settings': jsonEncode({
-                                              'mode': mode,
-                                            }),
-                                          }),
-                                        );
-                                      }
-                                    },
-                            ),
-                          ),
-                        ),
+                      GameModePicker(
+                        key: ValueKey('game-mode-picker-$owner'),
+                        game: snapshot,
+                        onChanged: !ready
+                            ? null
+                            : (mode) => unawaited(
+                                send(minigameConfigure, {
+                                  'settings': jsonEncode({'mode': mode}),
+                                }),
+                              ),
                       ),
                       if (snapshot.json['timed'] == true ||
                           !const [
@@ -483,82 +441,6 @@ class _MiniGamePanelState extends State<MiniGamePanel>
       ),
     );
   }
-}
-
-class _GameModeChoice extends StatelessWidget {
-  const _GameModeChoice({
-    required this.number,
-    required this.id,
-    required this.label,
-    required this.description,
-  });
-  final int number;
-  final String id, label, description;
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      SizedBox(
-        width: 26,
-        child: Text(
-          '$number.',
-          style: Theme.of(context).textTheme.labelMedium
-              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-        ),
-      ),
-      Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: .10),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          switch (id) {
-            'press-to-win' => Icons.emoji_events_outlined,
-            'illuminated' => Icons.my_location,
-            'color-match' => Icons.palette_outlined,
-            'simon' => Icons.queue_music,
-            'memory-pairs' => Icons.style_outlined,
-            'clear-all' => Icons.checklist_rounded,
-            'color-order' => Icons.sort_rounded,
-            'switch-pattern' => Icons.grid_view_rounded,
-            'reaction-chase' => Icons.bolt_rounded,
-            'mine-field' => Icons.diamond_outlined,
-            'toggle' => Icons.toggle_on_outlined,
-            _ => Icons.sports_esports_outlined,
-          },
-          size: 22,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
 }
 
 /// Adapted from PCController EffectEditor.number/numberDrafts/save: invalid text

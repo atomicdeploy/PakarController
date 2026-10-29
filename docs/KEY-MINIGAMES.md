@@ -7,6 +7,30 @@ and outputs. Opening any client panel does not start or reset gameplay.
 
 ## Requested-feedback implementation audit (2026-10-29)
 
+### Mode-picker completion gate
+
+The Flutter selector has one shared implementation in `game_mode_picker.dart`.
+Keep these checks when changing its controls or adding advertised games:
+
+- Every advertised entry has a number, distinct or fallback icon, title and
+  muted wrapping description; custom board modes retain their supplied text.
+- Closed and expanded layouts fit phones/tablets, RTL, large text and bold
+  accessibility text without moving the control or clipping its number column.
+- Opening, focus, disabled input and selecting the current mode send nothing.
+  A board change closes its old menu; an explicit changed selection sends once.
+- Inspect expanded phone/tablet captures, not only the collapsed field.
+- Record installed APK identity and actual device interaction separately before
+  claiming deployment acceptance. That step was not performed by this side pass.
+
+Run the focused checks through
+`./tools/build-mobile.ps1 -Mode Test -TestPath test/game_mode_picker_test.dart`.
+The 2026-10-29 local pass also ran `minigame_test.dart` and
+`key_box_designer_test.dart`: 33 tests passed with clean analysis. Phone/tablet
+widget captures were inspected; this is not a claim about a currently installed
+app. Numbering, icons or descriptions alone are not the full acceptance gate.
+
+### Implementation audit
+
 | Request | Actual implementation and focused evidence |
 | --- | --- |
 | Mode descriptions and icons | Flutter numbered catalog uses distinct icons and wrapping muted second-line descriptions. Rust uses the imported detail-choice control; Web uses the shared icon/description menu. Flutter widget and isolated Web DOM tests cover the real controls. |
