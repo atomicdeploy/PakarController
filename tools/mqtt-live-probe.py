@@ -34,6 +34,8 @@ def main():
     result = {'board_id': args.board, 'tls': True, 'connected': False, 'published': False, 'status': None, 'telemetry': None, 'event': None, 'errors': []}
     packets = {}
     publish_mid = None
+    sent_at = None
+    fresh_status = False
     done = threading.Event()
     request = json.loads(Path(args.request).read_text()) if args.request else {'command': args.command, 'request_id': 'probe-' + uuid.uuid4().hex}
     if not re.fullmatch(r'[a-zA-Z0-9_-]{1,40}', request.get('request_id', '')):
@@ -56,11 +58,12 @@ def main():
         c.subscribe([(topic + '/status', 0), (topic + '/event', 0), (topic + '/telemetry/part', 0)])
 
     def subscribed(c, _userdata, _mid, granted, _properties=None):
-        nonlocal publish_mid
+        nonlocal publish_mid, sent_at
         if any(getattr(code, 'is_failure', code == 128) for code in granted):
             result['errors'].append('MQTT subscription rejected')
             done.set()
         elif publish_mid is None:
+            sent_at = time.monotonic()
             publication = c.publish(topic + '/command', json.dumps(request), qos=0, retain=False)
             if publication.rc != mqtt.MQTT_ERR_SUCCESS:
                 result['errors'].append('Command was not queued; no retry')
@@ -72,19 +75,24 @@ def main():
             result['published'] = True  # QoS0 socket write, not command acceptance.
 
     def message(_client, _userdata, msg):
+        nonlocal fresh_status
         try:
             value = json.loads(msg.payload)
             if msg.topic.endswith('/status'):
                 if value.get('board_id') != args.board:
                     raise ValueError('Foreign board status')
                 result['status'] = value
+                fresh_status = not msg.retain and sent_at is not None
             elif msg.topic.endswith('/event'):
                 if value.get('request_id') == request['request_id'] and isinstance(value.get('accepted'), bool) and isinstance(value.get('code'), str):
+                    if value.get('board_id') != args.board or not re.fullmatch(r'[a-f0-9]{32}', value.get('boot_id', '')):
+                        raise ValueError('Foreign command acknowledgement')
                     result['event'] = value
+                    result['command_reply_ms'] = round((time.monotonic() - sent_at) * 1000) if sent_at is not None else None
             else:
                 p = value
                 total, count, index = p['total_bytes'], p['count'], p['index']
-                if p.get('type') != 'telemetry-fragment' or p.get('encoding') != 'base64' or not re.fullmatch(r'[a-f0-9]{32}-\d{1,10}', p['snapshot_id']) or not 1 <= total <= 16384 or count != (total + 767) // 768 or not 0 <= index < count or not re.fullmatch(r'[a-f0-9]{64}', p['sha256']):
+                if p.get('type') != 'telemetry-fragment' or p.get('encoding') != 'base64' or not re.fullmatch(r'[a-f0-9]{32}-\d{1,10}', p['snapshot_id']) or not 1 <= total <= 24576 or count != (total + 767) // 768 or not 0 <= index < count or not re.fullmatch(r'[a-f0-9]{64}', p['sha256']):
                     raise ValueError('Invalid telemetry bounds/identity')
                 raw = base64.b64decode(p['data'], validate=True)
                 if len(raw) != min(768, total - index * 768):
@@ -110,7 +118,8 @@ def main():
                     result['telemetry'] = telemetry
                     result['telemetry_sha256'] = p['sha256']
                     result['telemetry_bytes'] = total
-            if (result['telemetry'] or request.get('command') != 'telemetry') and result['status'] and result['event'] is not None:
+            event, status, telemetry = result['event'], result['status'], result['telemetry']
+            if fresh_status and event and status and status.get('boot_id') == event['boot_id'] and (request.get('command') != 'telemetry' or telemetry and telemetry.get('boot_id') == event['boot_id']):
                 done.set()
         except (ValueError, KeyError, TypeError) as error:
             result['errors'].append(str(error))
@@ -125,8 +134,8 @@ def main():
         client.loop_stop()
     with Path(args.output).open('x') as output:
         json.dump(result, output)
-    print(json.dumps({key: result.get(key) for key in ('board_id', 'connected', 'published', 'telemetry_bytes', 'telemetry_sha256', 'event', 'errors')}))
-    if not result['published'] or not result['event'] or not result['event']['accepted'] or result['errors'] or request.get('command') == 'telemetry' and not result['telemetry']:
+    print(json.dumps({key: result.get(key) for key in ('board_id', 'connected', 'published', 'command_reply_ms', 'telemetry_bytes', 'telemetry_sha256', 'event', 'errors')}))
+    if not done.is_set() or not result['published'] or not result['event'] or not result['event']['accepted'] or result['errors']:
         raise SystemExit(2)
 
 

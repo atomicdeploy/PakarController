@@ -2386,7 +2386,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -2433,7 +2433,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -2990,7 +2990,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         },
         {
@@ -3104,7 +3104,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -3151,7 +3151,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -7730,7 +7730,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/NetworkConfig.cpp",
-          "sha256": "9b63a2e01513fc5f11d7fe82a3e744bc3347c3aaa560320ad0b8b3a45dcedf9b",
+          "sha256": "b852ac3e88606148bb6feacffb12ec040fb1d26e28b0e3cb0042b0f66db35074",
           "anchor": "bool NetworkConfigStore::configure("
         },
         {
@@ -7787,7 +7787,7 @@
       "proof": [
         {
           "path": "tests/network_config_test.cpp",
-          "sha256": "7279dda3555ee75d8029c28d998440de9ddfa095c11dedbc214107c6c961b53c",
+          "sha256": "6e2d13df417cbd7373ccddd1fb1d6d1978ea4c13e6b20b123a628219bcf62e0a",
           "anchor": "AP remains genuinely available on STA apply failure"
         },
         {
@@ -9275,6 +9275,11 @@
           "path": "firmware/esp/src/PeerRouteStore.h",
           "anchor": "class PeerRouteStore",
           "sha256": "93e58147fbf62072c7a6ce22abe39d0dd2cf3840cd41e70bcdea8c5693889756"
+        },
+        {
+          "path": "firmware/esp/src/PeerNetworkCommission.h",
+          "anchor": "class PeerNetworkCommission",
+          "sha256": "3d8ec120b978a6e5c2d523a2b7dd229c8cc3f0c5e8be2d7597405f2fc30f7115"
         }
       ],
       "omissions": [
@@ -9299,6 +9304,11 @@
           "path": "tests/peer_relay_test.cpp",
           "anchor": "int main()",
           "sha256": "30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2"
+        },
+        {
+          "path": "tests/peer_network_commission_test.cpp",
+          "anchor": "Acceptance alone never switches Wi-Fi.",
+          "sha256": "ec7bc2ebc0037b133588e44cd8fdd23afb7fb587243488272007cd2222740f0d"
         }
       ],
       "remaining": [
@@ -9936,7 +9946,7 @@
       "targets": [
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "MiniCore:avr:328:bootloader=uart0"
         }
       ],
@@ -9987,7 +9997,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "'compile', '--jobs', \"$Jobs\", '--fqbn'"
         }
       ],
@@ -11451,7 +11461,7 @@
         {
           "path": "tools/build-firmware.ps1",
           "anchor": "esp32:esp32:esp32s3:CDCOnBoot",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5"
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d"
         }
       ],
       "omissions": [
@@ -12914,7 +12924,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -13416,7 +13426,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -13474,7 +13484,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41"
         }
       ],
       "omissions": [
@@ -13535,7 +13545,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13551,7 +13561,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -13866,7 +13876,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -13917,7 +13927,7 @@
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "'prepare-avr-image.mjs'"
         }
       ],
@@ -14429,7 +14439,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662",
+          "sha256": "8b362da60381843154a12cc07b0c0401ec3885eb4cba2f0a2ed7815496dff6c3",
           "anchor": "assert.match(automationStore,"
         }
       ]
@@ -14789,7 +14799,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662",
+          "sha256": "8b362da60381843154a12cc07b0c0401ec3885eb4cba2f0a2ed7815496dff6c3",
           "anchor": "assert.match(transfer, /esp_partition_read"
         },
         {
@@ -14934,7 +14944,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -15364,7 +15374,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15689,7 +15699,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41",
           "anchor": "bool authenticate()"
         },
         {
@@ -18111,7 +18121,7 @@
         },
         {
           "path": "tools/ci-checks.mjs",
-          "sha256": "cf3da4a730886abe9525f51df9893e0ec408e1840b589e4cc2ba4e4479b05c0d",
+          "sha256": "ccc3d394d143d99959677140fe0321c1a9826f6963de91433dd30e7a51c9ec8a",
           "anchor": "export function runChecks"
         },
         {
@@ -18592,7 +18602,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
@@ -23423,7 +23433,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -23544,7 +23554,7 @@
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662",
+          "sha256": "8b362da60381843154a12cc07b0c0401ec3885eb4cba2f0a2ed7815496dff6c3",
           "anchor": "sceneStore.begin"
         },
         {
@@ -23736,12 +23746,12 @@
         },
         {
           "path": "firmware/esp/src/CloudServices.cpp",
-          "sha256": "e74b5fa09c067196d11e6dd6fa54923bbd2cafed2143ed746c9db7e2a5215792",
+          "sha256": "93caa953e4160faa00f399b8cbda92baa5ad3b2aa7e263b124cea2848d8e99fd",
           "anchor": "void CloudServices::handleCommand("
         },
         {
           "path": "firmware/esp/src/CloudServices.cpp",
-          "sha256": "e74b5fa09c067196d11e6dd6fa54923bbd2cafed2143ed746c9db7e2a5215792",
+          "sha256": "93caa953e4160faa00f399b8cbda92baa5ad3b2aa7e263b124cea2848d8e99fd",
           "anchor": "bool CloudServices::publishMqtt("
         },
         {
@@ -23756,7 +23766,7 @@
         },
         {
           "path": "libraries/BoardCore/src/CloudCommandGuard.h",
-          "sha256": "2259897f8275dbd6eb7e0254b00dfc589e88c9af35dc7d2267cd749f4cb12a3d",
+          "sha256": "66fb0fcd55396e1f2d31256b6a538470623dc646cb202f176ec755e375bad50d",
           "anchor": "class Guard"
         },
         {
@@ -23792,7 +23802,7 @@
         {
           "path": "firmware/esp/src/CloudServices.cpp",
           "anchor": "const uint32_t completedAt=millis()",
-          "sha256": "e74b5fa09c067196d11e6dd6fa54923bbd2cafed2143ed746c9db7e2a5215792"
+          "sha256": "93caa953e4160faa00f399b8cbda92baa5ad3b2aa7e263b124cea2848d8e99fd"
         },
         {
           "path": "firmware/esp/src/FilesystemTelemetry.h",
@@ -23829,12 +23839,12 @@
         },
         {
           "path": "tests/remote_tools_test.mjs",
-          "sha256": "4a38cbf8a24751720b35f940e894a64bcd1689b1402972feeb69fa079603e760",
+          "sha256": "ae5bf9aefe3e3df0db85857f6f0cd6da5d3626b1cdd4484e0853ead6f11edc15",
           "anchor": "const solo=manifest"
         },
         {
           "path": "tests/s3_platform_wiring_test.mjs",
-          "sha256": "778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662",
+          "sha256": "8b362da60381843154a12cc07b0c0401ec3885eb4cba2f0a2ed7815496dff6c3",
           "anchor": "const flashRead ="
         },
         {
@@ -23884,7 +23894,7 @@
         },
         {
           "path": "tests/cloud_services_test.cpp",
-          "sha256": "1b91ad923e352d5b9926d8642bb95d1e4e5a1ea46c0da0e53d7c1bb299c2cc56",
+          "sha256": "fcc7aa33c18378c7ba4f21283c5007ce6748bb79516452f6b48912e2f02b3314",
           "anchor": "int main()"
         },
         {
@@ -23930,7 +23940,7 @@
         {
           "path": "tests/cloud_services_test.cpp",
           "anchor": "A slow failed connect must wait a full interval AFTER completion",
-          "sha256": "1b91ad923e352d5b9926d8642bb95d1e4e5a1ea46c0da0e53d7c1bb299c2cc56"
+          "sha256": "fcc7aa33c18378c7ba4f21283c5007ce6748bb79516452f6b48912e2f02b3314"
         },
         {
           "path": "tests/filesystem_telemetry_test.cpp",
@@ -24322,12 +24332,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -24403,7 +24413,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -24562,7 +24572,7 @@
         {
           "path": "tests/usb_snapshot_budget_test.mjs",
           "anchor": "Captured regression must exceed the old sublimit",
-          "sha256": "5ed04d90439eb98662bc6ec4a50b176e26558e209dc3d600a3ba5d33cf031378"
+          "sha256": "35d8fcb11a50bb33b553a7cf5993a21892c4d311c4225f12423274ea6f8bc03b"
         },
         {
           "path": "tools/test-usb-api.ps1",
@@ -24664,12 +24674,12 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
           "path": "tools/build-firmware.ps1",
-          "sha256": "db0f33ee819dfa15d1bd326279c6d2de9284aaf12ffe176e07361ce2983b82a5",
+          "sha256": "5268a71688fc600de1faf4704358735006b4e9d78420aa02aefc79ede3d7ee4d",
           "anchor": "CellChaseOnBoot"
         },
         {
@@ -24740,7 +24750,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
+          "sha256": "a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41"
         }
       ],
       "omissions": [
@@ -24863,7 +24873,7 @@
         {
           "path": "tests/usb_snapshot_budget_test.mjs",
           "anchor": "Captured regression must exceed the old sublimit",
-          "sha256": "5ed04d90439eb98662bc6ec4a50b176e26558e209dc3d600a3ba5d33cf031378"
+          "sha256": "35d8fcb11a50bb33b553a7cf5993a21892c4d311c4225f12423274ea6f8bc03b"
         },
         {
           "path": "tools/test-usb-api.ps1",

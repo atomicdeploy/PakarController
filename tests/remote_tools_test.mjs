@@ -27,4 +27,9 @@ const bad=new TelemetryReceiver();for(let i=0;i<packets.length-1;i++)bad.accept(
 assert.throws(()=>bad.accept({...packets.at(-1),sha256:'0'.repeat(64)},8),/checksum/);
 const expired=new TelemetryReceiver();expired.accept(packets[0],1);for(let i=1;i<packets.length;i++)assert.equal(expired.accept(packets[i],31002),null);
 assert.throws(()=>expired.accept({...packets[0],total_bytes:999999},31003));
+const expanded=Buffer.from(JSON.stringify({type:'telemetry',product:'PakarController',boot_id:'expanded-device-boot',padding:'x'.repeat(18000)}));
+const expandedRx=new TelemetryReceiver();let expandedResult=null;
+for(let index=0;index<Math.ceil(expanded.length/768);++index)expandedResult=expandedRx.accept({type:'telemetry-fragment',snapshot_id:'b'.repeat(32)+'-2',index,count:Math.ceil(expanded.length/768),total_bytes:expanded.length,sha256:createHash('sha256').update(expanded).digest('hex'),encoding:'base64',data:expanded.subarray(index*768,(index+1)*768).toString('base64')},1);
+assert.equal(expandedResult.boot_id,'expanded-device-boot');
+assert.throws(()=>new TelemetryReceiver().accept({...packets[0],total_bytes:24577,count:Math.ceil(24577/768)},1));
 console.log('Remote publisher validation and bounded MQTT reassembly: out-of-order, duplicates, mixed metadata, checksum failure, expiry and missing packets passed.');

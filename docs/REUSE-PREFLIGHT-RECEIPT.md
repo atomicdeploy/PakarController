@@ -11707,3 +11707,50 @@ Fresh Flutter picker analysis and all seven focused tests also pass. Key
 commissioning confirmed no network API write: phone failed to stay associated
 with the identified AP and requested restoration to Dlink. The later explicit
 join lost SSH again; inspect current phone network before any board retry.
+
+### MQTT TLS and detached commissioning continuation
+
+Deploy the standard candidate24dfe517 through the canonical Termux updater once:
+actual2388880-byte full SHA256 readback, VALID selected/running slot, same-peer
+WebSocket and new bootc6cd787171b0adef7bffd78e03e6bc40 passed. Correction rules,
+group layout and cell assignments/locks compare unchanged. MQTT TLS now connects
+with the original root/hostname/time checks; office received correlated accepted
+commands. This does not establish whole-system health: full status had grown
+past16KiB and prevented all aggregate telemetry publication.
+
+Reuse the existing compact projection for routine S3 cloud status, free its
+owned temporary before building aggregate telemetry, and align fragmented S3
+telemetry/receivers with the aggregate API's existing24KiB maximum. Keep768-byte
+fragments and the existing4KiB command buffer, finite reassembly jobs/digest,
+strict peer identity, deadlines and non-retained/no-replay command discipline.
+Fixtures cover the boundary and oversized-status isolation. Fix a preexisting
+source-guard slice that ended at configureNtp's earlier declaration, rather than
+its definition. Rebind only reviewed changed target/proof hashes.
+
+An actual Internet MQTT firmware-fetch job1 then failed BEFORE image bytes with
+TLS-32512 (allocation failure), while retaining its existing MQTT TLS connection.
+Temporarily switching RMT to GPIO did not repair this; job2 also failed before
+bytes. The explicit saved RMT preference was restored via a correlated ACK.
+The later temporary station-only recovery experiment must restore the prior AP
+policy after inspection; acceptance does not prove an upgrade or AP restoration.
+
+Read the actual installed mbedTLS esp_config/esp_mem headers and archive symbol
+references, plus Espressif's esp_mem.c/Kconfig allocation strategy. Adapt its
+SPIRAM calloc strategy only for record-sized allocations (>=16KiB), using the
+project's existing GNU-wrap pattern rather than modifying the SDK or pretending
+header macros reconfigure prebuilt libraries. No PSRAM or allocation failure
+delegates to the original allocator; size multiplication overflow fails closed.
+Small allocations retain the SDK policy, and its heap_caps_free handles both
+regions. Certificate/SNI/time verification and record lengths are unchanged.
+Linked host fixtures pass; actual two-connection/OTA hardware proof is separate.
+
+For the newly requested detached board-to-board provisioning, reread actual
+PCController netpolicy/http_url.go and hostbridge/peer_response.go. Reuse the
+existing PeerRelay pinned dial/Host, bounded responses, explicit target identity
+and no uncertain-write replay policy. Add a queued/persisted job with explicit
+loop-only start after cloud callback return; transient NetworkConfig ownership
+never edits saved source networking. It verifies target identity/role, snapshots
+redacted settings, POSTs once, always requests restoration, and retains bounded
+receipts across client loss/reboot. A pending rebooted job is not resumed.
+Commission/network/relay fixtures pass; root integration/SDK and actual AP/LAN
+execution are separate gates. See PEER-NETWORK-COMMISSIONING.md.

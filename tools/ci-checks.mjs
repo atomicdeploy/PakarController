@@ -7,6 +7,8 @@ export const phases={
   "quality": [
     ["python", "-B", "tests/mqtt_provisioning_test.py"],
     ["pwsh", "-NoProfile", "-File", "tools/test-cloud-services.ps1"],
+    ["pwsh", "-NoProfile", "-File", "tools/test-tls-memory.ps1"],
+    ["pwsh", "-NoProfile", "-File", "tools/test-peer-network-commission.ps1"],
     ["node", "tests/resource_report_test.mjs"],
     ["node", "tests/doc_links_test.mjs"],
     ["node", "tools/check-doc-links.mjs"],

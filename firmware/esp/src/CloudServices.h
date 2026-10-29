@@ -26,6 +26,11 @@ class CloudServices {
  public:
   static constexpr size_t kCommandBytes=4096;
   static constexpr uint16_t kMqttBufferBytes=kCommandBytes+256; // Topic and fixed MQTT header overhead.
+#if defined(ESP32)
+  static constexpr size_t kTelemetryBytes=24576; // Same bound as the aggregate API builder.
+#else
+  static constexpr size_t kTelemetryBytes=16384;
+#endif
   struct MqttConnectionStats {
     uint32_t attempts=0,failures=0,lastDurationMs=0,maxDurationMs=0;
   };
@@ -77,7 +82,7 @@ class CloudServices {
   void connectMqtt(uint32_t now);
   void closeMqtt(CloseReason reason);
   void dropMqttWrite();
-  void publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry);
+  void publishTelemetry(String statusJson, uint32_t now,bool includeFullTelemetry);
   // Keep fragment/hash/base64 scratch OFF the telemetryProvider/buildStatus
   // call chain. noinline is part of the S3 loop-task stack budget, not style.
   void publishTelemetryFragments(const String &full) __attribute__((noinline));

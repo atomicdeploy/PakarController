@@ -38,6 +38,14 @@ class NetworkConfigStore {
   const char *profileSsid(uint8_t index)const{return index==0?record_.stationSsid:index<=3?record_.fallbackSsid[index-1]:"";}
   uint8_t activeProfile()const{return activeProfile_;}
   void service(uint32_t now);
+#if defined(ESP32)
+  // Explicit, maintenance-owned AP commissioning. No Record fields or SDK NVS
+  // credentials are changed. The owner MUST restore even after a failed join.
+  bool beginTemporaryStation(const String &ssid,const String &password,const uint8_t bssid[6]);
+  bool temporaryStationReady(const String &ssid,const uint8_t bssid[6])const;
+  bool restoreSavedNetwork(const char *hostname,const char *apPassword);
+  bool temporaryStationActive()const{return temporaryStation_;}
+#endif
   static constexpr bool ethernetBuild() {
 #if defined(ESP32) && defined(PAKAR_S3_ETHERNET_ENABLED) && PAKAR_S3_ETHERNET_ENABLED
     return true;
@@ -83,6 +91,7 @@ class NetworkConfigStore {
   uint8_t activeProfile_=0;
   uint32_t attemptAt_=0,scanAt_=0;
   bool wasConnected_=false,switchScan_=false;
+  bool temporaryStation_=false;
 };
 
 extern NetworkConfigStore networkConfig;

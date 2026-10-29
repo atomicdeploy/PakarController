@@ -58,6 +58,7 @@ static void fragmentStackBoundary(){
   assert(caller!=std::string::npos&&helper>caller&&serviceAt>helper);
   const auto buildScope=source.substr(caller,helper-caller),fragmentScope=source.substr(helper,serviceAt-helper);
   assert(buildScope.find("telemetryProvider_()")!=std::string::npos);
+  assert(buildScope.find("statusJson=String();")<buildScope.find("telemetryProvider_()"));
   assert(buildScope.find("publishTelemetryFragments(full)")!=std::string::npos);
   assert(buildScope.find("char encoded[1060]")==std::string::npos);
   assert(buildScope.find("uint8_t bytes[32]")==std::string::npos);
@@ -66,6 +67,10 @@ static void fragmentStackBoundary(){
   assert(header.find("publishTelemetryFragments(const String &full) __attribute__((noinline))")!=std::string::npos);
 }
 int main(){
+  for(const char *command:{"peer-network-status","peer-relay-result","peer-directory"})
+    assert(BoardCore::CloudCommand::Guard::readOnly(command));
+  for(const char *command:{"peer-network-provision","peer-relay"})
+    assert(!BoardCore::CloudCommand::Guard::readOnly(command));
   fragmentStackBoundary();
   fs::FS filesystem;assert(cloudConfig.begin(filesystem));
   assert(cloudConfig.setMqtt(true,false,"broker.local",1883,"","","pakar",true));
@@ -86,6 +91,21 @@ int main(){
   bool large=false;
   for(const auto &p:mqtt.packets)if(p.topic.endsWith("/status")){assert(p.payload==statusJson&&p.retained);large=true;}
   assert(large&&mqtt.largestWrite<=256&&mqtt.beginCalls==mqtt.endCalls);
+  // Aggregate telemetry can exceed 16 KiB without enlarging MQTT's packet
+  // buffer. Keep the API's explicit 24 KiB S3 limit and reject overflows.
+  const String savedFull=fullJson,savedStatus=statusJson;
+  fullJson=String(std::string(CloudServices::kTelemetryBytes,'x'));
+  cloudServices.requestTelemetry();service(true,true,1000);
+  assert(ws.sent.back()==fullJson&&mqtt.largestWrite<=256);
+  assert(mqtt.packets.back().topic.endsWith("/telemetry/part"));
+  fullJson+='x';cloudServices.requestTelemetry();service(true,true,1000);
+  assert(cloudServices.lastError()=="Telemetry exceeds bounded snapshot size");
+  assert(ws.sent.back()!=fullJson);
+  // An oversized status cannot starve the separate valid aggregate stream.
+  statusJson=String(std::string(16385,'s'));fullJson=savedFull;
+  cloudServices.requestTelemetry();service(true,true,1000);
+  assert(ws.sent.back()==fullJson);
+  statusJson=savedStatus;fullJson=savedFull;
   JsonDocument hello;assert(!deserializeJson(hello,ws.sent.front()));
   assert(hello["board_id"]==board&&hello["boot_id"]==boot&&hello["command_fencing"]==true);
   assert(hello["command_capacity"]==BoardCore::CloudCommand::Guard::kCapacity&&hello["expires_at_unit"]=="unix_seconds");
@@ -314,6 +334,13 @@ int main(){
   const auto eventDispatches=dispatches;
   ws.inject(envelope("after-live-event"));assert(dispatches==eventDispatches+1);
   assert(lastReply()["request_id"]=="after-live-event");
+  const String peerReceipt=String("{\"data\":\"")+std::string(32757,'x')+"\"}";
+  assert(peerReceipt.length()==32768);
+  cloudServices.publishEvent(peerReceipt);
+  assert(mqtt.packets.back().payload==peerReceipt&&mqtt.largestWrite<=256);
+  const auto receiptPackets=mqtt.packets.size();
+  cloudServices.publishEvent(peerReceipt+"x");
+  assert(mqtt.packets.size()==receiptPackets); // Outbound bound never grows RX/commands.
   ws.sendResult=false;cloudServices.publishEvent(event);
   assert(cloudServices.lastError().find("WebSocket event write failed")!=String::npos);
   ws.inject(envelope("lost-result"));assert(dispatches==eventDispatches+2);

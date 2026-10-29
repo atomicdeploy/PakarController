@@ -324,7 +324,9 @@ void CloudServices::connectMqtt(uint32_t now) {
 bool CloudServices::publishMqtt(const String &destination,const String &json,bool retained) {
   // PubSubClient's publish() buffers the entire payload. beginPublish streams a
   // bounded JSON snapshot without increasing the shared 2048-byte RX buffer.
-  if (publishActive_ || progressActive_ || !mqtt_.connected() || json.length()>16384 || destination.length()>192) return false;
+  // Bounded outbound receipts may include an escaped LAN peer response. This
+  // does not enlarge MQTT RX/commands or the separately bounded status stream.
+  if (publishActive_ || progressActive_ || !mqtt_.connected() || json.length()>32768 || destination.length()>192) return false;
   IoScope io(*this,true);
   cooperate();
   if (!mqtt_.beginPublish(destination.c_str(),json.length(),retained)) {
@@ -345,27 +347,31 @@ bool CloudServices::publishMqtt(const String &destination,const String &json,boo
   cooperate();return written;
 }
 
-void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry) {
+void CloudServices::publishTelemetry(String statusJson, uint32_t now,bool includeFullTelemetry) {
   const uint32_t interval =
       static_cast<uint32_t>(cloudConfig.telemetrySeconds()) * 1000U;
   if (!telemetryRequested_ && static_cast<uint32_t>(now - lastTelemetryAt_) < interval) return;
   telemetryRequested_=false;
   lastTelemetryAt_ = now;
-  if(statusJson.length()>16384) {lastError_=F("Status exceeds bounded snapshot size");return;}
-  if (mqtt_.connected()) {
+  const bool statusReady=statusJson.length()>0 && statusJson.length()<=16384;
+  if(!statusReady) lastError_=F("Status exceeds bounded snapshot size or is empty");
+  if (statusReady && mqtt_.connected()) {
     const String statusTopic = topic(F("/status"));
     if (!publishMqtt(statusTopic,statusJson,true)) {
       lastError_ = F("MQTT status publish failed");
     }
   }
-  if (webSocket_.isConnected()) {
+  if (statusReady && webSocket_.isConnected()) {
     cooperate();
     webSocket_.sendTXT(statusJson.c_str());
     cooperate();
   }
+  // Own the provider's temporary and release it BEFORE constructing the larger
+  // aggregate. Retaining both snapshots exhausted internal RAM alongside TLS.
+  statusJson=String();
   if(includeFullTelemetry && telemetryProvider_ && (mqtt_.connected() || webSocket_.isConnected())) {
     const String full=telemetryProvider_();
-    if(full.length()>16384) {lastError_=F("Telemetry exceeds bounded snapshot size");return;}
+    if(full.length()>kTelemetryBytes) {lastError_=F("Telemetry exceeds bounded snapshot size");return;}
     if(webSocket_.isConnected()) {cooperate();webSocket_.sendTXT(full.c_str());cooperate();}
     if(mqtt_.connected() && telemetryBoot_.length()) publishTelemetryFragments(full);
   }

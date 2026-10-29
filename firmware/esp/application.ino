@@ -85,6 +85,9 @@
 #include "src/FirmwareTransfer.h"
 #include "src/CloudConfig.h"
 #include "src/CloudServices.h"
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+#include "src/PeerNetworkCommission.h"
+#endif
 #include "src/NtfyService.h"
 #include "src/CloudAnimationProgress.h"
 #include "src/LedGrid.h"
@@ -244,6 +247,8 @@ std::atomic<unsigned> artifactReaders{0};
 #if PAKAR_NETWORK_ENABLED
 PeerRelay peerRelay;
 bool peerRelayLease=false;
+PeerNetworkCommission peerNetworkCommission;
+bool peerNetworkLease=false,peerNetworkStarted=false;
 #endif
 #else
 unsigned artifactReaders=0; // Cooperative single-core owner; no unsupported LX106 atomic RMW.
@@ -466,6 +471,11 @@ bool saveCellMapping();
 String buildStatusJson();
 String buildStatusJson(bool compact);
 bool maintenanceApiIdle();
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+String submitPeerNetworkCommission(const String &request);
+void servicePeerNetworkCommission();
+String submitPeerRelay(const String &request);
+#endif
 String panelStatusJson();
 void serviceSemanticPanel(uint32_t now);
 void closeDeviceShells();
@@ -2507,10 +2517,11 @@ String buildStatusJson(bool compact) {
 #if defined(ARDUINO_ARCH_ESP32)
 String buildCloudStatusJson() {
   // Diagnostics need the exact published frame, not a locally inferred color.
-  // Keep routine cloud traffic unchanged; only this S3 diagnostic path allocates
-  // the additional frame. Compact status retains peer/capability/driver receipts.
+  // Full /api/status has grown beyond the cloud packet budget. Reuse the same
+  // compact projection as USB/aggregate telemetry, retaining peer, state and
+  // driver receipts; detailed configuration remains available at its API.
   const bool diagnostic=grid.diagnosticActive();
-  String body=buildStatusJson(diagnostic);
+  String body=buildStatusJson(true);
   if(!diagnostic || !body.endsWith("}"))return body;
   const String frame=grid.pixelFrameJson();
   if(!frame.length() || frame[0]!='{' || !frame.endsWith("}"))return body;
@@ -3085,6 +3096,23 @@ bool handleCloudCommand(const String &message, String &result) {
   }
   const JsonObjectConst commandRequest=commandDocument.as<JsonObjectConst>();
   const String command=PakarCommand::stringValue(commandRequest,"command");
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  if(command=="peer-network-status"){result=peerNetworkCommission.snapshot(commandRequest["job_request_id"]|"");return true;}
+  if(command=="peer-relay-result"){result=peerRelay.snapshot(commandRequest["job_request_id"]|"");return true;}
+  if(command=="peer-directory"){result=peerRelay.directory();return true;}
+  if(peerNetworkLease){result=F("Peer network commissioning owns network maintenance");return false;}
+  if(command=="peer-relay") {
+    if(!commandRequest["request"].is<JsonObjectConst>()){result=F("Explicit peer request object required");return false;}
+    String request;serializeJson(commandRequest["request"],request);
+    result=submitPeerRelay(request);JsonDocument receipt;
+    return !deserializeJson(receipt,result)&&receipt["accepted"]==true;
+  }
+  if(command=="peer-network-provision") {
+    String request;serializeJson(commandRequest["settings"],request);
+    result=submitPeerNetworkCommission(request);JsonDocument receipt;
+    return !deserializeJson(receipt,result)&&receipt["accepted"]==true;
+  }
+#endif
 #if PAKAR_FIRST_WINS_ENABLED
   if(command=="minigame-configure"||command=="minigame-control"||command=="minigame-input")return miniCommand(commandRequest,result);
 #endif
@@ -4002,6 +4030,30 @@ String avrBackupReadDirectory() {
   return server.hasArg("recovery_id")?avrRecoveryDirectory(server.arg("recovery_id")):String(kBackupDirectory);
 }
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+String submitPeerNetworkCommission(const String &request) {
+  if(peerNetworkLease)return peerNetworkCommission.submit(request,pcBoardId);
+  if(otaActive||otaRebootAt||remoteFirmware.busy()||remoteFirmware.ownsEspStage()||urbootBusy.get()||programmingLatched||
+      networkApplyPending||cloudApplyPending||avrUploadOwner||artifactReaders||uploadFile||networkToolsLease)
+    return F("{\"accepted\":false,\"error\":\"maintenance_busy\"}");
+  ++artifactReaders;peerNetworkLease=true;peerNetworkStarted=false;
+  const String result=peerNetworkCommission.submit(request,pcBoardId);
+  if(!peerNetworkCommission.busy()){--artifactReaders;peerNetworkLease=false;}
+  return result;
+}
+void servicePeerNetworkCommission() {
+  if(!peerNetworkLease)return;
+  if(!peerNetworkStarted&&peerNetworkCommission.busy()) {
+    // This runs after the MQTT/HTTP command response has returned. Never close
+    // sockets or switch Wi-Fi inside a cloud receive/publish callback.
+    cloudServices.suspend();stopDiscovery();apStarted=false;
+    peerNetworkStarted=peerNetworkCommission.start();
+  }
+  if(!peerNetworkCommission.busy()) {
+    --artifactReaders;peerNetworkLease=false;peerNetworkStarted=false;
+    apStarted=networkConfig.accessPointEnabled()&&WiFi.softAPIP()!=IPAddress();
+    startDiscovery();cloudServices.requestTelemetry();
+  }
+}
 String submitPeerRelay(const String &request) {
   if(otaActive||otaRebootAt||remoteFirmware.busy()||urbootBusy.get()||programmingLatched||
       networkApplyPending||cloudApplyPending||avrUploadOwner||(!peerRelayLease&&artifactReaders))
@@ -4023,6 +4075,12 @@ void servicePeerRelay() {
 #endif
 void registerApi() {
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  server.on("/api/peers/network",HTTP_POST,[](){
+    if(authenticate())server.send(200,"application/json",submitPeerNetworkCommission(server.jsonBody()));
+  });
+  server.on("/api/peers/network",HTTP_GET,[](){
+    if(authenticate())server.send(200,"application/json",peerNetworkCommission.snapshot(server.arg("request_id")));
+  });
   server.on("/api/peers/request",HTTP_POST,[](){
     if(authenticate())server.send(200,"application/json",submitPeerRelay(server.jsonBody()));
   });
@@ -5224,6 +5282,13 @@ void setup() {
   userFiles.begin(LittleFS,filesystemMounted);
 #if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
   peerRelay.begin(LittleFS,filesystemMounted);
+  peerNetworkCommission.begin(LittleFS,filesystemMounted,{
+    [](const String &ssid,const String &password,const uint8_t *bssid){return networkConfig.beginTemporaryStation(ssid,password,bssid);},
+    [](const String &ssid,const uint8_t *bssid){return networkConfig.temporaryStationReady(ssid,bssid);},
+    [](){return networkConfig.restoreSavedNetwork(deviceIdentity.hostname(),kDevelopmentPassword);},
+    [](){return networkConfig.stationEnabled()?networkConfig.stationConnected():
+        networkConfig.accessPointEnabled()&&WiFi.softAPIP()!=IPAddress();}
+  });
 #endif
 #if PAKAR_MICROSD_ENABLED
   sdUserFiles.begin(SD_MMC,PakarStorage::mount());
@@ -5559,6 +5624,7 @@ void loop() {
   serviceHostLink();
   serviceQueuedWebSocketMessage();
 #if PAKAR_NETWORK_ENABLED
+  servicePeerNetworkCommission();
   servicePeerRelay();
   serviceBle();
 #endif
@@ -5719,9 +5785,10 @@ void loop() {
   serviceConfigurationChanges();
   if(!remoteFirmware.busy()&&!otaActive&&!otaRebootAt&&!networkApplyPending&&!urbootBusy.get()&&!avrUploadOwner&&!artifactReaders)
     networkConfig.service(millis());
-  serviceDiscovery();
-  configureNtp();
-  serviceNetworkTools();
+#if defined(ARDUINO_ARCH_ESP32) && PAKAR_NETWORK_ENABLED
+  if(!peerNetworkLease)
+#endif
+  {serviceDiscovery();configureNtp();serviceNetworkTools();}
   if (wifiScanQueued && !remoteFirmware.busy() && !otaActive && !networkApplyPending && !artifactReaders) {
     wifiScanQueued = false;
     if (WiFi.scanComplete() != -1) WiFi.scanNetworks(true, true);
@@ -5737,6 +5804,9 @@ void loop() {
   if (!remoteFirmware.busy() && !otaActive && !otaRebootAt
 #if defined(ARDUINO_ARCH_ESP32)
       && !networkToolsLease
+#if PAKAR_NETWORK_ENABLED
+      && !peerNetworkLease
+#endif
 #endif
 #if defined(ARDUINO_ARCH_ESP32) && !PAKAR_AVR_LINK_ENABLED
       && !passiveAvrRx.snapshot().active
