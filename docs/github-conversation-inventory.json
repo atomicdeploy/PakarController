@@ -30,8 +30,8 @@
       "title": "PakarController complete production acceptance and donor parity",
       "url": "https://github.com/atomicdeploy/PakarController/issues/2",
       "state": "open",
-      "content_sha256": "a82376f61e9c19f4e6cf1d85e368bdd2954aa07dcc63a3163ea725af70a8560f",
-      "comments": 164,
+      "content_sha256": "2cfd1b48cde029025338698ea05ea8d18390721e540e4176878effd066b6e65a",
+      "comments": 165,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -47,8 +47,8 @@
       "title": "File-by-file donor parity, exact mappings and justified omissions",
       "url": "https://github.com/atomicdeploy/PakarController/issues/3",
       "state": "open",
-      "content_sha256": "453e38d03d7f0665164762d6d8d8c8d0e0d0f4f783ecfeffcdc394d26e9e12ac",
-      "comments": 53,
+      "content_sha256": "d366aaf25791ab198e694540409f8bb3e40f9dba2a53721235a696253b830aef",
+      "comments": 54,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -13854,18 +13854,18 @@
       "repository": "atomicdeploy/PakarController",
       "number": 37,
       "kind": "pull_request",
-      "title": "[codex] Restore keycontroller boot mode and add PuzzleBoard timer feedback",
+      "title": "Consolidate keycontroller games, clients, shell and remote recovery",
       "url": "https://github.com/atomicdeploy/PakarController/pull/37",
-      "state": "open",
-      "content_sha256": "a83e3065acc8e4c6eef8e529a8259d658f987ff2c950f634812df3c8451f4351",
+      "state": "closed",
+      "content_sha256": "1bae1c54075a94cacc45983fd630168b075ecc4094a253c8fc1f1a4f1fa90a94",
       "comments": 6,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Read complete updated body and all six comments; zero reviews or threads. Normally merged as5376d188 after combined3827676 passed Build40828106391, CodeQL40828106286 and standalone findings. SSH/theme and workspace fixture integration, BLE negative mutation repair, source history and all omission/physical gates retained. Full-record conversation scope is not whole-project, hardware or deployment acceptance; no completed Copilot review claimed."
     },
     {
       "repository": "atomicdeploy/PakarController",
@@ -13881,8 +13881,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Read full body and both comments; zero reviews or threads. Complete executable/source-pin/test diff independently reviewed. Normally merged as60722dcc after exact b44a1fb passed Build40796609099 and CodeQL40796609084. Combined3827676 retains command-only SSH behavior and models Exit fields; full integrated CI passes. Runtime memory, terminal slow-reader, specialized editors and board/physical gates remain open."
     },
     {
       "repository": "atomicdeploy/PakarController",
@@ -13898,8 +13898,8 @@
       "unresolved_threads": [],
       "copilot_messages": 0,
       "copilot_quota_notices": 0,
-      "read_state": "pending",
-      "application": "Not evaluated; fetching does not certify an import or resolution."
+      "read_state": "reviewed-record",
+      "application": "Read full body; no comments, reviews or threads. Complete audit-tool/test/projection diff reviewed. Normally merged as1dce537 after exact c2e1d909 passed Build40798880183 and CodeQL40798880271. Refreshed records merge by repository/number without deleting historical donor evidence or promoting fetched records to reviewed. Remaining source/conversation and physical acceptance stays pending."
     }
   ]
 }

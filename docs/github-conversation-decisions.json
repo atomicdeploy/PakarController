@@ -246,6 +246,27 @@
       "scope": "full-record",
       "content_sha256": "f8a69b3118fe3e935d0b4f03d96cc22210f127bf8aa71a017da4c2267d75e5ef",
       "application": "Read complete source/manifest/generated-ledger diff, complete body, both coordination comments and all review/thread pages (none), including unchanged final merged conversation. Four canonical headers independently match upstream10b7d294 hashes/byte counts. Both concurrent source/repair histories and complete814-record inventory are preserved. Final224dd2a passed Build40765000068, CodeQL40765000034 and standalone finding check; normal main merge b752b4c has exactly that tree. No completed Copilot review or device acceptance claimed; final receipt-only main CI is separate."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 37,
+      "content_sha256": "1bae1c54075a94cacc45983fd630168b075ecc4094a253c8fc1f1a4f1fa90a94",
+      "scope": "full-record",
+      "application": "Read complete updated body and all six comments; zero reviews or threads. Normally merged as5376d188 after combined3827676 passed Build40828106391, CodeQL40828106286 and standalone findings. SSH/theme and workspace fixture integration, BLE negative mutation repair, source history and all omission/physical gates retained. Full-record conversation scope is not whole-project, hardware or deployment acceptance; no completed Copilot review claimed."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 38,
+      "content_sha256": "d3cc0d6b823a59657ed7157f3ef91babd7de351a071b50350f1f2ff2a76b1ca2",
+      "scope": "full-record",
+      "application": "Read full body and both comments; zero reviews or threads. Complete executable/source-pin/test diff independently reviewed. Normally merged as60722dcc after exact b44a1fb passed Build40796609099 and CodeQL40796609084. Combined3827676 retains command-only SSH behavior and models Exit fields; full integrated CI passes. Runtime memory, terminal slow-reader, specialized editors and board/physical gates remain open."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 39,
+      "content_sha256": "0c94346b82403f1ef65d5ad1e6c3961900549aa61f9f31d79724ed1803076a2d",
+      "scope": "full-record",
+      "application": "Read full body; no comments, reviews or threads. Complete audit-tool/test/projection diff reviewed. Normally merged as1dce537 after exact c2e1d909 passed Build40798880183 and CodeQL40798880271. Refreshed records merge by repository/number without deleting historical donor evidence or promoting fetched records to reviewed. Remaining source/conversation and physical acceptance stays pending."
     }
   ]
 }

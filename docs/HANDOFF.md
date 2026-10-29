@@ -8,7 +8,70 @@ publishing source is not a new hardware deployment or complete feature acceptanc
 
 ## Verified GitHub integration
 
-### Final source handoff (2026-10-29)
+### Current consolidation: PR37, PR38 and PR39 (2026-10-29)
+
+All three PRs are normally merged. PR39 merged as
+`1dce537eaa962cfa7dc5dcb4f8e2dd4f7c71bb52`, PR38 as
+`60722dcc0fc627ae36702d193be03eca51c54f35`, and PR37 as
+`5376d188161d58f2d34a32a92694ef6d3bf19625`.
+The latter's complete tree equals the accepted integration head
+`3827676935bfed8767caf180dcb3d5651ddb62dc`.
+
+[Build40828106391](https://github.com/atomicdeploy/PakarController/actions/runs/40828106391)
+and [CodeQL40828106286](https://github.com/atomicdeploy/PakarController/actions/runs/40828106286)
+passed, including the standalone finding check. Evidence includes505 Rust tests,
+Windows packaging, Android analysis/tests/APK, all S3/AVR feature/link profiles,
+resource budgets, repository/Web/donor contracts and three-host tooling. Draft
+release publication was skipped; no release/tag or deployment was performed.
+
+The combined source retains SSH command-only behavior and the themed terminal.
+The actual workspace fixture now models both Exit fields, and the BLE negative
+guard fixture verifies that its mutation really occurred on LF and CRLF input.
+Both receipt appendices and all donor/source history and omissions are retained.
+All PR bodies, comments, reviews and paginated threads were refreshed against the
+complete reviewed conversations; no completed Copilot review is claimed.
+
+GitHub has zero open PRs. Every local/remote branch tip and the other owner's
+unchanged worktree head are ancestors of consolidated main; no stash hides work.
+Tracked source is clean and pushed. One generated file remains untracked:
+`tools/__pycache__/provision-mqtt-device.cpython-312.pyc`. Its cleanup was host-
+blocked and the user deferred manual removal. It is not source and has not been
+hidden, deleted by another route or published. Private backups remain local.
+
+This final conversation/handoff receipt changes documentation/audit metadata
+only; its post-merge CI is separate from the fully verified code checkpoint
+above. The product/donor/hardware issues and Linux glib issue17 remain open.
+ESP32-S3 and AVR remain release targets; unfinished ESP8266 support is preserved.
+
+#### Recovery state to verify before any deployment
+
+These are the preceding session's last observations, not fresh hardware checks
+from the GitHub integration task. Neither board nor installed client was changed
+by this integration.
+
+- Ledcontroller's last independently verified running application SHA-256 was
+  `24dfe517a2c8e0fb646bda5a1078b1ca1bff356ef4ca1a401bba1ed7da66f470`.
+  A later stage-only Internet request had no matching receipt; no Apply command
+  was sent. Read the actual maintenance job before considering another write.
+- Its AP was temporarily disabled during TLS-memory isolation, with the Dlink
+  station retained. Restoring the AP remains pending device access.
+- The peer-recovery candidate SHA-256
+  `6df01aabc3c1ef3766100aa12e148fcabbbc812cabf83d2486a66aa114ac553d`
+  was built and staged on the office server, but installation was not verified.
+  Detached commissioning requires a supporting image actually running first.
+- Keycontroller's AP was seen, but its current API identity, Dlink provisioning
+  and new deployment were not verified. A MAC-derived ID is not flash authority.
+- The localhost:8022 tunnel most recently belonged to Termux, not David-ASUS,
+  and stopped answering. Verify the host key and current endpoint owner; do not
+  overwrite the saved ASUS identity or assume access is restored.
+- Saved corrections, assignments, settings and rollback images are preserved in
+  ignored local recovery storage, not available by pulling GitHub.
+
+Obtain fresh identity/status/job evidence first. Use canonical tooling, verified
+backup and explicit no-replay recovery. Source synchronization does not lift a
+production hold or bypass authentication, maintenance or corruption guards.
+
+### Earlier source handoff, before PR37–39 (2026-10-29)
 
 PR27, PR34, PR35 and PR36 are normally merged. Main code checkpoint
 `b752b4c15e5f7fdfa3cecbcf6f9e33a882743670` has the identical tree of
