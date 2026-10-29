@@ -11,6 +11,11 @@ import 'table_workspace.dart';
 
 typedef MiniGameCommand = Future<bool> Function(String, Map<String, String>);
 
+// Transport/board validation already provides safe, actionable reasons. Keep
+// that reason intact without exposing Dart's exception type as interface text.
+String _gameErrorText(Object error) =>
+    error is FormatException ? error.message.toString() : error.toString();
+
 class MiniGamePanel extends StatefulWidget {
   const MiniGamePanel({
     super.key,
@@ -93,9 +98,7 @@ class _MiniGamePanelState extends State<MiniGamePanel>
       return ok;
     } catch (e) {
       if (mounted) {
-        setState(
-          () => error = e is FormatException ? e.message.toString() : '$e',
-        );
+        setState(() => error = _gameErrorText(e));
       }
       return false;
     } finally {
@@ -124,7 +127,7 @@ class _MiniGamePanelState extends State<MiniGamePanel>
         if (mounted) setState(() => pending = false);
         await released.future;
       } catch (e) {
-        if (mounted) setState(() => error = '$e');
+        if (mounted) setState(() => error = _gameErrorText(e));
       } finally {
         try {
           if (owner == heldOwner) {
@@ -137,7 +140,7 @@ class _MiniGamePanelState extends State<MiniGamePanel>
             }
           }
         } catch (e) {
-          if (mounted) setState(() => error = '$e');
+          if (mounted) setState(() => error = _gameErrorText(e));
         }
         if (mounted) {
           setState(() {
@@ -588,6 +591,7 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
     'mismatch_ms': 'Wrong pair feedback (ms)',
     'rounds': 'Rounds',
     'sequence_length': 'Sequence length',
+    'sequence_growth': 'Additional steps per round',
     'palette_size': 'Palette size',
     'fixed_target': 'Fixed target (0 = random)',
   };
@@ -646,7 +650,7 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
       if (mounted) {
         setState(() {
           saving = false;
-          error = '$e';
+          error = _gameErrorText(e);
         });
       }
     }
@@ -699,7 +703,9 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
                   runSpacing: 12,
                   children: [
                     for (final entry in minigameLimits.entries)
-                      if (draft[entry.key] is int)
+                      if (draft[entry.key] is int &&
+                          (entry.key != 'sequence_growth' ||
+                              draft['mode'] == 'simon'))
                         SizedBox(
                           width: 230,
                           child: TextFormField(

@@ -5,6 +5,70 @@ The `first-wins` board role now contains a runtime catalog; table boards remain
 separate. ESP owns the game, AVR supplies debounced input, finite tones, display
 and outputs. Opening any client panel does not start or reset gameplay.
 
+## Requested-feedback implementation audit (2026-10-29)
+
+| Request | Actual implementation and focused evidence |
+| --- | --- |
+| Mode descriptions and icons | Flutter numbered catalog uses distinct icons and wrapping muted second-line descriptions. Rust uses the imported detail-choice control; Web uses the shared icon/description menu. Flutter widget and isolated Web DOM tests cover the real controls. |
+| Illuminated response window | Board default is 10,000 ms. Typed settings permit 100–60,000 ms; core, persistent 20,000 ms readback and Flutter editing tests pass. Existing explicit saved values are not silently overwritten. |
+| Color Pattern completion | Exact player/target palette comparison over participating boxes, with per-box names/hex and match bits. All 511 nonempty masks and palette sizes 2–9 pass. No independent comparator defect was reproduced; the reported physical mismatch still needs a fresh hardware test. |
+| Color Pattern introduction | **Latest request supersedes default-on: now Off by default.** Explicit opt-in retains ordered fade plus color notes, capped at 500 ms per box. Persistence tests preserve both explicit Off and On. Updating this board's saved `intro_enabled` to false remains pending ASUS access; changing source defaults is not that instance write. |
+| Matching Pairs introduction | Default On, configurable per-box fade and final preview hold, with tones. Core sparse-layout/reveal tests and Flutter switch/save tests pass. |
+| Simon feedback | Each correct input enters Feedback and plays its color note before the configured feedback delay/advancement. Latest defaults are three rounds of **3 → 5 → 7** steps, 300 ms lit + 120 ms gap, and 240 ms correct-entry feedback. Core progression tests and Flutter editable-feedback/growth tests cover it. |
+| Flutter WebSocket-first controls | Minigame box inputs use the existing fast correlated command path, WS first, configured same-request-ID HTTP recovery. Board/boot identity, exact receipts and settings readback remain required; obsolete intents are never replayed to another board. |
+| Durable errors | Real board/transport rejection reasons remain visible; settings/hold catches no longer expose Dart's `FormatException:` prefix, and a failed save keeps its draft. Web's previously exposed boot/display/timer settings are now admitted by the shared typed command validator. No claim that all future network failures are eliminated. |
+| Arpeggios and success melody | Enabled color notes use one finite AVR-local 55/55/100 ms major arpeggio; disabled uses a single note. The configured full win cue follows the completing note at 240 ms, beside the 250–2249 ms rainbow. Compiled production-dispatch tests cover both and repeated wrong-pair presentations. Press-to-win retains its separate dedicated synchronized winner cue. |
+
+Silent settings remain authoritative. Arpeggios require the paired AVR capability;
+an older AVR uses the bounded single-note fallback instead. These are source,
+fixture and build claims, not an audible or optical acceptance report. The user
+is using the tablet and asked to retry deployment later; do not interrupt that
+session or actuate a game merely to complete this audit.
+
+For the pending instance change, verify the exact keycontroller identity and
+current mode first: apply only `{"intro_enabled":false}` while Color Pattern is
+selected, with the normal correlated command and saved-value readback. Do not
+disable an actively selected Matching Pairs introduction or switch a person's
+game underneath them. This board stores its current mode's settings, not an
+independent saved configuration for every mode.
+
+### Simon: shorter escalating rounds
+
+Fresh Simon settings now use `rounds=3`, `sequence_length=3`,
+`sequence_growth=2`, `show_ms=300`, `gap_ms=120` and `feedback_ms=240`.
+The same sequence prefix grows to five then seven steps; each correct response
+still gets its feedback before the next input or round. Presentation is 420 ms
+per step instead of the former 700 ms. The 210 ms arpeggio fits inside the lit
+interval rather than being cut off by the next note.
+
+`sequence_growth` is configurable from 0–31 in the board settings and all three
+clients; zero keeps equal-length rounds. The effective sequence length caps at
+32. Missing optional growth in an existing saved file retains its former +1
+behavior in RAM, without rewriting explicit saved timing/rounds. Tests cover the
+complete requested progression, fixed-length and capped sequences, note and
+feedback timing, persistence and invalid settings. This is additive data, not
+a new API generation or version-dependent adapter.
+
+For this particular board, the requested saved Simon patch is:
+
+```json
+{"rounds":3,"sequence_length":3,"sequence_growth":2,"show_ms":300,"gap_ms":120}
+```
+
+Apply it with exact board/boot identity and readback after the supporting image
+is installed and Simon is selected. It remains pending while ASUS is unreachable
+and David is using the tablet; do not silently switch another running mode.
+
+Final local candidates for this audit (not installed): ESP32-S3 application
+2,424,240 bytes, SHA-256
+`6679ecb3a65032ef4ce49274a4cb5fe2bcc2e0b560741dd1d1a3c557225b06cc`;
+Android APK 64,419,389 bytes, SHA-256
+`72a41b4db3ad3a514efaffd89a1084bb52e1d7a8902dd4326b9956da22d01c29`.
+Canonical firmware and APK builds pass. Native's ten focused minigame tests
+compile and pass; its new production executable has not been packaged or
+installed in this audit. AVR source is unchanged by these latest Simon/client
+changes; the previously built paired AVR candidate remains separately pending.
+
 | Mode | Rule | Default limit |
 | --- | --- | --- |
 | press-to-win | First enabled button wins; existing winner presentation | None |
@@ -129,8 +193,9 @@ finite success rainbow; color-associated notes are finite and consumed once.
 
 ### Color Pattern pacing and matching diagnostics (2026-10-29)
 
-Color Pattern now reveals each enabled box in at most 500 ms. Fresh settings
-default to 500 ms; an older saved `intro_ms` of 1000 or more remains stored
+Color Pattern's optional introduction is now disabled by default at the user's
+latest request. When explicitly enabled, it reveals each enabled box in at most
+500 ms. Fresh fade settings use 500 ms; an older saved `intro_ms` of 1000 or more remains stored
 unchanged, but its effective reveal interval is capped at 500 ms. The final
 color-pattern pause is also capped at 500 ms. Reveal deadlines are absolute:
 after a delayed service tick the engine skips expired steps and plays only the

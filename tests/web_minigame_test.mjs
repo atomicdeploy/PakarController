@@ -66,11 +66,21 @@ assert.equal(packet.command,'minigame-configure');assert.equal(packet.settings.l
 await transport.send('/api/minigame/control',{action:'pause'});assert.equal(packet.command,'minigame-control');
 await transport.send('/api/minigame/configure',{settings:{intro_enabled:true,color_arpeggio:true,intro_ms:1000,preview_ms:1500,mismatch_ms:1200}});
 assert.equal(packet.settings.intro_enabled,true);assert.equal(packet.settings.mismatch_ms,1200);
+await transport.send('/api/minigame/configure',{settings:{boot_mode:'last',segment_animation:true,timer_beeps:'true',timer_alternate_tones:false}});
+assert.equal(packet.settings.boot_mode,'last');assert.equal(packet.settings.segment_animation,true);
+assert.equal(packet.settings.timer_beeps,true);assert.equal(packet.settings.timer_alternate_tones,false);
+await transport.send('/api/minigame/configure',{settings:{intro_enabled:false,color_arpeggio:true}});
+assert.equal(packet.settings.intro_enabled,false,'Explicit Color Pattern no-intro choice is transmitted');
+await transport.send('/api/minigame/configure',{settings:{rounds:3,sequence_length:3,sequence_growth:2,show_ms:300,gap_ms:120}});
+assert.equal(packet.settings.sequence_growth,2);assert.equal(packet.settings.rounds,3);
 await transport.send('/api/minigame/input',{key:'2',action:'down'});assert.equal(packet.key,2);
 const before=requests;
 for(const [path,data] of [
  ['/api/minigame/configure',{settings:{mode:'not-advertised'}}],['/api/minigame/configure',{settings:{limit_ms:-1}}],
  ['/api/minigame/configure',{settings:{toggle_kind:'unknown'}}],['/api/minigame/configure',{settings:{outputs:[{source:'held',key:0}]}}],
+ ['/api/minigame/configure',{settings:{boot_mode:'resume-winner'}}],['/api/minigame/configure',{settings:{timer_beeps:1}}],
+ ['/api/minigame/configure',{settings:{segment_animation:null}}],['/api/minigame/configure',{settings:{timer_alternate_tones:'maybe'}}],
+ ['/api/minigame/configure',{settings:{sequence_growth:-1}}],['/api/minigame/configure',{settings:{sequence_growth:32}}],
  ['/api/minigame/control',{action:'autoplay'}],['/api/minigame/input',{key:10,action:'tap'}],['/api/minigame/input',{key:1,action:'unknown'}],
 ])await assert.rejects(transport.send(path,data));
 assert.equal(requests,before,'Malformed settings cannot dispatch');

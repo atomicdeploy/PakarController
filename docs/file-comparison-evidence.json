@@ -1026,7 +1026,8 @@
         "For local preview, read the full existing Flutter pixel_corrections_editor.dart and actual PixelCorrectionsPage.mappingPreview method. Reuse the existing port of pixelCorrectionSources in an explicit Applied/Draft wire-map selector: applied data stays board-provided, drafts project ordered enabled rules locally, invalid text clears the projection, view choice remains peer-model scoped, filtering sends no requests, and closed maps do not build hidden tiles. No board request, preview lease, write or duplicate renderer/transport is introduced.",
         "The same bounded numeric/local-draft controls now expose board-owned diagnostic timing/brightness under a capability-gated Advanced section. Actual full Flutter pixel_diagnostic.dart, complete commandPacket function and current firmware command/PixelDiagnostic/receipt contracts were read. Editing sends nothing; explicit Show uses shared typed WS-first transport and exact option/revision readback plus published-frame observation. One pinned read may settle pending publication, never a mutation replay. All off forces global clear/solid defaults independently of invalid overlay/effect drafts.",
         "Reread complete unchanged NumericValueControl, PCController PwmSetpointControl and complete current Flutter pixel_corrections_editor.dart, plus observedRgb/mappingPreview function slices in pixel_corrections_page.dart (page file SHA256 392cc722fcfcf4731c6ef8880d31d26ba52a4a926be32f8b415669e42a9513a0; not a whole-page read claim). Adapt PixelCorrectionDiagram into the existing Applied/Draft Web map: fixed32px circles, wire numbers above, projected source numbers inside, crossed black slots, neutral dashed unavailable RGB and luminance-selected text. Actual LedGrid pixelFrameJson/presentation slices establish published_ as pre-correction scene data. RGB requires current peer, completed published frame, exact capacity, valid numeric/hex fields and matching acknowledged group topology. Color updates reuse circles without structural redraw or new polling/subscriptions/commands. Expanded browser/RTL/touch acceptance and per-rule focused-window diagrams remain pending.",
-        "Verified unchanged Pealayer NumericValueControl source and reread actual Flutter operationOption/PixelCorrectionDiagram function slices. Reuse operationOption's clamped six-slot window and prefix-through-current-rule projection in optional collapsed Web row disclosures; actual enabled/global flags remain authoritative for this local projection. Main map and compact row windows now share mappingPixel/paintDiagram and existing observed RGB validation, not duplicated engines. Descriptions include black/remove/positive-negative shift semantics with Persian copy. Invalid current/prior numeric drafts clear dependent previews, late retired disclosure callbacks are fenced, live RGB retains nodes, reorder carries expanded presentation state and no previewOpen field enters canonical saves. Browser expanded/RTL/touch and rich operation-menu parity remain open."
+        "Verified unchanged Pealayer NumericValueControl source and reread actual Flutter operationOption/PixelCorrectionDiagram function slices. Reuse operationOption's clamped six-slot window and prefix-through-current-rule projection in optional collapsed Web row disclosures; actual enabled/global flags remain authoritative for this local projection. Main map and compact row windows now share mappingPixel/paintDiagram and existing observed RGB validation, not duplicated engines. Descriptions include black/remove/positive-negative shift semantics with Persian copy. Invalid current/prior numeric drafts clear dependent previews, late retired disclosure callbacks are fenced, live RGB retains nodes, reorder carries expanded presentation state and no previewOpen field enters canonical saves. Browser expanded/RTL/touch and rich operation-menu parity remain open.",
+        "2026-10-29 game-settings audit rereads the complete unchanged NumericValueControl and EffectGroupDialog plus current mobile typed command producer. Keep typed finite/bounded validation and explicit draft commit: Web transport now admits the boot/display/timer fields already exposed by its form, validates first/last and booleans, and preserves WS-first same-request receipt ownership. Unknown fields and invalid types still fail before sending; isolated transport/DOM tests cover controls. This fixes actual command coverage rather than weakening rejection or claiming live hardware acceptance."
       ],
       "targets": [
         {
@@ -1047,7 +1048,7 @@
         {
           "path": "assets/web/command-transport.js",
           "anchor": "if(path==='/api/led/diagnostic')",
-          "sha256": "c7b5e835f07cd2fc7900808a78b4be1b0753667eb34d6b4b2664a7c1b5fe96a8"
+          "sha256": "829ced127abe461595384f58822a18dc1e8e5388a6907bca945d566d53fe1e73"
         },
         {
           "path": "assets/web/studio.css",
@@ -1402,7 +1403,7 @@
         {
           "path": "web/index.html",
           "anchor": "function renderAssignmentTools(",
-          "sha256": "4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb"
+          "sha256": "8d280d81872e9d293bb2890f4b34b58289a84769077bd75cb81a82e1db4ab93d"
         }
       ],
       "proof": [
@@ -2555,7 +2556,7 @@
       "proof": [
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "f35c804345608b8c34046d31fab353e3940c0cb0ed08400f0836fe3585fe4a27",
+          "sha256": "130cf0dde2c4f818133662c846bacb48ed4b4afc7149d877a040f120d55f41b3",
           "anchor": "test('actual AVR key callback"
         }
       ],
@@ -3231,7 +3232,9 @@
         "2026-10-27 issue #32: reread all 886 donor lines. The new runtime-game request supersedes the earlier single-game policy inside keycontroller, not table/key role separation. Adapted mode transitions, countdown and relay predicates into one bounded ESP-owned engine with ten optional modes, explicit AVR raw-edge ownership and shared HostPresentation effects. No blocking tones, fixed puzzle code or maze wiring copied.",
         "2026-10-28 issue #32: reread the unchanged 886-line donor through EOF and adapt its phase-local presentation and finite finish/incorrect cues, without its blocking welcome/tone waits. Add configurable ordered fade/reveal, per-entry Simon feedback, a distinct wrong-pair phase duration, phase-aligned blink rendering, matched-color progress and locally timed atomic arpeggios using the existing AVR circular queue. Existing saved instance values are not migrated or overwritten; core/transport evidence is not physical acceptance.",
         "2026-10-29 issue #32: narrow audio-owner regression fix. Deferred generic result feedback is owned by exact game mode and input epoch, cleared on ownership loss and excluded from PressToWin at final dispatch. The first-win synchronized action6 or configured named/Silent cue remains its sole winner audio owner; generic game success cannot preempt it. The actual production source blocks are extracted and compiled in a regression fixture, rather than a copied model. No current instance colors, timing or winner cue is migrated.",
-        "2026-10-29 issue #32: reread the unchanged complete Puzzles sketch and WS2811 source with the existing HostPresentation renderer. Adapt the actual TonePlayer previous-deadline clock to bounded nine-box reveal catch-up. Color Pattern now caps effective reveal/final pause at500ms without rewriting saved intro_ms; Matching Pairs retains independent times. Replace three similar blue-family default hues with seven distinct semantic colors and expose each participating box's intended palette positions, RGB/hex/names and matching result. All511 nonempty masks and palette sizes2-9, duplicate Down/release, sparse layouts, normal-brightness distinction, long-hold reversal and reveal stall/rollover fixtures pass through the canonical suite. No independent matching-algorithm defect was reproduced; live mask62/progress5 identifies box1 as different. Physical six-box matching, correction/wiring and hue acceptance remain pending; no saved instance values or correction rules were migrated."
+        "2026-10-29 issue #32: reread the unchanged complete Puzzles sketch and WS2811 source with the existing HostPresentation renderer. Adapt the actual TonePlayer previous-deadline clock to bounded nine-box reveal catch-up. Color Pattern now caps effective reveal/final pause at500ms without rewriting saved intro_ms; Matching Pairs retains independent times. Replace three similar blue-family default hues with seven distinct semantic colors and expose each participating box's intended palette positions, RGB/hex/names and matching result. All511 nonempty masks and palette sizes2-9, duplicate Down/release, sparse layouts, normal-brightness distinction, long-hold reversal and reveal stall/rollover fixtures pass through the canonical suite. No independent matching-algorithm defect was reproduced; live mask62/progress5 identifies box1 as different. Physical six-box matching, correction/wiring and hue acceptance remain pending; no saved instance values or correction rules were migrated.",
+        "2026-10-29 requirement audit: latest explicit Color Pattern request changes fresh mode defaults to intro disabled, without rewriting existing saved policy; Matching Pairs reveal remains default on. Exact production audio dispatch distinguishes phase plus presentation timestamp, so consecutive wrong-pair feedback earns its own full incorrect cue. Expanded fixtures verify 10-second illuminated default/persistent override, Simon feedback, atomic arpeggio and configured winner cue beside generic success rainbow. Current instance policy and physical sounds/colors still require a reachable approved device session.",
+        "2026-10-29 latest Simon request: fresh defaults become3rounds with3initialsteps and2additionalsteps, 300mslit/120msgap. Typed optional sequence_growth0..31 supports fixed length and caps effective sequences at32. Existing saved explicit settings missing growth retain +1inRAM without automatic write. Coretests play full3/5/7prefixes with feedback and validate fixed/capped progressions; actual instance settings/deployment remain pending."
       ],
       "targets": [
         {
@@ -3241,17 +3244,17 @@
         },
         {
           "path": "libraries/BoardCore/src/KeyMiniGame.h",
-          "sha256": "239e7f56f22f912c0053617f0e8ec0e1e4b9b3328233d9fb90e82226a2ac2e2f",
+          "sha256": "383c192ea5f2bcd4b0d989fab47bd2f8aa406d37650e9394d0f4ab80fb1eb838",
           "anchor": "class KeyMiniGame"
         },
         {
           "path": "firmware/esp/src/KeyMiniGameSettings.h",
-          "sha256": "1688f38c4bd15d14ba56bc7a2e41297034d6e3eb1d41554158092669010014c5",
+          "sha256": "9632b6d8a0f3956bb8ee109709ccb470374a5a3380fa58b0ca8962e27c45ccc4",
           "anchor": "struct KeyMiniGameSettings"
         },
         {
           "path": "firmware/esp/src/KeyMiniGameService.h",
-          "sha256": "5c3900008e866a963a32f79dbbb36b1935bbf6d639cc7fcf972d36d781c970f1",
+          "sha256": "4036928120a650585d923c834860ce9fd8a8c2bfe54bbd81fd6cd040a887faca",
           "anchor": "void serviceMiniGame"
         }
       ],
@@ -3268,28 +3271,38 @@
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "dec3f0ab47f4094d88e96186d68e40178778b7092bed5f3d88bc5a132b34ef42",
+          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
           "anchor": "static void toggle()"
         },
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "f35c804345608b8c34046d31fab353e3940c0cb0ed08400f0836fe3585fe4a27",
+          "sha256": "130cf0dde2c4f818133662c846bacb48ed4b4afc7149d877a040f120d55f41b3",
           "anchor": "test('every minigame command"
         },
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "f35c804345608b8c34046d31fab353e3940c0cb0ed08400f0836fe3585fe4a27",
+          "sha256": "130cf0dde2c4f818133662c846bacb48ed4b4afc7149d877a040f120d55f41b3",
           "anchor": "actual cue owners fence deferred feedback and preserve first-win melody overrides"
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "dec3f0ab47f4094d88e96186d68e40178778b7092bed5f3d88bc5a132b34ef42",
+          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
           "anchor": "static void paletteAndMatchingDiagnostics()"
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "dec3f0ab47f4094d88e96186d68e40178778b7092bed5f3d88bc5a132b34ef42",
+          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
           "anchor": "static void boundedColorIntroduction()"
+        },
+        {
+          "path": "tests/key_minigame_test.cpp",
+          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
+          "anchor": "static void simonProgression()"
+        },
+        {
+          "path": "tests/key_minigame_settings_test.cpp",
+          "sha256": "04fe1d3a8071a8d14fe37f1c8bbacdadb9dc4e4f9236c626af0e9a4f241c1e0f",
+          "anchor": "sequence_growth"
         }
       ],
       "omissions": [
@@ -3384,7 +3397,8 @@
         "Reread the complete unchanged donor for keycontroller's Flutter designer. Reuse Pakar's imported workspace header, semantic icon surfaces, badges and menu rows; adapt the donor's fixed border geometry and bounded Flexible text to dual-group live box cards and a compact game control card. Board-owned minigames and older first-wins controls share one designer, including persistent local selection and grab-offset-preserving group movement. Existing acknowledgement, hold-release and peer fencing stay in their command owners. This does not complete unrelated wide-navigation omissions.",
         "The pending signal footer uses the same bounded Material/InkWell target and theme roles, with local icon/value/both persistence. Full donor ActivityStrip was reread; constrained Flexible popup labels fix the discovered 13px overflow. Four focused widget tests cover menu interactions, restore, RSSI changes and phone/tablet RTL large-text bounds. No network or board mutation is performed.",
         "2026-10-29 issue #32: reread actual ActivityStrip through EOF; adapt its semantic icon surfaces, fixed geometry and bounded text for the board-catalog game picker. Number only advertised modes in board order, retain a distinct game icon, show a muted wrapping second-line description, and scale the reserved row height with accessibility text. Opening remains read-only; selection retains the original correlated configure owner. Installed build 23 was observed with a plain single-line menu; candidate installation and screenshot are tracked separately.",
-        "The same game card now has one stable contextual primary action: Start in ready/finished phases, Pause in show/input/feedback and Resume only while paused. Rebuilds and menu opening cannot dispatch a command; the existing peer-bound owner and pending admission are unchanged."
+        "The same game card now has one stable contextual primary action: Start in ready/finished phases, Pause in show/input/feedback and Resume only while paused. Rebuilds and menu opening cannot dispatch a command; the existing peer-bound owner and pending admission are unchanged.",
+        "2026-10-29 requirement audit retains the existing numbered semantic icon/description game picker and contextual action. New widget fixtures exercise the board-supplied 10-second target setting, Color Pattern introduction Off versus Matching Pairs On, editable Simon feedback/steps and narrow settings patches. Settings/hold failures remove only the Dart FormatException type prefix, preserving the board/transport cause and unsaved draft; existing actual command transport tests prove WS-first box control without a preceding HTTP status read. No automatic deployment, fallback replay to another peer or hardware/audio acceptance is inferred."
       ],
       "targets": [
         {
@@ -3419,7 +3433,7 @@
         },
         {
           "path": "mobile/lib/minigame_panel.dart",
-          "sha256": "2f958cd68196b30d93600e4989044e942987687361815cf26062868e8d23cdfa",
+          "sha256": "8676853bda8f258ea0d14ebe2129fb75a6447d4eb3d990c2bf75f0da498f2489",
           "anchor": "class MiniGamePanel"
         },
         {
@@ -3481,12 +3495,12 @@
         },
         {
           "path": "mobile/test/minigame_test.dart",
-          "sha256": "4e4727d554e33ca2876aa4eb3165789b31cbb749506bc0616348a6d7cb2a518d",
+          "sha256": "b2c44eb9696f86878c00944fe817fb2b207bd800c843d7e0ba7c828c65c98ce2",
           "anchor": "Mode picker numbers only advertised games with icons and muted descriptions"
         },
         {
           "path": "mobile/test/minigame_test.dart",
-          "sha256": "4e4727d554e33ca2876aa4eb3165789b31cbb749506bc0616348a6d7cb2a518d",
+          "sha256": "b2c44eb9696f86878c00944fe817fb2b207bd800c843d7e0ba7c828c65c98ce2",
           "anchor": "One contextual transport button follows phase without sending on refresh"
         }
       ],
@@ -8794,7 +8808,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function firmwareUpdateObservation(s)"
         }
       ],
@@ -9591,12 +9605,12 @@
         },
         {
           "path": "firmware/esp/src/KeyMiniGameSettings.h",
-          "sha256": "1688f38c4bd15d14ba56bc7a2e41297034d6e3eb1d41554158092669010014c5",
+          "sha256": "9632b6d8a0f3956bb8ee109709ccb470374a5a3380fa58b0ca8962e27c45ccc4",
           "anchor": "bootLast=false"
         },
         {
           "path": "firmware/esp/src/KeyMiniGameService.h",
-          "sha256": "5c3900008e866a963a32f79dbbb36b1935bbf6d639cc7fcf972d36d781c970f1",
+          "sha256": "4036928120a650585d923c834860ce9fd8a8c2bfe54bbd81fd6cd040a887faca",
           "anchor": "if(miniBootPending)"
         }
       ],
@@ -9613,7 +9627,7 @@
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "dec3f0ab47f4094d88e96186d68e40178778b7092bed5f3d88bc5a132b34ef42",
+          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
           "anchor": "static void panelFeedback()"
         },
         {
@@ -9628,7 +9642,7 @@
         },
         {
           "path": "tests/key_minigame_settings_test.cpp",
-          "sha256": "f19be5b2bf9bffe0557cde8f40d8bc16dc4acc5ae51ccd6bb7a9c8dbcf38947e",
+          "sha256": "04fe1d3a8071a8d14fe37f1c8bbacdadb9dc4e4f9236c626af0e9a4f241c1e0f",
           "anchor": "Actual minigame settings:"
         }
       ],
@@ -12922,7 +12936,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function upgradeObservation(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         }
       ],
       "omissions": [
@@ -13047,7 +13061,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         }
       ],
       "proof": [
@@ -13137,7 +13151,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         }
       ],
       "proof": [
@@ -13227,7 +13241,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         }
       ],
       "proof": [
@@ -13317,7 +13331,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         }
       ],
       "proof": [
@@ -13629,7 +13643,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -13770,7 +13784,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         }
       ],
       "proof": [
@@ -13949,7 +13963,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -14026,7 +14040,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -14848,7 +14862,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function statusRgbOutput"
         }
       ],
@@ -14982,7 +14996,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function acceptStatusRgb("
         }
       ],
@@ -15456,7 +15470,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -16897,7 +16911,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function connectWs()"
         }
       ],
@@ -17006,7 +17020,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -17098,7 +17112,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -17270,7 +17284,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function connectWs()"
         }
       ],
@@ -17373,7 +17387,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -17469,7 +17483,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -17554,7 +17568,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -17754,12 +17768,12 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb",
+          "sha256": "8d280d81872e9d293bb2890f4b34b58289a84769077bd75cb81a82e1db4ab93d",
           "anchor": "function renderLedBackendControl(anchor){"
         },
         {
           "path": "web/index.html",
-          "sha256": "4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb",
+          "sha256": "8d280d81872e9d293bb2890f4b34b58289a84769077bd75cb81a82e1db4ab93d",
           "anchor": "function waitForLedBackend("
         }
       ],
@@ -17942,7 +17956,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -18374,7 +18388,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function statusRgbOutput"
         },
         {
@@ -18560,7 +18574,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function peerAvailability("
         }
       ],
@@ -18750,7 +18764,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         }
       ],
       "omissions": [
@@ -18949,7 +18963,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -18959,7 +18973,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -19040,7 +19054,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -19781,7 +19795,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -19951,7 +19965,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -20580,7 +20594,7 @@
       "proof": [
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "f35c804345608b8c34046d31fab353e3940c0cb0ed08400f0836fe3585fe4a27",
+          "sha256": "130cf0dde2c4f818133662c846bacb48ed4b4afc7149d877a040f120d55f41b3",
           "anchor": "test('actual AVR key callback"
         }
       ],
@@ -22070,7 +22084,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -22160,7 +22174,8 @@
         "Current complete 1236-line donor and complete mapped Pakar dialog.rs were reread by the status/front-panel agent; historical bounded geometry, inside-stroke navigation, equal action sizing, RTL adjustments, numeric modifier/clipboard/wheel and scrolling mappings remain intact. This is source comparison, not native test execution.",
         "The root/native agent fully reread the same current 1236-line donor and mapped Pakar dialog helpers. EffectControls and StateAppearance now use actual section/action/setting-row helpers and reserved choice geometry. A fixed-role board creates no mode card or spacer, while first-wins reset remains independently live-gated. PanelDetails supplies responsive observed network cards and styled ordered correction drafts with square row actions and bounded virtualized mapping; narrow text wraps and long values truncate with tooltips. These are additional scoped consumers, not all dialog/modal behavior.",
         "The final panel pass adds measured, accessible single-line feature-chip slots after an actual Hardware framebuffer exposed collapsed vertical labels. The shared setting-row brightness consumer now isolates an in-progress pointer draft by current peer, boot, route and connection epoch, otherwise reading the live observation on USB and Wi-Fi. Release or keyboard emits one intent; owner loss, Escape, lost focus or a missing panel frame cancels the draft. These are controller-specific safety/layout adaptations of the reused controls, not newly claimed donor numeric-control equivalence.",
-        "Preferences footer checkpoint reread the complete actual 1236-line src/ui/dialog.rs at C:/Users/David/AppData/Local/Programs/Pealayer/source/Pealayer. Existing imported action-button, navigation and scroll-column helpers remain reused. Preferences reserves trailing Save/Cancel slots before clipping status rather than allowing a leading long status to consume action width; native and embedded hosts share this layout. The added actual-egui geometry regression exercises resize, both text directions, regular/comfortable density, short and unmatched categories, long status, bounded action painting and unchanged drafts. No helper-process/focus-modal or full numeric-control parity is claimed."
+        "Preferences footer checkpoint reread the complete actual 1236-line src/ui/dialog.rs at C:/Users/David/AppData/Local/Programs/Pealayer/source/Pealayer. Existing imported action-button, navigation and scroll-column helpers remain reused. Preferences reserves trailing Save/Cancel slots before clipping status rather than allowing a leading long status to consume action width; native and embedded hosts share this layout. The added actual-egui geometry regression exercises resize, both text directions, regular/comfortable density, short and unmatched categories, long status, bounded action painting and unchanged drafts. No helper-process/focus-modal or full numeric-control parity is claimed.",
+        "2026-10-29 Simon settings: specialist read all1236 actual dialog donor lines through EOF after inspecting setting_row/navigation/action helpers before edits; secondary dropdown source also fully read. Retain imported setting_row and detail-choice geometry for an optional bounded additional-steps field. Only explicit picker click applies current Pakar Config::defaults (3,5,7 at300/120ms); painting/reopening preserves user edits and wiring/boot/timer policies, and an unadvertised optional growth field is never invented. Inline tests cover bounds, visibility, explicit-only defaults and exact readback. These are Pakar game rules, not donor business logic; installed gameplay and wider generic dialog parity remain open."
       ],
       "targets": [
         {
@@ -22175,7 +22190,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "/* Fixed manager slots:"
         },
         {
@@ -22197,6 +22212,11 @@
           "path": "desktop/src/state_appearance.rs",
           "sha256": "567e65fa7d3e0e7ad7ef508b7944c0f861b376fd348031dd105ad2df94ece5eb",
           "anchor": "pub fn controls("
+        },
+        {
+          "path": "desktop/src/minigame.rs",
+          "sha256": "2d7d73247e7b9760ff72415bc6ac209a172ce69547b78805a177ed0daf81dfcd",
+          "anchor": "fn bounds("
         }
       ],
       "omissions": [
@@ -22315,6 +22335,21 @@
           "path": "desktop/src/state_appearance.rs",
           "sha256": "567e65fa7d3e0e7ad7ef508b7944c0f861b376fd348031dd105ad2df94ece5eb",
           "anchor": "fn unavailable_connection_disables_appearance_and_preview_without_hiding_them()"
+        },
+        {
+          "path": "desktop/src/minigame.rs",
+          "sha256": "2d7d73247e7b9760ff72415bc6ac209a172ce69547b78805a177ed0daf81dfcd",
+          "anchor": "fn minigame_simon_growth_is_bounded_and_visible_only_in_sequence_settings()"
+        },
+        {
+          "path": "desktop/src/minigame.rs",
+          "sha256": "2d7d73247e7b9760ff72415bc6ac209a172ce69547b78805a177ed0daf81dfcd",
+          "anchor": "fn minigame_simon_defaults_apply_only_on_explicit_mode_change()"
+        },
+        {
+          "path": "desktop/src/minigame.rs",
+          "sha256": "2d7d73247e7b9760ff72415bc6ac209a172ce69547b78805a177ed0daf81dfcd",
+          "anchor": "fn minigame_growth_readback_must_match_requested_value()"
         }
       ],
       "improvement": ""
@@ -22406,7 +22441,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391",
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -23364,7 +23399,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -24811,7 +24846,7 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "4d58fc9df53cd9021f93a005bf1ae3d9df5a6b7a5fd9253a84d92e352d600dcb",
+          "sha256": "8d280d81872e9d293bb2890f4b34b58289a84769077bd75cb81a82e1db4ab93d",
           "anchor": "function workspaceDiagnosticDraft()"
         },
         {
@@ -25142,7 +25177,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function createWorkspaceStorage",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         },
         {
           "path": "assets/web/device-settings.js",
@@ -25196,7 +25231,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function workspaceSettingsRecord",
-          "sha256": "08bbfeaa3561f5412e3eb88f07b9206fa216309d26398865b3bdd9a3505df391"
+          "sha256": "b8cdd7132d4baaed9fc7f2b9a36be2eab0180932de01e076464574722ae1155b"
         }
       ],
       "proof": [

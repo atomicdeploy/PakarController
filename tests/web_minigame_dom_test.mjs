@@ -77,6 +77,20 @@ try{
   await page.locator('[data-mini-form] [name=window_ms]').fill('900');
   await page.evaluate(()=>{state.minigame.mode='toggle';state.minigame.settings.mode='toggle';state.minigame.settings.window_ms=1200;state.minigame.settings.limit_ms=0;renderKeyGame()});
   assert.equal(await page.locator('[data-mini-form] [name=window_ms]').inputValue(),'1200','External mode change retires the previous mode draft even while its field is focused');
+  await page.evaluate(()=>{
+    state.minigame.available_modes.push({id:'simon',label:'Repeat sequence'});
+    state.minigame.mode='simon';
+    Object.assign(state.minigame.settings,{mode:'simon',rounds:3,sequence_length:3,sequence_growth:2,show_ms:300,gap_ms:120});
+    renderKeyGame();
+  });
+  const growth=page.locator('[data-mini-form] [name=sequence_growth]');
+  assert(await growth.isVisible());assert.equal(await growth.inputValue(),'2');
+  assert.equal(await page.locator('[data-mini-form] [name=rounds]').inputValue(),'3');
+  assert.equal(await page.locator('[data-mini-form] [name=show_ms]').inputValue(),'300');
+  await growth.fill('4');await page.locator('[data-mini-form] [type=submit]').click();
+  assert.equal(await page.evaluate(()=>calls.at(-1).settings.sequence_growth),4);
+  await page.evaluate(()=>{state.minigame.mode='toggle';state.minigame.settings.mode='toggle';renderKeyGame()});
+  assert.equal(await growth.isVisible(),false,'Simon-only growth control stays contextual');
   await page.evaluate(()=>{state.minigame.ready=false;renderKeyGame()});
   assert.equal(await page.locator('[data-mini-mode]').isDisabled(),true);assert.equal(await box.isDisabled(),true);
   await page.evaluate(()=>{state.minigame.ready=true;state.boot_id='next';renderKeyGame()});

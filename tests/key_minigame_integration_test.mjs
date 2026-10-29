@@ -135,13 +135,14 @@ test('actual cue owners fence deferred feedback and preserve first-win melody ov
 using G=BoardCore::KeyMiniGame;
 using namespace BoardCore::Protocol;
 struct Mini {
-  G::Config cfg;G::View state;uint16_t note=0;
+  G::Config cfg;G::View state;uint16_t note=0;uint32_t phaseAt=0;bool good=false;
   const G::Config &config()const{return cfg;}
   G::View view()const{return state;}
   G::Phase phase()const{return state.phase;}
+  uint32_t presentationAt()const{return phaseAt;}
   uint16_t takeNote(){const auto out=note;note=0;return out;}
   bool running()const{return state.phase==G::Input||state.phase==G::Show;}
-  bool feedbackCorrect()const{return false;}
+  bool feedbackCorrect()const{return good;}
 }miniGame;
 struct Settings {uint8_t winnerCue=kCueWinner;BoardCore::KeyPresentation presentation;}keySettings;
 struct MiniSettings {bool timerBeeps=true,timerAlternateTones=true;}miniSettings;
@@ -208,6 +209,35 @@ int main(){
   clear();miniGame.state.phase=G::Success;feedback(4000);miniGame.cfg.mode=G::PressToWin;
   ready=false;feedback(4100);ready=true;miniGame.state.phase=G::Success;
   feedback(4500);assert(sent.empty());
+  // Two wrong-pair presentations may have the same phase when all intermediate
+  // input edges were processed before the next service pass. Both earn a cue.
+  clear();miniGame.cfg.mode=G::MemoryPairs;miniGame.state.phase=G::Feedback;
+  miniGame.phaseAt=5000;feedback(5000);feedback(5240);
+  assert(sent.size()==1&&sent[0].opcode==kAudioCue&&sent[0].payload[0]==kCueIncorrect);
+  miniGame.phaseAt=6000;feedback(6000);feedback(6240);
+  assert(sent.size()==2&&sent[1].opcode==kAudioCue&&sent[1].payload[0]==kCueIncorrect);
+  // A newer correct pair cancels the previous wrong-pair deferred result.
+  clear();miniGame.phaseAt=7000;feedback(7000);miniGame.good=true;
+  miniGame.phaseAt=7100;feedback(7100);feedback(7400);assert(sent.empty());
+  // Color notes use one finite AVR-local major arpeggio, not per-note network
+  // calls. Disabling it keeps a single tone; old AVR capability falls back.
+  clear();miniGame.cfg.mode=G::Simon;miniGame.state.phase=G::Input;
+  miniGame.phaseAt=8000;miniGame.note=523;miniGame.cfg.colorArpeggio=true;feedback(8000);
+  assert(sent.size()==1&&sent[0].opcode==kAudioStream&&sent[0].payload.size()==17);
+  const auto arp=sent[0].payload;assert(arp[0]==7);
+  assert((arp[5]|uint16_t(arp[6])<<8)==523&&arp[7]==55);
+  assert((arp[9]|uint16_t(arp[10])<<8)==653&&arp[11]==55);
+  assert((arp[13]|uint16_t(arp[14])<<8)==784&&arp[15]==100);
+  clear();miniGame.cfg.colorArpeggio=false;miniGame.note=659;feedback(8100);
+  assert(sent.size()==1&&sent[0].opcode==kAudioStream&&sent[0].payload.size()==9&&sent[0].payload[7]==100);
+  clear();avrAtomicAudio=false;miniGame.note=659;feedback(8200);
+  assert(sent.size()==1&&sent[0].opcode==kBuzzer&&sent[0].payload[2]==80);avrAtomicAudio=true;
+  // A completing arpeggio finishes before the full configured winner melody.
+  clear();miniGame.cfg.mode=G::ColorMatch;miniGame.state.phase=G::Success;miniGame.phaseAt=9000;
+  miniGame.cfg.colorArpeggio=true;miniGame.note=523;keySettings.winnerCue=kCueWinner;feedback(9000);
+  assert(sent.size()==1&&sent[0].opcode==kAudioStream);
+  feedback(9239);assert(sent.size()==1);feedback(9240);
+  assert(sent.size()==2&&sent[1].opcode==kAudioCue&&sent[1].payload[0]==kCueWinner);
 }
 `;
   const directory=resolve('build/native');mkdirSync(directory,{recursive:true});

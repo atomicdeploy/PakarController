@@ -101,7 +101,7 @@ bool miniCommand(JsonObjectConst request,String &result){
 void serviceMiniGame(uint32_t now){
   using G=BoardCore::KeyMiniGame;
   static G::Phase audioPhase=G::Ready;static G::Mode audioMode=G::ModeCount;
-  static uint16_t audioEpoch=0;static uint32_t successAt=0;
+  static uint16_t audioEpoch=0;static uint32_t audioPhaseAt=0,successAt=0;
   static bool successCue=false;static uint8_t resultCue=BoardCore::AudioCues::kSilent;
   // Deferred feedback belongs to one game/input epoch, not merely a phase.
   // Two different rounds may both report Success without an intervening tick;
@@ -112,7 +112,7 @@ void serviceMiniGame(uint32_t now){
   }
   if(miniResumeAfterFence&&uint32_t(now-miniFenceAt)>2000){miniResumeAfterFence=false;miniFenceNote=0;}
   if(!miniReady()){
-    successCue=false;audioPhase=miniGame.phase(); // An interrupted owner never replays feedback.
+    successCue=false;audioPhase=miniGame.phase();audioPhaseAt=miniGame.presentationAt(); // No interrupted feedback replay.
     miniTimerFeedback.update(false,0,0,false,false);
     if(miniGame.running())miniGame.pause(now);
     for(uint8_t k=1;k<=9;++k){
@@ -149,7 +149,10 @@ void serviceMiniGame(uint32_t now){
   const auto timerCue=miniTimerFeedback.update(miniGame.running()&&v.timed,
     v.elapsedMs,v.remainingMs,miniSettings.timerBeeps,miniSettings.timerAlternateTones);
   if(miniGame.config().mode==G::PressToWin)successCue=false;
-  if(audioPhase!=v.phase){audioPhase=v.phase;
+  // A new round-local feedback presentation can have the same phase as the
+  // previous one when several input edges arrive between service passes.
+  if(audioPhase!=v.phase||audioPhaseAt!=miniGame.presentationAt()){
+    audioPhase=v.phase;audioPhaseAt=miniGame.presentationAt();
     if(v.phase==G::Success&&miniGame.config().mode!=G::PressToWin){successAt=now;successCue=true;resultCue=keySettings.winnerCue;}
     else if(v.phase==G::Feedback&&miniGame.config().mode==G::MemoryPairs&&!miniGame.feedbackCorrect()){
       successAt=now;successCue=true;resultCue=kCueIncorrect;

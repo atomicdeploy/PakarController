@@ -21,6 +21,7 @@ const minigameLimits = <String, (int, int)>{
   'mismatch_ms': (600, 10000),
   'rounds': (1, 32),
   'sequence_length': (1, 32),
+  'sequence_growth': (0, 31),
   'palette_size': (2, 9),
   'fixed_target': (0, 9),
 };

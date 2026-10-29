@@ -11328,6 +11328,70 @@ S3 build pass. Evidence hashes retain the separation between origin source rows
 and target/proof references; comparison generation and Check pass. No failed
 gate was disabled, and no failed fixture justified a production API downgrade.
 
+### Game-feedback requirement audit (2026-10-29)
+
+Audited the user's entire game feedback list against actual engine, service,
+AVR player, Flutter controls and command transport, plus Rust and canonical Web
+controls. Retain the existing semantic icon/description menus and correlated
+WS-first transport; do not replace connection checks with optimistic success.
+New targeted Flutter tests verify board-provided timing/reveal settings, narrow
+patches and failed-save draft retention. FormatException presentation now strips
+only the type prefix, keeping its actionable reason. The 18 game and six actual
+transport tests pass with clean analyzer results; no tablet install is part of
+this audit because David is using it and requested a later deployment retry.
+
+The actual production audio blocks exposed another phase-only assumption:
+repeated wrong-pair Feedback entries can be separated by input processing without
+an intervening audio service pass. Bind feedback to presentation timestamp as
+well as phase, retaining the mode/input-epoch fence. Compile the real dispatch
+block and assert both repeated incorrect cues, cancellation by a new correct
+pair, the exact atomic arpeggio and delayed configured winner cue. Core/settings,
+all-mode/excluded-mode, seven integration and boot/reset tests pass.
+
+Latest explicit policy overrides the older Color Pattern request: its fresh
+introduction default is Off; optional reveal remains capped at 500 ms, and
+Matching Pairs keeps its default-on reveal. Existing saved choices are not
+migrated. This instance's requested Off write remains pending ASUS access.
+
+Reread the unchanged complete Pealayer NumericValueControl and EffectGroupDialog
+at their recorded hashes, preserving bounded typed drafts and explicit commit.
+The existing Web form exposed boot/display/timer fields that its command
+validator rejected. Align its typed field catalogue with those actual firmware
+settings; invalid booleans/policies and unknown fields still reject before any
+send. Transport and isolated browser interaction tests pass. Canonical Web
+regeneration changed the embedded route target hash; the mandatory PU route
+gate stopped the build. Re-review the affected donor/target registrations and
+update only two target bindings, then pass the 50-route guard without bypass.
+
+### Shorter Simon progression (2026-10-29)
+
+The latest user request supersedes the prior one-round/eight-step default. Use
+three rounds with the same prefix extended from three to five to seven steps;
+300 ms lit plus 120 ms gap accommodates the existing 210 ms AVR-local arpeggio.
+Keep correct-entry feedback at 240 ms. An additive bounded `sequence_growth`
+setting (0–31, zero for fixed length) is advertised/persisted by the board and
+editable in Flutter, Rust and the canonical Web controls; maximum sequence
+length remains 32. The old-file missing-field default retains +1 growth in RAM
+without automatically rewriting explicit saved timing or configuration.
+
+Core tests play each complete prefix and response with exact feedback timing,
+then fixed-length/capped variants. Persistence tests cover explicit growth and
+unchanged older saved policies. Flutter's 19 game tests and six previously
+verified unchanged transport tests, plus ten native minigame tests, pass. Web
+typed-command and isolated DOM tests exercise growth bounds, contextual control
+visibility and actual Save. Full/onboard assets share the same revision.
+
+The native specialist reread all 1236 actual Pealayer dialog lines and all 646
+dropdown lines after inspecting the used helper slices before edits; retain
+their imported setting-row/navigation controls without a new widget or geometry.
+Only explicit picker interaction applies new mode defaults. Painting/reopening
+preserves edits, wiring, startup and timer policies; an unadvertised optional
+field is not inserted for another board. Reuse/source proofs remain separate
+from installed UI, audible timing and actual three-round hardware acceptance.
+No device operation is authorized by these fixture results: deployment and the
+current-instance Color Pattern/Simon settings are intentionally deferred while
+David uses the tablet.
+
 ## Color Pattern pacing and visible matching (2026-10-29)
 
 Consulted games-streaming and the exact Puzzles.ino donor-audit route. The

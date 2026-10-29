@@ -945,10 +945,11 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
     const result={...values};
     if(path==='/api/minigame/configure'){
       const settings=structured(result.settings,'minigame settings');
-      const limits={limit_ms:[0,86400000],warning_ms:[0,86400000],urgent_ms:[0,86400000],penalty_ms:[0,86400000],window_ms:[100,60000],show_ms:[100,10000],gap_ms:[50,5000],feedback_ms:[50,5000],intro_ms:[100,10000],preview_ms:[0,10000],mismatch_ms:[600,10000],rounds:[1,32],sequence_length:[1,32],palette_size:[2,9],fixed_target:[0,9]};
-      for(const key of Object.keys(settings))if(!Object.hasOwn(limits,key)&&!['mode','hard','intro_enabled','color_arpeggio','toggle_kind','outputs'].includes(key))throw Error('Unknown minigame setting');
+      const limits={limit_ms:[0,86400000],warning_ms:[0,86400000],urgent_ms:[0,86400000],penalty_ms:[0,86400000],window_ms:[100,60000],show_ms:[100,10000],gap_ms:[50,5000],feedback_ms:[50,5000],intro_ms:[100,10000],preview_ms:[0,10000],mismatch_ms:[600,10000],rounds:[1,32],sequence_length:[1,32],sequence_growth:[0,31],palette_size:[2,9],fixed_target:[0,9]};
+      for(const key of Object.keys(settings))if(!Object.hasOwn(limits,key)&&!['mode','hard','intro_enabled','color_arpeggio','toggle_kind','outputs','boot_mode','segment_animation','timer_beeps','timer_alternate_tones'].includes(key))throw Error('Unknown minigame setting');
       for(const [key,[min,max]] of Object.entries(limits))if(key in settings)settings[key]=integer(settings[key],key,min,max);
-      for(const key of ['hard','intro_enabled','color_arpeggio'])if(key in settings)settings[key]=boolean(settings[key],key);
+      for(const key of ['hard','intro_enabled','color_arpeggio','segment_animation','timer_beeps','timer_alternate_tones'])if(key in settings)settings[key]=boolean(settings[key],key);
+      if('boot_mode' in settings&&!['first','last'].includes(settings.boot_mode))throw Error('Invalid boot game policy');
       if('mode' in settings&&!snapshot().minigame?.available_modes?.some(mode=>mode.id===settings.mode))throw Error('Unavailable minigame');
       if('toggle_kind' in settings&&!['toggle','latch','press'].includes(settings.toggle_kind))throw Error('Invalid toggle behavior');
       if('outputs' in settings){
@@ -2775,7 +2776,7 @@ async function releaseMiniGameKey(key){
 // Adapt the donor EffectGroupDialog local-draft/explicit-save separation through
 // the existing key-game card. Status reads and opening settings never start play.
 const miniGameFields={limit_ms:['Time limit (ms · 0 = off)',0,86400000],warning_ms:['Warning remaining (ms)',0,86400000],urgent_ms:['Urgent remaining (ms)',0,86400000],penalty_ms:['Mistake penalty (ms)',0,86400000],window_ms:['Reaction window (ms)',100,60000],show_ms:['Show time (ms)',100,10000],gap_ms:['Show gap (ms)',50,5000],feedback_ms:['Feedback time (ms)',50,5000],rounds:['Rounds',1,32],sequence_length:['Sequence length',1,32],palette_size:['Palette colors',2,9],fixed_target:['Target box (0 = random)',0,9]};
-Object.assign(miniGameFields,{intro_ms:['Reveal fade per box (ms)',100,10000],preview_ms:['Pairs preview hold (ms)',0,10000],mismatch_ms:['Wrong pair feedback (ms)',600,10000]});
+Object.assign(miniGameFields,{intro_ms:['Reveal fade per box (ms)',100,10000],preview_ms:['Pairs preview hold (ms)',0,10000],mismatch_ms:['Wrong pair feedback (ms)',600,10000],sequence_growth:['Additional steps per round',0,31]});
 const miniModeDetails={
   'press-to-win':['pointer','First press wins; reset for the next round'],
   illuminated:['sun','Press the glowing target before its window closes'],
@@ -2862,7 +2863,7 @@ function renderMiniGame(card){
     form.elements.boot_mode.value=game.settings.boot_mode??'first';
     for(let i=0;i<8;i++){const rule=game.settings.outputs?.[i];form.elements['source'+i].value=rule?.source??'disabled';form.elements['key'+i].value=rule?.key||1;}
   }
-  for(const [name] of Object.entries(miniGameFields)){const input=form.elements[name];input.parentElement.hidden=!Object.hasOwn(game.settings,name);input.disabled=!enabled||input.parentElement.hidden;}
+  for(const [name] of Object.entries(miniGameFields)){const input=form.elements[name];input.parentElement.hidden=!Object.hasOwn(game.settings,name)||name==='sequence_growth'&&game.mode!=='simon';input.disabled=!enabled||input.parentElement.hidden;}
   for(const name of ['hard','intro_enabled','color_arpeggio','toggle_kind','boot_mode','segment_animation','timer_beeps','timer_alternate_tones']){const input=form.elements[name];input.parentElement.hidden=!Object.hasOwn(game.settings,name);input.disabled=!enabled||input.parentElement.hidden;}
   for(const row of root.querySelectorAll('[data-mini-output]')){const i=Number(row.dataset.miniOutput),source=form.elements['source'+i],key=form.elements['key'+i];row.hidden=game.settings.outputs?.length!==8;source.disabled=!enabled||row.hidden;key.disabled=!enabled||row.hidden||!['held','latched','winner','lost'].includes(source.value);}
   form.querySelector('[type=submit]').disabled=!enabled;

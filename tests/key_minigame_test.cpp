@@ -9,7 +9,8 @@ static void tap(Game &g,uint8_t key,uint32_t now){assert(g.input(key,true,now));
 static Config config(Game::Mode mode,uint16_t mask=15){auto c=Config::defaults(mode);c.enabledMask=mask;c.introEnabled=false;return c;}
 static void configure(Game &g,Config c,uint32_t now=0){assert(g.configure(c,now));assert(g.phase()==Game::Ready);}
 static void basics(){
-  const auto simon=Config::defaults(Game::Simon);assert(simon.rounds==1&&simon.sequenceLength==8&&simon.valid());
+  const auto simon=Config::defaults(Game::Simon);
+  assert(simon.rounds==3&&simon.sequenceLength==3&&simon.sequenceGrowth==2&&simon.showMs==300&&simon.gapMs==120&&simon.feedbackMs==240&&simon.valid());
   Game g;auto c=config(Game::PressToWin);configure(g,c);
   assert(c.limitMs==0);g.tick(600000);assert(g.phase()==Game::Ready);
   tap(g,2,600000);assert(g.view().winner==2&&g.phase()==Game::Success);
@@ -43,6 +44,10 @@ static void reaction(){
   g.tick(c.windowMs);assert(g.phase()==Game::Input&&g.view().target!=first);
 }
 static void colorMatch(){
+  const auto fresh=Config::defaults(Game::ColorMatch);
+  assert(!fresh.introEnabled&&fresh.introMs==500);
+  Game immediate;configure(immediate,fresh);assert(immediate.start(0,17));
+  assert(immediate.phase()==Game::Input&&immediate.takeNote()==0);
   const uint16_t masks[]={3,15,63,511,0x125};
   for(uint16_t mask:masks)for(uint8_t palette=2;palette<=9;++palette)for(uint8_t seed=1;seed<=32;++seed){
     Game trial;auto rules=config(Game::ColorMatch,mask);rules.paletteSize=palette;configure(trial,rules);trial.start(0,seed);
@@ -114,7 +119,7 @@ static void paletteAndMatchingDiagnostics(){
   }
 }
 static void simon(){
-  Game g;auto c=config(Game::Simon);c.sequenceLength=2;c.rounds=2;configure(g,c);g.start(0,22);
+  Game g;auto c=config(Game::Simon);c.sequenceLength=2;c.sequenceGrowth=1;c.rounds=2;configure(g,c);g.start(0,22);
   uint32_t now=0;
   for(uint8_t round=0;round<2;++round){
     uint8_t sequence[32]{},size=0;
@@ -134,6 +139,44 @@ static void simon(){
     }
   }
   assert(g.phase()==Game::Success);
+}
+static void simonProgression(){
+  auto play=[](Config c,const uint8_t *lengths){
+    Game g;configure(g,c);assert(g.start(0,22));uint32_t now=0;
+    uint8_t previous[32]{},previousSize=0;
+    for(uint8_t round=0;round<c.rounds;++round){
+      uint8_t shown[32]{},size=0;
+      assert(g.phase()==Game::Show&&g.view().round==round+1);
+      while(g.phase()==Game::Show){
+        const uint8_t target=g.view().target;assert(target&&size<32);shown[size++]=target;
+        assert(g.takeNote()==Game::frequency(target-1)&&g.takeNote()==0);
+        assert(!g.input(target,true,now));
+        g.tick(now+c.showMs-1);assert(g.view().target==target);
+        g.tick(now+c.showMs);assert(g.view().target==0);
+        g.tick(now+c.showMs+c.gapMs-1);assert(g.view().target==0);
+        now+=c.showMs+c.gapMs;g.tick(now);
+      }
+      assert(size==lengths[round]&&g.phase()==Game::Input);
+      for(uint8_t i=0;i<previousSize;++i)assert(shown[i]==previous[i]);
+      memcpy(previous,shown,size);previousSize=size;
+      for(uint8_t i=0;i<size;++i){
+        now+=10;tap(g,shown[i],now);assert(g.phase()==Game::Feedback);
+        assert(g.view().progress==i+1&&g.takeNote()==Game::frequency(shown[i]-1));
+        g.tick(now+c.feedbackMs-1);assert(g.phase()==Game::Feedback);
+        now+=c.feedbackMs;g.tick(now);
+        if(i+1<size)assert(g.phase()==Game::Input);
+      }
+    }
+    assert(g.phase()==Game::Success);
+  };
+  auto c=Config::defaults(Game::Simon);c.enabledMask=63;
+  const uint8_t requested[]={3,5,7};play(c,requested);
+  c.sequenceLength=4;c.sequenceGrowth=0;const uint8_t fixed[]={4,4,4};play(c,fixed);
+  c.sequenceLength=31;c.sequenceGrowth=2;c.limitMs=0;
+  const uint8_t capped[]={31,32,32};play(c,capped);
+  c.sequenceLength=1;c.sequenceGrowth=31;c.rounds=2;
+  const uint8_t maximum[]={1,32};play(c,maximum);
+  c.sequenceGrowth=32;assert(!c.valid());
 }
 static void memory(){
   Game g;auto c=config(Game::MemoryPairs,511);configure(g,c);assert(g.view().participatingMask==255);
@@ -178,7 +221,8 @@ static void introductions(){
   const Game::Mode modes[]={Game::ColorMatch,Game::MemoryPairs};
   for(const auto mode:modes){
     Game g;auto c=Config::defaults(mode);c.enabledMask=0x125; // Non-adjacent boxes 1,3,6,9.
-    assert(c.introEnabled&&c.colorArpeggio);configure(g,c);assert(g.start(0,17));
+    assert(c.introEnabled==(mode==Game::MemoryPairs)&&c.colorArpeggio);
+    c.introEnabled=true;configure(g,c);assert(g.start(0,17));
     assert(g.phase()==Game::Show&&g.view().target==1&&g.takeNote()!=0);
     Game::Style s[18];g.styles(s);assert(s[0].rgb==0&&s[4].rgb==0);
     const auto step=g.introStepMs();assert(step==(mode==Game::ColorMatch?500:1000));
@@ -204,7 +248,7 @@ static void introductions(){
   }
 }
 static void boundedColorIntroduction(){
-  Game g;auto c=Config::defaults(Game::ColorMatch);c.enabledMask=63;c.introMs=10000;
+  Game g;auto c=Config::defaults(Game::ColorMatch);c.enabledMask=63;c.introMs=10000;c.introEnabled=true;
   configure(g,c);assert(g.config().introMs==10000&&g.introStepMs()==500);g.start(100,9);
   assert(g.view().target==1);g.tick(599);assert(g.view().target==1);
   g.tick(600);assert(g.view().target==2&&g.presentationAt()==600);
@@ -233,6 +277,17 @@ static void wrongPairFeedback(){
   g.tick(now+c.mismatchMs);assert(g.phase()==Game::Input);g.styles(s);
   assert(s[(a-1)*2].rgb==0&&s[(b-1)*2].rgb==0);
 }
+static void successPresentation(){
+  Game g;auto c=config(Game::ClearAll,1);configure(g,c);assert(g.start(0,9));tap(g,1,10);
+  assert(g.phase()==Game::Success);Game::Style styles[18];
+  g.tick(259);g.styles(styles);assert(styles[0].rgb==0x00ff00&&styles[0].effect==Game::Presentation::Solid);
+  g.tick(260);g.styles(styles);assert(styles[0].effect==Game::Presentation::Rainbow);
+  g.tick(2259);g.styles(styles);assert(styles[0].effect==Game::Presentation::Rainbow);
+  g.tick(2260);g.styles(styles);assert(styles[0].effect==Game::Presentation::Solid&&styles[0].rgb==0x00ff00);
+  // First-wins keeps its dedicated flash/ring owner, never generic rainbow.
+  c=config(Game::PressToWin,1);configure(g,c);tap(g,1,10);g.tick(260);g.styles(styles);
+  assert(styles[0].effect==Game::Presentation::Solid&&styles[0].rgb==0x00ff00);
+}
 static void panelFeedback(){
   uint8_t pixels[4];
   constexpr uint8_t digit[]={0,1,2,3,3,3,3,2,1,0,0,0};
@@ -248,7 +303,7 @@ static void panelFeedback(){
   c=Game::Config::defaults(Game::Simon);c.enabledMask=3;c.outputs[0]={Game::KeyHeld,2};
   const auto first=BoardCore::bootGameConfig(c,false),last=BoardCore::bootGameConfig(c,true);
   assert(first.mode==Game::PressToWin&&!first.limitMs&&first.enabledMask==3&&first.outputs[0].key==2);
-  assert(last.mode==Game::Simon&&last.sequenceLength==8);
+  assert(last.mode==Game::Simon&&last.sequenceLength==3&&last.sequenceGrowth==2&&last.rounds==3);
   Game fresh;assert(fresh.configure(first,0));assert(fresh.phase()==Game::Ready&&!fresh.view().timed);
   assert(fresh.input(1,true,1)&&fresh.view().winner==1);
 #endif
@@ -274,7 +329,7 @@ int main(){
   Game g;auto c=config(Game::Toggle);assert(!g.configure(c,0));
 #else
   static_assert(Game::compiledMask()==1023,"All games included by default");
-  basics();timers();reaction();colorMatch();paletteAndMatchingDiagnostics();simon();memory();clearOrderSwitch();toggle();introductions();boundedColorIntroduction();wrongPairFeedback();
+  basics();timers();reaction();colorMatch();paletteAndMatchingDiagnostics();simon();simonProgression();memory();clearOrderSwitch();toggle();introductions();boundedColorIntroduction();wrongPairFeedback();successPresentation();
   // Deterministic bounded soak with arbitrary input/timer sequences.
   for(uint8_t m=0;m<Game::ModeCount;++m){Game g;auto c=config(Game::Mode(m),511);c.paletteSize=9;
     configure(g,c);g.start(0,42);for(uint32_t i=1;i<15000;++i){g.tick(i*17);g.input(i%9+1,i%2,i*17);

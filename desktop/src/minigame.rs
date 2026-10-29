@@ -145,6 +145,7 @@ fn bounds(field: &str) -> Option<(u64, u64, &'static str)> {
         "mismatch_ms" => (600, 10000, "Wrong pair feedback"),
         "rounds" => (1, 32, "Rounds"),
         "sequence_length" => (1, 32, "Sequence length"),
+        "sequence_growth" => (0, 31, "Additional steps per round"),
         "palette_size" => (2, 9, "Palette size"),
         "fixed_target" => (0, 9, "Target box (0 = random)"),
         _ => return None,
@@ -346,7 +347,7 @@ fn setting_visible(mode: &str, field: &str, timed: bool) -> bool {
         "limit_ms" | "warning_ms" | "urgent_ms" => timed,
         "penalty_ms" => timed && mode == "color-order",
         "window_ms" | "fixed_target" => matches!(mode, "illuminated" | "reaction-chase"),
-        "show_ms" | "gap_ms" | "sequence_length" => mode == "simon",
+        "show_ms" | "gap_ms" | "sequence_length" | "sequence_growth" => mode == "simon",
         "intro_ms" => matches!(mode, "color-match" | "memory-pairs"),
         "preview_ms" | "mismatch_ms" => mode == "memory-pairs",
         "rounds" => matches!(mode, "illuminated" | "reaction-chase" | "simon"),
@@ -354,6 +355,36 @@ fn setting_visible(mode: &str, field: &str, timed: bool) -> bool {
         "feedback_ms" => !matches!(mode, "press-to-win" | "toggle"),
         _ => true,
     }
+}
+// Explicit picker changes only; rendering or reopening the current mode must
+// never overwrite an edited timing value. Match Config::defaults(Simon).
+fn select_mode(draft: &mut Value, selected: &str) {
+    if draft["mode"] == selected {
+        return;
+    }
+    draft["limit_ms"] = json!(
+        if matches!(selected, "press-to-win" | "toggle" | "clear-all") {
+            0
+        } else {
+            60000
+        }
+    );
+    draft["window_ms"] = json!(if selected == "illuminated" {
+        10000
+    } else {
+        1200
+    });
+    if selected == "simon" {
+        draft["rounds"] = json!(3);
+        draft["sequence_length"] = json!(3);
+        draft["show_ms"] = json!(300);
+        draft["gap_ms"] = json!(120);
+        // Optional additive setting: don't invent support on an older board.
+        if draft.get("sequence_growth").is_some() {
+            draft["sequence_growth"] = json!(2);
+        }
+    }
+    draft["mode"] = json!(selected);
 }
 pub fn input_controls(ui: &mut egui::Ui, status: &DeviceStatus) {
     if !hold_controls(status) {
@@ -625,26 +656,11 @@ fn panel(
                                 );
                                 if response.clicked() {
                                     selected = (*id).to_owned();
+                                    select_mode(&mut draft.edited, &selected);
                                     ui.close();
                                 }
                             }
                         });
-                    if draft.edited["mode"] != selected {
-                        draft.edited["limit_ms"] = json!(if matches!(
-                            selected.as_str(),
-                            "press-to-win" | "toggle" | "clear-all"
-                        ) {
-                            0
-                        } else {
-                            60000
-                        });
-                        draft.edited["window_ms"] = json!(if selected == "illuminated" {
-                            10000
-                        } else {
-                            1200
-                        });
-                    }
-                    draft.edited["mode"] = json!(selected);
                     let mut timed = draft.edited["limit_ms"].as_u64().unwrap_or(0) > 0;
                     if ui.checkbox(&mut timed, "Time limit").changed() {
                         draft.edited["limit_ms"] = json!(if timed { 60000 } else { 0 });
@@ -663,6 +679,7 @@ fn panel(
                         "mismatch_ms",
                         "rounds",
                         "sequence_length",
+                        "sequence_growth",
                         "palette_size",
                         "fixed_target",
                     ] {
@@ -852,6 +869,69 @@ fn panel(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn minigame_simon_growth_is_bounded_and_visible_only_in_sequence_settings() {
+        let s = status();
+        for growth in [0, 2, 31] {
+            assert!(
+                settings(&json!({"sequence_growth":growth}).to_string(), &s.minigame).is_ok()
+            );
+        }
+        for growth in [json!(-1), json!(32), json!(2.5), json!("2")] {
+            assert!(
+                settings(&json!({"sequence_growth":growth}).to_string(), &s.minigame).is_err()
+            );
+        }
+        assert_eq!(
+            bounds("sequence_growth"),
+            Some((0, 31, "Additional steps per round"))
+        );
+        assert!(setting_visible("simon", "sequence_growth", true));
+        for mode in ["press-to-win", "toggle", "memory-pairs", "illuminated"] {
+            assert!(!setting_visible(mode, "sequence_growth", true));
+        }
+    }
+    #[test]
+    fn minigame_simon_defaults_apply_only_on_explicit_mode_change() {
+        let original = json!({"mode":"press-to-win","rounds":8,"sequence_length":9,
+            "sequence_growth":0,"show_ms":800,"gap_ms":300,"limit_ms":0,
+            "boot_mode":"last","timer_beeps":false,"outputs":[{"source":"winner","key":2}]});
+        let mut draft = original.clone();
+        select_mode(&mut draft, "simon");
+        for (field, expected) in [
+            ("rounds", 3),
+            ("sequence_length", 3),
+            ("sequence_growth", 2),
+            ("show_ms", 300),
+            ("gap_ms", 120),
+        ] {
+            assert_eq!(draft[field], json!(expected), "{field}");
+        }
+        assert_eq!(draft["outputs"], original["outputs"]);
+        assert_eq!(draft["boot_mode"], original["boot_mode"]);
+        assert_eq!(draft["timer_beeps"], original["timer_beeps"]);
+        draft["sequence_growth"] = json!(0);
+        draft["show_ms"] = json!(700);
+        let edited = draft.clone();
+        select_mode(&mut draft, "simon");
+        assert_eq!(draft, edited, "Repainting/reopening must preserve edits");
+        select_mode(&mut draft, "press-to-win");
+        assert_eq!(draft["limit_ms"], json!(0));
+        assert_eq!(draft["outputs"], original["outputs"]);
+        let mut earlier_board = original;
+        earlier_board.as_object_mut().unwrap().remove("sequence_growth");
+        select_mode(&mut earlier_board, "simon");
+        assert!(earlier_board.get("sequence_growth").is_none());
+    }
+    #[test]
+    fn minigame_growth_readback_must_match_requested_value() {
+        let mut s = status();
+        let form = vec![("settings".into(), r#"{"sequence_growth":2}"#.into())];
+        s.minigame["settings"]["sequence_growth"] = json!(1);
+        assert!(!verify(CONFIGURE, &form, &s));
+        s.minigame["settings"]["sequence_growth"] = json!(2);
+        assert!(verify(CONFIGURE, &form, &s));
+    }
     #[test]
     fn untimed_press_and_toggle_hide_irrelevant_elapsed_timer() {
         assert!(!shows_elapsed("press-to-win"));

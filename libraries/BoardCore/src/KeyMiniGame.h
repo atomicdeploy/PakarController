@@ -61,7 +61,7 @@ class KeyMiniGame {
     uint32_t limitMs=0, warningMs=10000, urgentMs=3000, penaltyMs=2000;
     uint16_t windowMs=1200, showMs=500, gapMs=200, feedbackMs=240;
     uint16_t introMs=1000, previewMs=1500, mismatchMs=1200;
-    uint8_t rounds=5, sequenceLength=4, paletteSize=7, fixedTarget=0;
+    uint8_t rounds=5, sequenceLength=4, sequenceGrowth=1, paletteSize=7, fixedTarget=0;
     ToggleKind toggleKind=Flip;
     bool hard=false, introEnabled=true, colorArpeggio=true;
     OutputRule outputs[8]{};
@@ -69,9 +69,9 @@ class KeyMiniGame {
       Config c;c.mode=mode;
       if(mode!=PressToWin&&mode!=Toggle&&mode!=ClearAll)c.limitMs=60000;
       if(mode==ColorOrder)c.paletteSize=9;
-      if(mode==ColorMatch)c.introMs=500;
+      if(mode==ColorMatch){c.introMs=500;c.introEnabled=false;}
       if(mode==Illuminated)c.windowMs=10000;
-      if(mode==Simon){c.rounds=1;c.sequenceLength=8;}
+      if(mode==Simon){c.rounds=3;c.sequenceLength=3;c.sequenceGrowth=2;c.showMs=300;c.gapMs=120;}
       return c;
     }
     bool valid()const{
@@ -79,7 +79,7 @@ class KeyMiniGame {
          warningMs>86400000UL||urgentMs>warningMs||penaltyMs>86400000UL||
          windowMs<100||windowMs>60000||showMs<100||showMs>10000||gapMs<50||gapMs>5000||
          feedbackMs<50||feedbackMs>5000||introMs<100||introMs>10000||previewMs>10000||mismatchMs<600||mismatchMs>10000||!rounds||rounds>32||!sequenceLength||sequenceLength>32||
-         paletteSize<2||paletteSize>9||toggleKind>Momentary||fixedTarget>9||
+         sequenceGrowth>31||paletteSize<2||paletteSize>9||toggleKind>Momentary||fixedTarget>9||
          (fixedTarget&&!(enabledMask&keyBit(fixedTarget))))return false;
       if(mode==MemoryPairs&&count(enabledMask)<2)return false;
       if(mode==ColorOrder&&paletteSize<count(enabledMask))return false;
@@ -474,7 +474,10 @@ class KeyMiniGame {
     (((rgb>>16)*gain/255)<<16)|((((rgb>>8)&255)*gain/255)<<8)|((rgb&255)*gain/255);}
   uint8_t random(uint8_t n){rng_^=rng_<<13;rng_^=rng_>>17;rng_^=rng_<<5;return uint8_t(rng_%n);}
   void shuffle(uint8_t *items,uint8_t n){for(uint8_t i=n;i>1;--i){uint8_t j=random(i),v=items[i-1];items[i-1]=items[j];items[j]=v;}}
-  uint8_t sequenceSize()const{uint16_t n=config_.sequenceLength+round_-1;return n>32?32:n;}
+  uint8_t sequenceSize()const{
+    const uint16_t n=config_.sequenceLength+uint16_t(round_?round_-1:0)*config_.sequenceGrowth;
+    return n>32?32:n;
+  }
   void emitNote(uint8_t index){note_=frequency(index);}
   void incrementMistakes(){if(mistakes_!=255)++mistakes_;}
   void enter(Phase phase,uint32_t now){phase_=phase;phaseAt_=now;++revision_;}

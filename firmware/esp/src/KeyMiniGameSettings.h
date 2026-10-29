@@ -46,6 +46,7 @@ struct KeyMiniGameSettings {
        !number("gap_ms",5000,next.gapMs)||!number("feedback_ms",5000,next.feedbackMs)||
        !number("intro_ms",10000,next.introMs)||!number("preview_ms",10000,next.previewMs)||!number("mismatch_ms",10000,next.mismatchMs)||
        !number("rounds",32,next.rounds)||!number("sequence_length",32,next.sequenceLength)||
+       !number("sequence_growth",31,next.sequenceGrowth)||
        !number("palette_size",9,next.paletteSize)||!number("fixed_target",9,next.fixedTarget))return false;
     if(!v["toggle_kind"].isUnbound()){
       if(!v["toggle_kind"].is<const char*>())return false;
@@ -76,6 +77,7 @@ struct KeyMiniGameSettings {
     out["warning_ms"]=c.warningMs;out["urgent_ms"]=c.urgentMs;out["penalty_ms"]=c.penaltyMs;
     out["window_ms"]=c.windowMs;out["show_ms"]=c.showMs;out["gap_ms"]=c.gapMs;
     out["feedback_ms"]=c.feedbackMs;out["rounds"]=c.rounds;out["sequence_length"]=c.sequenceLength;
+    out["sequence_growth"]=c.sequenceGrowth;
     out["palette_size"]=c.paletteSize;out["fixed_target"]=c.fixedTarget;
     out["toggle_kind"]=toggleName(c.toggleKind);out["hard"]=c.hard;
     out["intro_enabled"]=c.introEnabled;out["intro_ms"]=c.introMs;out["preview_ms"]=c.previewMs;
@@ -84,7 +86,11 @@ struct KeyMiniGameSettings {
     auto a=out["outputs"].to<JsonArray>();for(const auto &r:c.outputs){auto o=a.add<JsonObject>();o["source"]=outputName(r.source);o["key"]=r.key;}
   }
   bool load(fs::FS &fs){auto f=fs.open("/minigame.json","r");if(!f||f.size()>4096)return false;
-    JsonDocument d;if(deserializeJson(d,f))return false;return patch(d.as<JsonVariantConst>());}
+    JsonDocument d;if(deserializeJson(d,f)||!d.is<JsonObject>())return false;
+    // Earlier saved settings grew by exactly one step. Preserve that explicit
+    // game's progression in RAM; no rewrite or timing/default migration.
+    if(d["sequence_growth"].isUnbound())d["sequence_growth"]=1U;
+    return patch(d.as<JsonVariantConst>());}
   bool save(fs::FS &fs)const{
     JsonDocument d;json(d.to<JsonObject>());String data;serializeJson(d,data);
     auto old=fs.open("/minigame.json","r");if(old&&old.readString()==data)return true;old.close();
