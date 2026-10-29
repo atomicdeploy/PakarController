@@ -11426,3 +11426,29 @@ reveal cap/stall/rollover behavior. Bind these reviewed bytes and proofs in the
 same Puzzles ledger row before canonical verification. No board command,
 firmware build, new round or optical acceptance was performed by this subtask;
 fresh six-box human feedback remains required after approved deployment.
+
+## Washed-color regression audit (2026-10-29)
+
+Consulted the games-streaming and exact Puzzles/PCController AddressableLeds
+ledger routes; reread the complete unchanged Puzzles sketch and AddressableLeds
+implementation/header, then actual HostPresentation, KeyPresentation, StateMotion
+and S3 wire conversion. Retain the shared RGB renderer and multiplicative
+brightness/channel permutation, not a second color correction owner. The old
+running-image palette had softened red/blue; the vivid palette is still pending
+deployment. Remove the gray floor from optional Pink and explicitly request
+HSV saturation/value 255/255 for normal and diagnostic rainbow, instead of the
+installed FastLED convenience implementation's saturation 240. This source
+finding alone does not diagnose severe physical washout or electrical health.
+
+Add published-frame-to-wire regressions for all nine game colors and brightness
+levels, plus zero-channel preservation under scalar effects. The first fixture
+incorrectly inspected FastLED's restored background working buffer; correct it
+to inspect the actual published composite. Its failed Windows process initially
+locked the canonical executable; exact owned-process cleanup was denied, so
+request manual cleanup rather than SSH/output-path/cache bypass. After that
+process cleared, rerun the same canonical test wrapper successfully. Minigame
+core/settings, both baked-role profiles and the full LED pipeline pass. The HSV
+stub deliberately preserves old hue-clock encoding and observes producer
+arguments only; it is not a claim of real HSV conversion or optical quality.
+Saved settings, brightness, correction rules and channel calibration remain
+untouched. Physical comparison and deployment remain separate pending gates.

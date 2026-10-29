@@ -141,7 +141,7 @@ class KeyMiniGame {
   static uint32_t color(uint8_t i){
     // The default seven must be unmistakable on real RGB LEDs. Cyan, blue
     // and blue-heavy violet previously occupied three of those seven slots.
-    constexpr uint32_t palette[]={0xff0000,0x00ff00,0x0000ff,0xffff00,0xff00ff,0xff8000,0xffffff,0x00ffff,0xff4080};
+    constexpr uint32_t palette[]={0xff0000,0x00ff00,0x0000ff,0xffff00,0xff00ff,0xff8000,0xffffff,0x00ffff,0xff0080};
     return palette[i%9];
   }
   static const char *colorName(uint8_t i){

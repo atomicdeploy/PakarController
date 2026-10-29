@@ -1,8 +1,24 @@
 #pragma once
 #include "Arduino.h"
+struct CHSV {
+ uint8_t hue,sat,val;
+ CHSV(uint8_t h,uint8_t s,uint8_t v):hue(h),sat(s),val(v){}
+};
+struct PixelTestHsvObservation {
+ unsigned conversions=0;uint8_t minimumSaturation=255,minimumValue=255;
+};
+inline PixelTestHsvObservation pixelTestHsv;
 struct CRGB {
  uint8_t r=0,g=0,b=0;
  CRGB()=default; CRGB(uint8_t red,uint8_t green,uint8_t blue):r(red),g(green),b(blue){}
+ CRGB& operator=(const CHSV& hsv){
+  ++pixelTestHsv.conversions;
+  pixelTestHsv.minimumSaturation=min(pixelTestHsv.minimumSaturation,hsv.sat);
+  pixelTestHsv.minimumValue=min(pixelTestHsv.minimumValue,hsv.val);
+  // Keep the existing hue-clock fixture encoding, NOT real HSV->RGB math.
+  // These observations prove producer parameters, never optical saturation.
+  r=hsv.hue;g=20;b=30;return *this;
+ }
  bool operator==(const CRGB& o)const{return r==o.r&&g==o.g&&b==o.b;}
  bool operator!=(const CRGB& o)const{return !(*this==o);}
  static const CRGB White,Red,Black;
@@ -19,7 +35,7 @@ struct TestFastLED {
 };
 inline TestFastLED FastLED;
 inline void fill_solid(CRGB* p,uint16_t n,CRGB c){for(uint16_t i=0;i<n;++i)p[i]=c;}
-inline void fill_rainbow(CRGB* p,uint16_t n,uint8_t hue,uint8_t step){for(uint16_t i=0;i<n;++i)p[i]=CRGB(static_cast<uint8_t>(hue+i*step),20,30);}
+inline void fill_rainbow(CRGB* p,uint16_t n,uint8_t hue,uint8_t step){for(uint16_t i=0;i<n;++i)p[i]=CHSV(static_cast<uint8_t>(hue+i*step),240,255);}
 inline uint8_t qsub8(uint8_t a,uint8_t b){return a>b?a-b:0;}
 inline uint8_t qadd8(uint8_t a,uint8_t b){return min<int>(255,a+b);}
 inline uint8_t random8(uint8_t=255,uint8_t=255){return 0;}

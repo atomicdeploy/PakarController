@@ -380,3 +380,32 @@ as `keycontroller-color-melody-esp.bin`; it has **not** been applied. The AVR
 job was still zero at the last successful read. Restore ASUS access to resume
 actual tablet-led deployment; neither physical sound nor six-box matching is
 accepted from these candidate tests.
+
+### Saturated colors candidate (2026-10-29)
+
+The older last-observed running ESP image still predates the vivid game palette;
+do not mistake the pending source fix for an installed image. Default chromatic
+game colors now have at least one zero channel (no gray floor), including the
+optional Pink slot changed from `#FF4080` to `#FF0080`. Intentional White remains
+white. No saved idle/win/lose colors, brightness, corrections or RGB channel
+calibration are rewritten.
+
+FastLED's installed convenience `fill_rainbow` requests saturation 240. Normal
+and diagnostic rainbow now explicitly request `CHSV(hue,255,255)` while retaining
+the original hue stepping, animation clock and downstream brightness owner.
+Scalar pulse/ring/chase/breathe effects do not introduce absent RGB channels.
+The configured transition from idle white may still blend white temporarily;
+that intentional transition is not a reason to alter a user's saved policy.
+
+Canonical minigame, baked-role and LED-pipeline tests pass. The role test drives
+the real Color Pattern engine through all nine colors, checks published RGB
+(not the restored working buffer), then the real S3 wire encoder over six
+brightness levels. Rainbow tests observe actual producer HSV arguments; the
+HSV test double is not real FastLED conversion or physical hue evidence.
+Installation and visual feedback remain deferred while David uses the tablet.
+
+The canonical S3 first-wins build passes with both LED backends, acknowledged
+ISP capability, Ethernet, 16 MB flash/OPI PSRAM and BLE disabled. Application
+file: 2,424,192 bytes, SHA-256
+`bfc86d3e0408f58975186760b7a5e12e440d2782f09349fad0e25174c010449d`.
+This identifies the local candidate, not the board's running image.

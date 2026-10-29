@@ -2802,7 +2802,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
@@ -2852,7 +2852,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
@@ -3060,7 +3060,7 @@
       "proof": [
         {
           "path": "tests/game_role_renderer_test.cpp",
-          "sha256": "2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59",
+          "sha256": "bd21f414a36e808ff04b888864ff7d4a2417b5eed4f31db44f85d82949f19fc3",
           "anchor": "Other game's renderer is compiled out"
         },
         {
@@ -3228,6 +3228,7 @@
       "source_line_count": 886,
       "verdict": "parity-gap",
       "preserved": [
+        "2026-10-29 washed-color audit: optional Pink loses its gray floor (#FF4080 to #FF0080); intentional White and all saved user colors, brightness and corrections stay unchanged. Real game-to-published-RGB-to-S3-wire tests pass for nine palette entries at six brightness levels and absent-channel preservation under scalar effects. Old running image predates the vivid palette; deployment and physical acceptance remain deferred.",
         "Firmware specialist read all 886 actual donor lines through EOF and matched original-byte inventory hash. Adapted PROGRAM_BASIC/PROGRAM_PUZZLE/PROGRAM_CODE/PROGRAM_MAZE preprocessor selection into one validated GameRole shared by ESP and AVR, rather than retaining several runtime games. Unsupported roles fail compilation; the baked role is disclosed to peers and clients filter acknowledged controls.",
         "2026-10-27 issue #32: reread all 886 donor lines. The new runtime-game request supersedes the earlier single-game policy inside keycontroller, not table/key role separation. Adapted mode transitions, countdown and relay predicates into one bounded ESP-owned engine with ten optional modes, explicit AVR raw-edge ownership and shared HostPresentation effects. No blocking tones, fixed puzzle code or maze wiring copied.",
         "2026-10-28 issue #32: reread the unchanged 886-line donor through EOF and adapt its phase-local presentation and finite finish/incorrect cues, without its blocking welcome/tone waits. Add configurable ordered fade/reveal, per-entry Simon feedback, a distinct wrong-pair phase duration, phase-aligned blink rendering, matched-color progress and locally timed atomic arpeggios using the existing AVR circular queue. Existing saved instance values are not migrated or overwritten; core/transport evidence is not physical acceptance.",
@@ -3244,7 +3245,7 @@
         },
         {
           "path": "libraries/BoardCore/src/KeyMiniGame.h",
-          "sha256": "383c192ea5f2bcd4b0d989fab47bd2f8aa406d37650e9394d0f4ab80fb1eb838",
+          "sha256": "20ad9cad50a7f99d60471c6a8f333c2afa40f565e4d58cfc9891347e21565fc9",
           "anchor": "class KeyMiniGame"
         },
         {
@@ -3266,12 +3267,12 @@
         },
         {
           "path": "tests/game_role_renderer_test.cpp",
-          "sha256": "2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59",
+          "sha256": "bd21f414a36e808ff04b888864ff7d4a2417b5eed4f31db44f85d82949f19fc3",
           "anchor": "A locked table scene never traps first-wins reset"
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
+          "sha256": "efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9",
           "anchor": "static void toggle()"
         },
         {
@@ -3286,17 +3287,17 @@
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
+          "sha256": "efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9",
           "anchor": "static void paletteAndMatchingDiagnostics()"
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
+          "sha256": "efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9",
           "anchor": "static void boundedColorIntroduction()"
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
+          "sha256": "efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9",
           "anchor": "static void simonProgression()"
         },
         {
@@ -6687,7 +6688,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6770,7 +6771,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6832,7 +6833,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6894,7 +6895,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -6956,7 +6957,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -7018,7 +7019,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "void LedGrid::showStaged() {"
         },
         {
@@ -9627,7 +9628,7 @@
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d",
+          "sha256": "efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9",
           "anchor": "static void panelFeedback()"
         },
         {
@@ -9757,7 +9758,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "Wall-clock interpolation"
         },
         {
@@ -9779,7 +9780,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9",
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc",
           "anchor": "rainbowClockCadence"
         },
         {
@@ -9856,7 +9857,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "bool LedGrid::resetWhite()"
         }
       ],
@@ -9868,7 +9869,7 @@
         },
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9",
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc",
           "anchor": "grid.resetWhite()"
         }
       ],
@@ -10476,7 +10477,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "void LedGrid::service(uint32_t now)"
         },
         {
@@ -10493,7 +10494,7 @@
         },
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9",
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc",
           "anchor": "partial stream never auto-shows"
         }
       ],
@@ -10585,7 +10586,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "void LedGrid::service(uint32_t now)"
         },
         {
@@ -10602,7 +10603,7 @@
         },
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9",
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc",
           "anchor": "First frame has no synthetic +3 jump."
         },
         {
@@ -20884,7 +20885,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
@@ -20954,7 +20955,7 @@
       "targets": [
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "FastLED.addLeds<WS2811"
         },
         {
@@ -23484,7 +23485,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9",
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc",
           "anchor": "Boot policy accepts existing files without restoring a saved animation"
         },
         {
@@ -24212,6 +24213,8 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
+        "2026-10-29 unchanged complete donor source/header reread: retain staged RGB/show and single brightness owner. Actual installed FastLED fill_rainbow requests saturation240; normal and diagnostic rainbow now explicitly request CHSV saturation/value255/255 with unchanged hue stepping. Producer-argument and game-to-wire regressions pass; HSV doubles are not physical or actual HSV conversion evidence. Saved brightness, channel calibration and corrections stay unchanged; visual acceptance pending.",
+        "2026-10-29 unchanged complete donor source/header reread: retain staged RGB/show and single brightness owner. Actual installed FastLED fill_rainbow requests saturation240; normal and diagnostic rainbow now explicitly request CHSV saturation/value255/255 with unchanged hue stepping. Producer-argument and game-to-wire regressions pass; HSV doubles are not physical or actual HSV conversion evidence. Saved brightness, channel calibration and corrections stay unchanged; visual acceptance pending.",
         "Actual canonical complete AddressableLeds source/header read through EOF, including staged RGB versus show ownership. The selection adapter validates all80 cells before one loop-owned state mutation; no per-cell network pacing, show calls, persistence or AVR fan-out. This is a scoped adaptation of stage/show discipline, not a copied AVR timing sender.",
         "ESP owns synchronized300ms wall-clock interpolation and one shared published frame. Single-cell actions use the same renderer method; static fallback remains immediate. Partial/invalid selections never reach renderer state.",
         "Stress regression reproduced/fixed unrelated committed raw pixels reverting to stale logical targets on an abandoned partial stream. Both renderer modes and10000 full80-cell host batches per mode pass; host CPU timing is not physical throughput.",
@@ -24235,7 +24238,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "bool LedGrid::setCells("
         },
         {
@@ -24336,7 +24339,7 @@
         {
           "path": "firmware/esp/src/LedGrid.cpp",
           "anchor": "bool LedGrid::diagnostic(",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168"
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793"
         },
         {
           "path": "firmware/esp/src/DiagnosticReceipt.h",
@@ -24389,7 +24392,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9",
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc",
           "anchor": "Entire selection validation"
         },
         {
@@ -24465,7 +24468,7 @@
         {
           "path": "tests/led_grid_test.cpp",
           "anchor": "void cloudAnimationProgress(",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9"
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc"
         },
         {
           "path": "desktop/src/pixel_diagnostic.rs",
@@ -24485,12 +24488,12 @@
         {
           "path": "tests/led_grid_test.cpp",
           "anchor": "Advanced diagnostics are one transient post-render layer, not a scene.",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9"
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc"
         },
         {
           "path": "tests/game_role_renderer_test.cpp",
           "anchor": "overlay.enabled=false",
-          "sha256": "2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59"
+          "sha256": "bd21f414a36e808ff04b888864ff7d4a2417b5eed4f31db44f85d82949f19fc3"
         },
         {
           "path": "tests/scene_store_test.cpp",
@@ -24530,7 +24533,7 @@
         {
           "path": "tests/led_grid_test.cpp",
           "anchor": "void matrixFireRendering()",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9"
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc"
         },
         {
           "path": "tests/web_appearance_mount_test.mjs",
@@ -24577,7 +24580,7 @@
         },
         {
           "path": "firmware/esp/src/LedGrid.cpp",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168",
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793",
           "anchor": "bool LedGrid::setCells("
         },
         {
@@ -24673,7 +24676,7 @@
         {
           "path": "firmware/esp/src/LedGrid.cpp",
           "anchor": "bool LedGrid::diagnostic(",
-          "sha256": "b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168"
+          "sha256": "9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793"
         },
         {
           "path": "firmware/esp/src/DiagnosticReceipt.h",
@@ -24710,7 +24713,7 @@
       "proof": [
         {
           "path": "tests/led_grid_test.cpp",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9",
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc",
           "anchor": "Entire selection validation"
         },
         {
@@ -24786,12 +24789,12 @@
         {
           "path": "tests/led_grid_test.cpp",
           "anchor": "Advanced diagnostics are one transient post-render layer, not a scene.",
-          "sha256": "3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9"
+          "sha256": "5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc"
         },
         {
           "path": "tests/game_role_renderer_test.cpp",
           "anchor": "overlay.enabled=false",
-          "sha256": "2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59"
+          "sha256": "bd21f414a36e808ff04b888864ff7d4a2417b5eed4f31db44f85d82949f19fc3"
         },
         {
           "path": "tests/scene_store_test.cpp",

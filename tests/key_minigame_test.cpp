@@ -77,9 +77,13 @@ static void colorMatch(){
   assert(correct);g.tick(3050);g.styles(s);assert(s[0].rgb==after);assert(g.input(1,false,3051));
 }
 static void paletteAndMatchingDiagnostics(){
-  const uint32_t colors[]={0xff0000,0x00ff00,0x0000ff,0xffff00,0xff00ff,0xff8000,0xffffff,0x00ffff,0xff4080};
+  const uint32_t colors[]={0xff0000,0x00ff00,0x0000ff,0xffff00,0xff00ff,0xff8000,0xffffff,0x00ffff,0xff0080};
   const char *names[]={"red","green","blue","yellow","magenta","orange","white","cyan","pink"};
-  for(uint8_t i=0;i<9;++i){assert(Game::color(i)==colors[i]);assert(!strcmp(Game::colorName(i),names[i]));}
+  for(uint8_t i=0;i<9;++i){
+    assert(Game::color(i)==colors[i]);assert(!strcmp(Game::colorName(i),names[i]));
+    // White is intentional; every chromatic palette entry has no gray floor.
+    if(i!=6)assert(!(colors[i]>>16)||!((colors[i]>>8)&255)||!(colors[i]&255));
+  }
   // The default seven have only one blue-family slot. Their RGB distinction
   // survives normal whole-board dimming; brightness never decides a match.
   for(uint8_t brightness:{uint8_t(8),uint8_t(64),uint8_t(128),uint8_t(255)}){

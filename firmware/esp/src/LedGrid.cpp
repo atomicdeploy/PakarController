@@ -18,6 +18,12 @@ const char *effectName(LedGrid::Pattern pattern) {
     default: return "none";
   }
 }
+// FastLED's convenience fill_rainbow uses saturation240 and adds a gray floor.
+// Preserve its hue stepping, but keep our explicit rainbow fully saturated;
+// the existing output owner applies the user's brightness afterwards.
+void fillVividRainbow(CRGB *pixels,uint16_t count,uint8_t hue,uint8_t step){
+  for(uint16_t i=0;i<count;++i){pixels[i]=CHSV(hue,255,255);hue+=step;}
+}
 }
 
 void LedGrid::begin(bool publish) {
@@ -455,7 +461,7 @@ void LedGrid::renderPattern(uint32_t now) {
       // long-running effects cannot overflow before modulo-256 hue conversion.
       const uint32_t elapsed=static_cast<uint32_t>(now-rainbowStartedAt_);
       hue_=static_cast<uint8_t>(rainbowBaseHue_+(uint64_t(elapsed)*3U)/16U);
-      fill_rainbow(pixels_, kPixels, hue_, 7);
+      fillVividRainbow(pixels_, kPixels, hue_, 7);
       break;
     }
     case kPatternFire:
@@ -640,7 +646,7 @@ void LedGrid::showStaged() {
     CRGB color(diagnosticRgb_>>16,(diagnosticRgb_>>8)&255,diagnosticRgb_&255);
     const uint32_t elapsed=uint32_t(millis()-diagnosticAt_);
     if(diagnosticOptions_.effect==BoardCore::PixelDiagnostic::Rainbow)
-      fill_rainbow(&color,1,uint8_t(uint64_t(elapsed%diagnosticOptions_.periodMs)*256U/diagnosticOptions_.periodMs),0);
+      fillVividRainbow(&color,1,uint8_t(uint64_t(elapsed%diagnosticOptions_.periodMs)*256U/diagnosticOptions_.periodMs),0);
     const uint8_t gain=diagnosticOff_?0:diagnosticOptions_.gain(elapsed);
     color=CRGB((uint16_t(color.r)*gain+127U)/255U,(uint16_t(color.g)*gain+127U)/255U,(uint16_t(color.b)*gain+127U)/255U);
     for(uint16_t i=0;i<diagnosticCount_;++i)pixels_[diagnosticPixel_-1+i]=color;

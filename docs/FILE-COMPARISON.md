@@ -200,7 +200,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `0f7fec7879abd26dbf2d56df28441727ea76fcb9e093f009d39f20cae77832bb`.
 
-- Target: `firmware/esp/src/LedGrid.cpp:28 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=FastLED.addLeds<WS2811]`.
+- Target: `firmware/esp/src/LedGrid.cpp:34 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=FastLED.addLeds<WS2811]`.
 - Target: `firmware/esp/src/LedGrid.h:217 [UTF8-LF sha256=d9df351a2859d24b56bb58b63b9ef19c146c19992bdefc708fa5707672d297ee; anchor=uint8_t brightness_ = 255]`.
 - Retained: Read the complete byte-identical Timer/Puzzles implementation. FastLED initialization, full brightness, clear/show and correction intent are retained in the ESP-owned renderer.
 - Omitted/replaced code: `AVR-owned eleven-pixel black scene and post-show array clear`. Disposition: **replaced**. Reason: The role-specific S3 renderer owns two twelve-pixel groups per enabled box and boots to the required white reset state; duplicate AVR scenes would conflict.
@@ -211,7 +211,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `395096029df7c507782f40c5b32c8b1dffbf2db392cb26cd2b02c824d6a36949`.
 
-- Target: `firmware/esp/src/LedGrid.cpp:28 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=FastLED.addLeds<WS2811]`.
+- Target: `firmware/esp/src/LedGrid.cpp:34 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=FastLED.addLeds<WS2811]`.
 - Target: `firmware/esp32s3/src/LedOutput.cpp:171 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=config.flags.with_dma=true]`.
 - Target: `firmware/esp32s3/src/LedWire.h:72 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=void encodeWire(]`.
 - Retained: Read the complete byte-identical Timer/Puzzles header. WS2811 setup, full brightness and correction concepts remain in the shared ESP engine; AVR D6 remains an explicit diagnostic/fallback path rather than a duplicate full effect engine.
@@ -257,7 +257,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 - Omitted/replaced code: `15-minute countdown, six-key all-held transition, rotary timer adjustment and relay-one timer puzzle`. Disposition: **not-applicable**. Reason: These are the donor Timer's business rules. The user requires one baked first-wins or table program and no cross-role narrative leakage.
 - Omitted/replaced code: `blocking welcomeBeep wait and raw one-character m/r/s/+/- protocol`. Disposition: **replaced**. Reason: Nonblocking audio and framed identity/capability-aware commands preserve responsiveness and multi-client correlation.
 - Omitted/replaced code: `full external TM1637 number/colon API and physical cue/relay timing`. Disposition: **pending**. Reason: Useful display semantics exist, but exact donor API coverage and physical front-panel/audio/relay acceptance are not proved by source fixtures.
-- Test-code evidence: `tests/game_role_renderer_test.cpp:47 [UTF8-LF sha256=2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59; anchor=Other game's renderer is compiled out]`.
+- Test-code evidence: `tests/game_role_renderer_test.cpp:95 [UTF8-LF sha256=bd21f414a36e808ff04b888864ff7d4a2417b5eed4f31db44f85d82949f19fc3; anchor=Other game's renderer is compiled out]`.
 - Test-code evidence: `tests/front_panel_test.cpp:144 [UTF8-LF sha256=c1c9da7276ef26ae35c7ad6a927d751f177bf43774c1408a86b225f651550cd6; anchor=BoardCore::Protocol::kModeFirstWins]`.
 - Remaining: Commission the four-box AVR/ESP pair and verify UART, all keys/relays, reset, winner cue, TM1637 and physical timing; separately close any useful external TM1637 API gap.
 
@@ -459,7 +459,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `0f7fec7879abd26dbf2d56df28441727ea76fcb9e093f009d39f20cae77832bb`.
 
-- Target: `firmware/esp/src/LedGrid.cpp:28 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=FastLED.addLeds<WS2811]`.
+- Target: `firmware/esp/src/LedGrid.cpp:34 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=FastLED.addLeds<WS2811]`.
 - Target: `firmware/esp/src/LedGrid.h:217 [UTF8-LF sha256=d9df351a2859d24b56bb58b63b9ef19c146c19992bdefc708fa5707672d297ee; anchor=uint8_t brightness_ = 255]`.
 - Retained: Actual FastLED WS2811 setup and TypicalLEDStrip correction concept; full 255 brightness; ESP owns the final strip engine.
 - Omitted/replaced code: `AVR D6 / 11-pixel final effect buffer`. Disposition: **replaced**. Reason: Final effects remain in the shared ESP engine: ESP8266 D2 or migrated ESP32-S3 GPIO4, with 80 groups of six LEDs. A duplicate 480-pixel AVR buffer would consume 1440 bytes before protocol/game state on a 2 KiB AVR; streaming it over UART would also consume bandwidth. D6 remains a diagnostic pin, not a second full engine.
@@ -471,7 +471,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `395096029df7c507782f40c5b32c8b1dffbf2db392cb26cd2b02c824d6a36949`.
 
-- Target: `firmware/esp/src/LedGrid.cpp:28 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=FastLED.addLeds<WS2811]`.
+- Target: `firmware/esp/src/LedGrid.cpp:34 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=FastLED.addLeds<WS2811]`.
 - Target: `firmware/esp/src/LedGrid.h:217 [UTF8-LF sha256=d9df351a2859d24b56bb58b63b9ef19c146c19992bdefc708fa5707672d297ee; anchor=uint8_t brightness_ = 255]`.
 - Target: `firmware/esp32s3/src/LedOutput.cpp:171 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=config.flags.with_dma=true]`.
 - Target: `firmware/esp32s3/src/LedWire.h:72 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=void encodeWire(]`.
@@ -490,9 +490,10 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `ec9eacb6a94a0c1841722520141cfb5f645d87db92654a88041489f5dd74bc3a`.
 
 - Target: `libraries/BoardCore/src/GameRole.h:7 [UTF8-LF sha256=d8e5d603f3669b68c40ef697e4e87744daa0ca9f029dbfd723dc690bb9749315; anchor=#ifndef PAKAR_GAME_MODE]`.
-- Target: `libraries/BoardCore/src/KeyMiniGame.h:45 [UTF8-LF sha256=383c192ea5f2bcd4b0d989fab47bd2f8aa406d37650e9394d0f4ab80fb1eb838; anchor=class KeyMiniGame]`.
+- Target: `libraries/BoardCore/src/KeyMiniGame.h:45 [UTF8-LF sha256=20ad9cad50a7f99d60471c6a8f333c2afa40f565e4d58cfc9891347e21565fc9; anchor=class KeyMiniGame]`.
 - Target: `firmware/esp/src/KeyMiniGameSettings.h:9 [UTF8-LF sha256=9632b6d8a0f3956bb8ee109709ccb470374a5a3380fa58b0ca8962e27c45ccc4; anchor=struct KeyMiniGameSettings]`.
 - Target: `firmware/esp/src/KeyMiniGameService.h:101 [UTF8-LF sha256=4036928120a650585d923c834860ce9fd8a8c2bfe54bbd81fd6cd040a887faca; anchor=void serviceMiniGame]`.
+- Retained: 2026-10-29 washed-color audit: optional Pink loses its gray floor (#FF4080 to #FF0080); intentional White and all saved user colors, brightness and corrections stay unchanged. Real game-to-published-RGB-to-S3-wire tests pass for nine palette entries at six brightness levels and absent-channel preservation under scalar effects. Old running image predates the vivid palette; deployment and physical acceptance remain deferred.
 - Retained: Firmware specialist read all 886 actual donor lines through EOF and matched original-byte inventory hash. Adapted PROGRAM_BASIC/PROGRAM_PUZZLE/PROGRAM_CODE/PROGRAM_MAZE preprocessor selection into one validated GameRole shared by ESP and AVR, rather than retaining several runtime games. Unsupported roles fail compilation; the baked role is disclosed to peers and clients filter acknowledged controls.
 - Retained: 2026-10-27 issue #32: reread all 886 donor lines. The new runtime-game request supersedes the earlier single-game policy inside keycontroller, not table/key role separation. Adapted mode transitions, countdown and relay predicates into one bounded ESP-owned engine with ten optional modes, explicit AVR raw-edge ownership and shared HostPresentation effects. No blocking tones, fixed puzzle code or maze wiring copied.
 - Retained: 2026-10-28 issue #32: reread the unchanged 886-line donor through EOF and adapt its phase-local presentation and finite finish/incorrect cues, without its blocking welcome/tone waits. Add configurable ordered fade/reveal, per-entry Simon feedback, a distinct wrong-pair phase duration, phase-aligned blink rendering, matched-color progress and locally timed atomic arpeggios using the existing AVR circular queue. Existing saved instance values are not migrated or overwritten; core/transport evidence is not physical acceptance.
@@ -503,13 +504,13 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 - Omitted/replaced code: `fixed puzzle code 61345, maze input mapping and 38/10-minute timer business`. Disposition: **not-applicable**. Reason: Fixed answer 61345, maze pins and 38/10-minute limits remain donor-specific. Runtime minigames are now requested and implemented with configurable rules rather than those fixed answers or unrelated wiring.
 - Omitted/replaced code: `remaining generic task, melody, display animation and peripheral integration`. Disposition: **pending**. Reason: The existing specialist donor rows retain their own source and physical acceptance gates. This build-role adaptation does not certify all generic behavior in the sketch or close whole-project parity.
 - Test-code evidence: `tools/test-game-role.ps1:7 [UTF8-LF sha256=f56acaa20e366cd1f8632472fe58a045295db476de2f310d3abf654c82a0f136; anchor=foreach($mode in @(1,2))]`.
-- Test-code evidence: `tests/game_role_renderer_test.cpp:49 [UTF8-LF sha256=2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59; anchor=A locked table scene never traps first-wins reset]`.
-- Test-code evidence: `tests/key_minigame_test.cpp:211 [UTF8-LF sha256=b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d; anchor=static void toggle()]`.
+- Test-code evidence: `tests/game_role_renderer_test.cpp:97 [UTF8-LF sha256=bd21f414a36e808ff04b888864ff7d4a2417b5eed4f31db44f85d82949f19fc3; anchor=A locked table scene never traps first-wins reset]`.
+- Test-code evidence: `tests/key_minigame_test.cpp:215 [UTF8-LF sha256=efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9; anchor=static void toggle()]`.
 - Test-code evidence: `tests/key_minigame_integration_test.mjs:64 [UTF8-LF sha256=130cf0dde2c4f818133662c846bacb48ed4b4afc7149d877a040f120d55f41b3; anchor=test('every minigame command]`.
 - Test-code evidence: `tests/key_minigame_integration_test.mjs:119 [UTF8-LF sha256=130cf0dde2c4f818133662c846bacb48ed4b4afc7149d877a040f120d55f41b3; anchor=actual cue owners fence deferred feedback and preserve first-win melody overrides]`.
-- Test-code evidence: `tests/key_minigame_test.cpp:79 [UTF8-LF sha256=b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d; anchor=static void paletteAndMatchingDiagnostics()]`.
-- Test-code evidence: `tests/key_minigame_test.cpp:250 [UTF8-LF sha256=b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d; anchor=static void boundedColorIntroduction()]`.
-- Test-code evidence: `tests/key_minigame_test.cpp:143 [UTF8-LF sha256=b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d; anchor=static void simonProgression()]`.
+- Test-code evidence: `tests/key_minigame_test.cpp:79 [UTF8-LF sha256=efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9; anchor=static void paletteAndMatchingDiagnostics()]`.
+- Test-code evidence: `tests/key_minigame_test.cpp:254 [UTF8-LF sha256=efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9; anchor=static void boundedColorIntroduction()]`.
+- Test-code evidence: `tests/key_minigame_test.cpp:147 [UTF8-LF sha256=efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9; anchor=static void simonProgression()]`.
 - Test-code evidence: `tests/key_minigame_settings_test.cpp:59 [UTF8-LF sha256=04fe1d3a8071a8d14fe37f1c8bbacdadb9dc4e4f9236c626af0e9a4f241c1e0f; anchor=sequence_growth]`.
 - Remaining: Issue #2/#6: approved deployment and physical keypad/display/audio/game acceptance; complete remaining generic donor integration separately. Host role fixtures and SDK compiles do not prove actual paired-board operation.
 - Remaining: Issue #32: core/client tests and compilation are not physical acceptance. Approved paired deployment, nine-key simultaneous input load, actual display/tones/relay behavior and user feedback for each mode remain required.
@@ -785,7 +786,7 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 - Target: `firmware/esp32s3/src/LedOutput.cpp:208 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=void LedOutput::work(){]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:89 [UTF8-LF sha256=46f0e3cc947e5262451e6b3659bdfedb9cc3fa3d5de8bc4779ec6ddc97f81fec; anchor=Frame producer_{};]`.
-- Target: `firmware/esp/src/LedGrid.cpp:606 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=void LedGrid::showStaged() {]`.
+- Target: `firmware/esp/src/LedGrid.cpp:612 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=void LedGrid::showStaged() {]`.
 - Target: `firmware/esp32s3/src/LedWire.h:40 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete RGB/HSV implementation/header and palette read through EOF. Canonical RGB/FastLED rendering retains byte colours, saturated arithmetic and HSV rainbow without a second colour engine. No old class-level API or exact palette parity is falsely promised.
@@ -801,7 +802,7 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 - Target: `firmware/esp32s3/src/LedOutput.cpp:208 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=void LedOutput::work(){]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:89 [UTF8-LF sha256=46f0e3cc947e5262451e6b3659bdfedb9cc3fa3d5de8bc4779ec6ddc97f81fec; anchor=Frame producer_{};]`.
-- Target: `firmware/esp/src/LedGrid.cpp:606 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=void LedGrid::showStaged() {]`.
+- Target: `firmware/esp/src/LedGrid.cpp:612 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=void LedGrid::showStaged() {]`.
 - Target: `firmware/esp32s3/src/LedWire.h:40 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete RGB/HSV implementation/header and palette read through EOF. Canonical RGB/FastLED rendering retains byte colours, saturated arithmetic and HSV rainbow without a second colour engine. No old class-level API or exact palette parity is falsely promised.
@@ -817,7 +818,7 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 - Target: `firmware/esp32s3/src/LedOutput.cpp:208 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=void LedOutput::work(){]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:89 [UTF8-LF sha256=46f0e3cc947e5262451e6b3659bdfedb9cc3fa3d5de8bc4779ec6ddc97f81fec; anchor=Frame producer_{};]`.
-- Target: `firmware/esp/src/LedGrid.cpp:606 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=void LedGrid::showStaged() {]`.
+- Target: `firmware/esp/src/LedGrid.cpp:612 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=void LedGrid::showStaged() {]`.
 - Target: `firmware/esp32s3/src/LedWire.h:40 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete base-class/task source read through EOF. Existing pattern start/replace/stop remains one loop renderer, no per-effect task or blocking sleeps; waveform driver remains independently owned.
@@ -833,7 +834,7 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 - Target: `firmware/esp32s3/src/LedOutput.cpp:208 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=void LedOutput::work(){]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:89 [UTF8-LF sha256=46f0e3cc947e5262451e6b3659bdfedb9cc3fa3d5de8bc4779ec6ddc97f81fec; anchor=Frame producer_{};]`.
-- Target: `firmware/esp/src/LedGrid.cpp:606 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=void LedGrid::showStaged() {]`.
+- Target: `firmware/esp/src/LedGrid.cpp:612 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=void LedGrid::showStaged() {]`.
 - Target: `firmware/esp32s3/src/LedWire.h:40 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete base-class/task source read through EOF. Existing pattern start/replace/stop remains one loop renderer, no per-effect task or blocking sleeps; waveform driver remains independently owned.
@@ -871,7 +872,7 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 - Target: `firmware/esp32s3/src/LedOutput.cpp:208 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=void LedOutput::work(){]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:89 [UTF8-LF sha256=46f0e3cc947e5262451e6b3659bdfedb9cc3fa3d5de8bc4779ec6ddc97f81fec; anchor=Frame producer_{};]`.
-- Target: `firmware/esp/src/LedGrid.cpp:606 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=void LedGrid::showStaged() {]`.
+- Target: `firmware/esp/src/LedGrid.cpp:612 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=void LedGrid::showStaged() {]`.
 - Target: `firmware/esp32s3/src/LedWire.h:40 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Target: `firmware/esp32s3/src/LedOutput.cpp:96 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=bool LedOutput::requestBackend(]`.
@@ -893,7 +894,7 @@ Verdict: **scoped-improvement**. Revision: `0222ef025f2b8e03f8c8aef35d63c545a98a
 
 - Target: `firmware/esp32s3/src/LedOutput.cpp:208 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=void LedOutput::work(){]`.
 - Target: `firmware/esp32s3/src/LedOutput.h:89 [UTF8-LF sha256=46f0e3cc947e5262451e6b3659bdfedb9cc3fa3d5de8bc4779ec6ddc97f81fec; anchor=Frame producer_{};]`.
-- Target: `firmware/esp/src/LedGrid.cpp:606 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=void LedGrid::showStaged() {]`.
+- Target: `firmware/esp/src/LedGrid.cpp:612 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=void LedGrid::showStaged() {]`.
 - Target: `firmware/esp32s3/src/LedWire.h:40 [UTF8-LF sha256=9d83e653d1d78a30142037519bc5bf9f5ab6487a354e245403b8ff25fdcf7dda; anchor=inline constexpr uint16_t resetMicros=300;]`.
 - Target: `docs/ESP32-WS2811-REUSE.md:1 [UTF8-LF sha256=56bf08b491e47cd61e040229ff2aa8a6b2a88b75d1f2636a49f0b91af15455c1; anchor=# esp32WS2811 source comparison]`.
 - Retained: Complete original driver/API read through EOF. Existing stage/show/get-published-frame, full480 RGB, dedicated worker, coalescing and immutable TX ownership mapped function by function. Newly adapt explicit idle-LOW policy to both backends: reset, preload LOW, enable output, then allocate/init; each failed GPIO step stops before RMT/heap/TX with no false ready/black receipt.
@@ -1634,7 +1635,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `43417181b23cab40b8a58ec26159ca025fb41d5bdbaf52d20a46bfc926fee1b0`.
 
 - Target: `libraries/BoardCore/src/CellBatch.h:9 [UTF8-LF sha256=752eb7baf7d4974f60be098c70a17198ce21b6a973401a01a67b41915e648884; anchor=struct CellBatch]`.
-- Target: `firmware/esp/src/LedGrid.cpp:72 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=bool LedGrid::setCells(]`.
+- Target: `firmware/esp/src/LedGrid.cpp:78 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=bool LedGrid::setCells(]`.
 - Target: `firmware/esp/src/LedGrid.h:86 [UTF8-LF sha256=d9df351a2859d24b56bb58b63b9ef19c146c19992bdefc708fa5707672d297ee; anchor=bool setCells(]`.
 - Target: `libraries/BoardCore/src/TableCellMapping.h:8 [UTF8-LF sha256=8a4d0d13b7779d8a54c74bb95cafcd871814423ee42909bcd5ebbd6006213ba0; anchor=constexpr uint8_t logicalForPhysical]`.
 - Target: `firmware/esp32s3/src/LedOutput.cpp:210 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=bool pending=false;]`.
@@ -1654,12 +1655,14 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/native_workspace.rs:66 [UTF8-LF sha256=15688543f8999613f064f17e60d453f50d59a05c564e927379fb86d50bc4f0d8; anchor=pub pixel_probe:]`.
 - Target: `desktop/src/ui/shell.rs:2705 [UTF8-LF sha256=015877d9b262b596d4e27fdddcbd03a42c8c1e1cbe2b15f46632a88bce7ccce8; anchor=fn send_pixel_probe(]`.
 - Target: `libraries/BoardCore/src/PixelDiagnostic.h:8 [UTF8-LF sha256=ed279cedb68663d0bfe93aae097e26fa0978f6642eb3c23dddc793a61522f8a2; anchor=struct PixelDiagnostic]`.
-- Target: `firmware/esp/src/LedGrid.cpp:558 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=bool LedGrid::diagnostic(]`.
+- Target: `firmware/esp/src/LedGrid.cpp:564 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=bool LedGrid::diagnostic(]`.
 - Target: `firmware/esp/src/DiagnosticReceipt.h:9 [UTF8-LF sha256=160078ef95ee5212d37b57ab452128a20810c544a23d613f2d8a0d449024a8fc; anchor=inline bool diagnosticReceiptStatus]`.
 - Target: `firmware/esp/application.ino:2608 [UTF8-LF sha256=c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb; anchor=String buildUsbTableSnapshot(bool includePixels) {]`.
 - Target: `libraries/BoardCore/src/PixelGroupLayout.h:9 [UTF8-LF sha256=b7463394fb83f9e74b2f296ccca3ca49f1cacc09a3a905c370dc469eb042844d; anchor=class PixelGroupLayout]`.
 - Target: `libraries/BoardCore/src/MatrixFire.h:10 [UTF8-LF sha256=363613221446af62c42e845887b6485e2d84cb6f4cb6170a34d7d8b3ea81200f; anchor=template<uint16_t Width,uint16_t Height>]`.
 - Target: `firmware/esp/src/StateAppearanceSettings.h:20 [UTF8-LF sha256=c5c190a2ea68e57f62522ec5334fe749ec734fcd13b263a14fef57318a58ddcb; anchor=key=="fire_rotation"]`.
+- Retained: 2026-10-29 unchanged complete donor source/header reread: retain staged RGB/show and single brightness owner. Actual installed FastLED fill_rainbow requests saturation240; normal and diagnostic rainbow now explicitly request CHSV saturation/value255/255 with unchanged hue stepping. Producer-argument and game-to-wire regressions pass; HSV doubles are not physical or actual HSV conversion evidence. Saved brightness, channel calibration and corrections stay unchanged; visual acceptance pending.
+- Retained: 2026-10-29 unchanged complete donor source/header reread: retain staged RGB/show and single brightness owner. Actual installed FastLED fill_rainbow requests saturation240; normal and diagnostic rainbow now explicitly request CHSV saturation/value255/255 with unchanged hue stepping. Producer-argument and game-to-wire regressions pass; HSV doubles are not physical or actual HSV conversion evidence. Saved brightness, channel calibration and corrections stay unchanged; visual acceptance pending.
 - Retained: Actual canonical complete AddressableLeds source/header read through EOF, including staged RGB versus show ownership. The selection adapter validates all80 cells before one loop-owned state mutation; no per-cell network pacing, show calls, persistence or AVR fan-out. This is a scoped adaptation of stage/show discipline, not a copied AVR timing sender.
 - Retained: ESP owns synchronized300ms wall-clock interpolation and one shared published frame. Single-cell actions use the same renderer method; static fallback remains immediate. Partial/invalid selections never reach renderer state.
 - Retained: Stress regression reproduced/fixed unrelated committed raw pixels reverting to stale logical targets on an abandoned partial stream. Both renderer modes and10000 full80-cell host batches per mode pass; host CPU timing is not physical throughput.
@@ -1677,7 +1680,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Fixed AVR D6/PORTD assembly, 16MHz interrupt masking, MacroQueue workspace and100-pixel/8-bit strip configuration`. Disposition: **replaced**. Reason: The final480-pixel renderer belongs to the ESP32-S3 GPIO4 (or ESP8266D2), not a second AVR strip. Reusing AVR registers/timing or truncating to100 pixels would conflict with confirmed hardware and memory ownership. Existing bounded PC contract remains a separate compatibility window.
 - Omitted/replaced code: `Donor native HAL showStrip and feature-profile brightness/renderedPixels buffers`. Disposition: **replaced**. Reason: The existing ESP output worker owns wire encoding/brightness and complete immutable frame copies. Host doubles test logical RGB and wire encoding separately; there is no second donor native HAL or duplicate brightness scale.
 - Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the earlier candidate used250/600ns highs. After reading all eight WS2811V1.4 pages, the current RMT profile uses300/625ns highs and950/625ns LOW,1250ns bits and300us reset. New optional whole-frame GPIO4 RX-DMA digital capture remains undeployed/unverified and cannot measure strip DIN voltage. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
-- Test-code evidence: `tests/led_grid_test.cpp:323 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=Entire selection validation]`.
+- Test-code evidence: `tests/led_grid_test.cpp:338 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=Entire selection validation]`.
 - Test-code evidence: `tests/led_grid_stress_test.cpp:12 [UTF8-LF sha256=812517dc4c2973487d67d4cd294c149dcb66b527fc85716363f87c723fe5fa4a; anchor=constexpr unsigned iterations=10000;]`.
 - Test-code evidence: `tests/led_worker_test.cpp:333 [UTF8-LF sha256=b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d; anchor=void functional()]`.
 - Test-code evidence: `tests/led_dma_guard_test.cpp:38 [UTF8-LF sha256=d69b5b0bd26348aabd176350120d11199748f2aceada1d39c113078719fa80c0; anchor=int main(]`.
@@ -1692,12 +1695,12 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/idf_rmt_ring_test.cpp:147 [UTF8-LF sha256=67b7f1107160e49db96f06907edb16dc540095bf4aaf6555041d49f47362cf00; anchor=void complete(]`.
 - Test-code evidence: `tests/idf_rmt_ring_sdk.inc:30 [UTF8-LF sha256=21407218c9fef3c223d298d4fc2084d9ab07b15a4de77a4cb43bd25c75c43d91; anchor=static size_t rmt_encode_bytes(]`.
 - Test-code evidence: `tests/idf_rmt_ring_provenance.json:2 [UTF8-LF sha256=882d1ef64d39ff9d99e303b7f997c1b7e6f11db82ae52f11c0a8b56a1075736f; anchor="sdk":]`.
-- Test-code evidence: `tests/led_grid_test.cpp:101 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=void cloudAnimationProgress(]`.
+- Test-code evidence: `tests/led_grid_test.cpp:116 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=void cloudAnimationProgress(]`.
 - Test-code evidence: `desktop/src/pixel_diagnostic.rs:643 [UTF8-LF sha256=5c2bb4db8bf95fc370c1b6fad2e11477cd76adad8f574304c7828e566a431108; anchor=fn pixel_diagnostic_remote_observation_is_ordered_and_never_actuates()]`.
 - Test-code evidence: `desktop/src/realtime.rs:681 [UTF8-LF sha256=134977c4f18998b92ebb2e8d763147a1c0eeb2039c019a603cb7de712502fa01; anchor=fn realtime_pixel_diagnostic_requires_exact_complete_readback_and_typed_intent()]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_command_test.dart:16 [UTF8-LF sha256=dc315906d40ff502aa39343f9a17bec4af8092527bb0e34c82c1059135445173; anchor=Two real WS clients observe the same diagnostic]`.
-- Test-code evidence: `tests/led_grid_test.cpp:435 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=Advanced diagnostics are one transient post-render layer, not a scene.]`.
-- Test-code evidence: `tests/game_role_renderer_test.cpp:98 [UTF8-LF sha256=2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59; anchor=overlay.enabled=false]`.
+- Test-code evidence: `tests/led_grid_test.cpp:450 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=Advanced diagnostics are one transient post-render layer, not a scene.]`.
+- Test-code evidence: `tests/game_role_renderer_test.cpp:146 [UTF8-LF sha256=bd21f414a36e808ff04b888864ff7d4a2417b5eed4f31db44f85d82949f19fc3; anchor=overlay.enabled=false]`.
 - Test-code evidence: `tests/scene_store_test.cpp:48 [UTF8-LF sha256=bde2386fcfab1043f052bcd9cf8d8ff2de2d478adfbdffd15aaa7c4a464e8a9e; anchor=Diagnostics never write mode, pattern, output policy or transient RGB]`.
 - Test-code evidence: `tests/diagnostic_receipt_test.cpp:56 [UTF8-LF sha256=85a66d548c203d2f3f95c69a7c008580f95cd1c0cf024f7dc5a2aca8dab7d282; anchor=Captured status projection:]`.
 - Test-code evidence: `tests/usb_snapshot_budget_test.mjs:118 [UTF8-LF sha256=5ed04d90439eb98662bc6ec4a50b176e26558e209dc3d600a3ba5d33cf031378; anchor=Captured regression must exceed the old sublimit]`.
@@ -1705,7 +1708,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `tests/pixel_group_layout_test.cpp:25 [UTF8-LF sha256=e90ecd6aa4c125eca53d631f14e28b9ac1cfe74ce05ca4ac8d10525867a5aba3; anchor=int main()]`.
 - Test-code evidence: `tests/pixel_group_renderer_test.cpp:6 [UTF8-LF sha256=fe614d76eca8e0afd62f3180bfe4f7621ae03c98e1b155dcf373807ca22fad45; anchor=int main()]`.
 - Test-code evidence: `tests/matrix_fire_test.cpp:7 [UTF8-LF sha256=a33060673935f26ad6d6d1a56fa162c463a45140bb9010e9544644b7b97c3cf5; anchor=using Fire=]`.
-- Test-code evidence: `tests/led_grid_test.cpp:67 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=void matrixFireRendering()]`.
+- Test-code evidence: `tests/led_grid_test.cpp:82 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=void matrixFireRendering()]`.
 - Test-code evidence: `tests/web_appearance_mount_test.mjs:46 [UTF8-LF sha256=6db5236e85ffc20b052684c16e625eaea04e05393d591abeb640b350e1b220a2; anchor=const sent=[]]`.
 - Test-code evidence: `mobile/test/appearance_live_test.dart:26 [UTF8-LF sha256=77e70b48b5faf8f8ed73ccb5711b0c0ae12889e11d09870780d47a1d1c6a6b13; anchor=Fire direction follows saved readback]`.
 - Test-code evidence: `desktop/src/state_appearance.rs:379 [UTF8-LF sha256=567e65fa7d3e0e7ad7ef508b7944c0f861b376fd348031dd105ad2df94ece5eb; anchor=fn validates_and_compares_only_requested_fields()]`.
@@ -1719,7 +1722,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `a28009e6211056f0cdb1071e7232d6d277a27cf9dc8e3e9951be9830745f18d4`.
 
 - Target: `libraries/BoardCore/src/CellBatch.h:9 [UTF8-LF sha256=752eb7baf7d4974f60be098c70a17198ce21b6a973401a01a67b41915e648884; anchor=struct CellBatch]`.
-- Target: `firmware/esp/src/LedGrid.cpp:72 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=bool LedGrid::setCells(]`.
+- Target: `firmware/esp/src/LedGrid.cpp:78 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=bool LedGrid::setCells(]`.
 - Target: `firmware/esp/src/LedGrid.h:86 [UTF8-LF sha256=d9df351a2859d24b56bb58b63b9ef19c146c19992bdefc708fa5707672d297ee; anchor=bool setCells(]`.
 - Target: `libraries/BoardCore/src/TableCellMapping.h:8 [UTF8-LF sha256=8a4d0d13b7779d8a54c74bb95cafcd871814423ee42909bcd5ebbd6006213ba0; anchor=constexpr uint8_t logicalForPhysical]`.
 - Target: `firmware/esp32s3/src/LedOutput.cpp:210 [UTF8-LF sha256=45954b1ad02507a049a80c190849317fc75fb639d011ee7debb8a0d2cf013ed0; anchor=bool pending=false;]`.
@@ -1738,7 +1741,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `desktop/src/native_workspace.rs:66 [UTF8-LF sha256=15688543f8999613f064f17e60d453f50d59a05c564e927379fb86d50bc4f0d8; anchor=pub pixel_probe:]`.
 - Target: `desktop/src/ui/shell.rs:2705 [UTF8-LF sha256=015877d9b262b596d4e27fdddcbd03a42c8c1e1cbe2b15f46632a88bce7ccce8; anchor=fn send_pixel_probe(]`.
 - Target: `libraries/BoardCore/src/PixelDiagnostic.h:8 [UTF8-LF sha256=ed279cedb68663d0bfe93aae097e26fa0978f6642eb3c23dddc793a61522f8a2; anchor=struct PixelDiagnostic]`.
-- Target: `firmware/esp/src/LedGrid.cpp:558 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=bool LedGrid::diagnostic(]`.
+- Target: `firmware/esp/src/LedGrid.cpp:564 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=bool LedGrid::diagnostic(]`.
 - Target: `firmware/esp/src/DiagnosticReceipt.h:9 [UTF8-LF sha256=160078ef95ee5212d37b57ab452128a20810c544a23d613f2d8a0d449024a8fc; anchor=inline bool diagnosticReceiptStatus]`.
 - Target: `firmware/esp/application.ino:2608 [UTF8-LF sha256=c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb; anchor=String buildUsbTableSnapshot(bool includePixels) {]`.
 - Retained: Actual canonical complete AddressableLeds source/header read through EOF, including staged RGB versus show ownership. The selection adapter validates all80 cells before one loop-owned state mutation; no per-cell network pacing, show calls, persistence or AVR fan-out. This is a scoped adaptation of stage/show discipline, not a copied AVR timing sender.
@@ -1755,7 +1758,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Fixed AVR D6/PORTD assembly, 16MHz interrupt masking, MacroQueue workspace and100-pixel/8-bit strip configuration`. Disposition: **replaced**. Reason: The final480-pixel renderer belongs to the ESP32-S3 GPIO4 (or ESP8266D2), not a second AVR strip. Reusing AVR registers/timing or truncating to100 pixels would conflict with confirmed hardware and memory ownership. Existing bounded PC contract remains a separate compatibility window.
 - Omitted/replaced code: `Donor native HAL showStrip and feature-profile brightness/renderedPixels buffers`. Disposition: **replaced**. Reason: The existing ESP output worker owns wire encoding/brightness and complete immutable frame copies. Host doubles test logical RGB and wire encoding separately; there is no second donor native HAL or duplicate brightness scale.
 - Omitted/replaced code: `Physical channel order/timing, RMT-DMA refill latency and full-buffer optical correctness`. Disposition: **pending**. Reason: The user confirmed pixels remained lit although the static backend reported complete transmissions and all1440 published RGB bytes were zero. That is a failed physical all-off acceptance, not a successful command. The explicit RMT recovery had350/700ns highs; the earlier candidate used250/600ns highs. After reading all eight WS2811V1.4 pages, the current RMT profile uses300/625ns highs and950/625ns LOW,1250ns bits and300us reset. New optional whole-frame GPIO4 RX-DMA digital capture remains undeployed/unverified and cannot measure strip DIN voltage. A witnessed task-scoped GDMA allocation requests cache-safe refill using the already-IRAM SDK graph; the ring still refills and partition flash guards remain. Incomplete SDK symbol accounting now fails closed; this is still not wire readback. Require visual all-black, whole-cell mapping, waveform/RF/refill stress and fault recovery; counters/error0 alone are not waveform or latch proof.
-- Test-code evidence: `tests/led_grid_test.cpp:323 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=Entire selection validation]`.
+- Test-code evidence: `tests/led_grid_test.cpp:338 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=Entire selection validation]`.
 - Test-code evidence: `tests/led_grid_stress_test.cpp:12 [UTF8-LF sha256=812517dc4c2973487d67d4cd294c149dcb66b527fc85716363f87c723fe5fa4a; anchor=constexpr unsigned iterations=10000;]`.
 - Test-code evidence: `tests/led_worker_test.cpp:333 [UTF8-LF sha256=b049e7e09ed4d47bd22f614a4f6e322b82727c01ff1ad1f0ca65ef27f83e8d4d; anchor=void functional()]`.
 - Test-code evidence: `tests/led_dma_guard_test.cpp:38 [UTF8-LF sha256=d69b5b0bd26348aabd176350120d11199748f2aceada1d39c113078719fa80c0; anchor=int main(]`.
@@ -1770,8 +1773,8 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `desktop/src/pixel_diagnostic.rs:643 [UTF8-LF sha256=5c2bb4db8bf95fc370c1b6fad2e11477cd76adad8f574304c7828e566a431108; anchor=fn pixel_diagnostic_remote_observation_is_ordered_and_never_actuates()]`.
 - Test-code evidence: `desktop/src/realtime.rs:681 [UTF8-LF sha256=134977c4f18998b92ebb2e8d763147a1c0eeb2039c019a603cb7de712502fa01; anchor=fn realtime_pixel_diagnostic_requires_exact_complete_readback_and_typed_intent()]`.
 - Test-code evidence: `mobile/test/pixel_diagnostic_command_test.dart:16 [UTF8-LF sha256=dc315906d40ff502aa39343f9a17bec4af8092527bb0e34c82c1059135445173; anchor=Two real WS clients observe the same diagnostic]`.
-- Test-code evidence: `tests/led_grid_test.cpp:435 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=Advanced diagnostics are one transient post-render layer, not a scene.]`.
-- Test-code evidence: `tests/game_role_renderer_test.cpp:98 [UTF8-LF sha256=2187d0dfed8415b8a19af5c8811f686860c8b1a1559b8424055d014cedb72c59; anchor=overlay.enabled=false]`.
+- Test-code evidence: `tests/led_grid_test.cpp:450 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=Advanced diagnostics are one transient post-render layer, not a scene.]`.
+- Test-code evidence: `tests/game_role_renderer_test.cpp:146 [UTF8-LF sha256=bd21f414a36e808ff04b888864ff7d4a2417b5eed4f31db44f85d82949f19fc3; anchor=overlay.enabled=false]`.
 - Test-code evidence: `tests/scene_store_test.cpp:48 [UTF8-LF sha256=bde2386fcfab1043f052bcd9cf8d8ff2de2d478adfbdffd15aaa7c4a464e8a9e; anchor=Diagnostics never write mode, pattern, output policy or transient RGB]`.
 - Test-code evidence: `tests/diagnostic_receipt_test.cpp:56 [UTF8-LF sha256=85a66d548c203d2f3f95c69a7c008580f95cd1c0cf024f7dc5a2aca8dab7d282; anchor=Captured status projection:]`.
 - Test-code evidence: `tests/usb_snapshot_budget_test.mjs:118 [UTF8-LF sha256=5ed04d90439eb98662bc6ec4a50b176e26558e209dc3d600a3ba5d33cf031378; anchor=Captured regression must exceed the old sublimit]`.
@@ -2007,7 +2010,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Donor AVR EEPROM address/layout,14-page motion-alias normalization, relay/PWM/motion/sensor restore and temperature/name records`. Disposition: **replaced**. Reason: LED preferences live in ESP LittleFS, not the donor AVR record. Copying the address/layout or actuator settings would collide with the separate Pakar AVR owner and imply absent hardware. Applicable board settings have an independent historical manifest; this narrow mapping neither replaces it nor certifies those full current-source contracts.
 - Omitted/replaced code: `Donor EEPROM record ownership and complete unrelated settings normalization`. Disposition: **replaced**. Reason: The ESP scene now has its own validated bounded record,1500ms dirty coalescing,10s maximum delay, changed-record skipping and failure backoff. AVR peripheral/menu settings retain their separate EEPROM owner; copying relay/PWM/sensor layout would corrupt unrelated hardware contracts.
 - Omitted/replaced code: `Physical interrupted flash/power-loss durability and optical restore acceptance`. Disposition: **pending**. Reason: Actual production SceneStore fixtures now cover stage/open/short-write/close-corruption/read/rename failures, exact unchanged/frame write counts, all record-byte corruption, rollover and reboot roundtrip. These filesystem doubles and atomic LittleFS rename do not prove physical abrupt-power flash durability or emitted colors.
-- Test-code evidence: `tests/led_grid_test.cpp:249 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=Boot policy accepts existing files without restoring a saved animation]`.
+- Test-code evidence: `tests/led_grid_test.cpp:264 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=Boot policy accepts existing files without restoring a saved animation]`.
 - Test-code evidence: `tests/s3_platform_wiring_test.mjs:148 [UTF8-LF sha256=778c0fee4df01440d52814b64363f0fba85d235edc457b4bae2739e94cf4e662; anchor=sceneStore.begin]`.
 - Test-code evidence: `tests/tone_player_test.cpp:46 [UTF8-LF sha256=d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42; anchor=const auto beforeMute]`.
 - Test-code evidence: `tests/pc_contract_test.cpp:118 [UTF8-LF sha256=d8aef9e99392072845e5110ecc9be0421435b0988daff633e1d7ec0da66bdc1c; anchor=silentRequest[22]]`.
@@ -6201,7 +6204,7 @@ Verdict: **parity-gap**. Revision: `filesystem-snapshot`. Original-byte SHA-256:
 - Omitted/replaced code: `LCD and full sixteen-input/two-register multiplex capability`. Disposition: **pending**. Reason: LCD remains separately capability-gated and current ATmega328P hardware uses the reviewed eight-bit register plus dedicated ninth input. This comparison cannot certify absent hardware.
 - Test-code evidence: `tests/front_panel_test.cpp:144 [UTF8-LF sha256=c1c9da7276ef26ae35c7ad6a927d751f177bf43774c1408a86b225f651550cd6; anchor=BoardCore::Protocol::kModeFirstWins]`.
 - Test-code evidence: `tests/key_input_order_test.cpp:32 [UTF8-LF sha256=fc1b99ef668cae2692a3317df5c345b544f702207f85646b5e88871c0ce2292a; anchor=shifted==0x5a]`.
-- Test-code evidence: `tests/key_minigame_test.cpp:291 [UTF8-LF sha256=b4ec77df34ed32580dd4d5b62f7c267dec44f4bbc2e68f61873acf02855dbd4d; anchor=static void panelFeedback()]`.
+- Test-code evidence: `tests/key_minigame_test.cpp:295 [UTF8-LF sha256=efda4b08aadb75c7dd15b2f90a0f850371bc5e17623b9f5652a3f37410cca1b9; anchor=static void panelFeedback()]`.
 - Test-code evidence: `tests/semantic_panel_test.cpp:53 [UTF8-LF sha256=24f15644080821c8ee821f8d9851a07ed22557c637714a32b9f0a5b5bd4188bd; anchor=Presenter animated]`.
 - Test-code evidence: `tests/tone_player_test.cpp:105 [UTF8-LF sha256=d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42; anchor=uint8_t tick[]]`.
 - Test-code evidence: `tests/key_minigame_settings_test.cpp:72 [UTF8-LF sha256=04fe1d3a8071a8d14fe37f1c8bbacdadb9dc4e4f9236c626af0e9a4f241c1e0f; anchor=Actual minigame settings:]`.
@@ -6274,7 +6277,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `9494993a0aa031a75b709a47a6220330c9b4bb4e90d5a7e9898a37ad9111599a`.
 
-- Target: `firmware/esp/src/LedGrid.cpp:330 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=Wall-clock interpolation]`.
+- Target: `firmware/esp/src/LedGrid.cpp:336 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=Wall-clock interpolation]`.
 - Target: `firmware/avr/BootMelody.cpp:22 [UTF8-LF sha256=fad1505f9cedc196236fc782ae2ec71a3c9fb8784659a1955affdf9e44137247; anchor=case kCueWelcome40Led:]`.
 - Target: `firmware/avr/ShiftRegisters.cpp:55 [UTF8-LF sha256=990c51a59be04c29618232bd86f2857f9fddc65eb70d7585ad2f537c8a46b902; anchor=void ShiftRegisters::service()]`.
 - Target: `libraries/BoardCore/src/SerialLink.h:12 [UTF8-LF sha256=99373bc4c090e34324cfd2ae8c94d6666c227ad7e157a47fbd85125aac6c13a0; anchor=class SerialLink]`.
@@ -6287,7 +6290,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 - Omitted/replaced code: `unchecked 16-byte ASCII parser, atoi commands, unconditional 9600-baud serial forwarding and 50 ms reply delay`. Disposition: **replaced**. Reason: Bounded framed COBS/CRC transport, typed commands, correlation and capability/version checks prevent overflow, ambiguity and blocking.
 - Omitted/replaced code: `blocking welcome/reset beeps, watchdog reboot loop and loop-coupled animation progress`. Disposition: **replaced**. Reason: Queued Timer1 audio, explicit reset/update owners and monotonic wall-clock rendering keep keys, UART and LED frames responsive.
 - Omitted/replaced code: `commented confetti, sinelon, BPM and juggle examples`. Disposition: **not-applicable**. Reason: The user explicitly excluded these generic effects.
-- Test-code evidence: `tests/led_grid_test.cpp:33 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=rainbowClockCadence]`.
+- Test-code evidence: `tests/led_grid_test.cpp:48 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=rainbowClockCadence]`.
 - Test-code evidence: `tests/tone_player_test.cpp:182 [UTF8-LF sha256=d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42; anchor=kCueWelcome40Led]`.
 - Test-code evidence: `tests/serial_link_test.cpp:45 [UTF8-LF sha256=c103ffb2c7530bb4c85373433b123fe072bb6649f2d97b82f70fa08d404eeae8; anchor=begin(38400]`.
 - Scoped advantage: Retains the donor's reusable progress, ownership and audio ideas with role-sized atomic scenes, nonblocking transport/audio and network-delay-independent animation instead of copying its incompatible pins and business rules.
@@ -6299,7 +6302,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 - Target: `firmware/avr/ShiftRegisters.cpp:55 [UTF8-LF sha256=990c51a59be04c29618232bd86f2857f9fddc65eb70d7585ad2f537c8a46b902; anchor=void ShiftRegisters::service()]`.
 - Target: `firmware/avr/avr.ino:291 [UTF8-LF sha256=537e5eab12a33a3e4834326257d9210ec16eb7fc9123c1a9d0d45e530211c370; anchor=void resetGame(bool playWelcome = true)]`.
-- Target: `firmware/esp/src/LedGrid.cpp:154 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=bool LedGrid::resetWhite()]`.
+- Target: `firmware/esp/src/LedGrid.cpp:160 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=bool LedGrid::resetWhite()]`.
 - Retained: Complete semantic coverage used the fully read 1523-line base plus the complete two-hunk no-index diff; every unchanged line inherits the reviewed base decision and every changed line was reviewed separately. No file region was omitted.
 - Retained: The variant's direct start/clear/door mapping, disabled 74HC165 scan and zero-event suppression are modeled as explicit hardware-profile decisions rather than silently changing a shared loop.
 - Retained: Current first-wins reset is idempotent, restores the complete grouped scene, reports the zero winner/reset revision and plays no reset cue when already ready; this is more reliable than suppressing zero notifications or beeping solely because a cached value changed.
@@ -6308,7 +6311,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 - Omitted/replaced code: `unconditional changed-value beep`. Disposition: **replaced**. Reason: Audio follows semantic winner/reset/menu cues and Silent/Prog policy. Idempotent ready-to-ready reset intentionally does not replay a melody.
 - Omitted/replaced code: `all unchanged FINAL_TABLE/RADIOGRAM business, incompatible pins, ASCII bridge and blocking effects inherited from 40LED.ino`. Disposition: **not-applicable**. Reason: The complete diff proves these regions are unchanged; their explicit base-file exclusion/replacement reasons apply identically rather than being silently omitted.
 - Test-code evidence: `tests/key_input_order_test.cpp:22 [UTF8-LF sha256=fc1b99ef668cae2692a3317df5c345b544f702207f85646b5e88871c0ce2292a; anchor=inputs.setVirtualInput]`.
-- Test-code evidence: `tests/led_grid_test.cpp:21 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=grid.resetWhite()]`.
+- Test-code evidence: `tests/led_grid_test.cpp:21 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=grid.resetWhite()]`.
 - Scoped advantage: Makes hardware differences explicit and preserves reset-to-zero truth instead of disabling inputs and suppressing the most important state transition inside a near-duplicate sketch.
 - Remaining: Physically verify the selected four-box input profile, zero-latency winner/reset reporting and idempotent-audio behavior on the newly connected ESP/AVR pair.
 
@@ -6334,7 +6337,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 - Target: `firmware/avr/BoardSettings.h:12 [UTF8-LF sha256=6bd5587eea26e1fbf0f1b5b827a5c5fc22b26bffb1bcf7cde8fcd2384d37946e; anchor=uint8_t flags = 2]`.
 - Target: `libraries/BoardCore/src/pccontroller/Keys.cpp:19 [UTF8-LF sha256=d9b8c8d4ec6beef667c01c5b5e3af539ead2429393e2632c4c59461f30c14224; anchor=void Key::updateSample]`.
-- Target: `firmware/esp/src/LedGrid.cpp:295 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=void LedGrid::service(uint32_t now)]`.
+- Target: `firmware/esp/src/LedGrid.cpp:301 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=void LedGrid::service(uint32_t now)]`.
 - Target: `firmware/avr/TonePlayer.cpp:62 [UTF8-LF sha256=6c578fb07b1c5059d1d03690beed73806a77b9d28cd05359d9f225b945275ed1; anchor=void TonePlayer::update(uint32_t now)]`.
 - Retained: Read all 623 lines through EOF. Persistent silent/configuration intent, single/hold input lifecycle, runtime color targets with damped transitions, tone commands, status reporting and explicit on/off ownership map to board settings, shared key events, LED-grid state and nonblocking audio.
 - Omitted/replaced code: `power-supply handle/PS_ON and two-item local menu business`. Disposition: **not-applicable**. Reason: Those rules belong to a power-controller product, not table-selection or first-wins. Pakar exposes role-specific controls and settings only after capability acknowledgement.
@@ -6342,7 +6345,7 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 - Omitted/replaced code: `dynamic String/strdup parser, 512-byte reservation, fixed 57600 baud and per-byte delay`. Disposition: **replaced**. Reason: Bounded COBS/CRC at 38,400 owns ESP/AVR traffic; validated structured commands avoid heap fragmentation, command ambiguity and loop stalls.
 - Omitted/replaced code: `blocking beep/menu/power delays and per-transition EEPROM.write`. Disposition: **replaced**. Reason: Tone/effects/input remain cooperative, and validated settings are coalesced/persisted only after explicit changes.
 - Test-code evidence: `tests/pc_contract_test.cpp:119 [UTF8-LF sha256=d8aef9e99392072845e5110ecc9be0421435b0988daff633e1d7ec0da66bdc1c; anchor=silentSettings.flags]`.
-- Test-code evidence: `tests/led_grid_test.cpp:42 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=First frame has no synthetic +3 jump.]`.
+- Test-code evidence: `tests/led_grid_test.cpp:57 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=First frame has no synthetic +3 jump.]`.
 - Test-code evidence: `tests/tone_player_test.cpp:40 [UTF8-LF sha256=d1d890f6ead81d22702eb685ae710935bc7c007af5f97236454b851a3f5adc42; anchor=player.update(start+270)]`.
 - Scoped advantage: Keeps the reusable interaction/configuration ideas while making them role-aware, bounded, nonblocking and compatible with the actual board pins and framed peer link.
 - Remaining: Physical button, audio, color-transition and settings-persistence acceptance remain open on the newly connected four-box hardware.
@@ -6428,13 +6431,13 @@ Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte 
 
 Verdict: **scoped-improvement**. Revision: `filesystem-snapshot`. Original-byte SHA-256: `df59cde813609ef2fad421583ed596697a8a888e2a090fba2da476f4f37a4ffa`.
 
-- Target: `firmware/esp/src/LedGrid.cpp:295 [UTF8-LF sha256=b45b96382638eec98d7fb8f01c91d6f52f41bca35e65dc2bb45a3e3071ad4168; anchor=void LedGrid::service(uint32_t now)]`.
+- Target: `firmware/esp/src/LedGrid.cpp:301 [UTF8-LF sha256=9e08798277b72ee4420add3d3dc530dce83bf507e824a088439c7dc123211793; anchor=void LedGrid::service(uint32_t now)]`.
 - Target: `libraries/BoardCore/src/Tasks.cpp:7 [UTF8-LF sha256=55aac682e670f2aa62832818c60d45d508c85729aca242ff306439e9f4a1fb8b; anchor=void Tasks::update(uint32_t now)]`.
 - Retained: Read all 51 lines. Finite timed indication and automatic stop intent are retained through rollover-safe cooperative effect/service deadlines.
 - Omitted/replaced code: `direct legacy TCCR2/TIMSK register ISR toggling PD4`. Disposition: **replaced**. Reason: It lacks an OCR2 compare value, aliases application pins and is not portable to the ATmega328P/S3 split. Current finite effects are cooperative, role-owned and do not steal AVR Timer2.
 - Omitted/replaced code: `hard-coded four toggles at an unspecified interrupt period`. Disposition: **replaced**. Reason: Pakar effects use named durations and wall-clock deadlines, while audio keeps its own timer ownership.
 - Test-code evidence: `tests/tasks_test.cpp:67 [UTF8-LF sha256=1fc35f2e57d21d42048e392a28bdb09c123d7cf84a3a4c9a45c03534dc19977e; anchor=reset-owner cancellation passed]`.
-- Test-code evidence: `tests/led_grid_test.cpp:274 [UTF8-LF sha256=3de14e766bd50806bd5d220cba111bd351400401b11fff0dbae32f16bd9febd9; anchor=partial stream never auto-shows]`.
+- Test-code evidence: `tests/led_grid_test.cpp:289 [UTF8-LF sha256=5122ffecf1d5dfdf3cf765beea48c3be0eb40bd08a6ab2de0372f0ae017011bc; anchor=partial stream never auto-shows]`.
 - Scoped advantage: Cooperative rollover-safe deadlines preserve finite indication without stealing Timer2 or an application GPIO.
 - Remaining: Optical timing acceptance remains physical-board work.
 
