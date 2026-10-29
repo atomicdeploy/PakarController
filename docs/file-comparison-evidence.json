@@ -3365,7 +3365,9 @@
         "Reread the same complete canonical donor and verified its recorded hash for footer preservation. The original Pakar NavigationBar from a7d69ce's parent is retained for two-to-five destinations whose selected/unselected labels actually fit at current width, safe insets and text scale. More/longer destinations retain the donor overflow strip without hiding pages; selected IDs survive count/width changes and post-frame reveal callbacks coalesce. Wide tablets keep the existing rail, now scrollable for shorter landscape screens. No contextual destination is removed or fabricated by this layout policy.",
         "The complete 233-line donor was reread at the recorded hash for panel refinement. WorkspaceActionCard adapts actual ActivityStrip Material/InkWell composition, semantic icon background, a reserved border and directional chevron; WorkspaceGrid and WorkspaceValueRow are responsive controller-specific adaptations. No duplicate navigation or command engine is introduced, and the existing wide-navigation gap is not certified by this card work.",
         "Reread the complete unchanged donor for keycontroller's Flutter designer. Reuse Pakar's imported workspace header, semantic icon surfaces, badges and menu rows; adapt the donor's fixed border geometry and bounded Flexible text to dual-group live box cards and a compact game control card. Board-owned minigames and older first-wins controls share one designer, including persistent local selection and grab-offset-preserving group movement. Existing acknowledgement, hold-release and peer fencing stay in their command owners. This does not complete unrelated wide-navigation omissions.",
-        "The pending signal footer uses the same bounded Material/InkWell target and theme roles, with local icon/value/both persistence. Full donor ActivityStrip was reread; constrained Flexible popup labels fix the discovered 13px overflow. Four focused widget tests cover menu interactions, restore, RSSI changes and phone/tablet RTL large-text bounds. No network or board mutation is performed."
+        "The pending signal footer uses the same bounded Material/InkWell target and theme roles, with local icon/value/both persistence. Full donor ActivityStrip was reread; constrained Flexible popup labels fix the discovered 13px overflow. Four focused widget tests cover menu interactions, restore, RSSI changes and phone/tablet RTL large-text bounds. No network or board mutation is performed.",
+        "2026-10-29 issue #32: reread actual ActivityStrip through EOF; adapt its semantic icon surfaces, fixed geometry and bounded text for the board-catalog game picker. Number only advertised modes in board order, retain a distinct game icon, show a muted wrapping second-line description, and scale the reserved row height with accessibility text. Opening remains read-only; selection retains the original correlated configure owner. Installed build 23 was observed with a plain single-line menu; candidate installation and screenshot are tracked separately.",
+        "The same game card now has one stable contextual primary action: Start in ready/finished phases, Pause in show/input/feedback and Resume only while paused. Rebuilds and menu opening cannot dispatch a command; the existing peer-bound owner and pending admission are unchanged."
       ],
       "targets": [
         {
@@ -3400,7 +3402,7 @@
         },
         {
           "path": "mobile/lib/minigame_panel.dart",
-          "sha256": "ad11aa9c271162f7452c465b532ec72289f8fcb9a62c03564cbe99d989dcfab5",
+          "sha256": "2f958cd68196b30d93600e4989044e942987687361815cf26062868e8d23cdfa",
           "anchor": "class MiniGamePanel"
         },
         {
@@ -3459,6 +3461,16 @@
           "path": "mobile/test/signal_indicator_test.dart",
           "anchor": "Footer stays bounded on phones and tablets with signal and errors",
           "sha256": "290678231599bdaf327512bbf6dac90775919c0f49c204213ca1d89981578a51"
+        },
+        {
+          "path": "mobile/test/minigame_test.dart",
+          "sha256": "4e4727d554e33ca2876aa4eb3165789b31cbb749506bc0616348a6d7cb2a518d",
+          "anchor": "Mode picker numbers only advertised games with icons and muted descriptions"
+        },
+        {
+          "path": "mobile/test/minigame_test.dart",
+          "sha256": "4e4727d554e33ca2876aa4eb3165789b31cbb749506bc0616348a6d7cb2a518d",
+          "anchor": "One contextual transport button follows phase without sending on refresh"
         }
       ],
       "omissions": [

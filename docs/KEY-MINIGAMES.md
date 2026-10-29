@@ -193,3 +193,48 @@ display, outputs and reconnect remains open. A native event also showed a failed
 runtime LED-backend switch (error 258, GPIO-static retained); that is an open
 observation, not a successful RMT switch. Do not reset or change the mode while
 David is testing without coordinating first.
+
+### Tablet picker and delivery checkpoint (2026-10-29)
+
+The SM-X906B tablet (explicit ADB serial `R52T60C6V9B`) now has the updated
+Flutter APK, SHA-256
+`a0844dd01cca98e909614182b2937f5b1f238cae357fb5c6dbb0454540df8798`.
+The installed Android `base.apk` was independently hashed and matched. Actual
+tablet screenshots and accessibility inspection show all ten board-advertised
+modes numbered in catalog order, with distinct icons and muted wrapping
+descriptions. The game card has one contextual Start/Pause/Resume control;
+opening a menu or refreshing the phase never starts a game. Analyzer and all
+14 focused minigame tests passed, including phase-by-phase command dispatch.
+
+David-ASUS is running the new Rust executable at its existing deployment path,
+SHA-256 `5f588663afff98834f497d02279cc400272becb07c35fa268009ddb96f271a02`,
+PID 13112/session 2 at observation. Its previous executable and preferences were
+preserved. SSH-session-zero IPC remains unavailable; process/hash evidence is
+not a completed interactive native UI or board acceptance test.
+
+The tablet's actual Flutter firmware page exported the running ESP application
+through Android's document picker: 2,347,808 bytes, SHA-256
+`fe15419230b3b013d86a1a6411fc5c480c384592d68eb697f95ea0c04408f4d1`,
+MD5 `a444333384f3ecca8d2ac49d04db211d`, matching `/update/info`.
+The file was copied off Android and retained as rollback. Earlier Node Range
+backup attempts timed out; the owned 1,310,720-byte partial is retained, not
+presented as the full backup. A read-only telemetry observation reported
+81,728 free internal-heap bytes, largest block 34,804, historical minimum 364;
+this does not establish the cause of the intermittent HTTP 503/timeouts.
+
+The actual tablet document picker selected the locally supplied ESP application
+`keycontroller-timer-esp.bin`, 2,422,912 bytes, SHA-256
+`b73c65a0fb20b6b5a6347668e4525a76bb8faae269661db34f8c2e7b0fabb078`.
+Flutter displayed measured application upload bytes and then observed
+`Board OTA #7 · complete`. No laptop uploader was used. This application-only
+candidate includes both LED backends, the previously acknowledged ISP
+capability, Ethernet, 16 MB flash/OPI PSRAM and disabled BLE. The saved board
+configuration is not intentionally rewritten.
+
+At this checkpoint the independent post-reboot ESP hash/boot readback has not
+returned, and AVR deployment has not started. ASUS and Android Wi-Fi
+associations are being refreshed without blindly repeating the upload.
+The AVR candidate with Urboot is ready at SHA-256
+`fa3d01739769b43401be7d11b23b8d3546fde120a0394d1a669bac390ec14782`.
+Do not claim paired deployment, wireless ADB stability, peripheral effects,
+sound or safe USB removal from this intermediate receipt.

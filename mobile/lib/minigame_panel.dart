@@ -183,6 +183,11 @@ class _MiniGamePanelState extends State<MiniGamePanel>
   @override
   Widget build(BuildContext context) {
     final snapshot = game, colors = Theme.of(context).colorScheme;
+    final primaryAction = snapshot.running
+        ? 'pause'
+        : snapshot.phase == 'paused'
+        ? 'resume'
+        : 'start';
     final seconds =
         snapshot.number(
           snapshot.json['timed'] == true ? 'remaining_ms' : 'elapsed_ms',
@@ -254,14 +259,19 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                               key: const ValueKey('minigame-mode'),
                               value: snapshot.mode,
                               isExpanded: true,
-                              itemHeight: 64,
+                              itemHeight:
+                                  84 *
+                                  MediaQuery.textScalerOf(context).scale(14) /
+                                  14,
                               isDense: false,
                               borderRadius: BorderRadius.circular(16),
                               items: [
-                                for (final entry in snapshot.modes.entries)
+                                for (final (index, entry)
+                                    in snapshot.modes.entries.indexed)
                                   DropdownMenuItem(
                                     value: entry.key,
                                     child: _GameModeChoice(
+                                      number: index + 1,
                                       id: entry.key,
                                       label: entry.value,
                                       description: snapshot.description(
@@ -327,23 +337,17 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final action in [
-                        'start',
-                        'pause',
-                        'resume',
-                        'reset',
-                        'stop',
-                      ])
+                      for (final action in [primaryAction, 'reset', 'stop'])
                         FilledButton.tonalIcon(
                           key: ValueKey('minigame-$action'),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(96, 42),
-                            backgroundColor: action == 'start'
+                            backgroundColor: action == primaryAction
                                 ? colors.primary
                                 : action == 'reset'
                                 ? colors.primary.withValues(alpha: .13)
                                 : colors.surfaceContainerHigh,
-                            foregroundColor: action == 'start'
+                            foregroundColor: action == primaryAction
                                 ? colors.onPrimary
                                 : action == 'reset'
                                 ? colors.primary
@@ -474,30 +478,49 @@ class _MiniGamePanelState extends State<MiniGamePanel>
 
 class _GameModeChoice extends StatelessWidget {
   const _GameModeChoice({
+    required this.number,
     required this.id,
     required this.label,
     required this.description,
   });
+  final int number;
   final String id, label, description;
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Icon(
-        switch (id) {
-          'press-to-win' => Icons.emoji_events_outlined,
-          'illuminated' => Icons.my_location,
-          'color-match' => Icons.palette_outlined,
-          'simon' => Icons.queue_music,
-          'memory-pairs' => Icons.style_outlined,
-          'clear-all' => Icons.checklist_rounded,
-          'color-order' => Icons.sort_rounded,
-          'switch-pattern' => Icons.grid_view_rounded,
-          'reaction-chase' => Icons.bolt_rounded,
-          'toggle' => Icons.toggle_on_outlined,
-          _ => Icons.sports_esports_outlined,
-        },
-        size: 23,
-        color: Theme.of(context).colorScheme.primary,
+      SizedBox(
+        width: 26,
+        child: Text(
+          '$number.',
+          style: Theme.of(context).textTheme.labelMedium
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+      ),
+      Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: .10),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          switch (id) {
+            'press-to-win' => Icons.emoji_events_outlined,
+            'illuminated' => Icons.my_location,
+            'color-match' => Icons.palette_outlined,
+            'simon' => Icons.queue_music,
+            'memory-pairs' => Icons.style_outlined,
+            'clear-all' => Icons.checklist_rounded,
+            'color-order' => Icons.sort_rounded,
+            'switch-pattern' => Icons.grid_view_rounded,
+            'reaction-chase' => Icons.bolt_rounded,
+            'toggle' => Icons.toggle_on_outlined,
+            _ => Icons.sports_esports_outlined,
+          },
+          size: 22,
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
       const SizedBox(width: 12),
       Expanded(
@@ -505,11 +528,17 @@ class _GameModeChoice extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 3),
             Text(
               description,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,

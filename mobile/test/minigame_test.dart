@@ -309,6 +309,39 @@ void main() {
   );
 
   testWidgets(
+    'Mode picker numbers only advertised games with icons and muted descriptions',
+    (tester) async {
+      tester.view.physicalSize = const Size(420, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final commands = <String>[];
+      await tester.pumpWidget(
+        fixture(miniStatus(), (path, _) async {
+          commands.add(path);
+          return true;
+        }),
+      );
+      await tester.tap(find.byKey(const ValueKey('minigame-mode')));
+      await tester.pumpAndSettle();
+      expect(find.text('2.'), findsOneWidget);
+      expect(find.text('3.'), findsNothing);
+      expect(find.byIcon(Icons.toggle_on_outlined), findsOneWidget);
+      final description = tester.widget<Text>(
+        find.text(miniStatus().peer.minigame!.description('toggle')),
+      );
+      expect(description.maxLines, 2);
+      final context = tester.element(find.text('Switches'));
+      expect(
+        description.style?.color,
+        Theme.of(context).colorScheme.onSurfaceVariant,
+      );
+      expect(commands, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'Opening never starts and controls use only board catalog and live phase',
     (tester) async {
       final commands = <(String, Map<String, String>)>[];
@@ -333,17 +366,56 @@ void main() {
       await tester.pumpAndSettle();
       expect(commands.last.$1, minigameControl);
       expect(commands.last.$2, {'action': 'start'});
-      expect(
-        tester
-            .widget<FilledButton>(find.byKey(const ValueKey('minigame-pause')))
-            .onPressed,
-        isNull,
-      );
+      expect(find.byKey(const ValueKey('minigame-pause')), findsNothing);
       await tester.pumpWidget(fixture(miniStatus(phase: 'paused'), command));
       await tester.tap(find.byKey(const ValueKey('minigame-resume')));
       await tester.pumpAndSettle();
       expect(commands.last.$1, minigameControl);
       expect(commands.last.$2, {'action': 'resume'});
+    },
+  );
+
+  testWidgets(
+    'One contextual transport button follows phase without sending on refresh',
+    (tester) async {
+      final commands = <Map<String, String>>[];
+      for (final phase in [
+        'ready',
+        'show',
+        'input',
+        'feedback',
+        'paused',
+        'success',
+        'failed',
+        'timeout',
+        'stopped',
+      ]) {
+        await tester.pumpWidget(
+          fixture(miniStatus(phase: phase), (_, values) async {
+            commands.add(values);
+            return true;
+          }),
+        );
+        await tester.pump();
+        final expected = phase == 'paused'
+            ? 'resume'
+            : ['show', 'input', 'feedback'].contains(phase)
+            ? 'pause'
+            : 'start';
+        for (final action in ['start', 'pause', 'resume']) {
+          expect(
+            find.byKey(ValueKey('minigame-$action')),
+            action == expected ? findsOneWidget : findsNothing,
+            reason: '$phase must expose only $expected',
+          );
+        }
+        expect(commands, isEmpty);
+        await tester.tap(find.byKey(ValueKey('minigame-$expected')));
+        await tester.pumpAndSettle();
+        expect(commands.single, {'action': expected});
+        commands.clear();
+        expect(tester.takeException(), isNull);
+      }
     },
   );
 

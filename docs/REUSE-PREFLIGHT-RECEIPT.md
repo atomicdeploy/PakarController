@@ -11278,3 +11278,31 @@ load_workspace_dependencies/NODE_PATH, without installing another package or
 contacting a board. The first DOM run lacked NODE_PATH; the corrected isolated
 browser fixture passes. A later narrow HTTPS fetch succeeded and verified
 origin/main remains a66d3a8. No failed check was disabled or bypassed.
+
+## Tablet game picker and paired-delivery continuation (2026-10-29)
+
+Reread PCController's complete ActivityStrip in workspace_chrome.dart and the
+existing mapped game-card implementation. Retain its semantic icon surface,
+bounded text and stable target geometry; add catalog-relative numbering,
+wrapping muted descriptions and one contextual Start/Pause/Resume action.
+Rebind only the changed reviewed target/proof files and retain the donor's
+unrelated open omissions. Analyzer and 14 focused widget/model tests pass.
+
+Forwarded ADB intermittently lost the tablet transport; ASUS-local ADB completed
+successive commands. Reuse the actual android-device.ps1, viewport and process
+probe helpers on ASUS, retaining explicit serial, lock guards and fresh UI
+observations. Do not restart the shared ADB server, touch the attached phone,
+or call this an established electrical/cable diagnosis. The full installed APK
+hash and actual tablet menu were verified. Windows process replacement found
+no running owner; preserve old executable/preferences before the guarded
+existing interactive production task launch. Session-zero IPC failure remains
+separate from process/hash evidence, not routed around as a forced replacement.
+
+The standard Range backup reached an owned partial then timed out; reuse the
+already implemented Flutter espBytes/AndroidDocuments path rather than bypassing
+identity/integrity rules or claiming the partial succeeded. Actual tablet export
+matched the running image's complete size/MD5 and was copied off-device.
+The tablet selected the candidate binary through SAF, confirmed it and performed
+the ESP upload; captured byte progress and observed board OTA job completion
+are not independent post-boot hash or physical acceptance. See KEY-MINIGAMES.md
+for precise hashes and the still-open paired-deployment gates.
