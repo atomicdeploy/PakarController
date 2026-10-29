@@ -40,7 +40,7 @@ struct DeviceShellSession : public Print {
   bool authenticated=false,closing=false,fault=false,color=true,watch=false,upper=false,unicode=true,alternateScreen=false;
   size_t write(uint8_t byte) override{return write(&byte,1);}
   size_t write(const uint8_t *bytes,size_t size) override {
-    if(fault||output.length()+size>8192U){fault=true;return 0;}
+    if(fault||output.length()+size>PS_DEVICE_VIEW_FRAME_BYTES+2048U){fault=true;return 0;}
     const size_t before=output.length();output.concat(reinterpret_cast<const char*>(bytes),size);
     if(!before&&size)lastDrain=millis();
     if(output.length()!=before+size){fault=true;return 0;}return size;
@@ -167,6 +167,7 @@ bool shellSet(const String &requestedKey,const String &value,String &result){
   String json;serializeJson(d,json);return handleCloudCommand(json,result);
 }
 void shellPrompt(DeviceShellSession &s){
+  s.editor.setTheme(s.tui.theme(),s.tui.trueColor());
   s.editor.setPrompt(deviceIdentity.hostname(),s.color&&s.parser.ansi());
   s.editor.prompt([&](const uint8_t *p,size_t n){s.write(p,n);});
 }
@@ -210,13 +211,20 @@ void executeDeviceShell(DeviceShellSession &s,String line){
   }else if(verb=="terminal"){
     if(args=="unicode on"||args=="unicode off")s.unicode=args.endsWith("on");
     else if(args=="color on"||args=="color off")s.color=args.endsWith("on");
+    else if(args=="truecolor on"||args=="truecolor off")s.tui.setTrueColor(args.endsWith("on"));
+    else if(args.startsWith("theme ")){
+      const String theme=args.substring(6);using T=PakarShell::ShellTui;
+      if(theme!="violet"&&theme!="red"&&theme!="lumen"&&theme!="onedark"){
+        shellResult(s,false,F("Use terminal theme violet|red|lumen|onedark"));shellPrompt(s);return;}
+      s.tui.setTheme(theme=="red"?T::Red:theme=="lumen"?T::Lumen:theme=="onedark"?T::OneDark:T::Violet);
+    }
     else if(args.startsWith("size ")){
       const int split=args.indexOf(' ',5);uint32_t w=0,h=0;
       if(split<0||!PakarShell::unsignedNumber(args.substring(5,split).c_str(),240,w)||
          !PakarShell::unsignedNumber(args.substring(split+1).c_str(),100,h)||!s.parser.size(w,h)){
         shellResult(s,false,F("Use terminal size 40..240 16..100"));shellPrompt(s);return;}
-    }else if(args.length()){shellResult(s,false,F("Use terminal, terminal unicode|color on|off, terminal size COLS ROWS"));shellPrompt(s);return;}
-    s.print(F("Terminal "));s.print(s.parser.terminal());s.print(F(" | "));s.print(s.parser.columns());s.print('x');s.print(s.parser.rows());
+    }else if(args.length()){shellResult(s,false,F("Use terminal unicode|color|truecolor on|off, terminal theme violet|red|lumen|onedark, terminal size COLS ROWS"));shellPrompt(s);return;}
+    s.print(F("Terminal "));s.print(s.parser.terminal());s.print(F(" | "));s.print(s.parser.columns());s.print(s.unicode?F(" \xc3\x97 "):F(" x "));s.print(s.parser.rows());
     s.print(F(" | Unicode "));s.print(s.unicode?F("on"):F("off"));s.print(F(" | ANSI "));s.println(s.color&&s.parser.ansi()?F("on"):F("off"));
   }else if(verb=="game"){
     String result;JsonDocument d;bool valid=PAKAR_FIRST_WINS_ENABLED;
@@ -402,7 +410,7 @@ uint16_t shellAdvertisedPort(){return shellListening?shellListeningPort:0;}
 String shellStatusJson(){
   JsonDocument d;d["enabled"]=bool(PAKAR_TELNET_ENABLED)&&shellSettings.enabled();d["port"]=shellSettings.port();
   d["listening"]=shellListening;d["sessions"]=shellConnectionCount();d["session_limit"]=PAKAR_TELNET_SESSIONS;
-  d["color"]=shellSettings.color();d["history_limit"]=8;d["serial_encapsulated"]=bool(PAKAR_SERIAL_SHELL_ENABLED);
+  d["color"]=shellSettings.color();d["history_limit"]=PS_EDITOR_HISTORY;d["serial_encapsulated"]=bool(PAKAR_SERIAL_SHELL_ENABLED);
   d["udp_query_built"]=bool(PAKAR_REMOTE_QUERY_UDP_ENABLED);d["udp_query_read_only"]=true;
 #if PAKAR_REMOTE_QUERY_UDP_ENABLED
   d["udp_query_listening"]=shellRemoteQuery.listening();d["udp_query_port"]=PakarShell::RemoteQuery::port;

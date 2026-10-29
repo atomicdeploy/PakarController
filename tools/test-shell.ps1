@@ -1,21 +1,25 @@
-param([switch]$Plan)
+param([switch]$Plan,[switch]$WorkspaceOnly,[string]$CapturePrefix)
 $ErrorActionPreference='Stop'
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern network-cloud | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern terminal-ui | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern device-shell -Gate | Out-Null
 & (Join-Path $PSScriptRoot 'consult-reuse.ps1') -Concern build-storage -Gate | Out-Null
 $taskRoot=Split-Path -Parent $PSScriptRoot
-foreach($taskName in @('portable_shell','telnet_shell','shell_tui','shell_wire','shell_pixel','shell_remote_query','ssh_policy')){
+foreach($taskName in @('portable_shell','telnet_shell','shell_tui','shell_workspace','shell_wire','shell_pixel','shell_remote_query','ssh_policy')){
+  if($WorkspaceOnly -and $taskName -ne 'shell_workspace'){continue}
   $taskOutput=Join-Path $taskRoot "build/native/${taskName}_test.exe"
   $taskStandard=if($taskName -eq 'shell_tui'){'-std=c++23'}else{'-std=c++17'}
   $taskArgs=@($taskStandard,'-Wall','-Wextra','-Werror','-I',(Join-Path $taskRoot 'firmware/esp/src'),'-I',(Join-Path $taskRoot 'tests/access_stubs'),(Join-Path $taskRoot "tests/${taskName}_test.cpp"),'-o',$taskOutput)
+  if($taskName -eq 'shell_workspace'){$taskArgs=@('-DARDUINO_ARCH_ESP32','-DPAKAR_FIRST_WINS_ENABLED=1')+$taskArgs}
+  if($taskName -eq 'shell_workspace' -and $CapturePrefix){$taskArgs=@('-DPS_RENDER_FIXTURE=1')+$taskArgs}
   if($Plan){[pscustomobject]@{Executable='g++';Arguments=$taskArgs};continue}
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
   & g++ @taskArgs
   if($LASTEXITCODE){throw "$taskName fixture compilation failed"}
-  & $taskOutput
+  if($taskName -eq 'shell_workspace' -and $CapturePrefix){& $taskOutput $CapturePrefix}else{& $taskOutput}
   if($LASTEXITCODE){throw "$taskName fixture failed"}
 }
+if($WorkspaceOnly){return}
 $taskAccess=Join-Path $taskRoot 'build/native/access_config_test.exe'
 $taskAccessArgs=@('-std=c++17','-Wall','-Wextra','-Werror','-I',(Join-Path $taskRoot 'tests/access_stubs'),'-I',(Join-Path $taskRoot 'libraries/BoardCore/src'),'-I',(Join-Path $taskRoot 'firmware/esp/src'),(Join-Path $taskRoot 'tests/access_config_test.cpp'),(Join-Path $taskRoot 'firmware/esp/src/AccessConfig.cpp'),'-o',$taskAccess)
 $taskDiscovery=Join-Path $taskRoot 'build/native/discovery_mdns_test.exe'
