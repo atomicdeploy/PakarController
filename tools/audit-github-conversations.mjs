@@ -95,7 +95,23 @@ function save(path,value){
   if(prior===text)return;
   mkdirSync(dirname(path),{recursive:true});writeFileSync(path,text);
 }
+// A fresh worktree may have the committed inventory but no ignored raw cache.
+// A targeted fetch must not erase other repositories or their review evidence.
+export function mergeInventory(previous,current){
+  const key=row=>row.repository+'#'+row.number;
+  const replacements=new Map(current.map(row=>[key(row),row]));
+  const merged=previous.map(row=>{
+    const id=key(row),next=replacements.get(id);
+    replacements.delete(id);
+    return next||row;
+  });
+  return [...merged,...replacements.values()];
+}
 export function audit(repositories,cached=false){
+  const inventoryPath=resolve(root,'docs/github-conversation-inventory.json');
+  let previous=[];
+  try{previous=JSON.parse(readFileSync(inventoryPath,'utf8')).records;}
+  catch(e){if(e.code!=='ENOENT')throw e;}
   const records=[];
   let prior=[];
   try{prior=JSON.parse(readFileSync(resolve(root,'.build/github-audit/conversations.json'),'utf8'));}
@@ -111,9 +127,9 @@ export function audit(repositories,cached=false){
   let decisions=[];
   try{decisions=JSON.parse(readFileSync(resolve(root,'docs/github-conversation-decisions.json'),'utf8')).records;}
   catch(e){if(e.code!=='ENOENT')throw e;}
-  const inventory=reviewed(records.map(inspect),decisions);
-  const included=[...new Set(records.map(r=>r.repository))];
-  save(resolve(root,'docs/github-conversation-inventory.json'),{scope:'All states; full paginated bodies, comments, reviews and threads fetched. Only explicit hash-bound decisions attest manual review; the rest remain pending.',repositories:included,records:inventory});
+  const inventory=mergeInventory(previous,reviewed(records.map(inspect),decisions));
+  const included=[...new Set(inventory.map(r=>r.repository))];
+  save(inventoryPath,{scope:'All states; fetched records include full paginated bodies, comments, reviews and threads. Unrefreshed records retain their last committed evidence. Only explicit hash-bound decisions attest manual review; fetching never promotes review state.',repositories:included,records:inventory});
   return inventory;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

@@ -3137,12 +3137,12 @@ Verdict: **equivalent-behavior**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1c
 
 Verdict: **parity-gap**. Revision: `5a6961ce6a477a4726b7baf8a84d12fde1cdf6ad`. Original-byte SHA-256: `7a91d9fa8778383ee37e33d861ceebc5ab210e46bedab6af8be82d56c27523cc`.
 
-- Target: `tools/audit-github-conversations.mjs:59 [UTF8-LF sha256=d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a; anchor=export function collect]`.
-- Target: `docs/GITHUB-COORDINATION.md:1 [UTF8-LF sha256=bfe6cae355c53bccbd128f6afb3235b8ed132d5b6791897ffd15c504a79ecf47; anchor=# Conversation-aware integration]`.
+- Target: `tools/audit-github-conversations.mjs:59 [UTF8-LF sha256=0bd597414af4e28668d2da96e250a27a99550fff9b86e5d58136b7de583a1dcf; anchor=export function collect]`.
+- Target: `docs/GITHUB-COORDINATION.md:1 [UTF8-LF sha256=64a078407d296db907e8645e07dc25a6392168cb1cb2e39cc8bb18a9bce01f0d; anchor=# Conversation-aware integration]`.
 - Retained: Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController.
 - Omitted/replaced code: `Historical media thumbnails, MPV surface and DLL basename, timeline/cue migration, audio delay and media picking fixes`. Disposition: **not-applicable**. Reason: Pakar is an mpv-free controller and does not own donor playback/media/timeline models. Generic staging safety, keyboard ownership, error correlation, authentication and service-worker origin lessons remain applicable and tracked independently.
 - Omitted/replaced code: `Complete semantic disposition of every historical issue/review and full DNS-rebinding, actuator/persistence, UI/PWA/physical acceptance`. Disposition: **pending**. Reason: All pages are collected but fetching does not mean reading or implementing them. Only explicitly hash-bound reviewed scopes are marked; every unread record and source-file import remains pending.
-- Test-code evidence: `tests/github_conversation_audit_test.mjs:22 [UTF8-LF sha256=d71ee1e531770b756ab7f5269f9b6cb6d1bf75f7d17cd6c5e71e1529712ae7bd; anchor=Paginated GitHub audit]`.
+- Test-code evidence: `tests/github_conversation_audit_test.mjs:30 [UTF8-LF sha256=dc841c32e7f17b65ae9f16222dde27d0aa7d7d96565654e383978d4919499486; anchor=Paginated GitHub audit]`.
 - Remaining: Read and reconcile pending records in the refreshed 794-record conversation corpus; seventeen full-record and two comment scopes now have explicit semantic decisions. Continue applicable source imports and exact source/test mapping. Verify RayanLamp repository when supplied; do not invent one or mutate donor comments from Pakar.
 
 ### Pealayer: `docs/superpowers/plans/2026-09-28-windows-taskbar-and-tray-suite.md`

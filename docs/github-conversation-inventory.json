@@ -1,5 +1,5 @@
 {
-  "scope": "All states; full paginated bodies, comments, reviews and threads fetched. Only explicit hash-bound decisions attest manual review; the rest remain pending.",
+  "scope": "All states; fetched records include full paginated bodies, comments, reviews and threads. Unrefreshed records retain their last committed evidence. Only explicit hash-bound decisions attest manual review; fetching never promotes review state.",
   "repositories": [
     "atomicdeploy/PakarController",
     "atomicdeploy/PCController",
@@ -489,8 +489,8 @@
       "title": "Integrate pinned portable-shell source without regressing device ownership",
       "url": "https://github.com/atomicdeploy/PakarController/issues/29",
       "state": "open",
-      "content_sha256": "d6594508738415dab810091f3fe6db830aee347ea39c53ad375cfce128fb9b6d",
-      "comments": 6,
+      "content_sha256": "ca1997ae40780388181f7ce72eec5b55ca1fd2872ba9ecbdecb5056d50154cab",
+      "comments": 9,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -540,8 +540,8 @@
       "title": "Board-owned keycontroller minigames and runtime game selection",
       "url": "https://github.com/atomicdeploy/PakarController/issues/32",
       "state": "open",
-      "content_sha256": "0dc2055383f104751c1f2e07a170d8a50ff13a0f3681047e8d9a043cb068fbea",
-      "comments": 7,
+      "content_sha256": "490ae7d9ce5b23f9ad039c91c7c43875252e74203c38dec330e07a4817d6788f",
+      "comments": 12,
       "reviews": 0,
       "threads": 0,
       "unresolved_threads": [],
@@ -13849,6 +13849,40 @@
       "copilot_quota_notices": 0,
       "read_state": "reviewed-record",
       "application": "Runtime build/capture/readiness are separate, and a prior ACK is not current preview authority. Apply to the actual Pakar production receipt: exact executable/PID/capture/settings checked, offline board truth retained, caret/error/shell gaps recorded, no physical or all-green release claim. Private user state is not published. Documentation conversation review only, not donor code-diff review."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 37,
+      "kind": "pull_request",
+      "title": "[codex] Restore keycontroller boot mode and add PuzzleBoard timer feedback",
+      "url": "https://github.com/atomicdeploy/PakarController/pull/37",
+      "state": "open",
+      "content_sha256": "6d6b7408e0e5915e9d6c02afbbbaedf690ae440ac1002db1b76d1dba94ef3d5e",
+      "comments": 2,
+      "reviews": 0,
+      "threads": 0,
+      "unresolved_threads": [],
+      "copilot_messages": 0,
+      "copilot_quota_notices": 0,
+      "read_state": "pending",
+      "application": "Not evaluated; fetching does not certify an import or resolution."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 38,
+      "kind": "pull_request",
+      "title": "Make ESP terminal tables contextual with configured matrix colors and inline controls",
+      "url": "https://github.com/atomicdeploy/PakarController/pull/38",
+      "state": "open",
+      "content_sha256": "aeb3bcf8858cec07cc043b3742e1d4695d800bdc7e85c760c384047ec3439095",
+      "comments": 2,
+      "reviews": 0,
+      "threads": 0,
+      "unresolved_threads": [],
+      "copilot_messages": 0,
+      "copilot_quota_notices": 0,
+      "read_state": "pending",
+      "application": "Not evaluated; fetching does not certify an import or resolution."
     }
   ]
 }

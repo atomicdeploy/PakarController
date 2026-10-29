@@ -16675,24 +16675,24 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController."
+        "Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController. Targeted cold-cache refresh now retains other repositories from the committed inventory, preserving all 778 PCController/Pealayer records alongside 38 refreshed Pakar records without promoting their review status."
       ],
       "targets": [
         {
           "path": "tools/audit-github-conversations.mjs",
-          "sha256": "d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a",
+          "sha256": "0bd597414af4e28668d2da96e250a27a99550fff9b86e5d58136b7de583a1dcf",
           "anchor": "export function collect"
         },
         {
           "path": "docs/GITHUB-COORDINATION.md",
-          "sha256": "bfe6cae355c53bccbd128f6afb3235b8ed132d5b6791897ffd15c504a79ecf47",
+          "sha256": "64a078407d296db907e8645e07dc25a6392168cb1cb2e39cc8bb18a9bce01f0d",
           "anchor": "# Conversation-aware integration"
         }
       ],
       "proof": [
         {
           "path": "tests/github_conversation_audit_test.mjs",
-          "sha256": "d71ee1e531770b756ab7f5269f9b6cb6d1bf75f7d17cd6c5e71e1529712ae7bd",
+          "sha256": "dc841c32e7f17b65ae9f16222dde27d0aa7d7d96565654e383978d4919499486",
           "anchor": "Paginated GitHub audit"
         }
       ],
