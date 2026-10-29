@@ -35,6 +35,7 @@ const minigameDescriptions = <String, String>{
   'color-order': 'Press the boxes in palette color order',
   'switch-pattern': 'Toggle buttons to copy the indicator pattern',
   'reaction-chase': 'Catch the moving light inside its response window',
+  'mine-field': 'Toggle boxes to all cyan or all yellow; fastest time wins',
   'toggle': 'Control latched or momentary outputs without a timer',
 };
 const minigameOutputSources = [

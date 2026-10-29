@@ -11,7 +11,7 @@ $taskArgs=@('-std=c++17','-O2','-g0','-Wall','-Wextra','-Werror','-I',(Join-Path
 if($LASTEXITCODE){throw 'Minigame core compilation failed'}
 & $taskOutput
 if($LASTEXITCODE){throw 'Minigame assertions failed'}
-$taskExcluded=@('ILLUMINATED','COLOR_MATCH','SIMON','MEMORY_PAIRS','CLEAR_ALL','COLOR_ORDER','SWITCH_PATTERN','REACTION_CHASE','TOGGLE') | ForEach-Object {"-DPAKAR_GAME_$_=0"}
+$taskExcluded=@('ILLUMINATED','COLOR_MATCH','SIMON','MEMORY_PAIRS','CLEAR_ALL','COLOR_ORDER','SWITCH_PATTERN','REACTION_CHASE','MINE_FIELD','TOGGLE') | ForEach-Object {"-DPAKAR_GAME_$_=0"}
 & g++ @taskArgs @taskExcluded -DTEST_EXCLUDED_MODES -Wno-unused-function
 if($LASTEXITCODE){throw 'Mode-exclusion compilation failed'}
 & $taskOutput

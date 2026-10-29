@@ -733,4 +733,121 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  test('Mine Field follows the advertised catalog and uses existing typed settings', () {
+    final game = configuredGame('mine-field', {
+      'limit_ms': 60000,
+      'show_ms': 1000,
+    });
+    final modes = game.modes.keys.toList();
+    expect(modes.length, 11);
+    expect(modes.indexOf('mine-field'), modes.indexOf('reaction-chase') + 1);
+    expect(modes.last, 'toggle');
+    expect(game.description('mine-field'), contains('all cyan or all yellow'));
+    expect(
+      game.command(minigameConfigure, {
+        'settings': '{"mode":"mine-field","limit_ms":60000,"show_ms":1000}',
+      }),
+      {
+        'settings': {'mode': 'mine-field', 'limit_ms': 60000, 'show_ms': 1000},
+      },
+    );
+    expect(
+      miniStatus().peer.minigame!.allows(minigameConfigure, {
+        'settings': '{"mode":"mine-field"}',
+      }),
+      isFalse,
+      reason: 'A client must not add Mine Field to an older board catalog',
+    );
+  });
+
+  testWidgets(
+    'Mine Field shows a distinct icon, does not auto-start and edits its pulse period',
+    (tester) async {
+      final game = configuredGame('mine-field', {
+        'limit_ms': 60000,
+        'show_ms': 1000,
+      });
+      final commands = <Map<String, String>>[];
+      final status = DeviceStatus({
+        ...miniStatus().json,
+        'minigame': game.json,
+      });
+      await tester.pumpWidget(
+        fixture(status, (_, values) async {
+          commands.add(values);
+          return true;
+        }),
+      );
+      expect(find.byIcon(Icons.diamond_outlined), findsOneWidget);
+      expect(commands, isEmpty);
+      await tester.pumpWidget(const SizedBox());
+      Map<String, Object>? saved;
+      await tester.pumpWidget(
+        settingsFixture(game, (patch) async => saved = patch),
+      );
+      expect(find.text('Pulse period (ms)'), findsOneWidget);
+      final pulse = find.byKey(const ValueKey('minigame-setting-show_ms'));
+      expect(tester.widget<TextFormField>(pulse).initialValue, '1000');
+      await tester.ensureVisible(pulse);
+      await tester.enterText(pulse, '800');
+      await tester.tap(find.text('Save to board'));
+      await tester.pumpAndSettle();
+      expect(saved, {'show_ms': 800});
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(
+        settingsFixture(
+          configuredGame('simon', {'show_ms': 300}),
+          (_) async {},
+        ),
+      );
+      expect(find.text('Pulse period (ms)'), findsNothing);
+      expect(find.text('Show time (ms)'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Timed Mine Field success shows winning elapsed milliseconds without sending commands',
+    (tester) async {
+      final game = configuredGame('mine-field', {
+        'limit_ms': 60000,
+        'show_ms': 1000,
+      });
+      final commands = <Map<String, String>>[];
+      final status = DeviceStatus({
+        ...miniStatus().json,
+        'minigame': {
+          ...game.json,
+          'phase': 'success',
+          'timed': true,
+          'elapsed_ms': 1234,
+          'remaining_ms': 58766,
+        },
+      });
+      await tester.pumpWidget(
+        fixture(status, (_, values) async {
+          commands.add(values);
+          return true;
+        }),
+      );
+      expect(find.text('Winning time: 1.234 s'), findsOneWidget);
+      expect(find.textContaining('Remaining:'), findsNothing);
+      expect(commands, isEmpty);
+      final simon = DeviceStatus({
+        ...status.json,
+        'minigame': {...status.json['minigame'] as Map, 'mode': 'simon'},
+      });
+      await tester.pumpWidget(
+        fixture(simon, (_, values) async {
+          commands.add(values);
+          return true;
+        }),
+      );
+      expect(find.text('Winning time: 1.234 s'), findsNothing);
+      expect(find.text('Remaining: 58.8 s'), findsOneWidget);
+      expect(commands, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

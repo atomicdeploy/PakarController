@@ -91,6 +91,18 @@ try{
   assert.equal(await page.evaluate(()=>calls.at(-1).settings.sequence_growth),4);
   await page.evaluate(()=>{state.minigame.mode='toggle';state.minigame.settings.mode='toggle';renderKeyGame()});
   assert.equal(await growth.isVisible(),false,'Simon-only growth control stays contextual');
+  const beforeMine=await page.evaluate(()=>calls.length);
+  await page.evaluate(()=>{
+    state.minigame.available_modes.splice(state.minigame.available_modes.findIndex(mode=>mode.id==='toggle'),0,{id:'mine-field',label:'Mine Field'});
+    state.minigame.mode='mine-field';Object.assign(state.minigame.settings,{mode:'mine-field',show_ms:1000,limit_ms:60000});renderKeyGame();
+  });
+  assert.equal(await page.evaluate(()=>calls.length),beforeMine,'Showing Mine Field never starts a game');
+  assert.equal(await page.locator('[data-mini-field-label=show_ms]').textContent(),'Pulse period (ms)');
+  const pulse=page.locator('[data-mini-form] [name=show_ms]');
+  assert.equal(await pulse.inputValue(),'1000');await pulse.fill('800');
+  await page.locator('[data-mini-form] [type=submit]').click();
+  assert.equal(await page.evaluate(()=>calls.at(-1).settings.show_ms),800);
+  assert.equal(await pulse.inputValue(),'800','Acknowledged Mine Field timing remains visible');
   await page.evaluate(()=>{state.minigame.ready=false;renderKeyGame()});
   assert.equal(await page.locator('[data-mini-mode]').isDisabled(),true);assert.equal(await box.isDisabled(),true);
   await page.evaluate(()=>{state.minigame.ready=true;state.boot_id='next';renderKeyGame()});

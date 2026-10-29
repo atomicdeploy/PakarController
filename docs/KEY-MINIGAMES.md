@@ -80,6 +80,7 @@ changes; the previously built paired AVR candidate remains separately pending.
 | color-order | Press colors in palette order; mistakes subtract time | 60 s |
 | switch-pattern | Toggle to match cyan indicators; optional hard latch | 60 s |
 | reaction-chase | Catch the moving target within its window | 60 s |
+| mine-field | Toggle cyan/yellow until every enabled box has the same color | 60 s |
 | toggle | Toggle, latch or momentary button state | None |
 
 Press-to-win is the initial default. Configure/reset enters Ready. Puzzles require
@@ -88,6 +89,55 @@ press-to-win/toggle may start on their first input. Pause preserves time.
 Matching pairs needs two or more boxes: an odd enabled count sits the highest box
 out without changing its saved enabled setting. Reaction times measure ESP receipt
 time, not independently measured electrical latency.
+
+### Mine Field
+
+Select **Mine Field**, then **Start**. Both groups in each enabled box show the
+same randomly chosen color: pulsing cyan (`#00FFFF`) or steady yellow
+(`#FFFF00`). At least two boxes are required; the initial arrangement is always
+mixed so the round cannot begin already solved. A press toggles only that box,
+and either all-cyan or all-yellow wins. Disabled boxes stay out of the puzzle.
+
+The existing `limit_ms` setting defaults to 60 seconds (zero disables the
+deadline); `show_ms` is shown as **Pulse period** for this mode and defaults to
+1000 ms, bounded to 100–10000 ms. Cyan's shared pulse varies between 255 and 150
+gain, never Off. Deadline warning flashes affect the indicators; on timeout,
+both groups of every participating box flash red. Success uses the shared
+green/rainbow result and configured winner melody. `elapsed_ms` stops at the
+winning press for shortest-time comparisons; no synthetic network roundtrip is
+included in that board-measured elapsed time.
+
+Mine Field uses the existing explicit configure/control/input commands across
+USB, WebSocket, MQTT and HTTP. Example configure payload:
+
+```json
+{"command":"minigame-configure","settings":{"mode":"mine-field","limit_ms":60000,"show_ms":1000}}
+```
+
+Then send `minigame-control` with `action:"start"` and `minigame-input` with a
+1-based `key` and `action:"tap"` using the normal peer-bound command envelope.
+Reads/opening panels never start it. The `mine_field` status object reports
+cyan/yellow masks, RGB values and pulse period beside the existing live frame,
+phase, timer and output rules. `latched_mask` represents yellow boxes; output
+rules for latched keys, round success or failure can use the same state.
+
+Build inclusion is controlled by `PAKAR_GAME_MINE_FIELD` (default On) and the
+canonical `-KeyMiniGames` list. Old numeric mode IDs are preserved; Mine Field
+is appended internally and displayed before Toggle, which remains last.
+Table-role builds omit it with the other key games. No existing instance is
+switched to this mode or has its colors/timing migrated automatically.
+
+Source verification: all-mask/dual-solution engine, press-only exclusion,
+persistent settings, both baked board roles, production dispatch and isolated
+Web controls pass. The first-wins S3 candidate also compiles with both LED
+backends and the existing device profile: application file 2,425,200 bytes,
+SHA-256 `32f1a454eced20fa1efaf9916e17a72ef843aab52f98206c2e84466a78476122`.
+No device installation, mode selection or physical game acceptance is claimed.
+The production-hold APK candidate is 64,419,469 bytes, SHA-256
+`8c8e150a8903d494c6e0bf8e8fb1062f4896954b2333e69190c8206b8b09c771`.
+Flutter's analyzer and 22 game tests, native's 13 focused compiled tests and the
+isolated Web/Mine Field settings interaction pass. A new native production
+executable was not packaged; no running client was replaced.
 
 ## Power-up and seven-segment feedback
 

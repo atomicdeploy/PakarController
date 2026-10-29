@@ -25,13 +25,23 @@ String miniJson(){
       snprintf(hex,sizeof(hex),"#%06lX",static_cast<unsigned long>(G::color(target)));box["target_hex"]=hex;
     }
   }
+  if(miniGame.config().mode==G::MineField){
+    auto mine=d["mine_field"].to<JsonObject>();
+    const uint16_t yellow=v.latchedMask&v.participatingMask;
+    mine["yellow_mask"]=yellow;mine["cyan_mask"]=v.participatingMask^yellow;
+    mine["yellow_rgb"]=0xffff00;mine["cyan_rgb"]=0x00ffff;
+    mine["pulsing_color"]="cyan";mine["pulse_period_ms"]=miniGame.config().showMs;
+  }
   d["arpeggio_supported"]=avrOnline&&avrAtomicAudio;
   d["timer_beeps_supported"]=avrOnline&&avrIdleAudio;
   if(v.phase==G::Feedback)d["feedback_correct"]=miniGame.feedbackCorrect();
   auto modes=d["available_modes"].to<JsonArray>();
   constexpr const char *labels[]={"Press to win","Illuminated target","Color pattern","Repeat sequence","Matching pairs",
-    "Clear all","Color order","Switch pattern","Reaction chase","Toggle"};
-  for(uint8_t i=0;i<G::ModeCount;++i)if(G::available(G::Mode(i))){auto mode=modes.add<JsonObject>();mode["id"]=G::name(G::Mode(i));mode["label"]=labels[i];mode["description"]=G::description(G::Mode(i));}
+    "Clear all","Color order","Switch pattern","Reaction chase","Toggle","Mine Field"};
+  // Stable internal IDs; Toggle remains the last item in the user-facing list.
+  constexpr G::Mode order[]={G::PressToWin,G::Illuminated,G::ColorMatch,G::Simon,G::MemoryPairs,
+    G::ClearAll,G::ColorOrder,G::SwitchPattern,G::ReactionChase,G::MineField,G::Toggle};
+  for(const auto id:order)if(G::available(id)){auto mode=modes.add<JsonObject>();mode["id"]=G::name(id);mode["label"]=labels[id];mode["description"]=G::description(id);}
   String result;serializeJson(d,result);return result;
 }
 void miniInput(uint8_t key,bool down,bool physical,uint32_t now){

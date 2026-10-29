@@ -10,9 +10,15 @@ for(const body of scriptBodies(source))new vm.Script(body);
 assert.deepEqual(scriptBodies('<SCRIPT>const upper=1;</SCRIPT >'), ['const upper=1;']);
 assert.deepEqual(scriptBodies('<script>const checked=1;</script\t\n ignored>'), ['const checked=1;']);
 const controls=source.split('// BEGIN KEY GAME PRESS CONTROLS')[1].split('// END KEY GAME PRESS CONTROLS')[0];
+const settingsUi=source.split('// BEGIN MINIGAME SETTINGS')[1].split('// END MINIGAME SETTINGS')[0];
+const settingsContext=vm.createContext({});vm.runInContext(settingsUi,settingsContext);
+assert.equal(vm.runInContext("miniGameFieldLabel('show_ms','mine-field')",settingsContext),'Pulse period (ms)');
+assert.equal(vm.runInContext("miniGameFieldLabel('show_ms','simon')",settingsContext),'Show time (ms)');
+assert.equal(vm.runInContext("miniModeDetails['mine-field'][0]",settingsContext),'controls');
+assert.match(vm.runInContext("miniModeDetails['mine-field'][1]",settingsContext),/all cyan or all yellow/);
 function fixture(){
   const calls=[],peer={known:true,role:'first-wins',has:()=>true};
-  const game={available_modes:[{id:'press-to-win',label:'First press wins'},{id:'toggle',label:'Toggle'}],mode:'press-to-win',phase:'ready',revision:4,ready:true,participating_mask:3,settings:{mode:'press-to-win',toggle_kind:'toggle'}};
+  const game={available_modes:[{id:'press-to-win',label:'First press wins'},{id:'mine-field',label:'Mine Field'},{id:'toggle',label:'Toggle'}],mode:'press-to-win',phase:'ready',revision:4,ready:true,participating_mask:3,settings:{mode:'press-to-win',toggle_kind:'toggle'}};
   const context=vm.createContext({state:{board_id:'board',boot_id:'boot',minigame:game,key_game:{enabled_mask:3}},currentPeer:()=>peer,peerHttp:{writable:()=>true},renderKeyGame(){},post:async(path,data)=>{calls.push({path,...data});return true}});
   vm.runInContext(controls,context);const run=code=>vm.runInContext(code,context);
   run('syncKeyGameOwner()');return {context,game,peer,calls,run,arm:()=>run('keyGameControl.readOnly=false')};
@@ -73,6 +79,9 @@ await transport.send('/api/minigame/configure',{settings:{intro_enabled:false,co
 assert.equal(packet.settings.intro_enabled,false,'Explicit Color Pattern no-intro choice is transmitted');
 await transport.send('/api/minigame/configure',{settings:{rounds:3,sequence_length:3,sequence_growth:2,show_ms:300,gap_ms:120}});
 assert.equal(packet.settings.sequence_growth,2);assert.equal(packet.settings.rounds,3);
+await transport.send('/api/minigame/configure',{settings:{mode:'mine-field',limit_ms:60000,show_ms:1000}});
+assert.equal(packet.command,'minigame-configure');assert.equal(packet.settings.mode,'mine-field');
+assert.equal(packet.settings.limit_ms,60000);assert.equal(packet.settings.show_ms,1000);
 await transport.send('/api/minigame/input',{key:'2',action:'down'});assert.equal(packet.key,2);
 const before=requests;
 for(const [path,data] of [

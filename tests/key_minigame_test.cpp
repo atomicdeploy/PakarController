@@ -221,6 +221,66 @@ static void toggle(){
   c.toggleKind=Game::Latch;configure(g,c);tap(g,1,10);tap(g,1,20);assert(g.outputMask()==1);
   g.stop(30);assert(g.outputMask()==0);
 }
+static void mineField(){
+  static_assert(Game::Toggle==9&&Game::MineField==10,"Preserve existing mode IDs");
+  auto fresh=Config::defaults(Game::MineField);
+  assert(fresh.limitMs==60000&&fresh.showMs==1000&&fresh.valid());
+  Game::Mode parsed;assert(Game::parse("mine-field",parsed)&&parsed==Game::MineField);
+  // Both uniform colors are accepted for every supported enabled-box layout.
+  for(uint16_t mask=1;mask<=511;++mask){
+    if(Game::count(mask)<2){fresh.enabledMask=mask;assert(!fresh.valid());continue;}
+    for(uint8_t seed=1;seed<=4;++seed)for(bool yellow:{false,true}){
+      Game g;auto c=config(Game::MineField,mask);c.outputs[0]={Game::RoundSuccess,0};
+      c.outputs[1]={Game::RoundFailure,0};c.outputs[2]={Game::KeyLatched,1};
+      configure(g,c);assert(!g.input(1,true,1)); // Opening/configuring never starts.
+      assert(g.start(100,seed)&&g.phase()==Game::Input);
+      const auto initial=g.view();assert(initial.elapsedMs==0&&initial.timed);
+      assert(initial.latchedMask&&initial.latchedMask!=mask); // Never already solved.
+      assert(initial.participatingMask==mask&&!(initial.latchedMask&~mask));
+      Game::Style styles[18];g.styles(styles);
+      const auto n=Game::count(mask),nYellow=Game::count(initial.latchedMask);
+      assert(initial.progress==(nYellow>n-nYellow?nYellow:n-nYellow));
+      for(uint8_t key=1;key<=9;++key){
+        const auto &button=styles[(key-1)*2],&indicator=styles[(key-1)*2+1];
+        if(!(mask&Game::keyBit(key))){assert(!button.rgb&&!indicator.rgb);continue;}
+        const bool on=initial.latchedMask&Game::keyBit(key);
+        assert(button.rgb==(on?0xffff00:0x00ffff)&&button.rgb==indicator.rgb);
+        assert(button.effect==(on?Game::Presentation::Solid:Game::Presentation::Pulse));
+        assert(button.effect==indicator.effect&&button.periodMs==1000&&indicator.periodMs==1000);
+      }
+      assert(BoardCore::StateMotion::pulse(0,1000)==255);
+      assert(BoardCore::StateMotion::pulse(500,1000)==150); // Low, never Off.
+      uint32_t now=101;
+      for(uint8_t key=1;key<=9&&g.running();++key)if(mask&Game::keyBit(key)){
+        if(bool(g.view().latchedMask&Game::keyBit(key))==yellow)continue;
+        const auto before=g.view().latchedMask;
+        assert(g.input(key,true,now));assert(!g.input(key,true,now));
+        assert(g.view().latchedMask==(before^Game::keyBit(key)));
+        assert(g.takeNote()==Game::frequency(yellow?3:7)&&g.takeNote()==0);
+        assert(g.input(key,false,now+1));now+=10;
+      }
+      assert(g.phase()==Game::Success&&g.view().latchedMask==(yellow?mask:0));
+      assert(g.view().progress==n&&!g.view().heldMask&&(g.outputMask()&3)==1);
+      const auto elapsed=g.view().elapsedMs;assert(elapsed>0&&elapsed<100);
+      g.tick(50000);assert(g.view().elapsedMs==elapsed); // Result remains measured.
+      g.reset(50001);assert(g.phase()==Game::Ready&&!g.view().elapsedMs);
+    }
+  }
+  Game g;auto c=config(Game::MineField,0x105);c.limitMs=1000;c.warningMs=700;c.urgentMs=200;c.showMs=600;
+  c.outputs[0]={Game::RoundFailure,0};configure(g,c,0xffffff00);assert(g.start(0xffffff00,3));
+  g.tick(0x90);assert(g.view().elapsedMs==400&&g.view().warning==1);
+  assert(g.pause(0x90));g.tick(10000);assert(g.view().elapsedMs==400);
+  assert(g.resume(10000));g.tick(10400);assert(g.view().warning==2);
+  g.tick(10600);assert(g.phase()==Game::Timeout&&g.outputMask()==1);
+  const auto before=g.view().latchedMask;assert(!g.input(1,true,10601)&&g.view().latchedMask==before);
+  Game::Style styles[18];g.styles(styles);
+  for(uint8_t key:{1,3,9})for(uint8_t group:{0,1}){
+    const auto &style=styles[(key-1)*2+group];
+    assert(style.rgb==0xff0000&&style.effect==Game::Presentation::Blink);
+  }
+  c.limitMs=0;configure(g,c);assert(g.start(0,11));g.tick(86400000);
+  assert(g.phase()==Game::Input&&!g.view().timed);g.stop(86400001);assert(g.outputMask()==0);
+}
 static void introductions(){
   const Game::Mode modes[]={Game::ColorMatch,Game::MemoryPairs};
   for(const auto mode:modes){
@@ -331,9 +391,11 @@ int main(){
 #ifdef TEST_EXCLUDED_MODES
   static_assert(Game::compiledMask()==1,"Only press-to-win should be compiled");
   Game g;auto c=config(Game::Toggle);assert(!g.configure(c,0));
+  Game::Mode excluded;assert(!Game::parse("mine-field",excluded));
 #else
-  static_assert(Game::compiledMask()==1023,"All games included by default");
+  static_assert(Game::compiledMask()==2047,"All games included by default");
   basics();timers();reaction();colorMatch();paletteAndMatchingDiagnostics();simon();simonProgression();memory();clearOrderSwitch();toggle();introductions();boundedColorIntroduction();wrongPairFeedback();successPresentation();
+  mineField();
   // Deterministic bounded soak with arbitrary input/timer sequences.
   for(uint8_t m=0;m<Game::ModeCount;++m){Game g;auto c=config(Game::Mode(m),511);c.paletteSize=9;
     configure(g,c);g.start(0,42);for(uint32_t i=1;i<15000;++i){g.tick(i*17);g.input(i%9+1,i%2,i*17);

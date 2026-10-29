@@ -11452,3 +11452,41 @@ stub deliberately preserves old hue-clock encoding and observes producer
 arguments only; it is not a claim of real HSV conversion or optical quality.
 Saved settings, brightness, correction rules and channel calibration remain
 untouched. Physical comparison and deployment remain separate pending gates.
+
+## Mine Field shared minigame (2026-10-29)
+
+Consult games-streaming and the exact Puzzles.ino donor-audit row; reread all
+886 unchanged sketch lines and the current KeyMiniGame/HostPresentation/
+StateMotion sources. Adapt the existing phase/countdown/output owner, not the
+donor's blocking welcome waits, fixed puzzle code or a separate game engine.
+Add Mine Field with seeded cyan/yellow initial states and at least one of each,
+edge-deduplicated per-box toggles, either-color uniform success, frozen elapsed
+result, shared high/low pulse and red timeout rendering. Shared countdown,
+TM1637, finite color notes, configured result cue and output predicates remain
+the only hardware owners. Preserve old enum IDs and keep Toggle last in the
+advertised catalog. The new inclusion flag is On by default for key builds and
+Off with the other key modes in table builds; no current settings are changed.
+
+Reuse existing board-catalog menus, details/icons, typed drafts, explicit Save
+and WS-first peer-bound controls in Flutter/Rust/Web. The existing show_ms field
+is labeled Pulse period contextually; no API generation, synthetic per-frame
+client animation or parallel Web app is introduced. Native's imported selector
+keeps the same hit geometry; only explicit mode selection applies new defaults.
+
+Canonical core/excluded-mode/settings tests pass, including all 502 enabled-box
+masks with two or more boxes, both solutions, sparse layouts, duplicate edges,
+countdown rollover/pause/timeout, output rules and persisted custom timings.
+Flutter analyzer/22 focused game tests, native 13 focused tests, actual extracted
+production dispatch integration, Web typed WS admission and isolated mobile
+browser interaction pass. The first browser invocation lacked NODE_PATH;
+reuse the documented bundled Playwright runtime via load_workspace_dependencies
+and NODE_PATH, with no package install, before rerunning successfully. Canonical
+Web full/onboard builds share the same source revision. Re-review unchanged PU
+AsyncOTA.cpp and root route registration plus actual generated target anchors,
+then rebind only the two target hashes, preserving the 50-route guard.
+Device installation and optical/acoustic gameplay acceptance remain pending;
+no board, active tablet or app process was changed in this implementation pass.
+The final result controls show Winning time with millisecond precision for
+Mine Field success instead of its leftover countdown; other modes are unchanged.
+The S3 firmware and production-hold APK build pass; native evidence is the
+focused compiled test binary, not a newly packaged production executable.

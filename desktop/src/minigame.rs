@@ -72,6 +72,10 @@ fn mode_visual(id: &str) -> (&'static str, &'static str) {
             icons::LIGHTNING,
             "Catch the moving light inside its response window",
         ),
+        "mine-field" => (
+            icons::DIAMOND,
+            "Toggle boxes to all cyan or all yellow; fastest time wins",
+        ),
         "toggle" => (
             icons::TOGGLE_RIGHT,
             "Control latched or momentary outputs without a timer",
@@ -342,18 +346,34 @@ pub fn settings_controls(ui: &mut egui::Ui, status: &DeviceStatus, writable: boo
 pub fn shows_elapsed(mode: &str) -> bool {
     !matches!(mode, "press-to-win" | "toggle")
 }
+fn winning_elapsed_label(game: &Value) -> Option<String> {
+    if game["mode"] != "mine-field" || game["phase"] != "success" {
+        return None;
+    }
+    game["elapsed_ms"]
+        .as_u64()
+        .map(|ms| format!("Winning time: {}.{:03} s", ms / 1000, ms % 1000))
+}
 fn setting_visible(mode: &str, field: &str, timed: bool) -> bool {
     match field {
         "limit_ms" | "warning_ms" | "urgent_ms" => timed,
         "penalty_ms" => timed && mode == "color-order",
         "window_ms" | "fixed_target" => matches!(mode, "illuminated" | "reaction-chase"),
-        "show_ms" | "gap_ms" | "sequence_length" | "sequence_growth" => mode == "simon",
+        "show_ms" => matches!(mode, "simon" | "mine-field"),
+        "gap_ms" | "sequence_length" | "sequence_growth" => mode == "simon",
         "intro_ms" => matches!(mode, "color-match" | "memory-pairs"),
         "preview_ms" | "mismatch_ms" => mode == "memory-pairs",
         "rounds" => matches!(mode, "illuminated" | "reaction-chase" | "simon"),
         "palette_size" => matches!(mode, "color-match" | "memory-pairs" | "color-order"),
         "feedback_ms" => !matches!(mode, "press-to-win" | "toggle"),
         _ => true,
+    }
+}
+fn setting_caption(mode: &str, field: &str) -> Option<&'static str> {
+    if mode == "mine-field" && field == "show_ms" {
+        Some("Pulse period")
+    } else {
+        bounds(field).map(|(_, _, label)| label)
     }
 }
 // Explicit picker changes only; rendering or reopening the current mode must
@@ -383,6 +403,9 @@ fn select_mode(draft: &mut Value, selected: &str) {
         if draft.get("sequence_growth").is_some() {
             draft["sequence_growth"] = json!(2);
         }
+    }
+    if selected == "mine-field" && draft.get("show_ms").is_some() {
+        draft["show_ms"] = json!(1000);
     }
     draft["mode"] = json!(selected);
 }
@@ -466,7 +489,11 @@ fn panel(
                         ui.label(format!("Target · Box {target}"));
                     }
                 });
-                if game["timed"] == true {
+                let winning_time = winning_elapsed_label(game);
+                if let Some(label) = &winning_time {
+                    ui.strong(format!("{}  {label}", icons::CLOCK));
+                }
+                if game["timed"] == true && winning_time.is_none() {
                     if let (Some(remaining), Some(limit)) = (
                         game["remaining_ms"].as_u64(),
                         game["settings"]["limit_ms"].as_u64(),
@@ -500,7 +527,8 @@ fn panel(
                             ui.weak(format!("{label} {n}"));
                         }
                     }
-                    if shows_elapsed(mode)
+                    if winning_time.is_none()
+                        && shows_elapsed(mode)
                         && let Some(ms) = game["elapsed_ms"].as_u64()
                     {
                         ui.weak(format!("Elapsed {}:{:02}", ms / 60000, ms / 1000 % 60));
@@ -687,7 +715,8 @@ fn panel(
                             continue;
                         }
                         if let Some(mut number) = draft.edited[field].as_u64() {
-                            let (min, max, label) = bounds(field).unwrap();
+                            let (min, max, _) = bounds(field).unwrap();
+                            let label = setting_caption(&selected, field).unwrap();
                             dialog::setting_row(ui, icons::SLIDERS_HORIZONTAL, label, None, |ui| {
                                 let suffix = if field.ends_with("_ms") { " ms" } else { "" };
                                 if ui
@@ -870,17 +899,94 @@ fn panel(
 mod tests {
     use super::*;
     #[test]
+    fn minigame_mine_field_success_reports_precise_elapsed_not_remaining() {
+        let mut s = status();
+        s.minigame["mode"] = json!("mine-field");
+        s.minigame["phase"] = json!("success");
+        s.minigame["timed"] = json!(true);
+        s.minigame["elapsed_ms"] = json!(1234);
+        s.minigame["remaining_ms"] = json!(58766);
+        s.minigame["settings"]["limit_ms"] = json!(60000);
+        assert_eq!(
+            winning_elapsed_label(&s.minigame).as_deref(),
+            Some("Winning time: 1.234 s")
+        );
+        let ctx = egui::Context::default();
+        let _ = ctx.run_ui(Default::default(), |ui| {
+            assert!(
+                controls(ui, &s, true).is_empty(),
+                "Viewing success must not start/reset a round"
+            );
+        });
+        s.minigame["phase"] = json!("input");
+        assert!(winning_elapsed_label(&s.minigame).is_none());
+        s.minigame["phase"] = json!("success");
+        s.minigame["mode"] = json!("simon");
+        assert!(winning_elapsed_label(&s.minigame).is_none());
+    }
+    #[test]
+    fn minigame_mine_field_preserves_board_catalog_and_contextual_pulse_settings() {
+        let mut s = status();
+        s.minigame["available_modes"] = json!([
+            {"id":"reaction-chase","label":"Reaction chase"},
+            {"id":"mine-field","label":"Mine Field"},
+            {"id":"toggle","label":"Toggle"}
+        ]);
+        assert_eq!(
+            modes(&s.minigame),
+            vec![
+                ("reaction-chase", "Reaction chase"),
+                ("mine-field", "Mine Field"),
+                ("toggle", "Toggle")
+            ]
+        );
+        assert!(
+            settings(
+                r#"{"mode":"mine-field","limit_ms":60000,"show_ms":1000}"#,
+                &s.minigame
+            )
+            .is_ok()
+        );
+        assert!(settings(r#"{"mode":"mine-field"}"#, &status().minigame).is_err());
+        assert_eq!(mode_visual("mine-field").0, icons::DIAMOND);
+        assert!(
+            mode_visual("mine-field")
+                .1
+                .contains("all cyan or all yellow")
+        );
+        assert!(setting_visible("mine-field", "show_ms", true));
+        assert!(!setting_visible("mine-field", "gap_ms", true));
+        assert_eq!(
+            setting_caption("mine-field", "show_ms"),
+            Some("Pulse period")
+        );
+        assert_eq!(setting_caption("simon", "show_ms"), Some("Show duration"));
+    }
+    #[test]
+    fn minigame_mine_field_defaults_apply_only_on_explicit_selection() {
+        let mut draft = json!({"mode":"simon","limit_ms":9000,"show_ms":300,
+            "outputs":[{"source":"winner","key":2}],"timer_beeps":false});
+        select_mode(&mut draft, "mine-field");
+        assert_eq!(draft["limit_ms"], json!(60000));
+        assert_eq!(draft["show_ms"], json!(1000));
+        assert_eq!(draft["outputs"], json!([{"source":"winner","key":2}]));
+        assert_eq!(draft["timer_beeps"], json!(false));
+        draft["show_ms"] = json!(1500);
+        let edited = draft.clone();
+        select_mode(&mut draft, "mine-field");
+        assert_eq!(
+            draft, edited,
+            "Rendering/reopening preserves the pulse draft"
+        );
+    }
+    #[test]
     fn minigame_simon_growth_is_bounded_and_visible_only_in_sequence_settings() {
         let s = status();
         for growth in [0, 2, 31] {
-            assert!(
-                settings(&json!({"sequence_growth":growth}).to_string(), &s.minigame).is_ok()
-            );
+            assert!(settings(&json!({"sequence_growth":growth}).to_string(), &s.minigame).is_ok());
         }
         for growth in [json!(-1), json!(32), json!(2.5), json!("2")] {
-            assert!(
-                settings(&json!({"sequence_growth":growth}).to_string(), &s.minigame).is_err()
-            );
+            assert!(settings(&json!({"sequence_growth":growth}).to_string(), &s.minigame).is_err());
         }
         assert_eq!(
             bounds("sequence_growth"),
@@ -919,7 +1025,10 @@ mod tests {
         assert_eq!(draft["limit_ms"], json!(0));
         assert_eq!(draft["outputs"], original["outputs"]);
         let mut earlier_board = original;
-        earlier_board.as_object_mut().unwrap().remove("sequence_growth");
+        earlier_board
+            .as_object_mut()
+            .unwrap()
+            .remove("sequence_growth");
         select_mode(&mut earlier_board, "simon");
         assert!(earlier_board.get("sequence_growth").is_none());
     }

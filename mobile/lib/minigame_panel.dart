@@ -191,11 +191,11 @@ class _MiniGamePanelState extends State<MiniGamePanel>
         : snapshot.phase == 'paused'
         ? 'resume'
         : 'start';
+    final winningTime =
+        snapshot.mode == 'mine-field' && snapshot.phase == 'success';
+    final remainingTime = snapshot.json['timed'] == true && !winningTime;
     final seconds =
-        snapshot.number(
-          snapshot.json['timed'] == true ? 'remaining_ms' : 'elapsed_ms',
-        ) /
-        1000;
+        snapshot.number(remainingTime ? 'remaining_ms' : 'elapsed_ms') / 1000;
     final phaseTone = snapshot.phase == 'success'
         ? const Color(0xff38d996)
         : snapshot.phase == 'failed' || snapshot.phase == 'timeout'
@@ -310,7 +310,9 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              snapshot.json['timed'] == true
+                              winningTime
+                                  ? Icons.emoji_events_outlined
+                                  : remainingTime
                                   ? Icons.timer_outlined
                                   : Icons.av_timer,
                               color: phaseTone,
@@ -319,7 +321,11 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                             const SizedBox(width: 9),
                             Flexible(
                               child: Text(
-                                '${snapshot.json['timed'] == true ? 'Remaining' : 'Elapsed'}: ${seconds.toStringAsFixed(1)} s',
+                                '${winningTime
+                                    ? 'Winning time'
+                                    : remainingTime
+                                    ? 'Remaining'
+                                    : 'Elapsed'}: ${seconds.toStringAsFixed(winningTime ? 3 : 1)} s',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.titleMedium
@@ -518,6 +524,7 @@ class _GameModeChoice extends StatelessWidget {
             'color-order' => Icons.sort_rounded,
             'switch-pattern' => Icons.grid_view_rounded,
             'reaction-chase' => Icons.bolt_rounded,
+            'mine-field' => Icons.diamond_outlined,
             'toggle' => Icons.toggle_on_outlined,
             _ => Icons.sports_esports_outlined,
           },
@@ -713,7 +720,11 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
                             enabled: !saving,
                             initialValue: '${draft[entry.key]}',
                             decoration: InputDecoration(
-                              labelText: labels[entry.key],
+                              labelText:
+                                  entry.key == 'show_ms' &&
+                                      draft['mode'] == 'mine-field'
+                                  ? 'Pulse period (ms)'
+                                  : labels[entry.key],
                             ),
                             keyboardType: TextInputType.number,
                             validator: (text) {

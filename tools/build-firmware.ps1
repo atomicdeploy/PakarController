@@ -7,8 +7,8 @@ param(
     [ValidateSet('both', 'avr', 'esp8266', 'esp32s3')] [string] $Target = 'both',
     [ValidateSet('table-selection','first-wins')] [string] $GameMode = 'table-selection',
     [ValidateRange(1, 511)] [int] $InitialKeyMask = 511,
-    [ValidateSet('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle')]
-    [string[]] $KeyMiniGames = @('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle'),
+    [ValidateSet('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','mine-field','toggle')]
+    [string[]] $KeyMiniGames = @('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','mine-field','toggle'),
     [ValidateSet('auto','enabled','disabled')] [string] $AvrAutomations = 'auto',
     [switch] $AvrRadio,
     [switch] $AvrLedDiagnostic,
@@ -254,7 +254,7 @@ foreach ($board in @('avr', 'esp8266', 'esp32s3')) {
         $ledProfile.Content += "#define PAKAR_NETWORK_ENABLED $(if($DisableNetworking){0}else{1})`n"
         $ledProfile.Content += "#define PAKAR_REMOTE_QUERY_UDP_ENABLED $(if($EnableUdpDiagnostics){1}else{0})`n"
         $ledProfile.Content += "#define PAKAR_BOARD_SNAKE $(if($BoardSnake){1}else{0})`n"
-        foreach($miniMode in @('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','toggle')){
+        foreach($miniMode in @('press-to-win','illuminated','color-match','simon','memory-pairs','clear-all','color-order','switch-pattern','reaction-chase','mine-field','toggle')){
             $miniFlag=$miniMode.Replace('-','_').ToUpperInvariant()
             $ledProfile.Content += "#define PAKAR_GAME_$miniFlag $(if($GameMode -eq 'first-wins' -and $miniMode -in $KeyMiniGames){1}else{0})`n"
         }

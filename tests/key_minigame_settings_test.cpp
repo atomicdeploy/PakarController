@@ -69,5 +69,17 @@ int main(){
   assert(legacy.value.showMs==700&&legacy.value.gapMs==300&&legacy.value.feedbackMs==320&&files.writes==legacyWrites);
   assert(legacy.save(files));KeyMiniGameSettings kept;
   assert(kept.load(files)&&kept.value.sequenceGrowth==1&&kept.value.sequenceLength==8);
+  // Mine Field reuses the existing persisted time limit/pulse period and keeps
+  // relay wiring plus enabled boxes when explicitly changing modes.
+  KeyMiniGameSettings mine;mine.value.enabledMask=0x105;mine.value.outputs[0]={G::KeyHeld,3};
+  assert(patch(mine,R"({"mode":"mine-field"})"));
+  assert(mine.value.mode==G::MineField&&mine.value.limitMs==60000&&mine.value.showMs==1000);
+  assert(mine.value.enabledMask==0x105&&mine.value.outputs[0].key==3);
+  assert(patch(mine,R"({"limit_ms":45000,"show_ms":700})")&&mine.save(files));
+  const auto mineWrites=files.writes;KeyMiniGameSettings mineSaved;mineSaved.value.enabledMask=0x105;
+  assert(mineSaved.load(files)&&mineSaved.value.mode==G::MineField&&mineSaved.value.limitMs==45000&&mineSaved.value.showMs==700);
+  assert(mineSaved.value.outputs[0].source==G::KeyHeld&&mineSaved.value.outputs[0].key==3&&files.writes==mineWrites);
+  assert(!patch(mineSaved,R"({"show_ms":99})")&&mineSaved.value.showMs==700);
+  assert(patch(mineSaved,R"({"mode":"press-to-win"})")&&mineSaved.value.limitMs==0);
   puts("Actual minigame settings: defaults, typed atomic patches, persistence/readback, old-file policy, unchanged writes and failed rename passed.");
 }
