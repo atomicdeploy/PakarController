@@ -291,7 +291,7 @@ clean analyzer results. Urboot backup exports now bind the exact completed
 request and boot rather than substituting unrelated ISP files.
 
 The consolidated ESP candidate includes the Press-to-win audio-owner fix and
-Color Pattern palette/pacing changes below: 2,424,000 bytes, SHA-256
+Color Pattern palette/pacing changes described here: 2,424,000 bytes, SHA-256
 `b5252660a9487bb209987bc0a9afa45d70c16b76c57f2ab3a92ed3ed63405206`,
 MD5 `5e4fe168943a03f5501b75705f6db705`. Both GPIO/RMT drivers, Ethernet and the
 existing verified ISP profile remain included; BLE stays disabled. Core,
@@ -305,3 +305,13 @@ returned to the Game page before a maintenance job was created (`job_id=0`).
 The game also changed through Ready/Success. No uncertain write was repeated;
 coordination with the person using the tablet is pending before resuming its
 firmware-uploader interaction. The attached phone was left untouched.
+
+Subsequent fresh capture found the tablet on an unsecured swipe lock; the
+canonical Android helper woke and dismissed it once. No PIN was entered. Its
+Game-mode picker was open. A bounded return to maintenance then stopped when
+ASUS SSH at localhost:8022 refused three consecutive connection attempts.
+The consolidated ESP candidate remains staged on ASUS and in Android Downloads
+as `keycontroller-color-melody-esp.bin`; it has **not** been applied. The AVR
+job was still zero at the last successful read. Restore ASUS access to resume
+actual tablet-led deployment; neither physical sound nor six-box matching is
+accepted from these candidate tests.
