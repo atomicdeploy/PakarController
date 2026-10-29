@@ -12,13 +12,36 @@ String miniJson(){
   d["winner"]=v.winner;d["target"]=v.target;d["round"]=v.round;d["progress"]=v.progress;
   d["mistakes"]=v.mistakes;d["warning"]=v.warning;d["last_reaction_ms"]=v.lastReactionMs;d["best_reaction_ms"]=v.bestReactionMs;
   d["remote_hold_lease_ms"]=5000;d["outputs_owned"]=avrMiniOwned;miniSettings.json(d["settings"].to<JsonObject>());
-  if(miniGame.config().mode==G::ColorMatch)d["matching_mask"]=miniGame.matchingMask();
+  if(miniGame.config().mode==G::ColorMatch){
+    d["matching_mask"]=miniGame.matchingMask();d["intro_step_ms"]=miniGame.introStepMs();
+    auto boxes=d["color_match"].to<JsonArray>();
+    for(uint8_t key=1;key<=9;++key){uint8_t player,target;
+      if(!miniGame.colorMatchValues(key,player,target))continue;
+      auto box=boxes.add<JsonObject>();box["key"]=key;box["matched"]=player==target;
+      box["player_palette"]=player+1;box["target_palette"]=target+1;
+      box["player_rgb"]=G::color(player);box["target_rgb"]=G::color(target);
+      box["player_color"]=G::colorName(player);box["target_color"]=G::colorName(target);
+      char hex[8];snprintf(hex,sizeof(hex),"#%06lX",static_cast<unsigned long>(G::color(player)));box["player_hex"]=hex;
+      snprintf(hex,sizeof(hex),"#%06lX",static_cast<unsigned long>(G::color(target)));box["target_hex"]=hex;
+    }
+  }
+  if(miniGame.config().mode==G::MineField){
+    auto mine=d["mine_field"].to<JsonObject>();
+    const uint16_t yellow=v.latchedMask&v.participatingMask;
+    mine["yellow_mask"]=yellow;mine["cyan_mask"]=v.participatingMask^yellow;
+    mine["yellow_rgb"]=0xffff00;mine["cyan_rgb"]=0x00ffff;
+    mine["pulsing_color"]="cyan";mine["pulse_period_ms"]=miniGame.config().showMs;
+  }
   d["arpeggio_supported"]=avrOnline&&avrAtomicAudio;
+  d["timer_beeps_supported"]=avrOnline&&avrIdleAudio;
   if(v.phase==G::Feedback)d["feedback_correct"]=miniGame.feedbackCorrect();
   auto modes=d["available_modes"].to<JsonArray>();
   constexpr const char *labels[]={"Press to win","Illuminated target","Color pattern","Repeat sequence","Matching pairs",
-    "Clear all","Color order","Switch pattern","Reaction chase","Toggle"};
-  for(uint8_t i=0;i<G::ModeCount;++i)if(G::available(G::Mode(i))){auto mode=modes.add<JsonObject>();mode["id"]=G::name(G::Mode(i));mode["label"]=labels[i];mode["description"]=G::description(G::Mode(i));}
+    "Clear all","Color order","Switch pattern","Reaction chase","Toggle","Mine Field"};
+  // Stable internal IDs; Toggle remains the last item in the user-facing list.
+  constexpr G::Mode order[]={G::PressToWin,G::Illuminated,G::ColorMatch,G::Simon,G::MemoryPairs,
+    G::ClearAll,G::ColorOrder,G::SwitchPattern,G::ReactionChase,G::MineField,G::Toggle};
+  for(const auto id:order)if(G::available(id)){auto mode=modes.add<JsonObject>();mode["id"]=G::name(id);mode["label"]=labels[id];mode["description"]=G::description(id);}
   String result;serializeJson(d,result);return result;
 }
 void miniInput(uint8_t key,bool down,bool physical,uint32_t now){
@@ -38,7 +61,7 @@ void miniInputFence(uint32_t now){
   if(miniResumeAfterFence)miniGame.pause(now);
   miniFenceAt=now;keyMaskApplied=false;keyMaskPending=true;keyMaskSentAt=0;
 }
-void miniReset(uint32_t now){miniGame.reset(now);miniInputFence(now);winner=0;grid.resetWhite();gameAutoResetArmed=false;keyObservationPending=true;}
+void miniReset(uint32_t now){miniBootPending=false;miniGame.reset(now);miniInputFence(now);winner=0;grid.resetWhite();gameAutoResetArmed=false;keyObservationPending=true;}
 bool miniCommand(JsonObjectConst request,String &result){
   using G=BoardCore::KeyMiniGame;
   if(!miniReady()){result=F("minigame_avr_ownership_not_ready");return false;}
@@ -54,7 +77,7 @@ bool miniCommand(JsonObjectConst request,String &result){
     if(!pause){result=F("led_flash_guard_busy");return false;}
 #endif
     if(!next.save(LittleFS)){result=F("minigame_settings_not_saved");return false;}
-    miniSettings=next;miniGame.configure(next.value,now);miniInputFence(now);winner=0;grid.resetWhite();
+    miniBootPending=false;miniSettings=next;miniGame.configure(next.value,now);miniInputFence(now);winner=0;grid.resetWhite();
   }else if(command=="minigame-control"){
     const String action=request["action"]|"";
     if(action=="start"){
@@ -67,6 +90,7 @@ bool miniCommand(JsonObjectConst request,String &result){
     else if(action=="pause"){if(!miniGame.pause(now)){result=F("game_not_running");return false;}}
     else if(action=="resume"){if(!miniGame.resume(now)){result=F("game_not_paused");return false;}}
     else{result=F("unknown_game_action");return false;}
+    miniBootPending=false;
   }else if(command=="minigame-input"){
     if(!request["key"].is<uint8_t>()){result=F("invalid_key");return false;}
     const uint8_t key=request["key"];const String action=request["action"]|"tap";
@@ -86,14 +110,34 @@ bool miniCommand(JsonObjectConst request,String &result){
 }
 void serviceMiniGame(uint32_t now){
   using G=BoardCore::KeyMiniGame;
+  static G::Phase audioPhase=G::Ready;static G::Mode audioMode=G::ModeCount;
+  static uint16_t audioEpoch=0;static uint32_t audioPhaseAt=0,successAt=0;
+  static bool successCue=false;static uint8_t resultCue=BoardCore::AudioCues::kSilent;
+  // Deferred feedback belongs to one game/input epoch, not merely a phase.
+  // Two different rounds may both report Success without an intervening tick;
+  // an old generic cue must never replace first-wins' synchronized timeline.
+  if(audioMode!=miniGame.config().mode||audioEpoch!=miniEpoch){
+    audioMode=miniGame.config().mode;audioEpoch=miniEpoch;
+    successCue=false;audioPhase=G::Paused;
+  }
   if(miniResumeAfterFence&&uint32_t(now-miniFenceAt)>2000){miniResumeAfterFence=false;miniFenceNote=0;}
   if(!miniReady()){
+    successCue=false;audioPhase=miniGame.phase();audioPhaseAt=miniGame.presentationAt(); // No interrupted feedback replay.
+    miniTimerFeedback.update(false,0,0,false,false);
     if(miniGame.running())miniGame.pause(now);
     for(uint8_t k=1;k<=9;++k){
       if(miniRemoteHeld&G::keyBit(k))miniInput(k,false,false,now);
       if(miniPhysicalHeld&G::keyBit(k))miniInput(k,false,true,now);
     }
     miniLayer.enabled=false;return; // Explicit resume after interrupted input ownership.
+  }
+  // One boot-only admission, after AVR input ownership is acknowledged. A
+  // later disconnect never restarts a round. Press-to-win stays Ready/white
+  // until the first edge, so its optional timer does not run before a player.
+  if(miniBootPending){miniBootPending=false;
+    if(miniGame.phase()==G::Ready&&miniGame.config().mode!=G::PressToWin&&miniGame.config().mode!=G::Toggle){
+      miniGame.start(now,uint32_t(micros())^now);miniInputFence(now);return;
+    }
   }
   if(miniResumeAfterFence){miniResumeAfterFence=false;miniGame.resume(now);}
   for(uint8_t k=1;k<=9;++k)if((miniRemoteHeld&G::keyBit(k))&&uint32_t(now-miniRemoteAt[k-1])>=5000)
@@ -112,8 +156,13 @@ void serviceMiniGame(uint32_t now){
   if(revision!=v.revision||second!=lastSecond){revision=v.revision;lastSecond=second;
     keyObservationPending=true;grid.presentationChanged();}
   const uint16_t tone=miniFenceNote?miniFenceNote:miniGame.takeNote();miniFenceNote=0;
-  static G::Phase audioPhase=G::Ready;static uint32_t successAt=0;static bool successCue=false;static uint8_t resultCue=BoardCore::AudioCues::kSilent;
-  if(audioPhase!=v.phase){audioPhase=v.phase;
+  const auto timerCue=miniTimerFeedback.update(miniGame.running()&&v.timed,
+    v.elapsedMs,v.remainingMs,miniSettings.timerBeeps,miniSettings.timerAlternateTones);
+  if(miniGame.config().mode==G::PressToWin)successCue=false;
+  // A new round-local feedback presentation can have the same phase as the
+  // previous one when several input edges arrive between service passes.
+  if(audioPhase!=v.phase||audioPhaseAt!=miniGame.presentationAt()){
+    audioPhase=v.phase;audioPhaseAt=miniGame.presentationAt();
     if(v.phase==G::Success&&miniGame.config().mode!=G::PressToWin){successAt=now;successCue=true;resultCue=keySettings.winnerCue;}
     else if(v.phase==G::Feedback&&miniGame.config().mode==G::MemoryPairs&&!miniGame.feedbackCorrect()){
       successAt=now;successCue=true;resultCue=kCueIncorrect;
@@ -136,7 +185,20 @@ void serviceMiniGame(uint32_t now){
   }
   // Let the completing color finish, then play the configured full winner cue
   // once alongside the board-local success rainbow. No per-note network timing.
-  if(successCue&&uint32_t(now-successAt)>=240){successCue=false;if(resultCue!=BoardCore::AudioCues::kSilent)sendToAvr(kAudioCue,sequence++,&resultCue,1);}
+  if(successCue&&miniGame.config().mode!=G::PressToWin&&uint32_t(now-successAt)>=240){successCue=false;if(resultCue!=BoardCore::AudioCues::kSilent)sendToAvr(kAudioCue,sequence++,&resultCue,1);}
+  // Idle-only atomic admission in the AVR is authoritative: a tick cannot
+  // interrupt any melody, streamed note, pending prefill or winner timeline.
+  // Rejection consumes this tick; no retries or legacy stop-and-beep fallback.
+  if(timerCue!=BoardCore::GameTimerFeedback::None&&!tone&&!successCue&&avrIdleAudio){
+    static uint16_t tickId=0x8000;if(++tickId==0)++tickId;
+    const uint16_t hz=timerCue==BoardCore::GameTimerFeedback::Minute?659:
+      timerCue==BoardCore::GameTimerFeedback::SecondOdd?1047:880;
+    uint8_t payload[17]={8,uint8_t(tickId),uint8_t(tickId>>8),0,0};uint8_t length=5;
+    auto step=[&](uint16_t frequency,uint16_t duration){payload[length++]=frequency;payload[length++]=frequency>>8;payload[length++]=duration;payload[length++]=duration>>8;};
+    step(hz,timerCue==BoardCore::GameTimerFeedback::Minute?80:35);
+    if(timerCue==BoardCore::GameTimerFeedback::Minute){step(0,60);step(hz,80);}
+    sendToAvr(kAudioStream,sequence++,payload,length);
+  }
   // Set a level, never replay a press. Only differing confirmed outputs cause
   // bounded retries; ACK/readback remains the existing AVR output observation.
   const uint8_t outputs=miniGame.outputMask();

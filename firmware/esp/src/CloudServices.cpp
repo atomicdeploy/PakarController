@@ -5,6 +5,7 @@
 #include <time.h>
 #if defined(ESP32)
 #include <esp_random.h>
+#include <esp_heap_caps.h>
 #include <mbedtls/base64.h>
 #include <mbedtls/sha256.h>
 #else
@@ -246,6 +247,12 @@ void CloudServices::connectMqtt(uint32_t now) {
   }
   const String availability = topic(F("/availability"));
   cooperate();
+#if defined(ESP32)
+  const bool tlsAttempt=cloudConfig.mqttTls();
+  constexpr uint32_t internalCaps=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT;
+  const size_t internalFreeBefore=tlsAttempt?heap_caps_get_free_size(internalCaps):0;
+  const size_t internalLargestBefore=tlsAttempt?heap_caps_get_largest_free_block(internalCaps):0;
+#endif
   const uint32_t startedAt=millis();
   if(mqttConnectionStats_.attempts!=UINT32_MAX)++mqttConnectionStats_.attempts;
   bool connected = false;
@@ -267,6 +274,28 @@ void CloudServices::connectMqtt(uint32_t now) {
   nextMqttAttemptAt_=completedAt+10000U;if(!nextMqttAttemptAt_)nextMqttAttemptAt_=1;
   if (!connected) {
     if(mqttConnectionStats_.failures!=UINT32_MAX)++mqttConnectionStats_.failures;
+#if defined(ESP32)
+    // PubSubClient -2 means its Client::connect failed, not MQTT credential
+    // rejection. Retain the SDK's actual TLS result before any later socket
+    // work; a zero result is not proof of a certificate or memory failure.
+    if(tlsAttempt && mqtt_.state()==-2) {
+      const size_t internalFreeAfter=heap_caps_get_free_size(internalCaps);
+      const size_t internalLargestAfter=heap_caps_get_largest_free_block(internalCaps);
+      char reason[96]={};
+      const int tlsError=secureClient_.lastError(reason,sizeof(reason));
+      reason[sizeof(reason)-1]='\0';
+      for(size_t i=0;reason[i];++i)
+        if(static_cast<unsigned char>(reason[i])<32 || static_cast<unsigned char>(reason[i])>126)reason[i]=' ';
+      char diagnostic[320];
+      snprintf(diagnostic,sizeof(diagnostic),
+          "MQTT connect failed, state %d; tls_error %d (%s); elapsed_ms %lu; internal_free %lu->%lu; internal_largest %lu->%lu",
+          mqtt_.state(),tlsError,reason[0]?reason:"no SDK detail",
+          static_cast<unsigned long>(mqttConnectionStats_.lastDurationMs),
+          static_cast<unsigned long>(internalFreeBefore),static_cast<unsigned long>(internalFreeAfter),
+          static_cast<unsigned long>(internalLargestBefore),static_cast<unsigned long>(internalLargestAfter));
+      lastError_=diagnostic;
+    } else
+#endif
     lastError_ = String(F("MQTT connect failed, state ")) + mqtt_.state();
     cooperate();
     return;
@@ -295,7 +324,9 @@ void CloudServices::connectMqtt(uint32_t now) {
 bool CloudServices::publishMqtt(const String &destination,const String &json,bool retained) {
   // PubSubClient's publish() buffers the entire payload. beginPublish streams a
   // bounded JSON snapshot without increasing the shared 2048-byte RX buffer.
-  if (publishActive_ || progressActive_ || !mqtt_.connected() || json.length()>16384 || destination.length()>192) return false;
+  // Bounded outbound receipts may include an escaped LAN peer response. This
+  // does not enlarge MQTT RX/commands or the separately bounded status stream.
+  if (publishActive_ || progressActive_ || !mqtt_.connected() || json.length()>32768 || destination.length()>192) return false;
   IoScope io(*this,true);
   cooperate();
   if (!mqtt_.beginPublish(destination.c_str(),json.length(),retained)) {
@@ -316,27 +347,31 @@ bool CloudServices::publishMqtt(const String &destination,const String &json,boo
   cooperate();return written;
 }
 
-void CloudServices::publishTelemetry(const String &statusJson, uint32_t now,bool includeFullTelemetry) {
+void CloudServices::publishTelemetry(String statusJson, uint32_t now,bool includeFullTelemetry) {
   const uint32_t interval =
       static_cast<uint32_t>(cloudConfig.telemetrySeconds()) * 1000U;
   if (!telemetryRequested_ && static_cast<uint32_t>(now - lastTelemetryAt_) < interval) return;
   telemetryRequested_=false;
   lastTelemetryAt_ = now;
-  if(statusJson.length()>16384) {lastError_=F("Status exceeds bounded snapshot size");return;}
-  if (mqtt_.connected()) {
+  const bool statusReady=statusJson.length()>0 && statusJson.length()<=16384;
+  if(!statusReady) lastError_=F("Status exceeds bounded snapshot size or is empty");
+  if (statusReady && mqtt_.connected()) {
     const String statusTopic = topic(F("/status"));
     if (!publishMqtt(statusTopic,statusJson,true)) {
       lastError_ = F("MQTT status publish failed");
     }
   }
-  if (webSocket_.isConnected()) {
+  if (statusReady && webSocket_.isConnected()) {
     cooperate();
     webSocket_.sendTXT(statusJson.c_str());
     cooperate();
   }
+  // Own the provider's temporary and release it BEFORE constructing the larger
+  // aggregate. Retaining both snapshots exhausted internal RAM alongside TLS.
+  statusJson=String();
   if(includeFullTelemetry && telemetryProvider_ && (mqtt_.connected() || webSocket_.isConnected())) {
     const String full=telemetryProvider_();
-    if(full.length()>16384) {lastError_=F("Telemetry exceeds bounded snapshot size");return;}
+    if(full.length()>kTelemetryBytes) {lastError_=F("Telemetry exceeds bounded snapshot size");return;}
     if(webSocket_.isConnected()) {cooperate();webSocket_.sendTXT(full.c_str());cooperate();}
     if(mqtt_.connected() && telemetryBoot_.length()) publishTelemetryFragments(full);
   }

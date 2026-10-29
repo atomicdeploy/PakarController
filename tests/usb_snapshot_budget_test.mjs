@@ -5,7 +5,8 @@ const main=read('firmware/esp/application.ino');
 const driver=read('firmware/esp32s3/src/LedOutput.cpp');
 const ethernet=read('firmware/esp/src/EthernetManagement.h');
 const status=main.slice(main.indexOf('String buildStatusJson(bool compact) {'),main.indexOf('void sendStatusJson()'));
-const snapshot=main.slice(main.indexOf('String buildUsbTableSnapshot(bool includePixels) {'),main.indexOf('void configureNtp()'));
+const snapshotStart=main.indexOf('String buildUsbTableSnapshot(bool includePixels) {');
+const snapshot=main.slice(snapshotStart,main.indexOf('void configureNtp() {',snapshotStart));
 assert(main.includes('String buildStatusJson() { return buildStatusJson(false); }'));
 const configChange=main.slice(main.indexOf('String configurationStateJson('),main.indexOf('void sendStatusJson()'));
 for(const field of ['configuration-changed','board_id','boot_id','revision','phase','scopes','hostname','configured_hostname','fqdn','addresses','apply_pending'])
@@ -20,7 +21,7 @@ assert(main.includes('server.on("/api/configuration",HTTP_GET'));
 const cloudStatus=main.slice(main.indexOf('String buildCloudStatusJson() {'),main.indexOf('void sendStatusJson()'));
 assert(main.includes('#if defined(ARDUINO_ARCH_ESP32)\nString buildCloudStatusJson()'));
 assert(cloudStatus.includes('const bool diagnostic=grid.diagnosticActive();'));
-assert(cloudStatus.includes('buildStatusJson(diagnostic)'));
+assert(cloudStatus.includes('String body=buildStatusJson(true);'));
 assert(cloudStatus.indexOf('if(!diagnostic')<cloudStatus.indexOf('grid.pixelFrameJson()'));
 assert(cloudStatus.includes('bytes>16384U || !body.reserve(bytes)'));
 assert(cloudStatus.indexOf('body.reserve(bytes)')<cloudStatus.indexOf('body.remove('));

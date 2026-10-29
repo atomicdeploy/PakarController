@@ -144,6 +144,7 @@ bool NetworkConfigStore::begin(fs::FS &filesystem) {
 
 bool NetworkConfigStore::setStation(const String &ssid, const String &password,
                                     bool enabled, bool replacePassword) {
+  if(temporaryStation_){error_=F("Temporary station operation owns network settings");return false;}
   if (ssid.length() != strlen(ssid.c_str()) || password.length() != strlen(password.c_str()) ||
       ssid.length() > 32 || password.length() > 63 || (enabled && ssid.length() == 0)) {
     error_ = F("station SSID must be 1..32 and password 0..63 bytes");
@@ -166,6 +167,7 @@ bool NetworkConfigStore::setStation(const String &ssid, const String &password,
 }
 
 bool NetworkConfigStore::setAccessPointEnabled(bool enabled) {
+  if(temporaryStation_){error_=F("Temporary station operation owns network settings");return false;}
   if (!enabled && !stationEnabled() && !ethernetBuild()) {
     error_ = F("AP and station cannot both be disabled");
     return false;
@@ -177,6 +179,7 @@ bool NetworkConfigStore::setAccessPointEnabled(bool enabled) {
 }
 
 bool NetworkConfigStore::save() {
+  if(temporaryStation_){error_=F("Temporary station operation owns network settings");return false;}
   if (!stationEnabled() && !accessPointEnabled() && !ethernetBuild()) {
     error_ = F("AP and station cannot both be disabled"); return false;
   }
@@ -214,6 +217,7 @@ bool NetworkConfigStore::save() {
 
 bool NetworkConfigStore::setAddressing(bool dhcp, const String &address,
     const String &gateway, const String &subnet, const String &dns1, const String &dns2) {
+  if(temporaryStation_){error_=F("Temporary station operation owns network settings");return false;}
   uint8_t parsed[5][4]{};
   if (!dhcp) {
     const String values[] = {address, gateway, subnet, dns1, dns2};
@@ -248,6 +252,7 @@ bool NetworkConfigStore::setAddressing(bool dhcp, const String &address,
 
 bool NetworkConfigStore::configure(const char *hostname,
                                    const char *apPassword) {
+  if(temporaryStation_){error_=F("Temporary station operation owns network settings");return false;}
   if (!hostname || !*hostname || strlen(hostname)>63) {
     error_ = F("network hostname must be 1..63 bytes");return false;
   }
@@ -320,6 +325,7 @@ bool NetworkConfigStore::configure(const char *hostname,
 }
 
 bool NetworkConfigStore::setFallback(uint8_t slot,const String &ssid,const String &password){
+  if(temporaryStation_){error_=F("Temporary station operation owns network settings");return false;}
   if(slot>=3||ssid.length()>32||password.length()>63||ssid.length()!=strlen(ssid.c_str())||password.length()!=strlen(password.c_str())||
       (password.length()&&password.length()<8)||(!ssid.length()&&password.length())){error_=F("invalid fallback credentials");return false;}
   if(ssid.length())for(uint8_t i=0;i<4;++i)if(i!=slot+1&&ssid==profileSsid(i)){error_=F("duplicate station SSID");return false;}
@@ -328,6 +334,7 @@ bool NetworkConfigStore::setFallback(uint8_t slot,const String &ssid,const Strin
 }
 
 void NetworkConfigStore::service(uint32_t now){
+  if(temporaryStation_)return;
   if(!stationEnabled())return;
   uint8_t next=activeProfile_;
   if(stationConnected()){
@@ -354,3 +361,35 @@ void NetworkConfigStore::service(uint32_t now){
   WiFi.disconnect(false);
   WiFi.begin(profileSsid(next),next?record_.fallbackPassword[next-1]:record_.stationPassword);
 }
+
+#if defined(ESP32)
+bool NetworkConfigStore::beginTemporaryStation(const String &ssid,const String &password,const uint8_t bssid[6]) {
+  if(temporaryStation_||!bssid||ssid.isEmpty()||ssid.length()>32||password.length()>63||
+      ssid.length()!=strlen(ssid.c_str())||password.length()!=strlen(password.c_str())||
+      (password.length()&&password.length()<8))return false;
+  uint8_t any=0;for(unsigned i=0;i<6;++i)any|=bssid[i];
+  if(!any||(bssid[0]&1U))return false;
+  temporaryStation_=true;
+  WiFi.persistent(false);WiFi.setAutoReconnect(false);
+  // Both boards normally own 192.168.4.1 on their AP. Disable ONLY the
+  // commissioning board's AP temporarily to avoid routing to itself.
+  WiFi.disconnect(false);WiFi.softAPdisconnect(true);
+  if(!WiFi.mode(WIFI_STA)||!WiFi.config(IPAddress(0,0,0,0),IPAddress(0,0,0,0),IPAddress(0,0,0,0))){
+    error_=F("Temporary station setup failed; restore required");return false;
+  }
+  WiFi.setSleep(PAKAR_S3_WIFI_MODEM_SLEEP!=0);
+  WiFi.begin(ssid.c_str(),password.c_str(),0,bssid,true);
+  error_=String();return true;
+}
+bool NetworkConfigStore::temporaryStationReady(const String &ssid,const uint8_t bssid[6])const {
+  return temporaryStation_&&bssid&&WiFi.status()==WL_CONNECTED&&WiFi.SSID()==ssid&&
+      WiFi.BSSID()&&!memcmp(WiFi.BSSID(),bssid,6);
+}
+bool NetworkConfigStore::restoreSavedNetwork(const char *hostname,const char *apPassword) {
+  // Safe even when the temporary setup failed before association. configure()
+  // uses only the untouched persisted record, never commissioning credentials.
+  temporaryStation_=false;
+  configure(hostname,apPassword);
+  return error_.isEmpty();
+}
+#endif

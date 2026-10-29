@@ -30,6 +30,21 @@ void assertPendingSnapshot(const String& previous,const String& pending){
  assert(pending.find("\"pending\":true")!=String::npos);
  assert(withoutPending(previous)==withoutPending(pending));
 }
+void rainbowSaturationContract(){
+ const auto savedNow=pixelTestNow;LedGrid grid;grid.begin();grid.setStaticMode(false);grid.setBrightness(77);
+ pixelTestHsv={};pixelTestNow=1000;assert(grid.setPattern(LedGrid::kPatternRainbow));grid.service(pixelTestNow);
+ assert(pixelTestHsv.conversions==LedGrid::kPixels&&pixelTestHsv.minimumSaturation==255&&pixelTestHsv.minimumValue==255);
+ const auto frame=grid.pixelFrameJson();const auto at=frame.find("\"rgb\":\"")+7;
+ assert(frame.substr(at,2)=="00"&&frame.substr(at+6,2)=="07"); // Existing hue/delta, not a real RGB assertion.
+ assert(grid.brightness()==77&&frame.find("\"brightness\":77")!=String::npos);
+ assert(grid.setPattern(LedGrid::kPatternNone));
+ pixelTestHsv={};BoardCore::PixelDiagnostic options;options.effect=BoardCore::PixelDiagnostic::Rainbow;
+ assert(grid.diagnostic(474,6,0xff0000,false,options));
+ assert(pixelTestHsv.conversions==1&&pixelTestHsv.minimumSaturation==255&&pixelTestHsv.minimumValue==255);
+ pixelTestHsv={};pixelTestNow+=300;grid.service(pixelTestNow);
+ assert(pixelTestHsv.conversions==1&&pixelTestHsv.minimumSaturation==255&&pixelTestHsv.minimumValue==255);
+ assert(grid.brightness()==77);pixelTestNow=savedNow;
+}
 void rainbowClockCadence(){
  using namespace BoardCore::Protocol;
  const uint32_t savedNow=pixelTestNow;
@@ -210,7 +225,7 @@ int main(){
  semanticAppearance();
  sharedStateMotion();
  using namespace BoardCore::Protocol;
- rainbowClockCadence();
+ rainbowClockCadence();rainbowSaturationContract();
  cloudAnimationProgress();
  LedGrid grid;assert(grid.pixelFrameJson()=="null");grid.begin();
  assert(grid.outputCapabilitiesJson()=="{\"backend\":\"fastled\",\"rmt\":false,\"dma\":false}");

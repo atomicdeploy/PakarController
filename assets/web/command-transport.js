@@ -23,10 +23,11 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
     const result={...values};
     if(path==='/api/minigame/configure'){
       const settings=structured(result.settings,'minigame settings');
-      const limits={limit_ms:[0,86400000],warning_ms:[0,86400000],urgent_ms:[0,86400000],penalty_ms:[0,86400000],window_ms:[100,60000],show_ms:[100,10000],gap_ms:[50,5000],feedback_ms:[50,5000],intro_ms:[100,10000],preview_ms:[0,10000],mismatch_ms:[600,10000],rounds:[1,32],sequence_length:[1,32],palette_size:[2,9],fixed_target:[0,9]};
-      for(const key of Object.keys(settings))if(!Object.hasOwn(limits,key)&&!['mode','hard','intro_enabled','color_arpeggio','toggle_kind','outputs'].includes(key))throw Error('Unknown minigame setting');
+      const limits={limit_ms:[0,86400000],warning_ms:[0,86400000],urgent_ms:[0,86400000],penalty_ms:[0,86400000],window_ms:[100,60000],show_ms:[100,10000],gap_ms:[50,5000],feedback_ms:[50,5000],intro_ms:[100,10000],preview_ms:[0,10000],mismatch_ms:[600,10000],rounds:[1,32],sequence_length:[1,32],sequence_growth:[0,31],palette_size:[2,9],fixed_target:[0,9]};
+      for(const key of Object.keys(settings))if(!Object.hasOwn(limits,key)&&!['mode','hard','intro_enabled','color_arpeggio','toggle_kind','outputs','boot_mode','segment_animation','timer_beeps','timer_alternate_tones'].includes(key))throw Error('Unknown minigame setting');
       for(const [key,[min,max]] of Object.entries(limits))if(key in settings)settings[key]=integer(settings[key],key,min,max);
-      for(const key of ['hard','intro_enabled','color_arpeggio'])if(key in settings)settings[key]=boolean(settings[key],key);
+      for(const key of ['hard','intro_enabled','color_arpeggio','segment_animation','timer_beeps','timer_alternate_tones'])if(key in settings)settings[key]=boolean(settings[key],key);
+      if('boot_mode' in settings&&!['first','last'].includes(settings.boot_mode))throw Error('Invalid boot game policy');
       if('mode' in settings&&!snapshot().minigame?.available_modes?.some(mode=>mode.id===settings.mode))throw Error('Unavailable minigame');
       if('toggle_kind' in settings&&!['toggle','latch','press'].includes(settings.toggle_kind))throw Error('Invalid toggle behavior');
       if('outputs' in settings){

@@ -9,11 +9,12 @@ import {toolHeaders,assertToolPeerCompatible} from './peer-identity.mjs';
 import {gunzipSync} from 'node:zlib';
 
 // Only presentation is decoded; firmware range/hash checks retain wire bytes.
+export const maxWebUiBytes=1024*1024;
 export function assertWebUi(response) {
   const encoding=response.headers?.['content-encoding'];
   if(encoding&&encoding!=='identity'&&encoding!=='gzip')throw Error('Unsupported Web UI content encoding');
-  const body=encoding==='gzip'?gunzipSync(response.body,{maxOutputLength:512*1024}):response.body;
-  if(body.length>512*1024||!/<html|<!doctype html/i.test(body.toString('utf8')))throw Error('Device Web UI not served');
+  const body=encoding==='gzip'?gunzipSync(response.body,{maxOutputLength:maxWebUiBytes}):response.body;
+  if(body.length>maxWebUiBytes||!/<html|<!doctype html/i.test(body.toString('utf8')))throw Error('Device Web UI not served');
 }
 
 export function deviceOrigin(value) {
@@ -52,7 +53,7 @@ export function deviceRequest(origin,path,{form,headers={},expectedAddress,metho
     },response=>{
       const remote=ipv4(response.socket.remoteAddress),chunks=[];let bytes=0;
       if(expectedAddress&&remote!==expectedAddress){response.destroy();reject(Error('TCP peer changed; no retry'));return;}
-      response.on('data',chunk=>{bytes+=chunk.length;if(bytes>512*1024){request.destroy(Error('Response exceeds bounded probe size'));return;}chunks.push(chunk)});
+      response.on('data',chunk=>{bytes+=chunk.length;if(bytes>(path==='/'?maxWebUiBytes:512*1024)){request.destroy(Error('Response exceeds bounded probe size'));return;}chunks.push(chunk)});
       response.on('error',()=>reject(Error('Device response interrupted; no retry')));
       response.on('end',()=>resolve({status:response.statusCode,headers:response.headers,distinctHeaders:response.headersDistinct,body:Buffer.concat(chunks),remote}));
     });

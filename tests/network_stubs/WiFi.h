@@ -33,6 +33,7 @@ struct NetworkFixtureWiFi {
   bool sleepEnabled=true,sleepResult=true;unsigned sleepCalls=0;
   String hostnameValue, ssidValue, passwordValue,apSsidValue;
   IPAddress address;
+  uint8_t bssidValue[6]{};unsigned begins=0;
   void persistent(bool value){persistentValue=value;}
   bool setSleep(bool value){++sleepCalls;if(!sleepResult)return false;sleepEnabled=value;return true;}
   String nameAtStart;
@@ -45,7 +46,10 @@ struct NetworkFixtureWiFi {
   const char *softAPgetHostname()const{return AP.getHostname();}
   bool softAP(const char *ssid,const char *){apSsidValue=ssid;return apResult&&apSsidValue.length()<=32;}
   bool config(IPAddress ip,IPAddress,IPAddress,IPAddress=IPAddress(),IPAddress=IPAddress()){address=ip;return configResult;}
-  void begin(const char *ssid,const char *password){ssidValue=ssid;passwordValue=password;}
+  void begin(const char *ssid,const char *password){++begins;ssidValue=ssid;passwordValue=password;}
+  void begin(const char *ssid,const char *password,int,const uint8_t *bssid,bool){begin(ssid,password);memcpy(bssidValue,bssid,6);}
+  String SSID()const{return ssidValue;}
+  const uint8_t *BSSID()const{return bssidValue;}
   void setAutoReconnect(bool value){autoReconnect=value;}
   void setAutoConnect(bool){}
   int status()const{return connection;}

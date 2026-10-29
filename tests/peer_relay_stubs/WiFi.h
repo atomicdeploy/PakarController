@@ -16,7 +16,7 @@ class IPAddress {
   bool operator!=(const IPAddress &other)const{return !(*this==other);}
  private:uint8_t bytes_[4]{};
 };
-struct TestWiFi {IPAddress localIP()const{return {192,168,1,218};}IPAddress softAPIP()const{return {192,168,4,1};}};
+struct TestWiFi {IPAddress localIP()const{return {192,168,1,218};}IPAddress softAPIP()const{return {192,168,4,1};}IPAddress gatewayIP()const{return {192,168,4,1};}};
 inline TestWiFi WiFi;
 inline String physicalAddress;
 struct NetworkClient {

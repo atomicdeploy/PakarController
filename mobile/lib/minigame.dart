@@ -21,6 +21,7 @@ const minigameLimits = <String, (int, int)>{
   'mismatch_ms': (600, 10000),
   'rounds': (1, 32),
   'sequence_length': (1, 32),
+  'sequence_growth': (0, 31),
   'palette_size': (2, 9),
   'fixed_target': (0, 9),
 };
@@ -34,6 +35,7 @@ const minigameDescriptions = <String, String>{
   'color-order': 'Press the boxes in palette color order',
   'switch-pattern': 'Toggle buttons to copy the indicator pattern',
   'reaction-chase': 'Catch the moving light inside its response window',
+  'mine-field': 'Toggle boxes to all cyan or all yellow; fastest time wins',
   'toggle': 'Control latched or momentary outputs without a timer',
 };
 const minigameOutputSources = [
@@ -165,7 +167,13 @@ class MiniGameSnapshot {
         } else {
           valid = switch (entry.key) {
             'mode' => modes.containsKey(value),
-            'hard' || 'intro_enabled' || 'color_arpeggio' => value is bool,
+            'hard' ||
+            'intro_enabled' ||
+            'color_arpeggio' ||
+            'segment_animation' ||
+            'timer_beeps' ||
+            'timer_alternate_tones' => value is bool,
+            'boot_mode' => const ['first', 'last'].contains(value),
             'toggle_kind' => const ['toggle', 'latch', 'press'].contains(value),
             'outputs' => validOutputs(value),
             _ => false,

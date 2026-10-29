@@ -4,12 +4,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import 'minigame.dart';
+import 'game_mode_picker.dart';
 import 'models.dart';
 import 'workspace_widgets.dart';
 import 'key_box_designer.dart';
 import 'table_workspace.dart';
 
 typedef MiniGameCommand = Future<bool> Function(String, Map<String, String>);
+
+// Transport/board validation already provides safe, actionable reasons. Keep
+// that reason intact without exposing Dart's exception type as interface text.
+String _gameErrorText(Object error) =>
+    error is FormatException ? error.message.toString() : error.toString();
 
 class MiniGamePanel extends StatefulWidget {
   const MiniGamePanel({
@@ -93,9 +99,7 @@ class _MiniGamePanelState extends State<MiniGamePanel>
       return ok;
     } catch (e) {
       if (mounted) {
-        setState(
-          () => error = e is FormatException ? e.message.toString() : '$e',
-        );
+        setState(() => error = _gameErrorText(e));
       }
       return false;
     } finally {
@@ -124,7 +128,7 @@ class _MiniGamePanelState extends State<MiniGamePanel>
         if (mounted) setState(() => pending = false);
         await released.future;
       } catch (e) {
-        if (mounted) setState(() => error = '$e');
+        if (mounted) setState(() => error = _gameErrorText(e));
       } finally {
         try {
           if (owner == heldOwner) {
@@ -137,7 +141,7 @@ class _MiniGamePanelState extends State<MiniGamePanel>
             }
           }
         } catch (e) {
-          if (mounted) setState(() => error = '$e');
+          if (mounted) setState(() => error = _gameErrorText(e));
         }
         if (mounted) {
           setState(() {
@@ -183,11 +187,16 @@ class _MiniGamePanelState extends State<MiniGamePanel>
   @override
   Widget build(BuildContext context) {
     final snapshot = game, colors = Theme.of(context).colorScheme;
+    final primaryAction = snapshot.running
+        ? 'pause'
+        : snapshot.phase == 'paused'
+        ? 'resume'
+        : 'start';
+    final winningTime =
+        snapshot.mode == 'mine-field' && snapshot.phase == 'success';
+    final remainingTime = snapshot.json['timed'] == true && !winningTime;
     final seconds =
-        snapshot.number(
-          snapshot.json['timed'] == true ? 'remaining_ms' : 'elapsed_ms',
-        ) /
-        1000;
+        snapshot.number(remainingTime ? 'remaining_ms' : 'elapsed_ms') / 1000;
     final phaseTone = snapshot.phase == 'success'
         ? const Color(0xff38d996)
         : snapshot.phase == 'failed' || snapshot.phase == 'timeout'
@@ -239,54 +248,16 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                     runSpacing: 16,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      SizedBox(
-                        width: 380,
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Game mode',
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 4,
-                            ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              key: const ValueKey('minigame-mode'),
-                              value: snapshot.mode,
-                              isExpanded: true,
-                              itemHeight: 64,
-                              isDense: false,
-                              borderRadius: BorderRadius.circular(16),
-                              items: [
-                                for (final entry in snapshot.modes.entries)
-                                  DropdownMenuItem(
-                                    value: entry.key,
-                                    child: _GameModeChoice(
-                                      id: entry.key,
-                                      label: entry.value,
-                                      description: snapshot.description(
-                                        entry.key,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                              onChanged: !ready
-                                  ? null
-                                  : (mode) {
-                                      if (mode != null &&
-                                          mode != snapshot.mode) {
-                                        unawaited(
-                                          send(minigameConfigure, {
-                                            'settings': jsonEncode({
-                                              'mode': mode,
-                                            }),
-                                          }),
-                                        );
-                                      }
-                                    },
-                            ),
-                          ),
-                        ),
+                      GameModePicker(
+                        key: ValueKey('game-mode-picker-$owner'),
+                        game: snapshot,
+                        onChanged: !ready
+                            ? null
+                            : (mode) => unawaited(
+                                send(minigameConfigure, {
+                                  'settings': jsonEncode({'mode': mode}),
+                                }),
+                              ),
                       ),
                       if (snapshot.json['timed'] == true ||
                           !const [
@@ -297,7 +268,9 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              snapshot.json['timed'] == true
+                              winningTime
+                                  ? Icons.emoji_events_outlined
+                                  : remainingTime
                                   ? Icons.timer_outlined
                                   : Icons.av_timer,
                               color: phaseTone,
@@ -306,7 +279,11 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                             const SizedBox(width: 9),
                             Flexible(
                               child: Text(
-                                '${snapshot.json['timed'] == true ? 'Remaining' : 'Elapsed'}: ${seconds.toStringAsFixed(1)} s',
+                                '${winningTime
+                                    ? 'Winning time'
+                                    : remainingTime
+                                    ? 'Remaining'
+                                    : 'Elapsed'}: ${seconds.toStringAsFixed(winningTime ? 3 : 1)} s',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.titleMedium
@@ -327,23 +304,17 @@ class _MiniGamePanelState extends State<MiniGamePanel>
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final action in [
-                        'start',
-                        'pause',
-                        'resume',
-                        'reset',
-                        'stop',
-                      ])
+                      for (final action in [primaryAction, 'reset', 'stop'])
                         FilledButton.tonalIcon(
                           key: ValueKey('minigame-$action'),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(96, 42),
-                            backgroundColor: action == 'start'
+                            backgroundColor: action == primaryAction
                                 ? colors.primary
                                 : action == 'reset'
                                 ? colors.primary.withValues(alpha: .13)
                                 : colors.surfaceContainerHigh,
-                            foregroundColor: action == 'start'
+                            foregroundColor: action == primaryAction
                                 ? colors.onPrimary
                                 : action == 'reset'
                                 ? colors.primary
@@ -472,56 +443,6 @@ class _MiniGamePanelState extends State<MiniGamePanel>
   }
 }
 
-class _GameModeChoice extends StatelessWidget {
-  const _GameModeChoice({
-    required this.id,
-    required this.label,
-    required this.description,
-  });
-  final String id, label, description;
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Icon(
-        switch (id) {
-          'press-to-win' => Icons.emoji_events_outlined,
-          'illuminated' => Icons.my_location,
-          'color-match' => Icons.palette_outlined,
-          'simon' => Icons.queue_music,
-          'memory-pairs' => Icons.style_outlined,
-          'clear-all' => Icons.checklist_rounded,
-          'color-order' => Icons.sort_rounded,
-          'switch-pattern' => Icons.grid_view_rounded,
-          'reaction-chase' => Icons.bolt_rounded,
-          'toggle' => Icons.toggle_on_outlined,
-          _ => Icons.sports_esports_outlined,
-        },
-        size: 23,
-        color: Theme.of(context).colorScheme.primary,
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 2),
-            Text(
-              description,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
 /// Adapted from PCController EffectEditor.number/numberDrafts/save: invalid text
 /// stays local, numeric values are bounded, and only explicit save commits.
 class MiniGameSettings extends StatefulWidget {
@@ -559,6 +480,7 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
     'mismatch_ms': 'Wrong pair feedback (ms)',
     'rounds': 'Rounds',
     'sequence_length': 'Sequence length',
+    'sequence_growth': 'Additional steps per round',
     'palette_size': 'Palette size',
     'fixed_target': 'Fixed target (0 = random)',
   };
@@ -617,7 +539,7 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
       if (mounted) {
         setState(() {
           saving = false;
-          error = '$e';
+          error = _gameErrorText(e);
         });
       }
     }
@@ -642,12 +564,37 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
               children: [
                 const Text('Saving resets the game to Ready.'),
                 const SizedBox(height: 16),
+                if (const ['first', 'last'].contains(draft['boot_mode']))
+                  DropdownButtonFormField<String>(
+                    initialValue: draft['boot_mode'] as String,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Game on power-up',
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'first',
+                        child: Text('Press to win (first available game)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'last',
+                        child: Text('Last configured game · fresh round'),
+                      ),
+                    ],
+                    onChanged: saving
+                        ? null
+                        : (value) {
+                            if (value != null) change('boot_mode', value);
+                          },
+                  ),
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
                     for (final entry in minigameLimits.entries)
-                      if (draft[entry.key] is int)
+                      if (draft[entry.key] is int &&
+                          (entry.key != 'sequence_growth' ||
+                              draft['mode'] == 'simon'))
                         SizedBox(
                           width: 230,
                           child: TextFormField(
@@ -655,7 +602,11 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
                             enabled: !saving,
                             initialValue: '${draft[entry.key]}',
                             decoration: InputDecoration(
-                              labelText: labels[entry.key],
+                              labelText:
+                                  entry.key == 'show_ms' &&
+                                      draft['mode'] == 'mine-field'
+                                  ? 'Pulse period (ms)'
+                                  : labels[entry.key],
                             ),
                             keyboardType: TextInputType.number,
                             validator: (text) {
@@ -681,6 +632,9 @@ class _MiniGameSettingsState extends State<MiniGameSettings> {
                 for (final entry in {
                   'intro_enabled': 'Reveal colors and notes before play',
                   'color_arpeggio': 'Arpeggio color notes',
+                  'segment_animation': 'Ready display · perimeter animation',
+                  'timer_beeps': 'Timer · second ticks and minute warning',
+                  'timer_alternate_tones': 'Timer · alternate odd/even tones',
                 }.entries)
                   if (draft[entry.key] is bool &&
                       (entry.key != 'intro_enabled' ||

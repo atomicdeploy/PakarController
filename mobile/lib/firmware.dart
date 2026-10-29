@@ -469,9 +469,41 @@ class FirmwareController {
 
   Future<Uint8List> backupBytes(bool eeprom) async {
     check('isp');
+    // Select the current board-acknowledged job, not a page's previous job or
+    // the legacy ISP files after an Urboot transaction.
+    final status = await api.status();
+    check('isp');
+    final before = await avrMaintenance();
+    check('isp');
+    if (before.busy || status.json['boot_id'] != before.boot) {
+      throw const FormatException(
+        'AVR maintenance is active or its boot changed; no backup exported',
+      );
+    }
+    final memory = eeprom ? 'eeprom' : 'flash';
+    String path;
+    if (before.method == 'urboot') {
+      if (before.id == 0 ||
+          !before.complete ||
+          !{'backup', 'program'}.contains(before.operation) ||
+          !RegExp(r'^[A-Za-z0-9_-]{1,40}$').hasMatch(before.requestId)) {
+        throw const FormatException(
+          'This Urboot job has no completed recovery backup; no ISP backup substituted',
+        );
+      }
+      path = Uri(
+        path: '/file/download',
+        queryParameters: {
+          'artifact': 'urboot-$memory',
+          'request_id': before.requestId,
+        },
+      ).toString();
+    } else {
+      path = '/api/avr/backup/$memory';
+    }
     final size = eeprom ? 1024 : 32768;
     final bytes = await api.maintenanceBytes(
-      '/api/avr/backup/${eeprom ? 'eeprom' : 'flash'}',
+      path,
       maximum: size,
       authorize: () => allowed('isp'),
     );
@@ -479,6 +511,20 @@ class FirmwareController {
     if (bytes.length != size) {
       throw const FormatException(
         'Backup length differs; no export file created',
+      );
+    }
+    final after = await avrMaintenance();
+    check('isp');
+    if (after.busy ||
+        after.boot != before.boot ||
+        after.id != before.id ||
+        after.method != before.method ||
+        after.requestId != before.requestId ||
+        after.operation != before.operation ||
+        after.phase != before.phase ||
+        after.hash != before.hash) {
+      throw const FormatException(
+        'AVR backup owner changed during download; no export file created',
       );
     }
     return bytes;

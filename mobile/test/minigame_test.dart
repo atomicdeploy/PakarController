@@ -93,6 +93,27 @@ Widget fixture(
   ),
 );
 
+MiniGameSnapshot configuredGame(String mode, Map<String, Object> settings) {
+  final raw = miniStatus().json['minigame'] as Map;
+  return MiniGameSnapshot.read({
+    ...raw,
+    'mode': mode,
+    'available_modes': [
+      for (final id in minigameDescriptions.keys) {'id': id, 'label': id},
+    ],
+    'settings': {...raw['settings'] as Map, 'mode': mode, ...settings},
+  })!;
+}
+
+Widget settingsFixture(
+  MiniGameSnapshot game,
+  Future<void> Function(Map<String, Object>) save,
+) => MaterialApp(
+  home: Scaffold(
+    body: MiniGameSettings(initial: game, save: save),
+  ),
+);
+
 void main() {
   test(
     'Receipt owner survives the input fence without admitting a new command',
@@ -118,6 +139,29 @@ void main() {
       expect(commandPeerMatches(null, null, null), isFalse);
     },
   );
+  test('Boot and timer presentation settings are strict optional fields', () {
+    final game = miniStatus().peer.minigame!;
+    expect(
+      game.command(minigameConfigure, {
+        'settings': jsonEncode({
+          'boot_mode': 'last',
+          'segment_animation': true,
+          'timer_beeps': true,
+          'timer_alternate_tones': false,
+        }),
+      }),
+      isNotNull,
+    );
+    for (final patch in [
+      {'boot_mode': 'resume-winner'},
+      {'timer_beeps': 1},
+    ]) {
+      expect(
+        () => game.command(minigameConfigure, {'settings': jsonEncode(patch)}),
+        throwsFormatException,
+      );
+    }
+  });
   test('Intro and arpeggio settings are typed, bounded and optional', () {
     final snapshot = miniStatus().peer.minigame!;
     final fields = {
@@ -286,6 +330,39 @@ void main() {
   );
 
   testWidgets(
+    'Mode picker numbers only advertised games with icons and muted descriptions',
+    (tester) async {
+      tester.view.physicalSize = const Size(420, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final commands = <String>[];
+      await tester.pumpWidget(
+        fixture(miniStatus(), (path, _) async {
+          commands.add(path);
+          return true;
+        }),
+      );
+      await tester.tap(find.byKey(const ValueKey('minigame-mode')));
+      await tester.pumpAndSettle();
+      expect(find.text('2.'), findsOneWidget);
+      expect(find.text('3.'), findsNothing);
+      expect(find.byIcon(Icons.toggle_on_outlined), findsOneWidget);
+      final description = tester.widget<Text>(
+        find.text(miniStatus().peer.minigame!.description('toggle')),
+      );
+      expect(description.maxLines, 2);
+      final context = tester.element(find.text('Switches'));
+      expect(
+        description.style?.color,
+        Theme.of(context).colorScheme.onSurfaceVariant,
+      );
+      expect(commands, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'Opening never starts and controls use only board catalog and live phase',
     (tester) async {
       final commands = <(String, Map<String, String>)>[];
@@ -310,17 +387,56 @@ void main() {
       await tester.pumpAndSettle();
       expect(commands.last.$1, minigameControl);
       expect(commands.last.$2, {'action': 'start'});
-      expect(
-        tester
-            .widget<FilledButton>(find.byKey(const ValueKey('minigame-pause')))
-            .onPressed,
-        isNull,
-      );
+      expect(find.byKey(const ValueKey('minigame-pause')), findsNothing);
       await tester.pumpWidget(fixture(miniStatus(phase: 'paused'), command));
       await tester.tap(find.byKey(const ValueKey('minigame-resume')));
       await tester.pumpAndSettle();
       expect(commands.last.$1, minigameControl);
       expect(commands.last.$2, {'action': 'resume'});
+    },
+  );
+
+  testWidgets(
+    'One contextual transport button follows phase without sending on refresh',
+    (tester) async {
+      final commands = <Map<String, String>>[];
+      for (final phase in [
+        'ready',
+        'show',
+        'input',
+        'feedback',
+        'paused',
+        'success',
+        'failed',
+        'timeout',
+        'stopped',
+      ]) {
+        await tester.pumpWidget(
+          fixture(miniStatus(phase: phase), (_, values) async {
+            commands.add(values);
+            return true;
+          }),
+        );
+        await tester.pump();
+        final expected = phase == 'paused'
+            ? 'resume'
+            : ['show', 'input', 'feedback'].contains(phase)
+            ? 'pause'
+            : 'start';
+        for (final action in ['start', 'pause', 'resume']) {
+          expect(
+            find.byKey(ValueKey('minigame-$action')),
+            action == expected ? findsOneWidget : findsNothing,
+            reason: '$phase must expose only $expected',
+          );
+        }
+        expect(commands, isEmpty);
+        await tester.tap(find.byKey(ValueKey('minigame-$expected')));
+        await tester.pumpAndSettle();
+        expect(commands.single, {'action': expected});
+        commands.clear();
+        expect(tester.takeException(), isNull);
+      }
     },
   );
 
@@ -411,6 +527,327 @@ void main() {
       await tester.pumpAndSettle();
       expect(jsonDecode(commands.single['settings']!), {'limit_ms': 12000});
       expect(find.text('Save to board'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Illuminated response window shows board 10 seconds and remains configurable',
+    (tester) async {
+      Map<String, Object>? saved;
+      await tester.pumpWidget(
+        settingsFixture(
+          configuredGame('illuminated', {'window_ms': 10000}),
+          (patch) async => saved = patch,
+        ),
+      );
+      final field = find.byKey(const ValueKey('minigame-setting-window_ms'));
+      expect(tester.widget<TextFormField>(field).initialValue, '10000');
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '15000');
+      await tester.tap(find.text('Save to board'));
+      await tester.pumpAndSettle();
+      expect(saved, {'window_ms': 15000});
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Color pattern intro stays off when supplied off; pairs reveal stays on and editable',
+    (tester) async {
+      for (final mode in ['color-match', 'memory-pairs']) {
+        Map<String, Object>? saved;
+        final intro = mode == 'memory-pairs';
+        await tester.pumpWidget(
+          settingsFixture(
+            configuredGame(mode, {
+              'intro_enabled': intro,
+              'color_arpeggio': true,
+              'intro_ms': 1000,
+              'preview_ms': 1500,
+              'mismatch_ms': 1200,
+            }),
+            (patch) async => saved = patch,
+          ),
+        );
+        final reveal = find.widgetWithText(
+          SwitchListTile,
+          'Reveal colors and notes before play',
+        );
+        await tester.ensureVisible(reveal);
+        expect(tester.widget<SwitchListTile>(reveal).value, intro);
+        expect(find.text('Arpeggio color notes'), findsOneWidget);
+        await tester.tap(reveal);
+        await tester.pump();
+        expect(tester.widget<SwitchListTile>(reveal).value, !intro);
+        await tester.tap(find.text('Save to board'));
+        await tester.pumpAndSettle();
+        expect(saved, {'intro_enabled': !intro});
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+  );
+
+  testWidgets(
+    'Simon response feedback and steps use observed settings and save a narrow patch',
+    (tester) async {
+      Map<String, Object>? saved;
+      await tester.pumpWidget(
+        settingsFixture(
+          configuredGame('simon', {
+            'rounds': 3,
+            'sequence_length': 3,
+            'sequence_growth': 2,
+            'show_ms': 300,
+            'gap_ms': 120,
+            'feedback_ms': 240,
+          }),
+          (patch) async => saved = patch,
+        ),
+      );
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(const ValueKey('minigame-setting-rounds')),
+            )
+            .initialValue,
+        '3',
+      );
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(const ValueKey('minigame-setting-sequence_length')),
+            )
+            .initialValue,
+        '3',
+      );
+      for (final entry in {
+        'sequence_growth': '2',
+        'show_ms': '300',
+        'gap_ms': '120',
+      }.entries) {
+        expect(
+          tester
+              .widget<TextFormField>(
+                find.byKey(ValueKey('minigame-setting-${entry.key}')),
+              )
+              .initialValue,
+          entry.value,
+        );
+      }
+      final feedback = find.byKey(
+        const ValueKey('minigame-setting-feedback_ms'),
+      );
+      await tester.ensureVisible(feedback);
+      await tester.enterText(feedback, '600');
+      await tester.tap(find.text('Save to board'));
+      await tester.pumpAndSettle();
+      expect(saved, {'feedback_ms': 600});
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Simon growth is optional, bounded, saved alone and hidden for other games',
+    (tester) async {
+      final game = configuredGame('simon', {
+        'rounds': 3,
+        'sequence_length': 3,
+        'sequence_growth': 2,
+      });
+      expect(
+        game.allows(minigameConfigure, {'settings': '{"sequence_growth":0}'}),
+        isTrue,
+      );
+      expect(
+        game.allows(minigameConfigure, {'settings': '{"sequence_growth":31}'}),
+        isTrue,
+      );
+      expect(
+        game.allows(minigameConfigure, {'settings': '{"sequence_growth":32}'}),
+        isFalse,
+      );
+      Map<String, Object>? saved;
+      await tester.pumpWidget(
+        settingsFixture(game, (patch) async => saved = patch),
+      );
+      final growth = find.byKey(
+        const ValueKey('minigame-setting-sequence_growth'),
+      );
+      await tester.ensureVisible(growth);
+      await tester.enterText(growth, '1');
+      await tester.tap(find.text('Save to board'));
+      await tester.pumpAndSettle();
+      expect(saved, {'sequence_growth': 1});
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(
+        settingsFixture(
+          configuredGame('illuminated', {'sequence_growth': 2}),
+          (_) async {},
+        ),
+      );
+      expect(growth, findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(
+        settingsFixture(configuredGame('simon', {}), (_) async {}),
+      );
+      expect(
+        growth,
+        findsNothing,
+        reason: 'Older board settings must not acquire guessed growth defaults',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Rejected game settings keep their actionable cause without a Dart exception prefix',
+    (tester) async {
+      await tester.pumpWidget(
+        settingsFixture(
+          configuredGame('illuminated', {'window_ms': 10000}),
+          (_) async => throw const FormatException(
+            'The board could not save the input window.',
+          ),
+        ),
+      );
+      final field = find.byKey(const ValueKey('minigame-setting-window_ms'));
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '12000');
+      await tester.tap(find.text('Save to board'));
+      await tester.pumpAndSettle();
+      final error = find.text('The board could not save the input window.');
+      await tester.ensureVisible(error);
+      expect(error, findsOneWidget);
+      expect(find.textContaining('FormatException:'), findsNothing);
+      expect(find.text('Save to board'), findsOneWidget);
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: field, matching: find.byType(EditableText)),
+            )
+            .controller
+            .text,
+        '12000',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  test('Mine Field follows the advertised catalog and uses existing typed settings', () {
+    final game = configuredGame('mine-field', {
+      'limit_ms': 60000,
+      'show_ms': 1000,
+    });
+    final modes = game.modes.keys.toList();
+    expect(modes.length, 11);
+    expect(modes.indexOf('mine-field'), modes.indexOf('reaction-chase') + 1);
+    expect(modes.last, 'toggle');
+    expect(game.description('mine-field'), contains('all cyan or all yellow'));
+    expect(
+      game.command(minigameConfigure, {
+        'settings': '{"mode":"mine-field","limit_ms":60000,"show_ms":1000}',
+      }),
+      {
+        'settings': {'mode': 'mine-field', 'limit_ms': 60000, 'show_ms': 1000},
+      },
+    );
+    expect(
+      miniStatus().peer.minigame!.allows(minigameConfigure, {
+        'settings': '{"mode":"mine-field"}',
+      }),
+      isFalse,
+      reason: 'A client must not add Mine Field to an older board catalog',
+    );
+  });
+
+  testWidgets(
+    'Mine Field shows a distinct icon, does not auto-start and edits its pulse period',
+    (tester) async {
+      final game = configuredGame('mine-field', {
+        'limit_ms': 60000,
+        'show_ms': 1000,
+      });
+      final commands = <Map<String, String>>[];
+      final status = DeviceStatus({
+        ...miniStatus().json,
+        'minigame': game.json,
+      });
+      await tester.pumpWidget(
+        fixture(status, (_, values) async {
+          commands.add(values);
+          return true;
+        }),
+      );
+      expect(find.byIcon(Icons.diamond_outlined), findsOneWidget);
+      expect(commands, isEmpty);
+      await tester.pumpWidget(const SizedBox());
+      Map<String, Object>? saved;
+      await tester.pumpWidget(
+        settingsFixture(game, (patch) async => saved = patch),
+      );
+      expect(find.text('Pulse period (ms)'), findsOneWidget);
+      final pulse = find.byKey(const ValueKey('minigame-setting-show_ms'));
+      expect(tester.widget<TextFormField>(pulse).initialValue, '1000');
+      await tester.ensureVisible(pulse);
+      await tester.enterText(pulse, '800');
+      await tester.tap(find.text('Save to board'));
+      await tester.pumpAndSettle();
+      expect(saved, {'show_ms': 800});
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(
+        settingsFixture(
+          configuredGame('simon', {'show_ms': 300}),
+          (_) async {},
+        ),
+      );
+      expect(find.text('Pulse period (ms)'), findsNothing);
+      expect(find.text('Show time (ms)'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Timed Mine Field success shows winning elapsed milliseconds without sending commands',
+    (tester) async {
+      final game = configuredGame('mine-field', {
+        'limit_ms': 60000,
+        'show_ms': 1000,
+      });
+      final commands = <Map<String, String>>[];
+      final status = DeviceStatus({
+        ...miniStatus().json,
+        'minigame': {
+          ...game.json,
+          'phase': 'success',
+          'timed': true,
+          'elapsed_ms': 1234,
+          'remaining_ms': 58766,
+        },
+      });
+      await tester.pumpWidget(
+        fixture(status, (_, values) async {
+          commands.add(values);
+          return true;
+        }),
+      );
+      expect(find.text('Winning time: 1.234 s'), findsOneWidget);
+      expect(find.textContaining('Remaining:'), findsNothing);
+      expect(commands, isEmpty);
+      final simon = DeviceStatus({
+        ...status.json,
+        'minigame': {...status.json['minigame'] as Map, 'mode': 'simon'},
+      });
+      await tester.pumpWidget(
+        fixture(simon, (_, values) async {
+          commands.add(values);
+          return true;
+        }),
+      );
+      expect(find.text('Winning time: 1.234 s'), findsNothing);
+      expect(find.text('Remaining: 58.8 s'), findsOneWidget);
+      expect(commands, isEmpty);
+      expect(tester.takeException(), isNull);
     },
   );
 }

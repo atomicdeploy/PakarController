@@ -945,10 +945,11 @@ function createCommandTransport({snapshot,socket,http,valid,fallback=true,now=()
     const result={...values};
     if(path==='/api/minigame/configure'){
       const settings=structured(result.settings,'minigame settings');
-      const limits={limit_ms:[0,86400000],warning_ms:[0,86400000],urgent_ms:[0,86400000],penalty_ms:[0,86400000],window_ms:[100,60000],show_ms:[100,10000],gap_ms:[50,5000],feedback_ms:[50,5000],intro_ms:[100,10000],preview_ms:[0,10000],mismatch_ms:[600,10000],rounds:[1,32],sequence_length:[1,32],palette_size:[2,9],fixed_target:[0,9]};
-      for(const key of Object.keys(settings))if(!Object.hasOwn(limits,key)&&!['mode','hard','intro_enabled','color_arpeggio','toggle_kind','outputs'].includes(key))throw Error('Unknown minigame setting');
+      const limits={limit_ms:[0,86400000],warning_ms:[0,86400000],urgent_ms:[0,86400000],penalty_ms:[0,86400000],window_ms:[100,60000],show_ms:[100,10000],gap_ms:[50,5000],feedback_ms:[50,5000],intro_ms:[100,10000],preview_ms:[0,10000],mismatch_ms:[600,10000],rounds:[1,32],sequence_length:[1,32],sequence_growth:[0,31],palette_size:[2,9],fixed_target:[0,9]};
+      for(const key of Object.keys(settings))if(!Object.hasOwn(limits,key)&&!['mode','hard','intro_enabled','color_arpeggio','toggle_kind','outputs','boot_mode','segment_animation','timer_beeps','timer_alternate_tones'].includes(key))throw Error('Unknown minigame setting');
       for(const [key,[min,max]] of Object.entries(limits))if(key in settings)settings[key]=integer(settings[key],key,min,max);
-      for(const key of ['hard','intro_enabled','color_arpeggio'])if(key in settings)settings[key]=boolean(settings[key],key);
+      for(const key of ['hard','intro_enabled','color_arpeggio','segment_animation','timer_beeps','timer_alternate_tones'])if(key in settings)settings[key]=boolean(settings[key],key);
+      if('boot_mode' in settings&&!['first','last'].includes(settings.boot_mode))throw Error('Invalid boot game policy');
       if('mode' in settings&&!snapshot().minigame?.available_modes?.some(mode=>mode.id===settings.mode))throw Error('Unavailable minigame');
       if('toggle_kind' in settings&&!['toggle','latch','press'].includes(settings.toggle_kind))throw Error('Invalid toggle behavior');
       if('outputs' in settings){
@@ -2775,7 +2776,8 @@ async function releaseMiniGameKey(key){
 // Adapt the donor EffectGroupDialog local-draft/explicit-save separation through
 // the existing key-game card. Status reads and opening settings never start play.
 const miniGameFields={limit_ms:['Time limit (ms · 0 = off)',0,86400000],warning_ms:['Warning remaining (ms)',0,86400000],urgent_ms:['Urgent remaining (ms)',0,86400000],penalty_ms:['Mistake penalty (ms)',0,86400000],window_ms:['Reaction window (ms)',100,60000],show_ms:['Show time (ms)',100,10000],gap_ms:['Show gap (ms)',50,5000],feedback_ms:['Feedback time (ms)',50,5000],rounds:['Rounds',1,32],sequence_length:['Sequence length',1,32],palette_size:['Palette colors',2,9],fixed_target:['Target box (0 = random)',0,9]};
-Object.assign(miniGameFields,{intro_ms:['Reveal fade per box (ms)',100,10000],preview_ms:['Pairs preview hold (ms)',0,10000],mismatch_ms:['Wrong pair feedback (ms)',600,10000]});
+Object.assign(miniGameFields,{intro_ms:['Reveal fade per box (ms)',100,10000],preview_ms:['Pairs preview hold (ms)',0,10000],mismatch_ms:['Wrong pair feedback (ms)',600,10000],sequence_growth:['Additional steps per round',0,31]});
+function miniGameFieldLabel(name,mode){return name==='show_ms'&&mode==='mine-field'?'Pulse period (ms)':miniGameFields[name]?.[0]||name;}
 const miniModeDetails={
   'press-to-win':['pointer','First press wins; reset for the next round'],
   illuminated:['sun','Press the glowing target before its window closes'],
@@ -2786,6 +2788,7 @@ const miniModeDetails={
   'color-order':['selectAll','Press the boxes in palette color order'],
   'switch-pattern':['panels','Toggle buttons to copy the indicator pattern'],
   'reaction-chase':['bolt','Catch the moving light inside its response window'],
+  'mine-field':['controls','Toggle boxes to all cyan or all yellow; fastest time wins'],
   toggle:['power','Control latched or momentary outputs without a timer'],
 };
 function renderMiniGame(card){
@@ -2795,7 +2798,7 @@ function renderMiniGame(card){
     root.innerHTML='<label class="key-number">Game<select data-mini-mode></select></label><div class="row" data-mini-actions></div><p class="hint" data-mini-status role="status"></p><details><summary>Advanced game settings</summary><form class="key-settings" data-mini-form><div class="key-palette" data-mini-fields></div><label class="key-option"><input name="hard" type="checkbox">Hard mode</label><label class="key-number">Switch behavior<select name="toggle_kind"><option value="toggle">Toggle</option><option value="latch">Latch</option><option value="press">While pressed</option></select></label><fieldset><legend>Output mapping</legend><div data-mini-outputs></div></fieldset><p class="hint">Saving resets the round to ready.</p><button type="submit" class="primary key-save">Save game settings</button></form></details>';
     card.querySelector('[data-keys]').insertAdjacentElement('beforebegin',root);
     for(const [name,[label,min,max]] of Object.entries(miniGameFields)){
-      const row=document.createElement('label');row.className='key-number';row.textContent=label;
+      const row=document.createElement('label');row.className='key-number';const caption=document.createElement('span');caption.dataset.miniFieldLabel=name;caption.textContent=miniGameFieldLabel(name,game.mode);row.append(caption);
       const input=document.createElement('input');input.type='number';input.name=name;input.min=min;input.max=max;input.step=1;row.append(input);root.querySelector('[data-mini-fields]').append(row);
     }
     for(const action of ['start','pause','resume','reset','stop']){
@@ -2808,7 +2811,11 @@ function renderMiniGame(card){
         action:async()=>{if(mode.id!==miniGameObservation()?.mode)await changeMiniGame('configure',{settings:{mode:mode.id}});renderKeyGame();}})),{label:'Game mode'});
     };
     const form=root.querySelector('form');
-    for(const [name,title] of [['intro_enabled','Reveal colors and notes before play'],['color_arpeggio','Arpeggio color notes']]){
+    const bootLabel=document.createElement('label');bootLabel.className='key-number';bootLabel.textContent='Game on power-up';
+    const boot=document.createElement('select');boot.name='boot_mode';
+    for(const [value,title] of [['first','Press to win (first available game)'],['last','Last configured game · fresh round']]){const option=document.createElement('option');option.value=value;option.textContent=title;boot.append(option);}
+    bootLabel.append(boot);form.querySelector('[data-mini-fields]').before(bootLabel);
+    for(const [name,title] of [['intro_enabled','Reveal colors and notes before play'],['color_arpeggio','Arpeggio color notes'],['segment_animation','Ready display · perimeter animation'],['timer_beeps','Timer · second ticks and minute warning'],['timer_alternate_tones','Timer · alternate odd/even tones']]){
       const label=document.createElement('label');label.className='key-option';const input=document.createElement('input');input.type='checkbox';input.name=name;label.append(input,document.createTextNode(title));form.querySelector('[data-mini-fields]').after(label);
     }
     for(let index=0;index<8;index++){
@@ -2829,7 +2836,8 @@ function renderMiniGame(card){
       event.preventDefault();if(form.dataset.owner!==keyGameControl.owner||form.dataset.mode!==miniGameObservation()?.mode||!canChangeMiniGame()||!form.reportValidity())return;
       const observed=miniGameObservation(),settings={};
       for(const name of Object.keys(miniGameFields))if(Object.hasOwn(observed.settings,name))settings[name]=Number(form.elements[name].value);
-      for(const name of ['hard','intro_enabled','color_arpeggio'])if(Object.hasOwn(observed.settings,name))settings[name]=form.elements[name].checked;
+      for(const name of ['hard','intro_enabled','color_arpeggio','segment_animation','timer_beeps','timer_alternate_tones'])if(Object.hasOwn(observed.settings,name))settings[name]=form.elements[name].checked;
+      if(Object.hasOwn(observed.settings,'boot_mode'))settings.boot_mode=form.elements.boot_mode.value;
       if(Object.hasOwn(observed.settings,'toggle_kind'))settings.toggle_kind=form.elements.toggle_kind.value;
       if(Array.isArray(observed.settings.outputs)&&observed.settings.outputs.length===8)settings.outputs=Array.from({length:8},(_,i)=>{const source=form.elements['source'+i].value;return {source,key:['held','latched','winner','lost'].includes(source)?Number(form.elements['key'+i].value):0}});
       const owner=keyGameControl.owner;
@@ -2853,11 +2861,12 @@ function renderMiniGame(card){
   root.querySelector('[data-mini-status]').textContent=[game.phase,game.ready===true?null:'Board not ready',game.timed===true?'Remaining '+number(game.remaining_ms)+' ms':null,'Elapsed '+number(game.elapsed_ms)+' ms','Round '+number(game.round),'Progress '+number(game.progress),'Mistakes '+number(game.mistakes),game.winner?'Winner · Box '+game.winner:null,game.target?'Target · Box '+game.target:null,game.warning?'Warning '+number(game.warning):null,'Reaction '+number(game.last_reaction_ms)+' ms','Best '+number(game.best_reaction_ms)+' ms'].filter(Boolean).join(' · ');
   if(contextChanged||form.dataset.dirty!=='true'&&!form.contains(document.activeElement)){
     for(const name of Object.keys(miniGameFields))form.elements[name].value=game.settings[name]??'';
-    for(const name of ['hard','intro_enabled','color_arpeggio'])form.elements[name].checked=game.settings[name]===true;form.elements.toggle_kind.value=game.settings.toggle_kind??'';
+    for(const name of ['hard','intro_enabled','color_arpeggio','segment_animation','timer_beeps','timer_alternate_tones'])form.elements[name].checked=game.settings[name]===true;form.elements.toggle_kind.value=game.settings.toggle_kind??'';
+    form.elements.boot_mode.value=game.settings.boot_mode??'first';
     for(let i=0;i<8;i++){const rule=game.settings.outputs?.[i];form.elements['source'+i].value=rule?.source??'disabled';form.elements['key'+i].value=rule?.key||1;}
   }
-  for(const [name] of Object.entries(miniGameFields)){const input=form.elements[name];input.parentElement.hidden=!Object.hasOwn(game.settings,name);input.disabled=!enabled||input.parentElement.hidden;}
-  for(const name of ['hard','intro_enabled','color_arpeggio','toggle_kind']){const input=form.elements[name];input.parentElement.hidden=!Object.hasOwn(game.settings,name);input.disabled=!enabled||input.parentElement.hidden;}
+  for(const [name] of Object.entries(miniGameFields)){const input=form.elements[name];input.parentElement.querySelector('[data-mini-field-label]').textContent=miniGameFieldLabel(name,game.mode);input.parentElement.hidden=!Object.hasOwn(game.settings,name)||name==='sequence_growth'&&game.mode!=='simon';input.disabled=!enabled||input.parentElement.hidden;}
+  for(const name of ['hard','intro_enabled','color_arpeggio','toggle_kind','boot_mode','segment_animation','timer_beeps','timer_alternate_tones']){const input=form.elements[name];input.parentElement.hidden=!Object.hasOwn(game.settings,name);input.disabled=!enabled||input.parentElement.hidden;}
   for(const row of root.querySelectorAll('[data-mini-output]')){const i=Number(row.dataset.miniOutput),source=form.elements['source'+i],key=form.elements['key'+i];row.hidden=game.settings.outputs?.length!==8;source.disabled=!enabled||row.hidden;key.disabled=!enabled||row.hidden||!['held','latched','winner','lost'].includes(source.value);}
   form.querySelector('[type=submit]').disabled=!enabled;
 }

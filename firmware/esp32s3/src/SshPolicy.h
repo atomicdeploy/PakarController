@@ -17,4 +17,16 @@ inline bool admitted(uint32_t token,uint32_t active,uint32_t revision,uint32_t c
 }
 inline uint16_t columns(int value){return value<40?40:value>240?240:uint16_t(value);}
 inline uint16_t rows(int value){return value<16?16:value>100?100:uint16_t(value);}
+// Exactly one bounded device command, not a script or operating-system shell.
+// Reject controls before they can become a second editor submission.
+inline size_t commandLength(const char* text){
+  if(!text)return 0;
+  bool content=false;size_t n=0;
+  for(;n<=packetBytes&&text[n];++n){
+    const auto ch=static_cast<unsigned char>(text[n]);
+    if(ch<32||ch>126)return 0;
+    content|=ch!=' ';
+  }
+  return content&&n<=packetBytes?n:0;
+}
 }

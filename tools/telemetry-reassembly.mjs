@@ -8,7 +8,7 @@ export class TelemetryReceiver{
     const p=typeof packet==='string'?JSON.parse(packet):packet;
     if(!p||p.type!=='telemetry-fragment'||p.encoding!=='base64'||
       typeof p.snapshot_id!=='string'||!/^[0-9a-f]{32}-\d{1,10}$/.test(p.snapshot_id)||
-      !Number.isInteger(p.total_bytes)||p.total_bytes<1||p.total_bytes>16384||
+      !Number.isInteger(p.total_bytes)||p.total_bytes<1||p.total_bytes>24576||
       !Number.isInteger(p.count)||p.count!==Math.ceil(p.total_bytes/768)||
       !Number.isInteger(p.index)||p.index<0||p.index>=p.count||! /^[0-9a-f]{64}$/.test(p.sha256)||
       typeof p.data!=='string'||p.data.length>1060||! /^[A-Za-z0-9+/=\r\n]*$/.test(p.data))throw Error('Invalid telemetry fragment');

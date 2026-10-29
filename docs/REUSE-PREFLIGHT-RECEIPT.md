@@ -1,5 +1,79 @@
 # Donor-first preflight receipt
 
+## Game picker acceptance gaps, side conversation, 2026-10-29 (#32)
+
+Scope is the Flutter game-mode selector, not board deployment or the main
+thread's other work. Read the current selector/tests and actual history: the
+first rich row retained a fixed 64 px height and no number, while 7e013fab added
+numbering and one two-entry test. Read the complete 233-line PCController
+ActivityStrip source at its unchanged recorded hash; retain its themed icon
+surface, bounded text and stable geometry, not a second command owner.
+
+The fixed 26 px number column was not accessibility-safe. The new shared picker
+measures number width, keeps digits LTR in RTL layouts, reserves both title and
+muted description lines, and exposes full labels/descriptions to accessibility
+and tooltips. Only advertised modes appear in board order. Parent ACK/peer
+admission is unchanged; focus, opening and selecting the current mode do not
+start or reconfigure a game. The canonical mobile capture selector additionally
+accepts GameModePhone/GameModeTablet for actual-widget fixture inspection.
+
+Canonical mobile wrappers report no analyzer issues and 33 passing tests:
+22 minigame, four box-designer and seven picker tests. Picker coverage includes
+all 11 advertised entries, 18 phone/tablet/RTL/text-scale combinations, bold
+text, keyboard selection, disabled/unchanged choices, custom modes, description
+fallbacks and closing the old popup on a board change without issuing a command.
+The first fixture run exposed a lazy-list Finder error and a missed-tap warning;
+the fixture now scopes to the actual popup and treats missed taps as failures.
+Expanded phone and tablet actual-widget captures were visually inspected. These
+are local source/fixture results, not installed-device or physical acceptance.
+No APK, running app, board, saved game setting or Git branch is replaced here.
+
+## SSH single-command and direct TUI entry, 2026-10-29 (#33)
+
+Consulted ssh-transport plus exact PU850 donor-audit LocalLib/Shell.cpp/.h rows
+at 4311040; read their complete session/dispatch code. Preserved the adapted
+session-owned output and shared dispatcher instead of adding another command
+catalogue or an OS shell. Inspected the pinned LibSSH-ESP32 5.10.0 command-request
+parser, channel exit-status and close/EOF implementations. No PortableShell
+vendored editor or concurrent shell integration checkout was overwritten.
+
+Ordinary SSH exec was rejected while SCP exec was accepted. Added a bounded
+128-byte command event after SSH authentication, preserving token/security
+revision and maintenance guards. Non-PTY commands omit prompt/banner/echo,
+report nonzero command failures, drain results before exit status, and survive
+host stdin EOF. PTY tui/edit uses the same TUI, resize and input owner; exit
+closes the exec channel rather than opening a second interactive shell.
+
+New fixtures exercise actual production functions with host transport/queue
+and peripheral doubles in both roles. Initial fixture compilation exposed
+Windows libssh dllimport and the host `eof` symbol; the test now selects the
+library's documented static API declarations and uses inputEof. The actual
+DeviceView exit API and ArduinoJson String writer were used rather than
+inventing an end method. No production validation was relaxed. Test results
+and final SDK link are recorded with the checkpoint; encrypted board login,
+live memory/LED coexistence and deployment remain issue #33 acceptance gates.
+
+Final verification: tools/test-ssh.ps1 passed command/policy/NVS fixtures,
+production transport API compilation with transfers included/excluded, both
+role-specific actual shell/SSH/TUI bindings, public-file adapters and real
+OpenSSH transfer clients over stdio doubles. tools/test-shell.ps1 passed the
+existing editor/navigation, framed USB, authority, production session and
+TCP/UDP loopbacks. Comparison generation/check and the living-contract guard
+passed. A standalone optional guard was first called by the wrong filename;
+the canonical tools/check-living-contract.mjs was then run successfully.
+
+Canonical SDK build passed: ESP32-S3 keycontroller, buffered UART, 16 MiB/OPI,
+both LED backends, BLE initialization excluded, W5500/acknowledged ISP and all
+four optional SSH/SCP/SFTP/FTP services included. It reused the existing cache
+with 12 workers; changing the resolved dependency list rebuilt vendor objects.
+The actual application object was compiled after the final source changes.
+Raw image is 2,734,096 bytes / 3,342,336-byte OTA slot (81.80%); static RAM
+136,436 bytes is not measured free heap. SHA-256:
+6715191bb505fcc587673e0c37c102619ff35d719d79f1e96507882dc0b02ed1.
+No board, Android or desktop deployment, listener enable, reboot or actuator
+test occurred. Existing runtime opt-ins and all default-off build flags remain
+unchanged. The image is a build candidate, not encrypted/live SSH acceptance.
+
 ## PortableShell component consolidation, 2026-10-28 (issue #29)
 
 Read portable-shell, device-shell, terminal-ui and donor-audit mappings; read the
@@ -11241,6 +11315,446 @@ HTTP/1.1 fetch then succeeded without disabling TLS checks. Fast-forwarded local
 main and verified its entire tree equals the accepted PR head before cleanup.
 Never treated the failed fetch's stale origin/main ref as the final handoff.
 
+## Keycontroller boot and PuzzleBoard timer presentation (2026-10-29)
+
+Consulted firmware-hardware, games-streaming, donor-audit/PuzzleBoard.ino and
+audio-attention. Read PuzzleBoard's MODE_RESET waitCounter, countdown/colon,
+beepOff and multiplex helpers, and the actual PCController LocalLib/TonePlayer
+header/implementation. The donor's exact bottom-first 12-step/100 ms animation
+now has a TM1637 active-high adapter in BoardCore/GamePanelFeedback.h. Retain
+A4/DIO and A5/CLK, bounded display admission and notice/menu/update ownership;
+do not copy the incompatible active-low shift-register pin map or blocking beeps.
+
+The same existing audio ring gains idle-only atomic admission (action8, explicit
+HELLO audio bit2); it rejects timer ticks during notes, flash cues or prefill.
+No extra AVR queue/RAM allocation, audio-rate interrupt, legacy stop-and-beep
+fallback or missed-tick replay. Silent mode remains authoritative. Persistent
+boot policy defaults to first available/Press to win, retains saved wiring and
+uses one fresh-round admission only after AVR ownership is confirmed. An
+interrupted link does not trigger another boot round.
+
+Scope-reviewed diffs in the existing shared files leave their unrelated donor
+routes/anchors unchanged; rebind only these changed target/proof bytes in the
+existing ledger. Add exact helper/proof references to the PuzzleBoard mapping,
+without promoting physical or remaining donor acceptance. The first Git refresh
+timed out; candidate work starts from the verified prior clean a66d3a8 checkpoint,
+not an assumption that a failed fetch refreshed origin/main. No production
+board, GPIO, ASUS, tablet or PBX action is part of this source task.
+
+Candidate checks caught the new native control in the read-only status scope;
+moved it into the existing per-peer settings Draft and retained the imported
+Pealayer ComboBox/DropdownUiExt geometry. Removed only this pass's unrelated
+whole-crate rustfmt changes and restored their original evidence bindings.
+The Web generation gate correctly rejected an edited packaging header; moved
+the diff to canonical web/index.html and regenerated all assets through
+build-web.mjs. Browser dependency lookup reused the bundled Playwright via
+load_workspace_dependencies/NODE_PATH, without installing another package or
+contacting a board. The first DOM run lacked NODE_PATH; the corrected isolated
+browser fixture passes. A later narrow HTTPS fetch succeeded and verified
+origin/main remains a66d3a8. No failed check was disabled or bypassed.
+
+## Tablet game picker and paired-delivery continuation (2026-10-29)
+
+Reread PCController's complete ActivityStrip in workspace_chrome.dart and the
+existing mapped game-card implementation. Retain its semantic icon surface,
+bounded text and stable target geometry; add catalog-relative numbering,
+wrapping muted descriptions and one contextual Start/Pause/Resume action.
+Rebind only the changed reviewed target/proof files and retain the donor's
+unrelated open omissions. Analyzer and 14 focused widget/model tests pass.
+
+Forwarded ADB intermittently lost the tablet transport; ASUS-local ADB completed
+successive commands. Reuse the actual android-device.ps1, viewport and process
+probe helpers on ASUS, retaining explicit serial, lock guards and fresh UI
+observations. Do not restart the shared ADB server, touch the attached phone,
+or call this an established electrical/cable diagnosis. The full installed APK
+hash and actual tablet menu were verified. Windows process replacement found
+no running owner; preserve old executable/preferences before the guarded
+existing interactive production task launch. Session-zero IPC failure remains
+separate from process/hash evidence, not routed around as a forced replacement.
+
+The standard Range backup reached an owned partial then timed out; reuse the
+already implemented Flutter espBytes/AndroidDocuments path rather than bypassing
+identity/integrity rules or claiming the partial succeeded. Actual tablet export
+matched the running image's complete size/MD5 and was copied off-device.
+The tablet selected the candidate binary through SAF, confirmed it and performed
+the ESP upload; captured byte progress and observed board OTA job completion
+are not independent post-boot hash or physical acceptance. See KEY-MINIGAMES.md
+for precise hashes and the still-open paired-deployment gates.
+
+### Maintenance progress and exact backup ownership (2026-10-29)
+
+Reused the reviewed PCController hostui/update_progress.go stage-local measured
+versus unknown progress rule, retaining the imported themed Flutter controls.
+The first accessibility run correctly rejected a prose-valued progress semantic;
+the control now uses Flutter's numeric percentage semantics. Five responsive,
+RTL, theme and large-text design tests, eight delivery tests and four upgrade
+lifecycle tests pass. The new Urboot export fixtures initially omitted mandatory
+board identity; corrected fixtures rather than weakening the production identity
+guard. All 30 firmware-controller tests and analyzer pass. Exact backup downloads
+are boot/job/request fenced before and after transfer, including exact byte
+length, and never fall back from Urboot to unrelated ISP backups.
+
+The S3 build's PU route guard detected stale application target bindings after
+the narrow audio-owner edit. Reread the actual donor registrations and current
+five mapped application regions; repair only target hashes and line references,
+not donor identities or route dispositions. The 50-route guard and canonical
+S3 build pass. Evidence hashes retain the separation between origin source rows
+and target/proof references; comparison generation and Check pass. No failed
+gate was disabled, and no failed fixture justified a production API downgrade.
+
+### Game-feedback requirement audit (2026-10-29)
+
+Audited the user's entire game feedback list against actual engine, service,
+AVR player, Flutter controls and command transport, plus Rust and canonical Web
+controls. Retain the existing semantic icon/description menus and correlated
+WS-first transport; do not replace connection checks with optimistic success.
+New targeted Flutter tests verify board-provided timing/reveal settings, narrow
+patches and failed-save draft retention. FormatException presentation now strips
+only the type prefix, keeping its actionable reason. The 18 game and six actual
+transport tests pass with clean analyzer results; no tablet install is part of
+this audit because David is using it and requested a later deployment retry.
+
+The actual production audio blocks exposed another phase-only assumption:
+repeated wrong-pair Feedback entries can be separated by input processing without
+an intervening audio service pass. Bind feedback to presentation timestamp as
+well as phase, retaining the mode/input-epoch fence. Compile the real dispatch
+block and assert both repeated incorrect cues, cancellation by a new correct
+pair, the exact atomic arpeggio and delayed configured winner cue. Core/settings,
+all-mode/excluded-mode, seven integration and boot/reset tests pass.
+
+Latest explicit policy overrides the older Color Pattern request: its fresh
+introduction default is Off; optional reveal remains capped at 500 ms, and
+Matching Pairs keeps its default-on reveal. Existing saved choices are not
+migrated. This instance's requested Off write remains pending ASUS access.
+
+Reread the unchanged complete Pealayer NumericValueControl and EffectGroupDialog
+at their recorded hashes, preserving bounded typed drafts and explicit commit.
+The existing Web form exposed boot/display/timer fields that its command
+validator rejected. Align its typed field catalogue with those actual firmware
+settings; invalid booleans/policies and unknown fields still reject before any
+send. Transport and isolated browser interaction tests pass. Canonical Web
+regeneration changed the embedded route target hash; the mandatory PU route
+gate stopped the build. Re-review the affected donor/target registrations and
+update only two target bindings, then pass the 50-route guard without bypass.
+
+### Shorter Simon progression (2026-10-29)
+
+The latest user request supersedes the prior one-round/eight-step default. Use
+three rounds with the same prefix extended from three to five to seven steps;
+300 ms lit plus 120 ms gap accommodates the existing 210 ms AVR-local arpeggio.
+Keep correct-entry feedback at 240 ms. An additive bounded `sequence_growth`
+setting (0–31, zero for fixed length) is advertised/persisted by the board and
+editable in Flutter, Rust and the canonical Web controls; maximum sequence
+length remains 32. The old-file missing-field default retains +1 growth in RAM
+without automatically rewriting explicit saved timing or configuration.
+
+Core tests play each complete prefix and response with exact feedback timing,
+then fixed-length/capped variants. Persistence tests cover explicit growth and
+unchanged older saved policies. Flutter's 19 game tests and six previously
+verified unchanged transport tests, plus ten native minigame tests, pass. Web
+typed-command and isolated DOM tests exercise growth bounds, contextual control
+visibility and actual Save. Full/onboard assets share the same revision.
+
+The native specialist reread all 1236 actual Pealayer dialog lines and all 646
+dropdown lines after inspecting the used helper slices before edits; retain
+their imported setting-row/navigation controls without a new widget or geometry.
+Only explicit picker interaction applies new mode defaults. Painting/reopening
+preserves edits, wiring, startup and timer policies; an unadvertised optional
+field is not inserted for another board. Reuse/source proofs remain separate
+from installed UI, audible timing and actual three-round hardware acceptance.
+No device operation is authorized by these fixture results: deployment and the
+current-instance Color Pattern/Simon settings are intentionally deferred while
+David uses the tablet.
+
+## Color Pattern pacing and visible matching (2026-10-29)
+
+Consulted games-streaming and the exact Puzzles.ino donor-audit route. The
+complete unchanged Puzzles sketch and its WS2811 header/implementation were
+reread, alongside the actual PCController TonePlayer deadline owner and
+Pealayer SoundEffectFields. Reuse bounded phase-local progression, finite
+color-note ownership and the tone player's previous-deadline anchoring rather
+than donor blocking welcome waits or an additional presentation engine.
+
+The current Color Pattern intro used one saved 1000 ms interval per box and
+reanchored each reveal to the current service tick, accumulating stalls. Cap
+its effective interval/final pause at 500 ms, default new color-puzzle settings
+to 500 ms and catch up over at most nine expired reveals without stale-note
+bursts. Matching Pairs keeps its own reveal/preview policy. No board settings
+or saved instance files are migrated by this source change.
+
+The old default palette used three blue-family hues. Replace the default seven
+with saturated Red/Green/Blue/Yellow/Magenta/Orange/White; optional extra slots
+are Cyan/Pink. Preserve palette-index note associations. Exact engine state
+matching does not use brightness or wire correction output. The observed
+mask62/progress5 with six enabled boxes identifies box1 as unmatched, not a
+disabled-box or off-by-one success condition. No independent matching algorithm
+defect has been reproduced; neither the old snapshot nor new source tests can
+prove what all physical groups displayed.
+
+Add nonmutating per-participating-box intended palette positions, RGB, hex,
+semantic color names and matched status to the existing Color Pattern snapshot,
+plus its effective intro interval. Core regressions cover all511 nonempty masks
+and all palette sizes2–9, repeated Down/release, sparse layouts, 5/6-to-6/6
+completion, long-hold reversal, normal-brightness palette distinction and
+reveal cap/stall/rollover behavior. Bind these reviewed bytes and proofs in the
+same Puzzles ledger row before canonical verification. No board command,
+firmware build, new round or optical acceptance was performed by this subtask;
+fresh six-box human feedback remains required after approved deployment.
+
+## Washed-color regression audit (2026-10-29)
+
+Consulted the games-streaming and exact Puzzles/PCController AddressableLeds
+ledger routes; reread the complete unchanged Puzzles sketch and AddressableLeds
+implementation/header, then actual HostPresentation, KeyPresentation, StateMotion
+and S3 wire conversion. Retain the shared RGB renderer and multiplicative
+brightness/channel permutation, not a second color correction owner. The old
+running-image palette had softened red/blue; the vivid palette is still pending
+deployment. Remove the gray floor from optional Pink and explicitly request
+HSV saturation/value 255/255 for normal and diagnostic rainbow, instead of the
+installed FastLED convenience implementation's saturation 240. This source
+finding alone does not diagnose severe physical washout or electrical health.
+
+Add published-frame-to-wire regressions for all nine game colors and brightness
+levels, plus zero-channel preservation under scalar effects. The first fixture
+incorrectly inspected FastLED's restored background working buffer; correct it
+to inspect the actual published composite. Its failed Windows process initially
+locked the canonical executable; exact owned-process cleanup was denied, so
+request manual cleanup rather than SSH/output-path/cache bypass. After that
+process cleared, rerun the same canonical test wrapper successfully. Minigame
+core/settings, both baked-role profiles and the full LED pipeline pass. The HSV
+stub deliberately preserves old hue-clock encoding and observes producer
+arguments only; it is not a claim of real HSV conversion or optical quality.
+Saved settings, brightness, correction rules and channel calibration remain
+untouched. Physical comparison and deployment remain separate pending gates.
+
+## Mine Field shared minigame (2026-10-29)
+
+Consult games-streaming and the exact Puzzles.ino donor-audit row; reread all
+886 unchanged sketch lines and the current KeyMiniGame/HostPresentation/
+StateMotion sources. Adapt the existing phase/countdown/output owner, not the
+donor's blocking welcome waits, fixed puzzle code or a separate game engine.
+Add Mine Field with seeded cyan/yellow initial states and at least one of each,
+edge-deduplicated per-box toggles, either-color uniform success, frozen elapsed
+result, shared high/low pulse and red timeout rendering. Shared countdown,
+TM1637, finite color notes, configured result cue and output predicates remain
+the only hardware owners. Preserve old enum IDs and keep Toggle last in the
+advertised catalog. The new inclusion flag is On by default for key builds and
+Off with the other key modes in table builds; no current settings are changed.
+
+Reuse existing board-catalog menus, details/icons, typed drafts, explicit Save
+and WS-first peer-bound controls in Flutter/Rust/Web. The existing show_ms field
+is labeled Pulse period contextually; no API generation, synthetic per-frame
+client animation or parallel Web app is introduced. Native's imported selector
+keeps the same hit geometry; only explicit mode selection applies new defaults.
+
+Canonical core/excluded-mode/settings tests pass, including all 502 enabled-box
+masks with two or more boxes, both solutions, sparse layouts, duplicate edges,
+countdown rollover/pause/timeout, output rules and persisted custom timings.
+Flutter analyzer/22 focused game tests, native 13 focused tests, actual extracted
+production dispatch integration, Web typed WS admission and isolated mobile
+browser interaction pass. The first browser invocation lacked NODE_PATH;
+reuse the documented bundled Playwright runtime via load_workspace_dependencies
+and NODE_PATH, with no package install, before rerunning successfully. Canonical
+Web full/onboard builds share the same source revision. Re-review unchanged PU
+AsyncOTA.cpp and root route registration plus actual generated target anchors,
+then rebind only the two target hashes, preserving the 50-route guard.
+Device installation and optical/acoustic gameplay acceptance remain pending;
+no board, active tablet or app process was changed in this implementation pass.
+The final result controls show Winning time with millisecond precision for
+Mine Field success instead of its leftover countdown; other modes are unchanged.
+The S3 firmware and production-hold APK build pass; native evidence is the
+focused compiled test binary, not a newly packaged production executable.
+
+## Rust contextual game configuration (2026-10-29)
+
+Consult games-streaming, native-dropdowns and the exact Pealayer dialog donor
+row. Reread all1236 dialog and646 dropdown lines at their unchanged recorded
+hashes, the current KeyMiniGame::Config defaults and native Game settings
+consumer. Inspect the actual Pealayer5b3d5c1 hardware_action_button and PCController
+f2260e3 CSS blame: recolor fixed geometry, never add a state-dependent stroke
+width. Retain existing setting_row/detail-navigation/ComboBox helpers; no new
+control implementation, modal runtime or board-side settings store is added.
+
+Fix the consumer's incomplete mode-change defaults and ignored option exposure.
+Known explicit mode changes refresh only advertised rule fields to the actual
+engine defaults; wiring, device policies, unknown fields and same-mode edits
+stay intact. Unknown future modes retain board-owned settings. Countdown,
+challenge and presentation controls are contextual, reveal fields honor intro
+Off, and stable numeric IDs survive hide/show. The output mapper changes only
+after a real interaction, preserving optional metadata, and uses readable
+predicate labels. Toggle behavior now uses the imported keyboard-aware selector
+instead of stock selectable-value buttons. Apply remains a narrow peer-bound
+patch with exact readback and stale-draft rejection. All 17 focused native tests
+pass, including 110 different-mode transitions, 11 rule-visibility/layout cases,
+new-mode warning validation and unchanged drafts/zero sends at 280/740 px.
+The five shared-dropdown tests also pass, including keyboard focus/navigation,
+search, fixed hover geometry and unrelated-editor arrow ownership.
+Native-only changes require no firmware/APK rebuild or board/client replacement;
+runtime acceptance stays separate from these focused source checks.
+
+## Termux upgrade preflight and interruption (2026-10-29)
+
+David authorized updating both ESP instances through Termux first, followed by
+completion/review/merge of the mixed workspace. Preserve that order; no merge or
+clean-working-tree claim is made while device deployment is blocked. The current
+8022 key was matched against the previously trusted Termux key at5022 without
+replacing ASUS's saved8022 key. Actual Termux/rish inventory found ledcontroller
+on its saved station network, AVR online, no programming latch,480 pixels and
+RMT/DMA active. Keycontroller was absent from hostname resolution and a fresh
+phone Wi-Fi scan; never substitute a guessed device.
+
+The canonical downloader obtained and verified the complete2314752-byte running
+ESP application, but Android denied its final hardlink publication. Retain the
+part file; independent transfer to this PC verified its running-image MD5 and
+SHA256. This is a preserved firmware backup, not successful completion of the
+downloader's final publication or a restore test. Android no-hardlink publication
+still needs a safe exclusive-create/verified-copy fallback and platform tests.
+Correction/group/configuration snapshots remain on the phone; retrieve and
+independently verify them before it leaves. Do not restore historical scene values
+over a user's newer intentional changes.
+
+Actual preflight also rejected the growing compressed root Web UI because its
+decoded body exceeded512KiB. Consult updates-telemetry/network-cloud and the
+exact PCController netpolicy/http_url.go donor row, reading its authority checks,
+PU850 FirmwareTransfer.h/.cpp and PCController UPDATE-PROGRESS.md in full. Keep
+hostname-first same-board/boot/socket binding, auth, ownership, no-replay and
+firmware digest checks. Increase only root HTML's compressed/decoded allowance
+to a bounded1MiB in check-ethernet-live.mjs; all other response limits stay512KiB.
+Loopback tests accept600KB raw/gzip HTML, reject over1MiB/decompression bombs and
+retain the non-root JSON bound. Ethernet-live and updater fixture suites pass;
+these are not device OTA or physical acceptance.
+
+Both current ESP application candidates and pinned manifests were published in
+new immutable HTTPS directories under office.digitalogic.ir/pakarcontroller/
+firmware/esp32s3/, with server-side image/manifest SHA checks and direct200,
+exact Content-Length for the ledcontroller image. This prepares an Internet
+download source, not an installed image or autonomous remote command channel.
+Before the upload started, Termux's SSH connection stopped completing handshakes
+and then refused connections. Known alternate forwards did not answer. No board
+firmware POST, reboot, scene/configuration write or AVR program operation occurred.
+Shared chisel was left intact; only identity-verified owned stalled SCP clients
+were stopped. Restore the phone tunnel and identify keycontroller before either
+upgrade. The existing remote panel still pins an older board identity/topic;
+do not run its historical installer or claim independent remote readiness.
+
+### Same-session deployment continuation
+
+Termux subsequently returned. Retrieve all ledcontroller snapshots onto this PC,
+freshly match its old firmware metadata to the verified backup, and download the
+candidate from the pinned HTTPS artifact. Launch exactly one canonical updater
+under an exclusive marker with a detached private log; no mutation replay on
+SSH loss. Actual local Async HTTP upload took42429ms, total188531ms including
+full2695408-byte SHA256 readback. Same board `esp32s3-907069eaaf34` changed boot
+from `62a8d50390ea3a9237c40df88afdbc87` to
+`664d3dfebef9065a2ae21090a3583fc8`; running hash matches
+`34ed92d994618ed5b7c23ae45ddc470929e6f20d34f25920ad37ed2df465430f`,
+integrity is verified and selected/running OTA slot is VALID. Actual WS proofs
+passed before/after. Independently compare saved correction rules/enabled/revision,
+group counts/starts/overrides and all cell assignments/locks: unchanged. No AVR
+programming or intentional LED-state command was performed. This is firmware and
+state-preservation evidence, not optical/audio or power-loss acceptance.
+
+David confirmed the Dlink router remains online and powered keycontroller back
+on. Its AP then appeared, but not its LAN hostname. Termux joining this AP drops
+the SSH route. A one-shot detached commissioner preserves the identified key
+snapshots before any station patch and requests return to Dlink in its finalizer.
+Its result must be retrieved before a retry; no key firmware upload was launched.
+Do not confuse the absent tunnel with an absent powered board or assert that
+its network mutation succeeded without the saved receipt.
+
+Adapt the existing Mosquitto provisioner with explicit validated device scopes:
+keep the old ledboard default, but create separate private credential files,
+principals, ACL topics and rollback names for ledcontroller/keycontroller. Three
+scope tests pass; register them and the actual cloud-service fixtures in CI.
+Only ledcontroller's broker scope was provisioned so far. Its peer-fenced local
+cloud settings commit received202 and readback confirms saved TLS MQTT policy.
+Actual office probe authenticated/published to the broker, but the board never
+replied and reports MQTT-2: this is NOT successful Internet board management.
+The broker sees TLS EOF before MQTT authentication. Clock is synced. Strict
+server TLS1.2/certificate checks pass; no certificate bypass is justified.
+
+Read the actual installed ESP32 NetworkClientSecure/ssl_client and S3 qio_opi
+sdkconfig. mbedTLS is prebuilt with internal-only allocations and16KiB record
+buffers, so free PSRAM alone is not handshake headroom. Resource pressure is
+plausible with measured57760 internal free/31732 largest, not yet proven. Add
+bounded numeric/text SDK TLS failure, elapsed and pre/post internal heap detail
+to the existing MQTT error only; preserve trust, timeout, ownership and retry
+policy. Both ESP32/ESP8266 cloud fixtures pass, including control-byte sanitation,
+long/unknown SDK detail, plain TCP and MQTT-auth failure distinction. Rebuild
+the standard production profile without opt-in SSH/file-service inclusion flags;
+those sources and the separately verified all-service image remain available.
+Measure its actual live result before declaring the remote path fixed.
+
+Review preparation found three open PRs, not a synchronized final main. Full
+38/39 diffs and paginated conversations were reviewed read-only. Their combined
+terminal source must preserve SSH command-only behavior and theme initialization,
+and the new workspace fixture needs matching session fields. Semantic ledger
+union and combined shell/SSH checks are required before normal merging. No
+merge was performed ahead of the requested board-upgrade ordering.
+
+The host denied cleanup of the test-created
+`tools/__pycache__/provision-mqtt-device.cpython-312.pyc`. Do not reroute the denied
+delete or hide it with ignore rules; user-assisted cleanup remains required.
+The scope test now suppresses bytecode creation, including its CI invocation.
+
+The standard16MiB/OPI/buffered/table/W5500/both-backend recovery build passed:
+2388880 raw application bytes, static RAM140156 (7400 bytes less than the
+all-service table image). SHA256
+`24dfe517a2c8e0fb646bda5a1078b1ca1bff356ef4ca1a401bba1ed7da66f470`.
+Its immutable HTTPS artifact/manifest were independently checked on office;
+this is still a candidate, not another installed image or a live TLS fix.
+Fresh Flutter picker analysis and all seven focused tests also pass. Key
+commissioning confirmed no network API write: phone failed to stay associated
+with the identified AP and requested restoration to Dlink. The later explicit
+join lost SSH again; inspect current phone network before any board retry.
+
+### MQTT TLS and detached commissioning continuation
+
+Deploy the standard candidate24dfe517 through the canonical Termux updater once:
+actual2388880-byte full SHA256 readback, VALID selected/running slot, same-peer
+WebSocket and new bootc6cd787171b0adef7bffd78e03e6bc40 passed. Correction rules,
+group layout and cell assignments/locks compare unchanged. MQTT TLS now connects
+with the original root/hostname/time checks; office received correlated accepted
+commands. This does not establish whole-system health: full status had grown
+past16KiB and prevented all aggregate telemetry publication.
+
+Reuse the existing compact projection for routine S3 cloud status, free its
+owned temporary before building aggregate telemetry, and align fragmented S3
+telemetry/receivers with the aggregate API's existing24KiB maximum. Keep768-byte
+fragments and the existing4KiB command buffer, finite reassembly jobs/digest,
+strict peer identity, deadlines and non-retained/no-replay command discipline.
+Fixtures cover the boundary and oversized-status isolation. Fix a preexisting
+source-guard slice that ended at configureNtp's earlier declaration, rather than
+its definition. Rebind only reviewed changed target/proof hashes.
+
+An actual Internet MQTT firmware-fetch job1 then failed BEFORE image bytes with
+TLS-32512 (allocation failure), while retaining its existing MQTT TLS connection.
+Temporarily switching RMT to GPIO did not repair this; job2 also failed before
+bytes. The explicit saved RMT preference was restored via a correlated ACK.
+The later temporary station-only recovery experiment must restore the prior AP
+policy after inspection; acceptance does not prove an upgrade or AP restoration.
+
+Read the actual installed mbedTLS esp_config/esp_mem headers and archive symbol
+references, plus Espressif's esp_mem.c/Kconfig allocation strategy. Adapt its
+SPIRAM calloc strategy only for record-sized allocations (>=16KiB), using the
+project's existing GNU-wrap pattern rather than modifying the SDK or pretending
+header macros reconfigure prebuilt libraries. No PSRAM or allocation failure
+delegates to the original allocator; size multiplication overflow fails closed.
+Small allocations retain the SDK policy, and its heap_caps_free handles both
+regions. Certificate/SNI/time verification and record lengths are unchanged.
+Linked host fixtures pass; actual two-connection/OTA hardware proof is separate.
+
+For the newly requested detached board-to-board provisioning, reread actual
+PCController netpolicy/http_url.go and hostbridge/peer_response.go. Reuse the
+existing PeerRelay pinned dial/Host, bounded responses, explicit target identity
+and no uncertain-write replay policy. Add a queued/persisted job with explicit
+loop-only start after cloud callback return; transient NetworkConfig ownership
+never edits saved source networking. It verifies target identity/role, snapshots
+redacted settings, POSTs once, always requests restoration, and retains bounded
+receipts across client loss/reboot. A pending rebooted job is not resumed.
+Commission/network/relay fixtures pass; root integration/SDK and actual AP/LAN
+execution are separate gates. See PEER-NETWORK-COMMISSIONING.md.
+
 ## Rich PortableShell device workspace (2026-10-29)
 
 Consulted device-shell, terminal-ui, portable-shell inventory and the exact
@@ -11336,3 +11850,26 @@ d34dafd380922c7e7f29a45c3d88761ac4feac0a10e521112a85739e52241d5a.
 The final typography-only follow-up receives a separate build attestation on
 PR38/issue29. Static RAM is not a runtime peak measurement. All historical donor
 records and omissions remain; no production action was taken.
+
+## Consolidated PR37/38/39 integration (2026-10-29)
+
+Reconsulted github-coordination and the exact Pealayer review-audit donor, read
+all refreshed PR conversations/reviews/threads and retained the complete reviewed
+source diffs. PR39 and PR38 merged normally after their exact-head Build and
+CodeQL success. No protection bypass or completed Copilot review is claimed.
+
+The combined shell retains both command-only SSH prompt suppression and the
+PortableShell theme, and the actual workspace fixture now models command-only
+and closing fields used by the retained Exit branch. Both receipt appendices,
+all source revisions/omissions and added mappings are retained. Resolve only
+reference-hash conflicts for the reviewed combined shell/binding; regenerate the
+existing Markdown/CSV projections, not a replacement ledger.
+
+PR37 Build40827209405 failed because the BLE negative fixture's exact replacement
+stopped matching when commissioning service was inserted before the relay call.
+The production network guard was still present. The negative fixture now matches
+that optional service, asserts that mutation actually occurs, and verifies LF
+and CRLF cases. No guard is removed and no check is suppressed. The existing
+bluetooth/source wiring was inspected; this is fixture repair, not BLE radio
+acceptance. Combined shell and audit fixtures pass; final SSH/quality/SDK/client
+CI remains a separate exact-head gate. No boards or production apps changed.

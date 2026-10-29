@@ -1,7 +1,55 @@
 #include "LedScene.h"
+#include <KeyMiniGame.h>
 #include "../firmware/esp32s3/src/LedWire.h"
 #include <cassert>
 #include <cstdio>
+#if PAKAR_FIRST_WINS_ENABLED
+static void vividGameColorsReachTheWire(){
+  using Game=BoardCore::KeyMiniGame;
+  Game game;auto config=Game::Config::defaults(Game::ColorMatch);
+  config.enabledMask=511;config.paletteSize=9;config.limitMs=0;
+  assert(game.configure(config,pixelTestNow)&&game.start(pixelTestNow,17));
+  uint32_t now=pixelTestNow;
+  uint8_t player,target;assert(game.colorMatchValues(2,player,target));
+  // Keep a second box deliberately unmatched while cycling all nine colors.
+  if(player==target){assert(game.input(2,true,++now));assert(game.input(2,false,++now));}
+  LedGrid grid;grid.begin(false);grid.configureKeys(511,0xffffff,0x00ff00,0xff0000);
+  LedGrid::Presentation::Layer layer;layer.enabled=true;layer.overlay=false;
+  grid.setGamePresentation(&layer);grid.setStaticMode(false);
+  for(uint8_t color=0;color<9;++color){
+    assert(game.phase()==Game::Input&&game.colorMatchValues(1,player,target));
+    game.styles(layer.entries);grid.presentationChanged();grid.service(pixelTestNow=++now);
+    const uint32_t intended=Game::color(player);
+    const CRGB expected(intended>>16,intended>>8,intended);
+    // Observe the published composite, not FastLED's working buffer: the
+    // renderer intentionally restores its underlying white scene after show.
+    const auto frame=grid.pixelFrameJson();const auto at=frame.find("\"rgb\":\"")+7;
+    char hex[7];std::snprintf(hex,sizeof(hex),"%02x%02x%02x",expected.r,expected.g,expected.b);
+    for(uint8_t pixel=0;pixel<12;++pixel)assert(frame.substr(at+pixel*6,6)==hex);
+    const CRGB emitted(std::stoul(frame.substr(at,2),nullptr,16),
+      std::stoul(frame.substr(at+2,2),nullptr,16),std::stoul(frame.substr(at+4,2),nullptr,16));
+    for(uint8_t brightness:{uint8_t(0),uint8_t(1),uint8_t(16),uint8_t(64),uint8_t(128),uint8_t(255)}){
+      uint8_t wire[3]{};PakarS3::encodeWireBytes(&emitted,1,brightness,true,wire);
+      const uint8_t channels[]={expected.r,expected.g,expected.b};
+      for(uint8_t c=0;c<3;++c){const uint8_t value=channels[PakarS3::logicalWireChannel(c)];
+        assert(wire[c]==PakarS3::wireChannel(value,brightness,255));
+        if(!value)assert(!wire[c]);
+      }
+    }
+    assert(game.input(1,true,++now));assert(game.input(1,false,++now));
+  }
+  // Scalar motion modulates only intensity; it cannot introduce white channels.
+  for(auto effect:{LedGrid::Presentation::Solid,LedGrid::Presentation::Pulse,
+      LedGrid::Presentation::Ring,LedGrid::Presentation::Chase,LedGrid::Presentation::Breathe}){
+    layer.entries[0].rgb=0x0000ff;layer.entries[0].effect=effect;layer.entries[0].periodMs=700;
+    for(uint16_t elapsed:{0,100,350,699}){
+      grid.setGamePresentationEpoch(0);grid.presentationChanged();grid.service(pixelTestNow=elapsed);
+      const auto frame=grid.pixelFrameJson();const auto at=frame.find("\"rgb\":\"")+7;
+      for(uint8_t pixel=0;pixel<12;++pixel)assert(frame.substr(at+pixel*6,4)=="0000");
+    }
+  }
+}
+#endif
 int main() {
   using Presentation=BoardCore::KeyPresentation;
   Presentation defaults;
@@ -142,5 +190,8 @@ int main() {
       for(unsigned i=13;i<24;++i)assert(FastLED.pixels[first+i]==FastLED.pixels[first+12]);
     }
   }
-  puts("Baked role renderer: game exclusion and saved table-lock migration passed; host doubles only.");
+#if PAKAR_FIRST_WINS_ENABLED
+  vividGameColorsReachTheWire();
+#endif
+  puts("Baked role renderer: game exclusion, saved table-lock migration and vivid game-to-wire colors passed; host doubles only.");
 }

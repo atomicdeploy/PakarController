@@ -566,7 +566,7 @@ class _FirmwarePageState extends State<FirmwarePage>
   }
 
   Future<void> export(bool eeprom) =>
-      run('Export stored ${eeprom ? 'EEPROM' : 'flash'} backup?', 'Download the existing ESP-stored backup, validate its exact full size, then choose a NEW Android document. This does not take a fresh backup or verify it represents the current running AVR. No existing document is overwritten.', () async {
+      run('Export stored ${eeprom ? 'EEPROM' : 'flash'} backup?', 'Download the current acknowledged maintenance path’s stored backup (Urboot request or ISP), validate its exact full size and unchanged job, then choose a NEW Android document. This does not take a fresh backup or verify it represents the current running AVR. No existing document is overwritten.', () async {
         final bytes = await controller.backupBytes(eeprom);
         final saved = await documents.export(
           'avr-${eeprom ? 'eeprom' : 'flash'}.bin',

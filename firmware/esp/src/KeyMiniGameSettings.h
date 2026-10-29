@@ -2,12 +2,14 @@
 #include <ArduinoJson.h>
 #include <FS.h>
 #include <KeyMiniGame.h>
+#include <GamePanelFeedback.h>
 
 // Same stage/readback/rename transaction as KeyGameSettings. No implicit format,
 // no instance migration, and no per-frame persistence or round replay on boot.
 struct KeyMiniGameSettings {
   using Game=BoardCore::KeyMiniGame;
   Game::Config value;
+  bool bootLast=false, segmentAnimation=true, timerBeeps=true, timerAlternateTones=true;
   static const char *outputName(Game::OutputSource s){
     constexpr const char *names[]={"disabled","active","success","failure","held","latched","winner","lost"};
     return s<=Game::KeyLost?names[s]:"disabled";
@@ -16,6 +18,18 @@ struct KeyMiniGameSettings {
   bool patch(JsonVariantConst v){
     if(!v.is<JsonObjectConst>())return false;
     auto next=value;
+    bool last=bootLast,animation=segmentAnimation,beeps=timerBeeps,alternate=timerAlternateTones;
+    if(!v["boot_mode"].isUnbound()){
+      if(!v["boot_mode"].is<const char*>())return false;
+      const char *policy=v["boot_mode"];
+      if(strcmp(policy,"first")&&strcmp(policy,"last"))return false;
+      last=!strcmp(policy,"last");
+    }
+    for(const auto name:{"segment_animation","timer_beeps","timer_alternate_tones"})
+      if(!v[name].isUnbound()&&!v[name].is<bool>())return false;
+    if(!v["segment_animation"].isUnbound())animation=v["segment_animation"];
+    if(!v["timer_beeps"].isUnbound())beeps=v["timer_beeps"];
+    if(!v["timer_alternate_tones"].isUnbound())alternate=v["timer_alternate_tones"];
     if(!v["mode"].isUnbound()){
       Game::Mode mode;if(!v["mode"].is<const char*>()||!Game::parse(v["mode"],mode))return false;
       if(mode!=next.mode){const auto mask=next.enabledMask;next=Game::Config::defaults(mode);next.enabledMask=mask;
@@ -32,6 +46,7 @@ struct KeyMiniGameSettings {
        !number("gap_ms",5000,next.gapMs)||!number("feedback_ms",5000,next.feedbackMs)||
        !number("intro_ms",10000,next.introMs)||!number("preview_ms",10000,next.previewMs)||!number("mismatch_ms",10000,next.mismatchMs)||
        !number("rounds",32,next.rounds)||!number("sequence_length",32,next.sequenceLength)||
+       !number("sequence_growth",31,next.sequenceGrowth)||
        !number("palette_size",9,next.paletteSize)||!number("fixed_target",9,next.fixedTarget))return false;
     if(!v["toggle_kind"].isUnbound()){
       if(!v["toggle_kind"].is<const char*>())return false;
@@ -53,13 +68,16 @@ struct KeyMiniGameSettings {
       }
     }
     if(!next.valid())return false;
-    value=next;return true;
+    value=next;bootLast=last;segmentAnimation=animation;timerBeeps=beeps;timerAlternateTones=alternate;return true;
   }
   void json(JsonObject out)const{
     const auto &c=value;out["mode"]=Game::name(c.mode);out["limit_ms"]=c.limitMs;
+    out["boot_mode"]=bootLast?"last":"first";out["segment_animation"]=segmentAnimation;
+    out["timer_beeps"]=timerBeeps;out["timer_alternate_tones"]=timerAlternateTones;
     out["warning_ms"]=c.warningMs;out["urgent_ms"]=c.urgentMs;out["penalty_ms"]=c.penaltyMs;
     out["window_ms"]=c.windowMs;out["show_ms"]=c.showMs;out["gap_ms"]=c.gapMs;
     out["feedback_ms"]=c.feedbackMs;out["rounds"]=c.rounds;out["sequence_length"]=c.sequenceLength;
+    out["sequence_growth"]=c.sequenceGrowth;
     out["palette_size"]=c.paletteSize;out["fixed_target"]=c.fixedTarget;
     out["toggle_kind"]=toggleName(c.toggleKind);out["hard"]=c.hard;
     out["intro_enabled"]=c.introEnabled;out["intro_ms"]=c.introMs;out["preview_ms"]=c.previewMs;
@@ -68,7 +86,11 @@ struct KeyMiniGameSettings {
     auto a=out["outputs"].to<JsonArray>();for(const auto &r:c.outputs){auto o=a.add<JsonObject>();o["source"]=outputName(r.source);o["key"]=r.key;}
   }
   bool load(fs::FS &fs){auto f=fs.open("/minigame.json","r");if(!f||f.size()>4096)return false;
-    JsonDocument d;if(deserializeJson(d,f))return false;return patch(d.as<JsonVariantConst>());}
+    JsonDocument d;if(deserializeJson(d,f)||!d.is<JsonObject>())return false;
+    // Earlier saved settings grew by exactly one step. Preserve that explicit
+    // game's progression in RAM; no rewrite or timing/default migration.
+    if(d["sequence_growth"].isUnbound())d["sequence_growth"]=1U;
+    return patch(d.as<JsonVariantConst>());}
   bool save(fs::FS &fs)const{
     JsonDocument d;json(d.to<JsonObject>());String data;serializeJson(d,data);
     auto old=fs.open("/minigame.json","r");if(old&&old.readString()==data)return true;old.close();

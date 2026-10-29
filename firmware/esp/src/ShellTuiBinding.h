@@ -97,7 +97,7 @@ void shellTuiInput(DeviceShellSession &s,uint8_t ch,bool flushEscape){
   using T=PakarShell::ShellTui;ShellTuiSnapshot state(s);T::Action action;
   const bool emitted=flushEscape?s.tui.flushEscape(action):s.tui.feed(ch,state.view,action);
   if(emitted){
-    if(action.type==T::Action::Exit){if(s.alternateScreen)s.print(F("\x1b[0m\x1b[?1049l"));s.alternateScreen=false;shellPrompt(s);return;}
+    if(action.type==T::Action::Exit){if(s.alternateScreen)s.print(F("\x1b[0m\x1b[?1049l"));s.alternateScreen=false;if(s.commandOnly)s.closing=true;shellPrompt(s);return;}
     String result;bool accepted=true;
     if(action.type==T::Action::Set){
       const String key(action.key),value(action.value);

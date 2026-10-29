@@ -59,7 +59,9 @@ class Guard {
 
   static bool readOnly(const char *command) {
     return command && (!strcmp(command, "status") ||
-        !strcmp(command, "telemetry") || !strcmp(command, "firmware-status"));
+        !strcmp(command, "telemetry") || !strcmp(command, "firmware-status") ||
+        !strcmp(command, "peer-network-status") || !strcmp(command, "peer-relay-result") ||
+        !strcmp(command, "peer-directory"));
   }
 
   Result admit(const char *command, const char *board, const char *boot,

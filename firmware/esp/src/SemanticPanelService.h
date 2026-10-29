@@ -74,6 +74,14 @@ void serviceSemanticPanel(uint32_t now) {
   if(!grid.diagnosticActive()&&grid.outputEnabled())miniPanel(text,now);
 #endif
   semanticPanel.resting(text);
+  semanticPanel.restingSegments(false,nullptr);
+#if PAKAR_FIRST_WINS_ENABLED
+  if(miniSettings.segmentAnimation&&miniReady()&&miniGame.phase()==BoardCore::KeyMiniGame::Ready&&
+      grid.outputEnabled()&&!grid.diagnosticActive()){
+    uint8_t segments[4];BoardCore::puzzlePanelSegments(now,segments);
+    semanticPanel.restingSegments(true,segments);
+  }
+#endif
   const bool cl=networkConfig.stationConnected();
   if(initialized) {
     if(lastAp!=apStarted)semanticPanel.post(PakarPanel::Network,apStarted?"AP ON":"AP OFF",apStarted,now,30);

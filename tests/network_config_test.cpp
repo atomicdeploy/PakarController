@@ -110,6 +110,29 @@ int main() {
   assert(loaded.setAccessPointEnabled(true));
   assert(loaded.configure("ledboard","fixture-ap-passphrase"));assert(WiFi.modeValue==WIFI_AP_STA);
 #if defined(ESP32)
+  {
+    const uint8_t peerBssid[]={0xba,0x1f,0x3f,0xbb,0x06,0x84};
+    fs::FS transientFs;NetworkConfigStore transient;assert(transient.begin(transientFs));
+    assert(transient.setStation("Saved WiFi","saved-passphrase",true));assert(transient.save());
+    const auto preserved=transientFs.files.at("/network.bin")->bytes;
+    assert(transient.beginTemporaryStation("keycontroller","pakarcontroller",peerBssid));
+    assert(transient.temporaryStationActive()&&WiFi.modeValue==WIFI_STA&&!WiFi.autoReconnect);
+    assert(String(transient.stationSsid())=="Saved WiFi"); // Durable record stays unchanged.
+    const auto begins=WiFi.begins;transient.service(999999);assert(WiFi.begins==begins);
+    assert(!transient.save()&&!transient.setStation("bad","bad-password",true));
+    assert(!transient.setAddressing(true)&&!transient.setFallback(0,"bad","bad-password"));
+    WiFi.connection=WL_CONNECTED;assert(transient.temporaryStationReady("keycontroller",peerBssid));
+    assert(!transient.temporaryStationReady("different",peerBssid));WiFi.bssidValue[5]^=1;
+    assert(!transient.temporaryStationReady("keycontroller",peerBssid));WiFi.bssidValue[5]^=1;
+    assert(transient.restoreSavedNetwork("ledcontroller","pakarcontroller"));
+    assert(!transient.temporaryStationActive()&&WiFi.ssidValue=="Saved WiFi"&&WiFi.passwordValue=="saved-passphrase");
+    assert(transientFs.files.at("/network.bin")->bytes==preserved);
+    assert(transient.setStation("New profile","new-passphrase",true));
+    // A reboot while detached reads only the old durable network, never peer credentials.
+    NetworkConfigStore reboot;assert(reboot.begin(transientFs));assert(String(reboot.stationSsid())=="Saved WiFi");
+    WiFi.connection=0;
+    assert(loaded.configure("ledboard","fixture-ap-passphrase"));
+  }
   assert(WiFi.sleepCalls>=2 && WiFi.sleepEnabled==(PAKAR_S3_WIFI_MODEM_SLEEP!=0));
   assert(WiFi.nameAtStart=="ledboard" && WiFi.STA.name=="ledboard" && WiFi.AP.name=="ledboard");
   const char *longName="a-long-configured-hostname-with-no-random-suffix";

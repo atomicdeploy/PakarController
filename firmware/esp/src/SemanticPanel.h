@@ -54,6 +54,9 @@ class Presenter {
     event=queue_[head_];head_=(head_+1)%capacity;--count_;return true;
   }
   void resting(const char *text) { copy4(rest_,text); }
+  void restingSegments(bool active,const uint8_t *segments) {
+    restRaw_=active;if(active)memcpy(restSegments_,segments,4);
+  }
   void persistent(bool active,const char *text) {
     persistent_=active;if(active)copy4(persistentText_,text);
   }
@@ -78,13 +81,16 @@ class Presenter {
   bool frame(uint32_t now,bool available,bool inhibited,uint8_t payload[12]) {
     if(!available||inhibited){sent_=false;return false;}
     char text[5];view(now,text);
-    if(sent_ && (!memcmp(text,last_,4)?uint32_t(now-sentAt_)<900U:
+    const bool raw=restRaw_&&!persistent_&&(!notice_||expired(now));
+    if(raw)memcpy(text,restSegments_,4);
+    if(sent_ && (raw==lastRaw_&&!memcmp(text,last_,4)?uint32_t(now-sentAt_)<900U:
         uint32_t(now-sentAt_)<60U))return false;
     const uint8_t prefix[8]={5,4,1,4,0,0xb0,4,0};
-    memcpy(payload,prefix,8);memcpy(payload+8,text,4);return true;
+    memcpy(payload,prefix,8);if(raw)payload[4]|=0x20;
+    memcpy(payload+8,text,4);return true;
   }
   void admitted(uint32_t now,const uint8_t payload[12]) {
-    sent_=true;sentAt_=now;memcpy(last_,payload+8,4);
+    sent_=true;sentAt_=now;lastRaw_=(payload[4]&0x20)!=0;memcpy(last_,payload+8,4);
   }
   void manual(const uint8_t *p,uint8_t n,uint32_t now) {
     if(!p)return;
@@ -124,6 +130,8 @@ class Presenter {
   unsigned head_=0,count_=0,historyNext_=0,historyCount_=0;
   uint32_t revision_=0,dropped_=0,noticeAt_=0,sentAt_=0;
   bool notice_=false,persistent_=false,sent_=false;
+  bool restRaw_=false,lastRaw_=false;
+  uint8_t restSegments_[4]{};
   bool manual_=false,manualInfinite_=false;
   uint32_t manualAt_=0,manualDuration_=0;
   char rest_[5]="C001",persistentText_[5]{},last_[4]{};

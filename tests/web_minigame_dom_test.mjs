@@ -20,6 +20,9 @@ try{
     async function post(path,data){calls.push({path,...data});if(data.settings){if(data.settings.mode)Object.assign(state.minigame.settings,{limit_ms:data.settings.mode==='toggle'?0:60000,window_ms:1200,show_ms:500,gap_ms:200,feedback_ms:240});Object.assign(state.minigame.settings,data.settings);state.minigame.mode=state.minigame.settings.mode;}renderKeyGame();return true}
     ${code}
     renderKeyGame();`});
+  await page.evaluate(()=>{
+    Object.assign(state.minigame.settings,{boot_mode:'first',segment_animation:true,timer_beeps:true,timer_alternate_tones:true});renderKeyGame();
+  });
   assert.equal(await page.evaluate(()=>calls.length),0);
   assert.equal(await page.locator('[data-mini-mode] option').count(),3,'Only the board catalog is rendered');
   assert.equal(await page.locator('[data-mini-action=start]').isDisabled(),true);
@@ -29,6 +32,10 @@ try{
   await page.locator('[data-key="1"]').click();
   assert.equal(await page.evaluate(()=>calls[1].action),'tap');
   await page.locator('[data-minigame] summary').click();
+  assert.equal(await page.locator('[name=boot_mode]').inputValue(),'first');
+  assert(await page.locator('[name=timer_beeps]').isChecked());
+  await page.locator('[name=boot_mode]').selectOption('last');
+  await page.locator('[name=timer_alternate_tones]').uncheck();
   await page.locator('[data-mini-form] [name=limit_ms]').fill('45000');
   await page.evaluate(()=>{state.minigame.elapsed_ms=123;renderKeyGame()});
   assert.equal(await page.locator('[data-mini-form] [name=limit_ms]').inputValue(),'45000','Status does not erase the local draft');
@@ -38,6 +45,8 @@ try{
   await page.locator('[data-mini-form] [type=submit]').click();
   assert.deepEqual(await page.evaluate(()=>calls.at(-1).settings.outputs[0]),{source:'held',key:2});
   assert.equal(await page.evaluate(()=>calls.at(-1).settings.limit_ms),45000);
+  assert.equal(await page.evaluate(()=>calls.at(-1).settings.boot_mode),'last');
+  assert.equal(await page.evaluate(()=>calls.at(-1).settings.timer_alternate_tones),false);
   await page.locator('[data-mini-choice]').click();
   assert.equal(await page.locator('[role=menuitemcheckbox] small').count(),3,'Each mode has a second-line description');
   assert.equal(await page.locator('[role=menuitemcheckbox] svg').count(),3,'Each mode has a vector icon');
@@ -68,6 +77,32 @@ try{
   await page.locator('[data-mini-form] [name=window_ms]').fill('900');
   await page.evaluate(()=>{state.minigame.mode='toggle';state.minigame.settings.mode='toggle';state.minigame.settings.window_ms=1200;state.minigame.settings.limit_ms=0;renderKeyGame()});
   assert.equal(await page.locator('[data-mini-form] [name=window_ms]').inputValue(),'1200','External mode change retires the previous mode draft even while its field is focused');
+  await page.evaluate(()=>{
+    state.minigame.available_modes.push({id:'simon',label:'Repeat sequence'});
+    state.minigame.mode='simon';
+    Object.assign(state.minigame.settings,{mode:'simon',rounds:3,sequence_length:3,sequence_growth:2,show_ms:300,gap_ms:120});
+    renderKeyGame();
+  });
+  const growth=page.locator('[data-mini-form] [name=sequence_growth]');
+  assert(await growth.isVisible());assert.equal(await growth.inputValue(),'2');
+  assert.equal(await page.locator('[data-mini-form] [name=rounds]').inputValue(),'3');
+  assert.equal(await page.locator('[data-mini-form] [name=show_ms]').inputValue(),'300');
+  await growth.fill('4');await page.locator('[data-mini-form] [type=submit]').click();
+  assert.equal(await page.evaluate(()=>calls.at(-1).settings.sequence_growth),4);
+  await page.evaluate(()=>{state.minigame.mode='toggle';state.minigame.settings.mode='toggle';renderKeyGame()});
+  assert.equal(await growth.isVisible(),false,'Simon-only growth control stays contextual');
+  const beforeMine=await page.evaluate(()=>calls.length);
+  await page.evaluate(()=>{
+    state.minigame.available_modes.splice(state.minigame.available_modes.findIndex(mode=>mode.id==='toggle'),0,{id:'mine-field',label:'Mine Field'});
+    state.minigame.mode='mine-field';Object.assign(state.minigame.settings,{mode:'mine-field',show_ms:1000,limit_ms:60000});renderKeyGame();
+  });
+  assert.equal(await page.evaluate(()=>calls.length),beforeMine,'Showing Mine Field never starts a game');
+  assert.equal(await page.locator('[data-mini-field-label=show_ms]').textContent(),'Pulse period (ms)');
+  const pulse=page.locator('[data-mini-form] [name=show_ms]');
+  assert.equal(await pulse.inputValue(),'1000');await pulse.fill('800');
+  await page.locator('[data-mini-form] [type=submit]').click();
+  assert.equal(await page.evaluate(()=>calls.at(-1).settings.show_ms),800);
+  assert.equal(await pulse.inputValue(),'800','Acknowledged Mine Field timing remains visible');
   await page.evaluate(()=>{state.minigame.ready=false;renderKeyGame()});
   assert.equal(await page.locator('[data-mini-mode]').isDisabled(),true);assert.equal(await box.isDisabled(),true);
   await page.evaluate(()=>{state.minigame.ready=true;state.boot_id='next';renderKeyGame()});

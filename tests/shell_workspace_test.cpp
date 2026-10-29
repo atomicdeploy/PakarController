@@ -17,7 +17,7 @@ struct String:std::string {
 };
 struct DeviceShellSession {
   PakarShell::TelnetParser parser;PakarShell::ShellTui tui;
-  bool unicode=true,color=true,alternateScreen=false;String output;
+  bool unicode=true,color=true,alternateScreen=false,commandOnly=false,closing=false;String output;
   void write(const uint8_t *p,size_t n){output.append((const char*)p,n);}
   void print(const char *s){output+=s;}
 };
