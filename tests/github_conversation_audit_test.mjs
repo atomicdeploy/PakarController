@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {connection,inspect,collect,reviewed} from '../tools/audit-github-conversations.mjs';
+import {connection,inspect,collect,reviewed,mergeInventory} from '../tools/audit-github-conversations.mjs';
 let calls=[];
 const rows=connection(after=>{calls.push(after);return after===null?{nodes:[1],pageInfo:{hasNextPage:true,endCursor:'next'}}:{nodes:[2],pageInfo:{hasNextPage:false,endCursor:null}}});
 assert.deepEqual(rows,[1,2]);assert.deepEqual(calls,[null,'next']);
@@ -19,4 +19,12 @@ const decision={repository:record.repository,number:1,content_sha256:checked.con
 assert.equal(reviewed([checked],[decision])[0].read_state,'reviewed-record');
 assert.deepEqual(reviewed([checked],[decision])[0].unresolved_threads,['pending']);
 assert.equal(reviewed([inspect({...record,body:'Changed'})],[decision])[0].read_state,'stale-review');
-console.log('Paginated GitHub audit: fail-closed completeness, stable content hashes and no fetch-to-review promotion passed.');
+const retained={...checked,repository:'other/donor',read_state:'reviewed-record'};
+const changed=inspect({...record,body:'Changed'});
+const added={...checked,number:2};
+assert.deepEqual(mergeInventory([checked,retained],[changed,added]),[changed,retained,added],
+  'Targeted audit without a raw cache must preserve other donor records and their exact evidence');
+assert.deepEqual(mergeInventory([retained],[]),[retained]);
+assert.deepEqual(mergeInventory([], [checked]),[checked]);
+assert.deepEqual(mergeInventory([checked,retained],[checked,retained]),[checked,retained]);
+console.log('Paginated GitHub audit: completeness, stable hashes, no review promotion and cold-cache inventory preservation passed.');

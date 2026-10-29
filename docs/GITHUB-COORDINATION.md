@@ -1,5 +1,11 @@
 # Conversation-aware integration
 
+Targeted audits retain the committed inventory for repositories absent from the
+local raw cache. This matters in fresh worktrees: querying one repository must
+not delete the other donors' records or their hash-bound review evidence.
+Refreshed records replace matching repository/number entries; unrefreshed records
+remain historical evidence, without being promoted to freshly reviewed status.
+
 ## Final handoff (2026-10-29)
 
 PRs #27, #34, #35 and #36 are normally merged. Main code checkpoint b752b4c has
