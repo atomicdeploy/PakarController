@@ -11490,3 +11490,30 @@ The final result controls show Winning time with millisecond precision for
 Mine Field success instead of its leftover countdown; other modes are unchanged.
 The S3 firmware and production-hold APK build pass; native evidence is the
 focused compiled test binary, not a newly packaged production executable.
+
+## Rust contextual game configuration (2026-10-29)
+
+Consult games-streaming, native-dropdowns and the exact Pealayer dialog donor
+row. Reread all1236 dialog and646 dropdown lines at their unchanged recorded
+hashes, the current KeyMiniGame::Config defaults and native Game settings
+consumer. Inspect the actual Pealayer5b3d5c1 hardware_action_button and PCController
+f2260e3 CSS blame: recolor fixed geometry, never add a state-dependent stroke
+width. Retain existing setting_row/detail-navigation/ComboBox helpers; no new
+control implementation, modal runtime or board-side settings store is added.
+
+Fix the consumer's incomplete mode-change defaults and ignored option exposure.
+Known explicit mode changes refresh only advertised rule fields to the actual
+engine defaults; wiring, device policies, unknown fields and same-mode edits
+stay intact. Unknown future modes retain board-owned settings. Countdown,
+challenge and presentation controls are contextual, reveal fields honor intro
+Off, and stable numeric IDs survive hide/show. The output mapper changes only
+after a real interaction, preserving optional metadata, and uses readable
+predicate labels. Toggle behavior now uses the imported keyboard-aware selector
+instead of stock selectable-value buttons. Apply remains a narrow peer-bound
+patch with exact readback and stale-draft rejection. All 17 focused native tests
+pass, including 110 different-mode transitions, 11 rule-visibility/layout cases,
+new-mode warning validation and unchanged drafts/zero sends at 280/740 px.
+The five shared-dropdown tests also pass, including keyboard focus/navigation,
+search, fixed hover geometry and unrelated-editor arrow ownership.
+Native-only changes require no firmware/APK rebuild or board/client replacement;
+runtime acceptance stays separate from these focused source checks.

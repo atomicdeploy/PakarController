@@ -139,6 +139,33 @@ Flutter's analyzer and 22 game tests, native's 13 focused compiled tests and the
 isolated Web/Mine Field settings interaction pass. A new native production
 executable was not packaged; no running client was replaced.
 
+### Rust Game settings audit (2026-10-29)
+
+Open **Game → Game settings** for the selected keycontroller. The numbered
+board-advertised catalog retains icons and second-line descriptions. Countdown,
+Challenge and Presentation show only parameters used by the chosen game.
+Mine Field exposes pulse period; Simon exposes length/growth/gap; Color Pattern
+and Matching Pairs reveal timing is hidden while their introduction is off.
+Ignored controls (such as a palette-size setting for Matching Pairs or a feedback
+phase for Mine Field) are no longer presented as working adjustments.
+
+Explicitly choosing a different known game refreshes all its supported rule
+defaults, including Color Pattern intro Off, Illuminated's 10-second window,
+Simon 3/5/7 and Color Order's nine-color palette. Wiring/output mappings,
+power-up/display/timer policies and unknown fields are retained. Reopening or
+repainting the same mode never resets an edit; unsupported optional fields are
+not invented, and board-provided unknown modes retain their own settings.
+
+Toggle behavior and relay predicates have readable selectors using the existing
+shared dropdowns. Rendering an output row no longer reconstructs its JSON or
+silently deletes optional metadata. Numeric editors have stable per-field IDs
+when contextual rows appear/disappear. Apply still sends only changed values,
+requires matching authoritative readback, and returns the game to Ready; stale
+drafts remain blocked until explicitly reverted. All 17 focused native tests pass,
+including all 110 different-mode transitions and all 11 settings layouts at narrow
+and wide widths. This is a native-source update, not an installation or a write
+to any board's current configuration.
+
 ## Power-up and seven-segment feedback
 
 Game settings in Flutter, Rust and Web expose these persistent options through

@@ -22182,7 +22182,8 @@
         "The root/native agent fully reread the same current 1236-line donor and mapped Pakar dialog helpers. EffectControls and StateAppearance now use actual section/action/setting-row helpers and reserved choice geometry. A fixed-role board creates no mode card or spacer, while first-wins reset remains independently live-gated. PanelDetails supplies responsive observed network cards and styled ordered correction drafts with square row actions and bounded virtualized mapping; narrow text wraps and long values truncate with tooltips. These are additional scoped consumers, not all dialog/modal behavior.",
         "The final panel pass adds measured, accessible single-line feature-chip slots after an actual Hardware framebuffer exposed collapsed vertical labels. The shared setting-row brightness consumer now isolates an in-progress pointer draft by current peer, boot, route and connection epoch, otherwise reading the live observation on USB and Wi-Fi. Release or keyboard emits one intent; owner loss, Escape, lost focus or a missing panel frame cancels the draft. These are controller-specific safety/layout adaptations of the reused controls, not newly claimed donor numeric-control equivalence.",
         "Preferences footer checkpoint reread the complete actual 1236-line src/ui/dialog.rs at C:/Users/David/AppData/Local/Programs/Pealayer/source/Pealayer. Existing imported action-button, navigation and scroll-column helpers remain reused. Preferences reserves trailing Save/Cancel slots before clipping status rather than allowing a leading long status to consume action width; native and embedded hosts share this layout. The added actual-egui geometry regression exercises resize, both text directions, regular/comfortable density, short and unmatched categories, long status, bounded action painting and unchanged drafts. No helper-process/focus-modal or full numeric-control parity is claimed.",
-        "2026-10-29 Simon settings: specialist read all1236 actual dialog donor lines through EOF after inspecting setting_row/navigation/action helpers before edits; secondary dropdown source also fully read. Retain imported setting_row and detail-choice geometry for an optional bounded additional-steps field. Only explicit picker click applies current Pakar Config::defaults (3,5,7 at300/120ms); painting/reopening preserves user edits and wiring/boot/timer policies, and an unadvertised optional growth field is never invented. Inline tests cover bounds, visibility, explicit-only defaults and exact readback. These are Pakar game rules, not donor business logic; installed gameplay and wider generic dialog parity remain open."
+        "2026-10-29 Simon settings: specialist read all1236 actual dialog donor lines through EOF after inspecting setting_row/navigation/action helpers before edits; secondary dropdown source also fully read. Retain imported setting_row and detail-choice geometry for an optional bounded additional-steps field. Only explicit picker click applies current Pakar Config::defaults (3,5,7 at300/120ms); painting/reopening preserves user edits and wiring/boot/timer policies, and an unadvertised optional growth field is never invented. Inline tests cover bounds, visibility, explicit-only defaults and exact readback. These are Pakar game rules, not donor business logic; installed gameplay and wider generic dialog parity remain open.",
+        "2026-10-29 native game-settings audit: root reread all1236 actual donor dialog lines and646 dropdown lines at unchanged recorded raw hashes. Retain existing section/setting_row/detail-choice geometry and keyboard-aware ComboBox. Replace stock Toggle selectable-values, add readable output predicates and numbered board-catalog entries. Known explicit game changes apply current engine defaults only to advertised rule fields, preserving wiring/device policies/unknown fields/same-mode edits. Contextual numeric editors have stable field IDs, unused controls are hidden, and painting output rows never reconstructs or drops optional JSON. All17 focused native game tests and5 shared-dropdown tests pass; installed ASUS behavior and wider donor parity remain open."
       ],
       "targets": [
         {
@@ -22222,7 +22223,7 @@
         },
         {
           "path": "desktop/src/minigame.rs",
-          "sha256": "f03a862edd118a6ddac902ec2a43aaba5fa9c90a50e063c819e165a24a51db29",
+          "sha256": "1dd5adb7c20f7d6c4529e5591c4175c50282c7a9ea4cf5fbfce88053653dca3f",
           "anchor": "fn bounds("
         }
       ],
@@ -22345,18 +22346,28 @@
         },
         {
           "path": "desktop/src/minigame.rs",
-          "sha256": "f03a862edd118a6ddac902ec2a43aaba5fa9c90a50e063c819e165a24a51db29",
+          "sha256": "1dd5adb7c20f7d6c4529e5591c4175c50282c7a9ea4cf5fbfce88053653dca3f",
           "anchor": "fn minigame_simon_growth_is_bounded_and_visible_only_in_sequence_settings()"
         },
         {
           "path": "desktop/src/minigame.rs",
-          "sha256": "f03a862edd118a6ddac902ec2a43aaba5fa9c90a50e063c819e165a24a51db29",
+          "sha256": "1dd5adb7c20f7d6c4529e5591c4175c50282c7a9ea4cf5fbfce88053653dca3f",
           "anchor": "fn minigame_simon_defaults_apply_only_on_explicit_mode_change()"
         },
         {
           "path": "desktop/src/minigame.rs",
-          "sha256": "f03a862edd118a6ddac902ec2a43aaba5fa9c90a50e063c819e165a24a51db29",
+          "sha256": "1dd5adb7c20f7d6c4529e5591c4175c50282c7a9ea4cf5fbfce88053653dca3f",
           "anchor": "fn minigame_growth_readback_must_match_requested_value()"
+        },
+        {
+          "path": "desktop/src/minigame.rs",
+          "sha256": "1dd5adb7c20f7d6c4529e5591c4175c50282c7a9ea4cf5fbfce88053653dca3f",
+          "anchor": "fn minigame_every_mode_selection_resets_rules_but_preserves_wiring_and_device_preferences()"
+        },
+        {
+          "path": "desktop/src/minigame.rs",
+          "sha256": "1dd5adb7c20f7d6c4529e5591c4175c50282c7a9ea4cf5fbfce88053653dca3f",
+          "anchor": "fn minigame_settings_all_modes_render_without_commands_or_draft_mutation()"
         }
       ],
       "improvement": ""

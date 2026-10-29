@@ -127,7 +127,21 @@ pub fn settings(text: &str, game: &Value) -> Result<Value, String> {
             return Err(format!("Invalid game setting: {name}"));
         }
     }
-    let get = |name: &str| patch.get(name).unwrap_or(&game["settings"][name]).as_u64();
+    let changed_defaults = patch["mode"]
+        .as_str()
+        .filter(|mode| game["mode"] != *mode)
+        .and_then(mode_defaults);
+    let get = |name: &str| {
+        patch
+            .get(name)
+            .or_else(|| {
+                changed_defaults
+                    .as_ref()
+                    .and_then(|defaults| defaults.get(name))
+            })
+            .unwrap_or(&game["settings"][name])
+            .as_u64()
+    };
     if matches!((get("urgent_ms"),get("warning_ms")),(Some(urgent),Some(warning)) if urgent>warning)
     {
         return Err("Urgent time must not exceed warning time".into());
@@ -364,8 +378,11 @@ fn setting_visible(mode: &str, field: &str, timed: bool) -> bool {
         "intro_ms" => matches!(mode, "color-match" | "memory-pairs"),
         "preview_ms" | "mismatch_ms" => mode == "memory-pairs",
         "rounds" => matches!(mode, "illuminated" | "reaction-chase" | "simon"),
-        "palette_size" => matches!(mode, "color-match" | "memory-pairs" | "color-order"),
-        "feedback_ms" => !matches!(mode, "press-to-win" | "toggle"),
+        "palette_size" => matches!(mode, "color-match" | "color-order"),
+        "feedback_ms" => matches!(
+            mode,
+            "illuminated" | "reaction-chase" | "simon" | "memory-pairs" | "color-order"
+        ),
         _ => true,
     }
 }
@@ -376,36 +393,74 @@ fn setting_caption(mode: &str, field: &str) -> Option<&'static str> {
         bounds(field).map(|(_, _, label)| label)
     }
 }
-// Explicit picker changes only; rendering or reopening the current mode must
-// never overwrite an edited timing value. Match Config::defaults(Simon).
+fn toggle_label(kind: &str) -> &str {
+    match kind {
+        "toggle" => "Toggle on each press",
+        "latch" => "Latch until reset",
+        "press" => "On while held",
+        other => other,
+    }
+}
+fn output_label(source: &str) -> &str {
+    match source {
+        "disabled" => "Off",
+        "active" => "Round active",
+        "success" => "Round won",
+        "failure" => "Round failed / timed out",
+        "held" => "Button held",
+        "latched" => "Box latched",
+        "winner" => "Winning box",
+        "lost" => "Losing box",
+        other => other,
+    }
+}
+fn setting_shown(mode: &str, field: &str, timed: bool, draft: &Value) -> bool {
+    setting_visible(mode, field, timed)
+        && !(matches!(field, "intro_ms" | "preview_ms") && draft["intro_enabled"] == false)
+}
+// Match the actual KeyMiniGame::Config::defaults, not the previous mode's
+// observed values. Only already-advertised fields are copied into a UI draft.
+fn mode_defaults(mode: &str) -> Option<Value> {
+    if !matches!(
+        mode,
+        "press-to-win"
+            | "illuminated"
+            | "color-match"
+            | "simon"
+            | "memory-pairs"
+            | "clear-all"
+            | "color-order"
+            | "switch-pattern"
+            | "reaction-chase"
+            | "mine-field"
+            | "toggle"
+    ) {
+        return None;
+    }
+    Some(json!({
+        "limit_ms":if matches!(mode,"press-to-win"|"toggle"|"clear-all"){0}else{60000},
+        "warning_ms":10000,"urgent_ms":3000,"penalty_ms":2000,
+        "window_ms":if mode=="illuminated"{10000}else{1200},
+        "show_ms":if mode=="simon"{300}else if mode=="mine-field"{1000}else{500},
+        "gap_ms":if mode=="simon"{120}else{200},"feedback_ms":240,
+        "intro_ms":if mode=="color-match"{500}else{1000},"preview_ms":1500,"mismatch_ms":1200,
+        "rounds":if mode=="simon"{3}else{5},"sequence_length":if mode=="simon"{3}else{4},
+        "sequence_growth":if mode=="simon"{2}else{1},"palette_size":if mode=="color-order"{9}else{7},
+        "fixed_target":0,"hard":false,"toggle_kind":"toggle",
+        "intro_enabled":mode!="color-match","color_arpeggio":true
+    }))
+}
+// Explicit picker changes only; rendering/reopening never overwrites a draft.
 fn select_mode(draft: &mut Value, selected: &str) {
     if draft["mode"] == selected {
         return;
     }
-    draft["limit_ms"] = json!(
-        if matches!(selected, "press-to-win" | "toggle" | "clear-all") {
-            0
-        } else {
-            60000
+    if let Some(defaults) = mode_defaults(selected) {
+        for (field, value) in defaults.as_object().unwrap() {
+            if draft.get(field).is_some() {
+                draft[field] = value.clone();
+            }
         }
-    );
-    draft["window_ms"] = json!(if selected == "illuminated" {
-        10000
-    } else {
-        1200
-    });
-    if selected == "simon" {
-        draft["rounds"] = json!(3);
-        draft["sequence_length"] = json!(3);
-        draft["show_ms"] = json!(300);
-        draft["gap_ms"] = json!(120);
-        // Optional additive setting: don't invent support on an older board.
-        if draft.get("sequence_growth").is_some() {
-            draft["sequence_growth"] = json!(2);
-        }
-    }
-    if selected == "mine-field" && draft.get("show_ms").is_some() {
-        draft["show_ms"] = json!(1000);
     }
     draft["mode"] = json!(selected);
 }
@@ -662,7 +717,7 @@ fn panel(
                         .width(ui.available_width().min(430.0))
                         .height(460.0)
                         .show_ui(ui, |ui| {
-                            for (id, label) in &catalog {
+                            for (index, (id, label)) in catalog.iter().enumerate() {
                                 let (icon, fallback) = mode_visual(id);
                                 let detail = game["available_modes"]
                                     .as_array()
@@ -673,7 +728,7 @@ fn panel(
                                     ui,
                                     selected == *id,
                                     icon,
-                                    label,
+                                    &format!("{}. {label}", index + 1),
                                     detail,
                                     ui.available_width(),
                                 );
@@ -690,48 +745,81 @@ fn panel(
                             }
                         });
                     let mut timed = draft.edited["limit_ms"].as_u64().unwrap_or(0) > 0;
-                    if ui.checkbox(&mut timed, "Time limit").changed() {
+                    if draft.edited["limit_ms"].is_u64()
+                        && ui.checkbox(&mut timed, "Time limit").changed()
+                    {
                         draft.edited["limit_ms"] = json!(if timed { 60000 } else { 0 });
                     }
-                    for field in [
-                        "limit_ms",
-                        "warning_ms",
-                        "urgent_ms",
-                        "penalty_ms",
-                        "window_ms",
-                        "show_ms",
-                        "gap_ms",
-                        "feedback_ms",
-                        "intro_ms",
-                        "preview_ms",
-                        "mismatch_ms",
-                        "rounds",
-                        "sequence_length",
-                        "sequence_growth",
-                        "palette_size",
-                        "fixed_target",
+                    for (heading, fields) in [
+                        ("Countdown", &["limit_ms", "warning_ms", "urgent_ms"][..]),
+                        (
+                            "Challenge",
+                            &[
+                                "penalty_ms",
+                                "window_ms",
+                                "fixed_target",
+                                "rounds",
+                                "sequence_length",
+                                "sequence_growth",
+                                "palette_size",
+                            ][..],
+                        ),
+                        (
+                            "Presentation",
+                            &[
+                                "show_ms",
+                                "gap_ms",
+                                "feedback_ms",
+                                "intro_ms",
+                                "preview_ms",
+                                "mismatch_ms",
+                            ][..],
+                        ),
                     ] {
-                        if !setting_visible(&selected, field, timed) {
+                        let visible: Vec<_> = fields
+                            .iter()
+                            .copied()
+                            .filter(|field| {
+                                draft.edited[*field].is_u64()
+                                    && setting_shown(&selected, field, timed, &draft.edited)
+                            })
+                            .collect();
+                        if visible.is_empty() {
                             continue;
                         }
-                        if let Some(mut number) = draft.edited[field].as_u64() {
-                            let (min, max, _) = bounds(field).unwrap();
-                            let label = setting_caption(&selected, field).unwrap();
-                            dialog::setting_row(ui, icons::SLIDERS_HORIZONTAL, label, None, |ui| {
-                                let suffix = if field.ends_with("_ms") { " ms" } else { "" };
-                                if ui
-                                    .add(
-                                        egui::DragValue::new(&mut number)
-                                            .range(min..=max)
-                                            .suffix(suffix),
-                                    )
-                                    .changed()
-                                {
-                                    draft.edited[field] = json!(number);
-                                }
-                            });
+                        ui.add_space(6.0);
+                        ui.strong(heading);
+                        for field in visible {
+                            if let Some(mut number) = draft.edited[field].as_u64() {
+                                let (min, max, _) = bounds(field).unwrap();
+                                let label = setting_caption(&selected, field).unwrap();
+                                ui.push_id(field, |ui| {
+                                    dialog::setting_row(
+                                        ui,
+                                        icons::SLIDERS_HORIZONTAL,
+                                        label,
+                                        None,
+                                        |ui| {
+                                            let suffix =
+                                                if field.ends_with("_ms") { " ms" } else { "" };
+                                            if ui
+                                                .add(
+                                                    egui::DragValue::new(&mut number)
+                                                        .range(min..=max)
+                                                        .suffix(suffix),
+                                                )
+                                                .changed()
+                                            {
+                                                draft.edited[field] = json!(number);
+                                            }
+                                        },
+                                    );
+                                });
+                            }
                         }
                     }
+                    ui.add_space(6.0);
+                    ui.strong("Feedback & power-up");
                     if let Some(policy) = draft.edited["boot_mode"].as_str() {
                         let mut policy = policy.to_owned();
                         dialog::setting_row(ui, icons::POWER, "Game on power-up", None, |ui| {
@@ -768,13 +856,23 @@ fn panel(
                         {
                             continue;
                         }
+                        if field == "color_arpeggio" && selected == "press-to-win" {
+                            continue;
+                        }
+                        if matches!(field, "timer_beeps" | "timer_alternate_tones") && !timed {
+                            continue;
+                        }
+                        if field == "timer_alternate_tones" && draft.edited["timer_beeps"] == false
+                        {
+                            continue;
+                        }
                         if let Some(mut value) = draft.edited[field].as_bool() {
                             if ui.checkbox(&mut value, label).changed() {
                                 draft.edited[field] = json!(value);
                             }
                         }
                     }
-                    if matches!(selected.as_str(), "switch-pattern" | "color-match")
+                    if selected == "switch-pattern"
                         && let Some(mut hard) = draft.edited["hard"].as_bool()
                     {
                         if ui.checkbox(&mut hard, "Hard mode").changed() {
@@ -785,12 +883,25 @@ fn panel(
                         && let Some(kind) = draft.edited["toggle_kind"].as_str()
                     {
                         let mut kind = kind.to_owned();
-                        ui.horizontal_wrapped(|ui| {
-                            ui.label("Switch behavior");
-                            for value in ["toggle", "latch", "press"] {
-                                ui.selectable_value(&mut kind, value.into(), value);
-                            }
-                        });
+                        dialog::setting_row(
+                            ui,
+                            icons::TOGGLE_RIGHT,
+                            "Switch behavior",
+                            None,
+                            |ui| {
+                                ComboBox::from_id_salt("toggle-kind")
+                                    .selected_text(toggle_label(&kind))
+                                    .show_ui(ui, |ui| {
+                                        for value in ["toggle", "latch", "press"] {
+                                            ui.dropdown_value(
+                                                &mut kind,
+                                                value.into(),
+                                                toggle_label(value),
+                                            );
+                                        }
+                                    });
+                            },
+                        );
                         draft.edited["toggle_kind"] = json!(kind);
                     }
                     ui.collapsing("Output mapping", |ui| {
@@ -803,8 +914,9 @@ fn panel(
                                             .as_str()
                                             .unwrap_or("disabled")
                                             .to_owned();
+                                        let previous_source = source.clone();
                                         ComboBox::from_id_salt("source")
-                                            .selected_text(&source)
+                                            .selected_text(output_label(&source))
                                             .show_ui(ui, |ui| {
                                                 for source_id in [
                                                     "disabled", "active", "success", "failure",
@@ -813,7 +925,7 @@ fn panel(
                                                     ui.dropdown_value(
                                                         &mut source,
                                                         source_id.into(),
-                                                        source_id,
+                                                        output_label(source_id),
                                                     );
                                                 }
                                             });
@@ -822,17 +934,23 @@ fn panel(
                                             "held" | "latched" | "winner" | "lost"
                                         );
                                         let mut key = rule["key"].as_u64().unwrap_or(0);
-                                        if keyed {
-                                            key = key.clamp(1, 9);
-                                            ui.add(
-                                                egui::DragValue::new(&mut key)
-                                                    .range(1..=9)
-                                                    .prefix("Box "),
-                                            );
-                                        } else {
-                                            key = 0;
+                                        let mut edited = source != previous_source;
+                                        if edited {
+                                            key = if keyed { key.clamp(1, 9) } else { 0 };
                                         }
-                                        *rule = json!({"source":source,"key":key});
+                                        if keyed {
+                                            edited |= ui
+                                                .add(
+                                                    egui::DragValue::new(&mut key)
+                                                        .range(1..=9)
+                                                        .prefix("Box "),
+                                                )
+                                                .changed();
+                                        }
+                                        if edited {
+                                            rule["source"] = json!(source);
+                                            rule["key"] = json!(key);
+                                        }
                                     });
                                 });
                             }
@@ -898,6 +1016,211 @@ fn panel(
 #[cfg(test)]
 mod tests {
     use super::*;
+    const KNOWN_MODES: [&str; 11] = [
+        "press-to-win",
+        "illuminated",
+        "color-match",
+        "simon",
+        "memory-pairs",
+        "clear-all",
+        "color-order",
+        "switch-pattern",
+        "reaction-chase",
+        "mine-field",
+        "toggle",
+    ];
+    fn configured_status(mode: &str) -> DeviceStatus {
+        let mut s = status();
+        let mut settings = mode_defaults(mode).unwrap();
+        settings["mode"] = json!(mode);
+        settings["boot_mode"] = json!("last");
+        settings["timer_beeps"] = json!(true);
+        settings["timer_alternate_tones"] = json!(true);
+        settings["segment_animation"] = json!(true);
+        settings["outputs"] = json!(
+            (0..8)
+                .map(|_| json!({"source":"disabled","key":0,"future":17}))
+                .collect::<Vec<_>>()
+        );
+        s.minigame["mode"] = json!(mode);
+        s.minigame["settings"] = settings;
+        s.minigame["available_modes"] = json!(
+            KNOWN_MODES
+                .iter()
+                .map(|id| json!({"id":id,"label":id}))
+                .collect::<Vec<_>>()
+        );
+        s.minigame["timed"] = json!(s.minigame["settings"]["limit_ms"].as_u64().unwrap() > 0);
+        s
+    }
+    #[test]
+    fn minigame_every_mode_selection_resets_rules_but_preserves_wiring_and_device_preferences() {
+        for from in KNOWN_MODES {
+            for to in KNOWN_MODES {
+                if from == to {
+                    continue;
+                }
+                let mut s = configured_status(from);
+                let original = s.minigame["settings"].clone();
+                let mut draft = original.clone();
+                draft["intro_enabled"] = json!(true);
+                draft["fixed_target"] = json!(9);
+                select_mode(&mut draft, to);
+                for (field, value) in mode_defaults(to).unwrap().as_object().unwrap() {
+                    assert_eq!(&draft[field], value, "{from} -> {to}: {field}");
+                }
+                for field in [
+                    "outputs",
+                    "boot_mode",
+                    "timer_beeps",
+                    "timer_alternate_tones",
+                    "segment_animation",
+                ] {
+                    assert_eq!(draft[field], original[field], "Preserve {field}");
+                }
+                let patch: serde_json::Map<String, Value> = draft
+                    .as_object()
+                    .unwrap()
+                    .iter()
+                    .filter(|(key, value)| original[*key] != **value)
+                    .map(|(key, value)| (key.clone(), value.clone()))
+                    .collect();
+                let patch = Value::Object(patch);
+                assert!(settings(&patch.to_string(), &s.minigame).is_ok());
+                let form = vec![("settings".into(), patch.to_string())];
+                s.minigame["settings"] = draft.clone();
+                s.minigame["mode"] = json!(to);
+                assert!(verify(CONFIGURE, &form, &s));
+                draft["show_ms"] = json!(1900);
+                let edited = draft.clone();
+                select_mode(&mut draft, to);
+                assert_eq!(draft, edited);
+            }
+        }
+        let mut sparse = json!({"mode":"toggle","boot_mode":"last","outputs":[]});
+        select_mode(&mut sparse, "simon");
+        assert!(sparse.get("sequence_growth").is_none());
+        assert!(
+            sparse.get("limit_ms").is_none(),
+            "Don't invent unadvertised fields"
+        );
+        let before = sparse.clone();
+        select_mode(&mut sparse, "future-game");
+        assert_eq!(sparse["outputs"], before["outputs"]);
+        assert!(sparse.get("show_ms").is_none());
+    }
+    #[test]
+    fn minigame_rule_visibility_matches_actual_game_mechanics() {
+        let fields = [
+            "window_ms",
+            "fixed_target",
+            "rounds",
+            "sequence_length",
+            "sequence_growth",
+            "palette_size",
+            "feedback_ms",
+            "intro_ms",
+            "preview_ms",
+            "mismatch_ms",
+            "show_ms",
+            "gap_ms",
+            "penalty_ms",
+        ];
+        for (mode, expected) in [
+            ("press-to-win", vec![]),
+            ("toggle", vec![]),
+            ("clear-all", vec![]),
+            (
+                "illuminated",
+                vec!["window_ms", "fixed_target", "rounds", "feedback_ms"],
+            ),
+            (
+                "reaction-chase",
+                vec!["window_ms", "fixed_target", "rounds", "feedback_ms"],
+            ),
+            ("color-match", vec!["palette_size", "intro_ms"]),
+            (
+                "simon",
+                vec![
+                    "rounds",
+                    "sequence_length",
+                    "sequence_growth",
+                    "feedback_ms",
+                    "show_ms",
+                    "gap_ms",
+                ],
+            ),
+            (
+                "memory-pairs",
+                vec!["feedback_ms", "intro_ms", "preview_ms", "mismatch_ms"],
+            ),
+            (
+                "color-order",
+                vec!["palette_size", "feedback_ms", "penalty_ms"],
+            ),
+            ("switch-pattern", vec![]),
+            ("mine-field", vec!["show_ms"]),
+        ] {
+            for field in fields {
+                assert_eq!(
+                    setting_visible(mode, field, true),
+                    expected.contains(&field),
+                    "{mode}: {field}"
+                );
+            }
+        }
+        let draft = json!({"intro_enabled":false});
+        assert!(!setting_shown("color-match", "intro_ms", true, &draft));
+        assert!(!setting_shown("memory-pairs", "preview_ms", true, &draft));
+        assert!(setting_shown("memory-pairs", "mismatch_ms", true, &draft));
+        assert!(!setting_shown("color-order", "penalty_ms", false, &draft));
+    }
+    #[test]
+    fn minigame_mode_change_validation_uses_new_mode_defaults_not_old_warning() {
+        let mut s = configured_status("toggle");
+        s.minigame["settings"]["warning_ms"] = json!(1000);
+        s.minigame["settings"]["urgent_ms"] = json!(500);
+        assert!(settings(r#"{"mode":"simon","urgent_ms":5000}"#, &s.minigame).is_ok());
+        assert!(settings(r#"{"urgent_ms":5000}"#, &s.minigame).is_err());
+        assert!(settings(r#"{"mode":"simon","urgent_ms":11000}"#, &s.minigame).is_err());
+    }
+    #[test]
+    fn minigame_settings_all_modes_render_without_commands_or_draft_mutation() {
+        for mode in KNOWN_MODES {
+            for width in [280.0, 740.0] {
+                let ctx = egui::Context::default();
+                let s = configured_status(mode);
+                for _ in 0..2 {
+                    let mut output = ctx.run_ui(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(
+                                egui::Pos2::ZERO,
+                                egui::vec2(width, 2400.0),
+                            )),
+                            ..Default::default()
+                        },
+                        |ui| {
+                            assert!(settings_controls(ui, &s, true).is_empty());
+                            assert!(
+                                ui.min_rect().right() <= width + 1.0,
+                                "{mode} overflows at {width}: {:?}",
+                                ui.min_rect()
+                            );
+                        },
+                    );
+                    output.textures_delta.clear();
+                    let id = egui::Id::new(("minigame-settings", &s.board_id, &s.boot_id));
+                    let draft = ctx
+                        .data(|data| data.get_temp::<Draft>(id))
+                        .expect("settings draft");
+                    assert_eq!(
+                        draft.edited, s.minigame["settings"],
+                        "Painting {mode} must not change settings"
+                    );
+                }
+            }
+        }
+    }
     #[test]
     fn minigame_mine_field_success_reports_precise_elapsed_not_remaining() {
         let mut s = status();
