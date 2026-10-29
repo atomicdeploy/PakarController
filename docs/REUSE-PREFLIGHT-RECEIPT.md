@@ -11240,3 +11240,50 @@ coordination procedure and verified GitHub's current main SHA; a bounded narrow
 HTTP/1.1 fetch then succeeded without disabling TLS checks. Fast-forwarded local
 main and verified its entire tree equals the accepted PR head before cleanup.
 Never treated the failed fetch's stale origin/main ref as the final handoff.
+
+## Rich PortableShell device workspace (2026-10-29)
+
+Consulted device-shell, terminal-ui, portable-shell inventory and the exact
+PU850-ESP Shell/Telnet/Commands sources before replacing the limited renderer.
+The canonical component pin is1235d4965ab9944be276807e31d6ef0298b9f280.
+Six current files plus17 preserved historical records pass the23-entry source
+lock. The original renderer/footer editor remain upstream behind explicit flags;
+CPU/MCU identity never disables the rich table, themes, widgets or dialogs.
+
+The actual ShellTuiBinding now supplies typed/category metadata and routes edits
+through the same validators and hardware owners. Nine pages have responsive
+columns, red rounded borders, inline editing, optional F2 dialogs, typed controls,
+secret masking, stale-edit rejection and changed-row repaint. Session terminal
+settings expose violet/red/lumen/onedark and true color. A complete-frame budget
+and output-queue deferral prevent a larger table from faulting the old8KB queue.
+History reporting uses its configured capacity instead of an unrelated literal.
+
+The native shell wrapper, actual binding fixture, descriptor/PROGMEM profiles,
+metadata gate,23-source lock and TCP/UDP loopbacks pass. The binding fixture
+injects keys through actual application code for all9 pages, inline brightness,
+toggle/theme dispatch, dialog cancel, masking and backpressure; its observations
+and hardware owners are test doubles. Actual emitted ANSI bytes were replayed by
+a C terminal utility and rendered with Agave. Inspection found and fixed Unicode
+hint sanitization, palette-reset background patches, dialog line erasure and
+unnecessary meters on generic numeric fields in the canonical upstream code.
+
+Recovery evidence: an initial donor lookup used PU850 instead of the indexed
+PU850-ESP name; inspected the inventory and consulted the correct records.
+Comparison generation found Timer/LooseTestCodes.txt still bound to the former
+4096-byte frame assertion. Read that entire donor and current test, then changed
+only its proof anchor to the explicit complete-frame budget. Arduino sketch
+staging omitted the new .inc member file; inspected the failing compiler path,
+renamed the canonical member include to .hpp and repinned both consumers.
+Fresh upstream CI passes native Windows/macOS/Linux with libc on/off, ARM32,
+AVR components and explicit small/ASCII/legacy profiles. Consumer CI passes
+Uno (view explicitly off), Mega (rich view on), STM32 and AVR simulation.
+
+The first local guarded S3 SDK build passed (2396075 program bytes,140156 static
+RAM bytes); source was still being refined during that iteration, so it is not
+the final candidate attestation. Final frozen-source build and GitHub integration
+are recorded separately. No board flash/reset, output diagnostic, production
+session or saved setting was changed. The production hold remains active.
+Event-editor Unicode/grapheme input, donor AP configuration/restore semantics and
+full application parity remain open in the existing ledger/issue29. A richer
+source renderer and fixture pictures do not establish universal superiority or
+physical acceptance.

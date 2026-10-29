@@ -49,17 +49,32 @@ struct ShellTuiSnapshot {
     else if(session.tui.page()==T::TerminalPage){
       values[0]=session.parser.terminal();values[1]=String(session.parser.columns());values[2]=String(session.parser.rows());
       values[3]=session.unicode?"true":"false";values[4]=session.color?"true":"false";
-      const char *labels[]={"Terminal type","Columns","Rows","Unicode","ANSI color"};
-      const char *keys[]={"terminal.type","terminal.columns","terminal.rows","terminal.unicode","terminal.color"};
-      view.rowCount=5;for(size_t i=0;i<5;++i)rows[i]={labels[i],keys[i],values[i].c_str(),i!=0,false};return;
+      static const char *const themes[]={"violet","red","lumen","onedark"};
+      values[5]=themes[session.tui.theme()];values[6]=session.tui.trueColor()?"true":"false";
+      const char *labels[]={"Terminal type","Columns","Rows","Unicode","ANSI color","Theme","True color"};
+      const char *keys[]={"terminal.type","terminal.columns","terminal.rows","terminal.unicode","terminal.color","terminal.theme","terminal.truecolor"};
+      view.rowCount=7;for(size_t i=0;i<7;++i){rows[i]={labels[i],keys[i],values[i].c_str(),i!=0,false};rows[i].category="Session";}
+      rows[1].kind=rows[2].kind=T::Level;rows[1].minimum=40;rows[1].maximum=240;rows[2].minimum=16;rows[2].maximum=100;
+      rows[3].kind=rows[4].kind=rows[6].kind=T::Toggle;
+      rows[5].kind=T::Choice;rows[5].choices=themes;rows[5].choiceCount=4;return;
     }
     view.rowCount=count;
     for(size_t i=0;i<count;++i){ShellProperty property;const bool known=shellProperty(list[i],property);
-      values[i]=known?shellGet(property):String("unknown");rows[i]={PakarShell::propertyLabel(list[i]),list[i],values[i].c_str(),known&&property.writable&&!shellBusy(),known&&property.secret};}
+      values[i]=known?shellGet(property):String("unknown");rows[i]={PakarShell::propertyLabel(list[i]),list[i],values[i].c_str(),known&&property.writable&&!shellBusy(),known&&property.secret};
+      if(known){rows[i].category=!strcmp(property.domain,"device")?"Controller":!strcmp(property.domain,"led")?"Lighting":!strcmp(property.domain,"driver")?"Driver":!strcmp(property.domain,"network")?"Network":!strcmp(property.domain,"network-tools")?"Network tools":!strcmp(property.domain,"cloud")?"Cloud":!strcmp(property.domain,"game")?"Game":!strcmp(property.domain,"clock")?"Clock":"Shell";rows[i].kind=property.type=='b'?T::Toggle:property.type=='n'?T::Level:T::Text;rows[i].maximum=UINT32_MAX;}
+      if(!strcmp(list[i],"led.brightness")){rows[i].minimum=1;rows[i].maximum=255;rows[i].meter=true;}
+      if(strstr(list[i],".port")){rows[i].minimum=1;rows[i].maximum=65535;}
+      static const char *const networkModes[]={"station","ap","both"},*const ledModes[]={"static","effects"};
+      if(!strcmp(list[i],"network.mode")){rows[i].kind=T::Choice;rows[i].choices=networkModes;rows[i].choiceCount=3;}
+      if(!strcmp(list[i],"led.mode")){rows[i].kind=T::Choice;rows[i].choices=ledModes;rows[i].choiceCount=2;}
+    }
     for(uint8_t i=0;i<80;++i)cells[i]=grid.state(i+1);
   }
 };
 void shellTuiDraw(DeviceShellSession &s,bool force){
+  // A complete bounded frame must fit after pending transport output. Deferral
+  // retains dirty state; the normal observer tick retries after drain.
+  if(s.output.length()>1024U)return;
   ShellTuiSnapshot state(s);s.tui.setAnsi(s.color&&s.parser.ansi());s.tui.render(state.view,[&](const uint8_t *p,size_t n){s.write(p,n);},force);
 }
 void shellTuiInput(DeviceShellSession &s,uint8_t ch,bool flushEscape){
@@ -71,9 +86,12 @@ void shellTuiInput(DeviceShellSession &s,uint8_t ch,bool flushEscape){
     if(action.type==T::Action::Set){
       const String key(action.key),value(action.value);
       if(key.startsWith("terminal.")){
-        if(key=="terminal.unicode"||key=="terminal.color"){
+        if(key=="terminal.theme"){
+          accepted=value=="violet"||value=="red"||value=="lumen"||value=="onedark";
+          if(accepted)s.tui.setTheme(value=="red"?T::Red:value=="lumen"?T::Lumen:value=="onedark"?T::OneDark:T::Violet);
+        }else if(key=="terminal.unicode"||key=="terminal.color"||key=="terminal.truecolor"){
           accepted=value=="true"||value=="false";
-          if(accepted){if(key=="terminal.unicode")s.unicode=value=="true";else s.color=value=="true";}
+          if(accepted){if(key=="terminal.unicode")s.unicode=value=="true";else if(key=="terminal.truecolor")s.tui.setTrueColor(value=="true");else s.color=value=="true";}
         }else{uint32_t number=0;accepted=PakarShell::unsignedNumber(value.c_str(),240,number)&&
           s.parser.size(key=="terminal.columns"?number:s.parser.columns(),key=="terminal.rows"?number:s.parser.rows());}
         result=accepted?F("Session terminal settings applied"):F("Invalid terminal setting");

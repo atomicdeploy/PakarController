@@ -2,9 +2,9 @@
 
 ## Canonical components (current integration)
 
-PortableShell commit `10b7d29469690822d8ee687a6d27a36977e9c194` now owns the
+PortableShell commit `1235d4965ab9944be276807e31d6ef0298b9f280` now owns the
 shared C Telnet/terminal primitives, C event editor, thin C++ callback facade
-and optional snapshot/action device view. The exact four headers are compiled
+and optional snapshot/action device view. The exact six component files are compiled
 from `firmware/esp/src/portable-shell/`; `source.json` binds their upstream paths,
 commit and SHA-256. CI rejects drift. Do not patch that slice independently:
 change atomicdeploy/portable-shell first, then review and update this pin.
@@ -14,7 +14,7 @@ suggestion storage, optional shift/subtract decimal formatting and a contextual
 Unicode navigation footer. Pakar keeps its existing capacities and native
 formatting default. The new in-place tokenizer and asynchronous cursor probe
 remain available upstream; they are not copied into Pakar without a call site.
-`tools/test-shell.ps1` and the 21-entry source/hash gate pass for this update.
+`tools/test-shell.ps1` and the 23-entry source/hash gate pass for this update.
 Actual firmware CI and device acceptance remain separate gates.
 
 `TelnetShell.h`, `ShellTui.h` and the Terminal binding in `PortableShellCore.h`
@@ -28,13 +28,12 @@ red rounded framing and magenta selection, plus real Unicode direction symbols.
 PortableShell also gained Pakar's secret-history policy, complete escape-payload
 sanitization and explicit scrubbing. Its rich C provider panels, UTF-8 command
 runtime, batch mode and host adapters remain available in that same repository.
-The bounded firmware event profile intentionally avoids pulling in the desktop
-workspace or changing the existing command/authentication owner.
+The event interface preserves the existing authenticated dispatcher. CPU type does not select a reduced presentation.
 
 The comparison and reusable integration guide is upstream `PAKAR-INTEGRATION.md`.
 The 17 older entries below remain historical source evidence, not another live
-implementation. Four current component entries bring the authoritative ledger
-to 21 files. Their original Git history is preserved; nothing is silently retired.
+implementation. Six current component entries bring the authoritative ledger
+to 23 files. Their original Git history is preserved; nothing is silently retired.
 
 Exact donor: https://github.com/atomicdeploy/portable-shell/tree/67c5dcb8a63f4055cbdaf02e9ff271c53b46410d
 Requested branch: `copilot/organize-readme-into-plan`. License: MIT, retained in
@@ -126,3 +125,9 @@ unchanged; a dedicated UDP command transport is not claimed by this integration.
 No claim of universal superiority or physical acceptance follows from this import.
 Focused local fixtures cover the imported code; live USB/Telnet sessions and
 production firmware deployment require their separate acceptance gate.
+
+## Rich device workspace
+
+The default shared view now uses the full palette, category/setting/value columns, proper border junctions, viewport scrolling, cell editing, optional F2 dialogs, typed toggles and numeric/choice controls, stale-edit rejection and changed-row repaint. The table uses 40..240 columns and a bounded complete-frame budget. Explicit PS_DEVICE_VIEW_* flags select exclusions; no MCU mode selects them. Terminal settings expose violet/red/lumen/onedark and true color. Application property validation and physical side effects stay with the same owner.
+
+Native fixtures and emitted-byte pictures are not installed-board proof. Event text input is still ASCII; AP configuration/restore and complete application parity remain open in the existing donor ledger.
