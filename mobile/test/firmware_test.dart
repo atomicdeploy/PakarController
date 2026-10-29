@@ -27,6 +27,24 @@ Map<String, dynamic> firmwareJob({
   'error': '',
 };
 
+Map<String, dynamic> backupJob({String method = 'urboot'}) => {
+  'job_id': 9,
+  'boot_id': 'fixture-boot',
+  'request_id': 'tablet-program-9',
+  'method': method,
+  'operation': 'program',
+  'phase': 'complete',
+  'busy': false,
+  'received_bytes': 1024,
+  'expected_bytes': 1024,
+  'programmed': true,
+  'verified': true,
+  'application_recovered': true,
+  'sha256': manifestHash,
+  'error': '',
+  'methods': ['isp', 'urboot'],
+};
+
 class MaintenanceClient extends http.BaseClient {
   MaintenanceClient(this.handler);
   final Future<http.StreamedResponse> Function(http.BaseRequest) handler;
@@ -343,8 +361,16 @@ void main() {
         final api = PakarApi(
           client: MaintenanceClient((request) async {
             if (request.url.path == '/api/status') {
-              return jsonResponse({'hostname': 'ledboard'});
+              return jsonResponse({
+                'hostname': 'ledboard',
+                'board_id': 'fixture-keycontroller',
+                'boot_id': 'fixture-boot',
+              });
             }
+            if (request.url.path == '/api/avr/maintenance') {
+              return jsonResponse(backupJob(method: 'isp'));
+            }
+            expect(request.url.path, '/api/avr/backup/eeprom');
             return http.StreamedResponse(
               Stream.value(List.filled(count, 0)),
               200,
@@ -364,6 +390,154 @@ void main() {
       },
     );
   }
+  for (final eeprom in [false, true]) {
+    test(
+      'Urboot ${eeprom ? 'EEPROM' : 'flash'} export uses the current request artifact',
+      () async {
+        final paths = <Uri>[];
+        final api = PakarApi(
+          baseUrl: 'http://keycontroller.local',
+          client: MaintenanceClient((request) async {
+            expect(request.method, 'GET');
+            if (request.url.path == '/api/status') {
+              return jsonResponse({
+                'hostname': 'keycontroller',
+                'board_id': 'fixture-keycontroller',
+                'boot_id': 'fixture-boot',
+              });
+            }
+            if (request.url.path == '/api/avr/maintenance') {
+              return jsonResponse(backupJob());
+            }
+            paths.add(request.url);
+            return http.StreamedResponse(
+              Stream.value(List.filled(eeprom ? 1024 : 32768, 42)),
+              200,
+            );
+          }),
+        );
+        final result = await FirmwareController(
+          api,
+          authorized: (_) => true,
+        ).backupBytes(eeprom);
+        expect(result.length, eeprom ? 1024 : 32768);
+        expect(paths.single.path, '/file/download');
+        expect(paths.single.queryParameters, {
+          'artifact': 'urboot-${eeprom ? 'eeprom' : 'flash'}',
+          'request_id': 'tablet-program-9',
+        });
+        await api.close();
+      },
+    );
+  }
+  for (final change in [
+    {'busy': true, 'phase': 'backup_flash'},
+    {'boot_id': 'other-boot'},
+    {'job_id': 10},
+    {'request_id': 'another-request'},
+    {'method': 'isp'},
+  ]) {
+    test('Changed AVR backup owner discards export: $change', () async {
+      var reads = 0;
+      final api = PakarApi(
+        baseUrl: 'http://keycontroller.local',
+        client: MaintenanceClient((request) async {
+          if (request.url.path == '/api/status') {
+            return jsonResponse({
+              'hostname': 'keycontroller',
+              'board_id': 'fixture-keycontroller',
+              'boot_id': 'fixture-boot',
+            });
+          }
+          if (request.url.path == '/api/avr/maintenance') {
+            return jsonResponse({...backupJob(), if (++reads > 1) ...change});
+          }
+          expect(request.url.path, '/file/download');
+          return http.StreamedResponse(Stream.value(List.filled(1024, 0)), 200);
+        }),
+      );
+      await expectLater(
+        FirmwareController(api, authorized: (_) => true).backupBytes(true),
+        throwsFormatException,
+      );
+      expect(reads, 2);
+      await api.close();
+    });
+  }
+  for (final change in [
+    {'busy': true, 'phase': 'backup_flash'},
+    {'boot_id': 'another-boot'},
+    {'operation': 'probe'},
+    {'phase': 'failed'},
+    {'request_id': 'invalid/request'},
+  ]) {
+    test(
+      'No backup substituted for unavailable Urboot request: $change',
+      () async {
+        var artifacts = 0;
+        final api = PakarApi(
+          baseUrl: 'http://keycontroller.local',
+          client: MaintenanceClient((request) async {
+            if (request.url.path == '/api/status') {
+              return jsonResponse({
+                'hostname': 'keycontroller',
+                'board_id': 'fixture-keycontroller',
+                'boot_id': 'fixture-boot',
+              });
+            }
+            if (request.url.path == '/api/avr/maintenance') {
+              return jsonResponse({...backupJob(), ...change});
+            }
+            ++artifacts;
+            return http.StreamedResponse(
+              Stream.value(List.filled(1024, 0)),
+              200,
+            );
+          }),
+        );
+        await expectLater(
+          FirmwareController(api, authorized: (_) => true).backupBytes(true),
+          throwsFormatException,
+        );
+        expect(artifacts, 0);
+        await api.close();
+      },
+    );
+  }
+  test(
+    'Disposed backup owner discards received bytes before document creation',
+    () async {
+      final pending = Completer<http.StreamedResponse>();
+      final dispatched = Completer<void>();
+      final api = PakarApi(
+        baseUrl: 'http://keycontroller.local',
+        client: MaintenanceClient((request) async {
+          if (request.url.path == '/api/status') {
+            return jsonResponse({
+              'hostname': 'keycontroller',
+              'board_id': 'fixture-keycontroller',
+              'boot_id': 'fixture-boot',
+            });
+          }
+          if (request.url.path == '/api/avr/maintenance') {
+            return jsonResponse(backupJob());
+          }
+          dispatched.complete();
+          return pending.future;
+        }),
+      );
+      final controller = FirmwareController(api, authorized: (_) => true);
+      final operation = controller.backupBytes(true);
+      final checked = expectLater(operation, throwsA(isA<StaleConnection>()));
+      await dispatched.future;
+      controller.dispose();
+      pending.complete(
+        http.StreamedResponse(Stream.value(List.filled(1024, 0)), 200),
+      );
+      await checked;
+      await api.close();
+    },
+  );
   test(
     'Response total deadline cancels drip stream; error body is never echoed',
     () async {

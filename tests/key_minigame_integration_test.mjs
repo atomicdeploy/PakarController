@@ -116,3 +116,107 @@ test('boot restoration is once-only and timer cues cannot preempt AVR audio',()=
     for(const file of ['mobile/lib/minigame.dart','mobile/lib/minigame_panel.dart','desktop/src/minigame.rs','firmware/esp/src/WebUi.h'])assert(read(file).includes(field),file+': '+field);
   }
 });
+test('actual cue owners fence deferred feedback and preserve first-win melody overrides',()=>{
+  const ownerStart=service.indexOf('  static G::Phase audioPhase=',service.indexOf('void serviceMiniGame('));
+  const ownerEnd=service.indexOf('  if(miniResumeAfterFence',ownerStart);
+  const audioStart=service.indexOf('  const uint16_t tone=',ownerEnd);
+  const audioEnd=service.indexOf('  // Set a level, never replay a press.',audioStart);
+  const linkStart=app.indexOf('#if PAKAR_FIRST_WINS_ENABLED',app.indexOf('void serviceGameLink('));
+  const linkEnd=app.indexOf('#endif',linkStart);
+  assert(ownerStart>=0&&ownerEnd>ownerStart&&audioStart>ownerEnd&&audioEnd>audioStart&&linkEnd>linkStart,
+    'Compile the actual owner and dispatch blocks, not a copied implementation');
+  const ownershipLoss=service.slice(service.indexOf('  if(!miniReady()){',ownerEnd),service.indexOf('    miniTimerFeedback.update(false',ownerEnd));
+  const fixture=`#include <cassert>
+#include <vector>
+#include <AudioCues.h>
+#include <KeyMiniGame.h>
+#include <KeyPresentation.h>
+#include <GamePanelFeedback.h>
+using G=BoardCore::KeyMiniGame;
+using namespace BoardCore::Protocol;
+struct Mini {
+  G::Config cfg;G::View state;uint16_t note=0;
+  const G::Config &config()const{return cfg;}
+  G::View view()const{return state;}
+  G::Phase phase()const{return state.phase;}
+  uint16_t takeNote(){const auto out=note;note=0;return out;}
+  bool running()const{return state.phase==G::Input||state.phase==G::Show;}
+  bool feedbackCorrect()const{return false;}
+}miniGame;
+struct Settings {uint8_t winnerCue=kCueWinner;BoardCore::KeyPresentation presentation;}keySettings;
+struct MiniSettings {bool timerBeeps=true,timerAlternateTones=true;}miniSettings;
+BoardCore::GameTimerFeedback miniTimerFeedback;
+struct Sent {uint8_t opcode;std::vector<uint8_t> payload;};
+std::vector<Sent> sent;bool accept=true;
+uint8_t sequence=1,winner=2,gameAudioSequence=0,gameAudioError=0;
+uint16_t miniEpoch=1,miniFenceNote=0;
+bool ready=true,avrMiniGames=true,avrOnline=true,keyAudioApplied=true,programmingLatched=false;
+bool miniReady(){return ready;}
+bool avrAtomicAudio=true,avrIdleAudio=true,avrFlashAudio=true;
+bool gameAudioStarted=false,gameAudioPending=false,gameAudioAck=false;
+uint32_t gameWinnerAt=0,gameAudioSentAt=0;
+bool sendToAvr(uint8_t opcode,uint8_t,const uint8_t *data,uint8_t size){
+  sent.push_back({opcode,std::vector<uint8_t>(data,data+size)});return accept;
+}
+void feedback(uint32_t now){
+${service.slice(ownerStart,ownerEnd)}
+${ownershipLoss}    return;
+  }
+  const auto v=miniGame.view();
+${service.slice(audioStart,audioEnd)}
+}
+void winnerAudio(uint32_t now){
+${app.slice(linkStart,linkEnd)}
+#endif
+}
+void clear(){sent.clear();accept=true;gameAudioStarted=false;gameAudioPending=false;gameAudioAck=false;gameAudioError=0;}
+int main(){
+  // A generic success was queued, then another mode wins before the next tick.
+  miniGame.cfg.mode=G::Illuminated;miniGame.state.phase=G::Success;feedback(100);assert(sent.empty());
+  miniGame.cfg.mode=G::PressToWin;gameWinnerAt=150;winnerAudio(150);
+  assert(sent.size()==1&&sent[0].opcode==kAudioStream&&sent[0].payload[0]==6);
+  const auto timeline=sent[0].payload;
+  assert(timeline.size()==12&&timeline[5]==120&&timeline[7]==100&&timeline[9]==4);
+  assert((timeline[10]|uint16_t(timeline[11])<<8)==400);
+  feedback(150);feedback(400);winnerAudio(400);assert(sent.size()==1);
+  // Named user overrides remain authoritative and are never replaced/replayed.
+  for(const auto cue:{kCueFinish,kCueLost,kCueAttention}){
+    clear();keySettings.winnerCue=cue;gameWinnerAt=500;winnerAudio(500);
+    assert(sent.size()==1&&sent[0].opcode==kAudioCue&&sent[0].payload[0]==cue);
+    feedback(500);feedback(800);winnerAudio(800);assert(sent.size()==1);
+  }
+  clear();keySettings.winnerCue=BoardCore::AudioCues::kSilent;winnerAudio(900);feedback(900);assert(sent.empty());
+  // A busy/uncertain write is a consumed intent; no generic fallback or retry.
+  clear();keySettings.winnerCue=kCueWinner;gameWinnerAt=1000;accept=false;winnerAudio(1000);
+  assert(sent.size()==1&&gameAudioError==kBusy&&gameAudioStarted&&!gameAudioPending);
+  accept=true;winnerAudio(1001);feedback(1300);assert(sent.size()==1);
+  // No winner from another game's stale global observation may own this path.
+  clear();miniGame.cfg.mode=G::Simon;winnerAudio(1400);assert(sent.empty());
+  // Other modes still earn their configured full cue after the final note.
+  keySettings.winnerCue=kCueFinish;feedback(1500);feedback(1739);assert(sent.empty());
+  feedback(1740);assert(sent.size()==1&&sent[0].opcode==kAudioCue&&sent[0].payload[0]==kCueFinish);
+  // Even the same mode/phase in a new input epoch cannot inherit an old cue.
+  clear();++miniEpoch;miniGame.state.phase=G::Success;feedback(2000);
+  ++miniEpoch;miniGame.state.phase=G::Input;feedback(2100);miniGame.state.phase=G::Ready;
+  feedback(2400);assert(sent.size()==1&&sent[0].opcode==kBuzzer); // Explicit ready stops old audio only.
+  clear();miniGame.state.phase=G::Success;feedback(3000);ready=false;feedback(3100);
+  ready=true;miniGame.state.phase=G::Ready;feedback(3400);
+  assert(sent.size()==1&&sent[0].opcode==kBuzzer);
+  clear();miniGame.state.phase=G::Success;feedback(3500);ready=false;feedback(3600);
+  ready=true;feedback(3900);feedback(4200);assert(sent.empty());
+  // Cancellation before the first post-switch tick is also peer/epoch-fenced.
+  clear();miniGame.state.phase=G::Success;feedback(4000);miniGame.cfg.mode=G::PressToWin;
+  ready=false;feedback(4100);ready=true;miniGame.state.phase=G::Success;
+  feedback(4500);assert(sent.empty());
+}
+`;
+  const directory=resolve('build/native');mkdirSync(directory,{recursive:true});
+  const cpp=resolve(directory,'key_game_audio_owner_fixture.cpp'),exe=resolve(directory,'key_game_audio_owner_test.exe');
+  let previous;try{previous=readFileSync(cpp,'utf8')}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(previous!==fixture)writeFileSync(cpp,fixture);
+  const result=spawnSync(process.env.CXX||'g++',['-std=c++17','-O2','-g0','-Wall','-Wextra','-Werror',
+    '-DPAKAR_FIRST_WINS_ENABLED=1','-I',resolve('libraries/BoardCore/src'),cpp,'-o',exe],{encoding:'utf8',timeout:60000});
+  assert.equal(result.status,0,result.error?.message||result.stderr);
+  const run=spawnSync(exe,[],{encoding:'utf8',timeout:10000});
+  assert.equal(run.status,0,run.error?.message||run.stderr);
+});

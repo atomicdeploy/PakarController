@@ -2555,7 +2555,7 @@
       "proof": [
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "1e1883b4b934bba41c25939d1cfaa59acf033cc9d537f7a03cf0826178242df8",
+          "sha256": "f35c804345608b8c34046d31fab353e3940c0cb0ed08400f0836fe3585fe4a27",
           "anchor": "test('actual AVR key callback"
         }
       ],
@@ -3229,7 +3229,9 @@
       "preserved": [
         "Firmware specialist read all 886 actual donor lines through EOF and matched original-byte inventory hash. Adapted PROGRAM_BASIC/PROGRAM_PUZZLE/PROGRAM_CODE/PROGRAM_MAZE preprocessor selection into one validated GameRole shared by ESP and AVR, rather than retaining several runtime games. Unsupported roles fail compilation; the baked role is disclosed to peers and clients filter acknowledged controls.",
         "2026-10-27 issue #32: reread all 886 donor lines. The new runtime-game request supersedes the earlier single-game policy inside keycontroller, not table/key role separation. Adapted mode transitions, countdown and relay predicates into one bounded ESP-owned engine with ten optional modes, explicit AVR raw-edge ownership and shared HostPresentation effects. No blocking tones, fixed puzzle code or maze wiring copied.",
-        "2026-10-28 issue #32: reread the unchanged 886-line donor through EOF and adapt its phase-local presentation and finite finish/incorrect cues, without its blocking welcome/tone waits. Add configurable ordered fade/reveal, per-entry Simon feedback, a distinct wrong-pair phase duration, phase-aligned blink rendering, matched-color progress and locally timed atomic arpeggios using the existing AVR circular queue. Existing saved instance values are not migrated or overwritten; core/transport evidence is not physical acceptance."
+        "2026-10-28 issue #32: reread the unchanged 886-line donor through EOF and adapt its phase-local presentation and finite finish/incorrect cues, without its blocking welcome/tone waits. Add configurable ordered fade/reveal, per-entry Simon feedback, a distinct wrong-pair phase duration, phase-aligned blink rendering, matched-color progress and locally timed atomic arpeggios using the existing AVR circular queue. Existing saved instance values are not migrated or overwritten; core/transport evidence is not physical acceptance.",
+        "2026-10-29 issue #32: narrow audio-owner regression fix. Deferred generic result feedback is owned by exact game mode and input epoch, cleared on ownership loss and excluded from PressToWin at final dispatch. The first-win synchronized action6 or configured named/Silent cue remains its sole winner audio owner; generic game success cannot preempt it. The actual production source blocks are extracted and compiled in a regression fixture, rather than a copied model. No current instance colors, timing or winner cue is migrated.",
+        "2026-10-29 issue #32: reread the unchanged complete Puzzles sketch and WS2811 source with the existing HostPresentation renderer. Adapt the actual TonePlayer previous-deadline clock to bounded nine-box reveal catch-up. Color Pattern now caps effective reveal/final pause at500ms without rewriting saved intro_ms; Matching Pairs retains independent times. Replace three similar blue-family default hues with seven distinct semantic colors and expose each participating box's intended palette positions, RGB/hex/names and matching result. All511 nonempty masks and palette sizes2-9, duplicate Down/release, sparse layouts, normal-brightness distinction, long-hold reversal and reveal stall/rollover fixtures pass through the canonical suite. No independent matching-algorithm defect was reproduced; live mask62/progress5 identifies box1 as different. Physical six-box matching, correction/wiring and hue acceptance remain pending; no saved instance values or correction rules were migrated."
       ],
       "targets": [
         {
@@ -3239,7 +3241,7 @@
         },
         {
           "path": "libraries/BoardCore/src/KeyMiniGame.h",
-          "sha256": "0421c7dbb75880594bc56e643f37fa4fd87d74bb7d28a6d9f9800de2dd181121",
+          "sha256": "239e7f56f22f912c0053617f0e8ec0e1e4b9b3328233d9fb90e82226a2ac2e2f",
           "anchor": "class KeyMiniGame"
         },
         {
@@ -3249,7 +3251,7 @@
         },
         {
           "path": "firmware/esp/src/KeyMiniGameService.h",
-          "sha256": "4245bc41e0a131b6e6f2549f4bec4817b4bc51b9c5da743eae1371e9730e1837",
+          "sha256": "5c3900008e866a963a32f79dbbb36b1935bbf6d639cc7fcf972d36d781c970f1",
           "anchor": "void serviceMiniGame"
         }
       ],
@@ -3266,13 +3268,28 @@
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "d2b57769a1ad667ae39b642c3a44114a4be2480772d5cbff42b52a3c7bc3d1b9",
+          "sha256": "dec3f0ab47f4094d88e96186d68e40178778b7092bed5f3d88bc5a132b34ef42",
           "anchor": "static void toggle()"
         },
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "1e1883b4b934bba41c25939d1cfaa59acf033cc9d537f7a03cf0826178242df8",
+          "sha256": "f35c804345608b8c34046d31fab353e3940c0cb0ed08400f0836fe3585fe4a27",
           "anchor": "test('every minigame command"
+        },
+        {
+          "path": "tests/key_minigame_integration_test.mjs",
+          "sha256": "f35c804345608b8c34046d31fab353e3940c0cb0ed08400f0836fe3585fe4a27",
+          "anchor": "actual cue owners fence deferred feedback and preserve first-win melody overrides"
+        },
+        {
+          "path": "tests/key_minigame_test.cpp",
+          "sha256": "dec3f0ab47f4094d88e96186d68e40178778b7092bed5f3d88bc5a132b34ef42",
+          "anchor": "static void paletteAndMatchingDiagnostics()"
+        },
+        {
+          "path": "tests/key_minigame_test.cpp",
+          "sha256": "dec3f0ab47f4094d88e96186d68e40178778b7092bed5f3d88bc5a132b34ef42",
+          "anchor": "static void boundedColorIntroduction()"
         }
       ],
       "omissions": [
@@ -8324,7 +8341,7 @@
         {
           "path": "mobile/lib/firmware_page.dart",
           "anchor": "avrMaintenance()",
-          "sha256": "c33c2df6dfc69b5f3b69f1a4f77b8feb5497e90ed3458a5e84f1bb2cc3c7d319"
+          "sha256": "391a60a7d166bcf295acd403826a5e696e617236debb525e794d6b9924ba8745"
         },
         {
           "path": "mobile/lib/firmware_automation_page.dart",
@@ -8761,7 +8778,8 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Adapt actual explicit measured stage counters, indeterminate non-transfer stages, separate verification/completion and terminal state handling. Rust retains external board update/local OTA state in HTTP/WS/USB DTOs; Flutter consumes the existing status stream, and Web renders that same source. No transfer 100 percent is treated as completed flashing."
+        "Adapt actual explicit measured stage counters, indeterminate non-transfer stages, separate verification/completion and terminal state handling. Rust retains external board update/local OTA state in HTTP/WS/USB DTOs; Flutter consumes the existing status stream, and Web renders that same source. No transfer 100 percent is treated as completed flashing.",
+        "2026-10-29: reread the complete current donor and tests. Redesign the actual Flutter progress consumer using the imported Workspace semantic icon/card/badge surfaces. Show exact stage-local bytes/percentage, distinguish Sending from Programming and explicit verified completion from pending recovery. Unmeasured verification/reboot remains indeterminate; no fabricated ETA or stage history. Add compact/wide, light/dark, RTL and large-text bounds fixtures; installed/device progress evidence remains a separate gate."
       ],
       "targets": [
         {
@@ -8771,7 +8789,7 @@
         },
         {
           "path": "mobile/lib/firmware_progress.dart",
-          "sha256": "51631d76da67f123c5419eb44d4d688c11ee162bf602ba6769e366a840d7348d",
+          "sha256": "c384ea707aee45a2c6e8faa7bfdaadadfc3d8b3a0b92f46ddce4d085edded464",
           "anchor": "class FirmwareProgress"
         },
         {
@@ -8797,6 +8815,11 @@
           "path": "mobile/test/firmware_delivery_test.dart",
           "sha256": "2a5a1ff4950f3806d522d2afe76050884aff03a7f3f0556abc329f25a0042976",
           "anchor": "External board OTA and remote jobs"
+        },
+        {
+          "path": "mobile/test/firmware_progress_design_test.dart",
+          "sha256": "82fa840388c7946f7cc9fb256e9f2cf1a5efbcbf99b30a38b269a7f3225e131e",
+          "anchor": "Transferred 100 percent is not a verified board update"
         }
       ],
       "remaining": [
@@ -8820,7 +8843,7 @@
         },
         {
           "path": "mobile/lib/firmware_progress.dart",
-          "sha256": "51631d76da67f123c5419eb44d4d688c11ee162bf602ba6769e366a840d7348d",
+          "sha256": "c384ea707aee45a2c6e8faa7bfdaadadfc3d8b3a0b92f46ddce4d085edded464",
           "anchor": "class FirmwareProgress"
         }
       ],
@@ -8875,7 +8898,7 @@
         },
         {
           "path": "mobile/lib/firmware.dart",
-          "sha256": "190ddce7b1bbf298a74464ea8202287ead801bfe8725ab4d0af39993d5a6c30e",
+          "sha256": "3d104c5c0e23ada43fc07a88092788e7be015e31b5b7cd38fc096ebd072ebd07",
           "anchor": "Future<String> fileUrl("
         }
       ],
@@ -8925,7 +8948,7 @@
       "targets": [
         {
           "path": "mobile/lib/firmware.dart",
-          "sha256": "190ddce7b1bbf298a74464ea8202287ead801bfe8725ab4d0af39993d5a6c30e",
+          "sha256": "3d104c5c0e23ada43fc07a88092788e7be015e31b5b7cd38fc096ebd072ebd07",
           "anchor": "class FirmwareController"
         },
         {
@@ -8940,7 +8963,7 @@
         },
         {
           "path": "mobile/lib/firmware_page.dart",
-          "sha256": "c33c2df6dfc69b5f3b69f1a4f77b8feb5497e90ed3458a5e84f1bb2cc3c7d319",
+          "sha256": "391a60a7d166bcf295acd403826a5e696e617236debb525e794d6b9924ba8745",
           "anchor": "maximum: controller.imageMaximum(esp),"
         },
         {
@@ -9573,7 +9596,7 @@
         },
         {
           "path": "firmware/esp/src/KeyMiniGameService.h",
-          "sha256": "4245bc41e0a131b6e6f2549f4bec4817b4bc51b9c5da743eae1371e9730e1837",
+          "sha256": "5c3900008e866a963a32f79dbbb36b1935bbf6d639cc7fcf972d36d781c970f1",
           "anchor": "if(miniBootPending)"
         }
       ],
@@ -9590,7 +9613,7 @@
         },
         {
           "path": "tests/key_minigame_test.cpp",
-          "sha256": "d2b57769a1ad667ae39b642c3a44114a4be2480772d5cbff42b52a3c7bc3d1b9",
+          "sha256": "dec3f0ab47f4094d88e96186d68e40178778b7092bed5f3d88bc5a132b34ef42",
           "anchor": "static void panelFeedback()"
         },
         {
@@ -12854,7 +12877,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String localUpdateJson() {",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
         },
         {
           "path": "firmware/esp/src/RemoteFirmware.h",
@@ -13356,7 +13379,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "std::atomic<uint32_t> otaRebootAt{0};",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
         },
         {
           "path": "firmware/esp/src/AsyncHttpService.h",
@@ -13414,7 +13437,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "AsyncWebSocket webSocket(\"/ws\");",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
         }
       ],
       "omissions": [
@@ -13475,7 +13498,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
           "anchor": "loopMessages.begin(); // PSRAM-backed S3 queue"
         },
         {
@@ -13491,7 +13514,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "void onWebSocketEvent(",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
         },
         {
           "path": "firmware/esp32s3/src/EthernetPort.h",
@@ -14874,7 +14897,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
           "anchor": "void serviceStatusRgb(uint32_t now)"
         },
         {
@@ -15304,7 +15327,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
           "anchor": "void serviceConfigurationChanges()"
         }
       ],
@@ -15629,7 +15652,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
           "anchor": "bool authenticate()"
         },
         {
@@ -17567,7 +17590,8 @@
       "preserved": [
         "Issue #28: reread the complete picker and preferenceFiles helper. Adapt bounded list/filter, explicit file actions and stale asynchronous reply rejection into the canonical Web Files panel. Board-managed names replace arbitrary host paths; uploads are staged and verified, and file replacement is explicitly confirmed. Original bytes and modification timestamps are kept together; PAX export preserves timestamps without claiming browser filesystem permissions.",
         "Fully read actual typed single-file selection, disabled/unselected/loading state, extension filtering, cancellation, stale-result protection and explicit acceptance. Adapted into Flutter AndroidDocuments + native SAF; firmware imports are validated and separately confirmed before any upload. Parent navigation is locked during maintenance confirmation/picking and writes; selected bytes never automatically program either board.",
-        "Canonical Pakar desktop maintenance and actual firmware routes were read, not fabricated mobile endpoints. FirmwareController pins remote job/boot/hash/targets and verifies a fresh identity before apply/cancel; single-dispatch bounded HTTP refuses redirects/replay. FirmwarePage gates each ISP/OTA domain on individual live feature ACK, distinguishes stage/apply/completion, and exposes real full flash/EEPROM exports."
+        "Canonical Pakar desktop maintenance and actual firmware routes were read, not fabricated mobile endpoints. FirmwareController pins remote job/boot/hash/targets and verifies a fresh identity before apply/cancel; single-dispatch bounded HTTP refuses redirects/replay. FirmwarePage gates each ISP/OTA domain on individual live feature ACK, distinguishes stage/apply/completion, and exposes real full flash/EEPROM exports.",
+        "2026-10-29: retain the existing document-export adapter while selecting a backup from the current acknowledged AVR maintenance owner. Urboot exports use the exact completed request-scoped artifact, not unrelated ISP files. Busy, wrong-boot, incomplete and replaced jobs fail before creating an Android document; exact full memory length and stable owner are checked. Exported backups remain historical recovery data, not asserted to be the current running AVR."
       ],
       "targets": [
         {
@@ -17587,12 +17611,12 @@
         },
         {
           "path": "mobile/lib/firmware_page.dart",
-          "sha256": "c33c2df6dfc69b5f3b69f1a4f77b8feb5497e90ed3458a5e84f1bb2cc3c7d319",
+          "sha256": "391a60a7d166bcf295acd403826a5e696e617236debb525e794d6b9924ba8745",
           "anchor": "class FirmwarePage"
         },
         {
           "path": "mobile/lib/firmware.dart",
-          "sha256": "190ddce7b1bbf298a74464ea8202287ead801bfe8725ab4d0af39993d5a6c30e",
+          "sha256": "3d104c5c0e23ada43fc07a88092788e7be015e31b5b7cd38fc096ebd072ebd07",
           "anchor": "class FirmwareController"
         },
         {
@@ -17629,7 +17653,7 @@
         },
         {
           "path": "mobile/test/firmware_test.dart",
-          "sha256": "aa539cf52ac6e02285dfb4de32034d5eadd44d8a3d5ed66714071a5f66710f1f",
+          "sha256": "dcdc186e4339fe92ff57d962eed1d5c9966c24c2f0de46d8170dc37c00c63cda",
           "anchor": "Lost mutating GET probe"
         },
         {
@@ -17641,6 +17665,11 @@
           "path": "mobile/test/capture_test.dart",
           "sha256": "9363580ff944f31aa581ed3e2eb1e882fade4cfcb22bdd218bc26af0fd7bb222",
           "anchor": "Firmware capture must never issue a device mutation"
+        },
+        {
+          "path": "mobile/test/firmware_test.dart",
+          "sha256": "dcdc186e4339fe92ff57d962eed1d5c9966c24c2f0de46d8170dc37c00c63cda",
+          "anchor": "Disposed backup owner discards received bytes before document creation"
         }
       ],
       "improvement": ""
@@ -18526,7 +18555,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
           "anchor": "if(BoardCore::Context::pixelEvents(available))"
         },
         {
@@ -20551,7 +20580,7 @@
       "proof": [
         {
           "path": "tests/key_minigame_integration_test.mjs",
-          "sha256": "1e1883b4b934bba41c25939d1cfaa59acf033cc9d537f7a03cf0826178242df8",
+          "sha256": "f35c804345608b8c34046d31fab353e3940c0cb0ed08400f0836fe3585fe4a27",
           "anchor": "test('actual AVR key callback"
         }
       ],
@@ -23304,7 +23333,7 @@
       "targets": [
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
           "anchor": "void serviceScenePersistence(bool flush)"
         },
         {
@@ -24201,7 +24230,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24282,7 +24311,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
         },
         {
           "path": "libraries/BoardCore/src/PixelGroupLayout.h",
@@ -24543,7 +24572,7 @@
         },
         {
           "path": "firmware/esp/application.ino",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41",
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb",
           "anchor": "uint8_t defaultPhysicalCell"
         },
         {
@@ -24619,7 +24648,7 @@
         {
           "path": "firmware/esp/application.ino",
           "anchor": "String buildUsbTableSnapshot(bool includePixels) {",
-          "sha256": "1f71bb5ff7ace9b87277b70df9811f05425d225d19ed2adb63fe4a2c92dc6c41"
+          "sha256": "c21b1eba74d52ca4cf2d2fe2a1e8d55eb4a74d2cbb2258eada40a4f08259bddb"
         }
       ],
       "omissions": [

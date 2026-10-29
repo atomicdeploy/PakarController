@@ -12,7 +12,19 @@ String miniJson(){
   d["winner"]=v.winner;d["target"]=v.target;d["round"]=v.round;d["progress"]=v.progress;
   d["mistakes"]=v.mistakes;d["warning"]=v.warning;d["last_reaction_ms"]=v.lastReactionMs;d["best_reaction_ms"]=v.bestReactionMs;
   d["remote_hold_lease_ms"]=5000;d["outputs_owned"]=avrMiniOwned;miniSettings.json(d["settings"].to<JsonObject>());
-  if(miniGame.config().mode==G::ColorMatch)d["matching_mask"]=miniGame.matchingMask();
+  if(miniGame.config().mode==G::ColorMatch){
+    d["matching_mask"]=miniGame.matchingMask();d["intro_step_ms"]=miniGame.introStepMs();
+    auto boxes=d["color_match"].to<JsonArray>();
+    for(uint8_t key=1;key<=9;++key){uint8_t player,target;
+      if(!miniGame.colorMatchValues(key,player,target))continue;
+      auto box=boxes.add<JsonObject>();box["key"]=key;box["matched"]=player==target;
+      box["player_palette"]=player+1;box["target_palette"]=target+1;
+      box["player_rgb"]=G::color(player);box["target_rgb"]=G::color(target);
+      box["player_color"]=G::colorName(player);box["target_color"]=G::colorName(target);
+      char hex[8];snprintf(hex,sizeof(hex),"#%06lX",static_cast<unsigned long>(G::color(player)));box["player_hex"]=hex;
+      snprintf(hex,sizeof(hex),"#%06lX",static_cast<unsigned long>(G::color(target)));box["target_hex"]=hex;
+    }
+  }
   d["arpeggio_supported"]=avrOnline&&avrAtomicAudio;
   d["timer_beeps_supported"]=avrOnline&&avrIdleAudio;
   if(v.phase==G::Feedback)d["feedback_correct"]=miniGame.feedbackCorrect();
@@ -88,8 +100,19 @@ bool miniCommand(JsonObjectConst request,String &result){
 }
 void serviceMiniGame(uint32_t now){
   using G=BoardCore::KeyMiniGame;
+  static G::Phase audioPhase=G::Ready;static G::Mode audioMode=G::ModeCount;
+  static uint16_t audioEpoch=0;static uint32_t successAt=0;
+  static bool successCue=false;static uint8_t resultCue=BoardCore::AudioCues::kSilent;
+  // Deferred feedback belongs to one game/input epoch, not merely a phase.
+  // Two different rounds may both report Success without an intervening tick;
+  // an old generic cue must never replace first-wins' synchronized timeline.
+  if(audioMode!=miniGame.config().mode||audioEpoch!=miniEpoch){
+    audioMode=miniGame.config().mode;audioEpoch=miniEpoch;
+    successCue=false;audioPhase=G::Paused;
+  }
   if(miniResumeAfterFence&&uint32_t(now-miniFenceAt)>2000){miniResumeAfterFence=false;miniFenceNote=0;}
   if(!miniReady()){
+    successCue=false;audioPhase=miniGame.phase(); // An interrupted owner never replays feedback.
     miniTimerFeedback.update(false,0,0,false,false);
     if(miniGame.running())miniGame.pause(now);
     for(uint8_t k=1;k<=9;++k){
@@ -125,7 +148,7 @@ void serviceMiniGame(uint32_t now){
   const uint16_t tone=miniFenceNote?miniFenceNote:miniGame.takeNote();miniFenceNote=0;
   const auto timerCue=miniTimerFeedback.update(miniGame.running()&&v.timed,
     v.elapsedMs,v.remainingMs,miniSettings.timerBeeps,miniSettings.timerAlternateTones);
-  static G::Phase audioPhase=G::Ready;static uint32_t successAt=0;static bool successCue=false;static uint8_t resultCue=BoardCore::AudioCues::kSilent;
+  if(miniGame.config().mode==G::PressToWin)successCue=false;
   if(audioPhase!=v.phase){audioPhase=v.phase;
     if(v.phase==G::Success&&miniGame.config().mode!=G::PressToWin){successAt=now;successCue=true;resultCue=keySettings.winnerCue;}
     else if(v.phase==G::Feedback&&miniGame.config().mode==G::MemoryPairs&&!miniGame.feedbackCorrect()){
@@ -149,7 +172,7 @@ void serviceMiniGame(uint32_t now){
   }
   // Let the completing color finish, then play the configured full winner cue
   // once alongside the board-local success rainbow. No per-note network timing.
-  if(successCue&&uint32_t(now-successAt)>=240){successCue=false;if(resultCue!=BoardCore::AudioCues::kSilent)sendToAvr(kAudioCue,sequence++,&resultCue,1);}
+  if(successCue&&miniGame.config().mode!=G::PressToWin&&uint32_t(now-successAt)>=240){successCue=false;if(resultCue!=BoardCore::AudioCues::kSilent)sendToAvr(kAudioCue,sequence++,&resultCue,1);}
   // Idle-only atomic admission in the AVR is authoritative: a tick cannot
   // interrupt any melody, streamed note, pending prefill or winner timeline.
   // Rejection consumes this tick; no retries or legacy stop-and-beep fallback.

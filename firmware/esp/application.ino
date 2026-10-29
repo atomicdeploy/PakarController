@@ -5476,7 +5476,8 @@ void serviceGameLink(uint32_t now) {
 #if PAKAR_FIRST_WINS_ENABLED
   // ESP owns the winner presentation clock. Never replay an expired pulse.
   // AVR tones have a finite duration even if the link disappears.
-  if(winner&&avrOnline&&keyAudioApplied&&!programmingLatched&&
+  if((!avrMiniGames||miniGame.config().mode==BoardCore::KeyMiniGame::PressToWin)&&
+     winner&&avrOnline&&keyAudioApplied&&!programmingLatched&&
      keySettings.winnerCue!=BoardCore::AudioCues::kSilent){
     const auto &p=keySettings.presentation;
     const uint32_t elapsed=now-gameWinnerAt;

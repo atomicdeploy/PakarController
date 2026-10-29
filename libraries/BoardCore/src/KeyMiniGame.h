@@ -69,6 +69,7 @@ class KeyMiniGame {
       Config c;c.mode=mode;
       if(mode!=PressToWin&&mode!=Toggle&&mode!=ClearAll)c.limitMs=60000;
       if(mode==ColorOrder)c.paletteSize=9;
+      if(mode==ColorMatch)c.introMs=500;
       if(mode==Illuminated)c.windowMs=10000;
       if(mode==Simon){c.rounds=1;c.sequenceLength=8;}
       return c;
@@ -138,13 +139,22 @@ class KeyMiniGame {
   }
   // Colors and notes are paired by stable palette index, across every mode.
   static uint32_t color(uint8_t i){
-    constexpr uint32_t palette[]={0xff3030,0x00e676,0x2979ff,0xffd600,0x00e5ff,0xaa44ff,0xff9100,0xff4081,0xffffff};
+    // The default seven must be unmistakable on real RGB LEDs. Cyan, blue
+    // and blue-heavy violet previously occupied three of those seven slots.
+    constexpr uint32_t palette[]={0xff0000,0x00ff00,0x0000ff,0xffff00,0xff00ff,0xff8000,0xffffff,0x00ffff,0xff4080};
     return palette[i%9];
+  }
+  static const char *colorName(uint8_t i){
+    constexpr const char *names[]={"red","green","blue","yellow","magenta","orange","white","cyan","pink"};
+    return names[i%9];
   }
   static uint16_t frequency(uint8_t i){
     constexpr uint16_t notes[]={523,587,659,698,784,880,988,1047,1175};return notes[i%9];
   }
   const Config &config()const{return config_;}
+  // A saved older fade value remains intact, but cannot slow the color puzzle
+  // to more than half a second per enabled box. Other modes retain their rule.
+  uint16_t introStepMs()const{return config_.mode==ColorMatch&&config_.introMs>500?500:config_.introMs;}
   Phase phase()const{return phase_;}
   uint32_t presentationAt()const{return phaseAt_;}
   bool feedbackCorrect()const{return phase_==Feedback&&feedbackGood_;}
@@ -329,17 +339,23 @@ class KeyMiniGame {
     }
 #endif
     if(phase_==Show&&(config_.mode==ColorMatch||config_.mode==MemoryPairs)){
-      const uint32_t age=now-phaseAt_;
-      if(target_&&age>=config_.introMs){
-        if(++showIndex_>=count(participating_)){target_=0;phaseAt_=now;++revision_;}
+      const uint16_t step=introStepMs();bool advanced=false;
+      // Anchor to the previous deadline, as the shared finite tone player does.
+      // Skip expired reveal steps after a stall instead of accumulating delay
+      // or replaying a burst of old color notes. Work is bounded by nine boxes.
+      while(target_&&uint32_t(now-phaseAt_)>=step){
+        phaseAt_+=step;advanced=true;
+        if(++showIndex_>=count(participating_))target_=0;
         else{
           uint8_t rank=0;
           for(uint8_t k=1;k<=9;++k)if(participating_&keyBit(k)){
             if(rank++==showIndex_){target_=k;break;}
           }
-          phaseAt_=now;emitNote(targets_[target_-1]);++revision_;
         }
-      }else if(!target_&&age>=(config_.mode==MemoryPairs?config_.previewMs:config_.gapMs))enter(Input,now);
+      }
+      if(advanced){++revision_;if(target_)emitNote(targets_[target_-1]);else note_=0;}
+      const uint16_t pause=config_.mode==MemoryPairs?config_.previewMs:config_.gapMs>500?500:config_.gapMs;
+      if(!target_&&uint32_t(now-phaseAt_)>=pause)enter(Input,now);
     }
     if(phase_==Input){
       if((config_.mode==Illuminated||config_.mode==ReactionChase)&&uint32_t(now-targetAt_)>=config_.windowMs){
@@ -375,6 +391,10 @@ class KeyMiniGame {
     for(uint8_t k=1;k<=9;++k)if((participating_&keyBit(k))&&player_[k-1]==targets_[k-1])mask|=keyBit(k);
     return mask;
   }
+  bool colorMatchValues(uint8_t key,uint8_t &player,uint8_t &target)const{
+    if(config_.mode!=ColorMatch||!(participating_&keyBit(key)))return false;
+    player=player_[key-1];target=targets_[key-1];return true;
+  }
   uint8_t outputMask()const{
     if(phase_==Stopped)return 0;
     uint8_t result=0;
@@ -406,7 +426,8 @@ class KeyMiniGame {
           const uint32_t age=lastAt_-phaseAt_;
           uint16_t gain=255;
           if(target_&&position==showIndex_){
-            const uint32_t x=age>=config_.introMs?255:uint64_t(age)*255/config_.introMs;
+            const uint16_t step=introStepMs();
+            const uint32_t x=age>=step?255:uint64_t(age)*255/step;
             gain=x*x*(765-2*x)/65025; // Smoothstep, not a stepped/blinking reveal.
           }
           button.rgb=scaled(color(config_.mode==ColorMatch?player_[k-1]:targets_[k-1]),gain);

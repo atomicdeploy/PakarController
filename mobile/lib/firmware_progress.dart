@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'firmware.dart';
 import 'models.dart';
+import 'workspace_widgets.dart';
 
 // PCController hostui/update_progress.go's stage-local measured/unknown rule.
 // A transferred file or reboot ACK is never a verified completed update.
@@ -165,27 +166,261 @@ class FirmwareProgressView extends StatelessWidget {
   const FirmwareProgressView(this.progress, {super.key});
   final FirmwareProgress progress;
   @override
-  Widget build(BuildContext context) => Semantics(
-    liveRegion: true,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(progress.label, style: Theme.of(context).textTheme.bodySmall),
-        if (progress.active) ...[
-          const SizedBox(height: 6),
-          LinearProgressIndicator(value: progress.fraction),
-        ],
-        if (progress.total != null)
-          Text(
-            '${progress.done} / ${progress.total} bytes · this stage',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        if (progress.error.isNotEmpty)
-          Text(
-            progress.error,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context), colors = theme.colorScheme;
+    final state = _ProgressPresentation(progress);
+    final tone = state.failed
+        ? colors.error
+        : state.verified
+        ? colors.secondary
+        : colors.primary;
+    final fraction = progress.fraction;
+    final measured = fraction != null;
+    final metric = measured
+        ? '${(fraction * 100).floor()}%'
+        : state.verified
+        ? 'Verified'
+        : state.failed
+        ? 'Stopped'
+        : state.waiting
+        ? 'Pending'
+        : 'In progress';
+
+    // WorkspaceActionCard's semantic icon surface and reserved border, adapted
+    // for a read-only live operation. No inferred timeline or elapsed-time ETA.
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label:
+          '${progress.label}. ${state.status}. '
+          '${measured ? '$metric of this stage' : metric}',
+      child: Container(
+        key: const ValueKey('firmware-progress-card'),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: tone.withValues(alpha: .32)),
+        ),
+        padding: const EdgeInsets.all(18),
+        child: LayoutBuilder(
+          builder: (context, bounds) {
+            final compact =
+                bounds.maxWidth < 420 ||
+                MediaQuery.textScalerOf(context).scale(14) > 21;
+            final badge = WorkspaceBadge(
+              state.status,
+              active: state.verified,
+              icon: state.failed
+                  ? Icons.error_outline_rounded
+                  : state.verified
+                  ? Icons.verified_outlined
+                  : state.waiting
+                  ? Icons.hourglass_top_rounded
+                  : Icons.sensors_rounded,
+            );
+            final identity = Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(11),
+                  decoration: BoxDecoration(
+                    color: tone.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(state.icon, color: tone, size: 25),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        state.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        progress.label,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!compact) ...[
+                  const SizedBox(width: 14),
+                  Flexible(child: badge),
+                ],
+              ],
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                identity,
+                if (compact) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: badge,
+                  ),
+                ],
+                const SizedBox(height: 20),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 16,
+                  runSpacing: 6,
+                  children: [
+                    Text(
+                      measured ? 'This stage' : state.detail,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      metric,
+                      key: const ValueKey('firmware-stage-metric'),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: tone,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                if (state.running || measured) ...[
+                  const SizedBox(height: 10),
+                  LinearProgressIndicator(
+                    value: state.running || measured ? fraction : null,
+                    color: tone,
+                    backgroundColor: tone.withValues(alpha: .12),
+                    minHeight: 8,
+                    borderRadius: BorderRadius.circular(8),
+                    semanticsLabel: 'Current firmware stage',
+                  ),
+                ],
+                if (measured) ...[
+                  const SizedBox(height: 9),
+                  Text(
+                    '${progress.done} / ${progress.total} bytes · this stage',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    state.detail,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                if (progress.error.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    progress.error,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colors.error,
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Only the current observation is presented; a byte transfer is not a flash
+/// verification, and an inactive/complete observation alone is not success.
+class _ProgressPresentation {
+  _ProgressPresentation(this.progress);
+  final FirmwareProgress progress;
+  String get phase => progress.phase.replaceAll('-', '_').replaceAll(' ', '_');
+  bool get failed =>
+      progress.error.isNotEmpty ||
+      {'failed', 'aborted', 'cancelled'}.contains(phase);
+  bool get verified => !failed && !progress.active && progress.verified;
+  bool get waiting =>
+      !failed &&
+      !verified &&
+      (!progress.active ||
+          {
+            'ready_to_reboot',
+            'rebooting',
+            'reconnecting',
+            'awaiting_application',
+            'awaiting_readback',
+            'complete',
+          }.contains(phase));
+  bool get running => progress.active && !failed && !verified;
+  bool get checking => phase.contains('verif');
+  bool get backup => phase.contains('backup');
+  bool get download => phase.contains('download') || phase == 'receiving';
+  bool get uploading => phase.contains('upload');
+  bool get programming => phase.contains('program');
+  String get status => failed
+      ? 'Update stopped'
+      : verified
+      ? 'Update verified'
+      : waiting
+      ? 'Awaiting confirmation'
+      : checking
+      ? 'Verifying'
+      : 'Live progress';
+  String get title => failed
+      ? 'Update interrupted'
+      : verified
+      ? 'Firmware ready'
+      : waiting
+      ? 'Waiting for board'
+      : checking
+      ? 'Verifying firmware'
+      : backup
+      ? 'Saving a recovery copy'
+      : download
+      ? 'Receiving firmware'
+      : uploading
+      ? 'Sending firmware'
+      : programming
+      ? 'Writing firmware'
+      : 'Preparing update';
+  IconData get icon => failed
+      ? Icons.error_outline_rounded
+      : verified
+      ? Icons.verified_outlined
+      : waiting
+      ? Icons.restart_alt_rounded
+      : checking
+      ? Icons.fact_check_outlined
+      : backup
+      ? Icons.save_alt_rounded
+      : download
+      ? Icons.download_rounded
+      : uploading
+      ? Icons.upload_rounded
+      : programming
+      ? Icons.system_update_alt_rounded
+      : Icons.memory_rounded;
+  String get detail => failed
+      ? 'Review the reported error before retrying.'
+      : verified
+      ? 'Board verification received.'
+      : waiting
+      ? 'Waiting for the board to confirm its running firmware.'
+      : checking
+      ? 'Checking stage integrity.'
+      : backup
+      ? 'Recovery data · current stage only'
+      : progress.fraction == 1
+      ? 'Transfer finished; board verification pending.'
+      : download || uploading || programming
+      ? 'Transferred bytes · current stage only'
+      : 'Waiting for the next board progress event.';
 }

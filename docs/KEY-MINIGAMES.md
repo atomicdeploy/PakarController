@@ -127,6 +127,45 @@ TM1637 shows Ready, pause/result or MMSS countdown with warning/urgent blink.
 Update progress retains priority. Shared effects provide stimulus, mismatch and
 finite success rainbow; color-associated notes are finite and consumed once.
 
+### Color Pattern pacing and matching diagnostics (2026-10-29)
+
+Color Pattern now reveals each enabled box in at most 500 ms. Fresh settings
+default to 500 ms; an older saved `intro_ms` of 1000 or more remains stored
+unchanged, but its effective reveal interval is capped at 500 ms. The final
+color-pattern pause is also capped at 500 ms. Reveal deadlines are absolute:
+after a delayed service tick the engine skips expired steps and plays only the
+current color's note, rather than extending every box or replaying old notes.
+Matching Pairs retains its separately configured reveal and memorization times.
+
+The default seven-color palette is Red, Green, Blue, Yellow, Magenta, Orange
+and White. Larger palettes add Cyan and Pink. The prior default contained Blue,
+Cyan and blue-heavy Violet, which could appear too similar on the fitted LEDs.
+Palette notes retain their index association; persisted instance settings,
+enabled boxes, pixel corrections and normal game-state colors are not rewritten.
+
+Matching is authoritative per enabled box: its player palette value must equal
+its target palette value. Brightness, blinking, RGB channel order and downstream
+pixel corrections do not decide success. A `matching_mask` of 62 with an enabled
+mask of 63 means boxes 2–6 match while box 1 still differs; it does not mean the
+engine is waiting for a disabled box. Tests have not reproduced an independent
+matching-algorithm defect. They exercise every nonempty nine-box mask, palette
+sizes 2–9, duplicate Down/release, sparse layouts and the 5/6 incident shape.
+This is not an independent verification of the user's physical six-box result.
+
+For Color Pattern, `status.minigame` additionally reports `intro_step_ms` and a
+`color_match` array containing only participating boxes:
+
+```json
+{"key":1,"matched":false,"player_palette":3,"target_palette":1,"player_rgb":255,"target_rgb":16711680,"player_color":"blue","target_color":"red","player_hex":"#0000FF","target_hex":"#FF0000"}
+```
+
+Palette positions and box IDs are one-based. RGB/hex/name values describe the
+game's intended colors before dimming, physical group mapping and corrections;
+they are not sensor measurements. A wrong wiring/group/correction map can make
+different intended values appear alike, so these fields support diagnosis
+without silently accepting a wrong answer or clearing the user's rules.
+Actual 6/6 button/LED acceptance remains pending a fresh human test after update.
+
 ## Builds and acceptance
 
 `tools/build-firmware.ps1 -Target esp32s3 -GameMode first-wins` includes all modes.
@@ -231,10 +270,38 @@ candidate includes both LED backends, the previously acknowledged ISP
 capability, Ethernet, 16 MB flash/OPI PSRAM and disabled BLE. The saved board
 configuration is not intentionally rewritten.
 
-At this checkpoint the independent post-reboot ESP hash/boot readback has not
-returned, and AVR deployment has not started. ASUS and Android Wi-Fi
-associations are being refreshed without blindly repeating the upload.
+The independent post-reboot full ESP readback subsequently matched the candidate
+SHA-256 above; boot changed to `8186eee9741c5d41a34946f19b3b8a49`.
+ASUS and Android Wi-Fi associations were refreshed without repeating the upload.
+AVR deployment has not yet completed in this continuation.
 The AVR candidate with Urboot is ready at SHA-256
 `fa3d01739769b43401be7d11b23b8d3546fde120a0394d1a669bac390ec14782`.
 Do not claim paired deployment, wireless ADB stability, peripheral effects,
 sound or safe USB removal from this intermediate receipt.
+
+### Feedback regression and tablet maintenance candidate (2026-10-29)
+
+The updated tablet APK is installed and its Android `base.apk` hash matches
+`ed7dba272ad67409479562db98897e5e4752810087ff706ee42fe48f7330c65e`.
+The professional firmware progress card distinguishes sending from programming,
+uses measured stage-local byte counts, and treats verification/reconnection as
+indeterminate unless the board supplies real progress. Accessibility/layout,
+delivery/lifecycle and backup-controller suites passed (47 tests total), with
+clean analyzer results. Urboot backup exports now bind the exact completed
+request and boot rather than substituting unrelated ISP files.
+
+The consolidated ESP candidate includes the Press-to-win audio-owner fix and
+Color Pattern palette/pacing changes below: 2,424,000 bytes, SHA-256
+`b5252660a9487bb209987bc0a9afa45d70c16b76c57f2ab3a92ed3ed63405206`,
+MD5 `5e4fe168943a03f5501b75705f6db705`. Both GPIO/RMT drivers, Ethernet and the
+existing verified ISP profile remain included; BLE stays disabled. Core,
+mode-exclusion, settings-persistence and seven production-block integration
+tests passed. This is a candidate, not a completed deployment or audible proof.
+
+Wireless ADB at `192.168.4.2:5555` returned the actual SM-X906B, installed the APK
+and verified its hash. USB was absent at that observation; sustained wireless
+stability is not inferred. The tablet left the AVR maintenance dialog and
+returned to the Game page before a maintenance job was created (`job_id=0`).
+The game also changed through Ready/Success. No uncertain write was repeated;
+coordination with the person using the tablet is pending before resuming its
+firmware-uploader interaction. The attached phone was left untouched.

@@ -11306,3 +11306,59 @@ The tablet selected the candidate binary through SAF, confirmed it and performed
 the ESP upload; captured byte progress and observed board OTA job completion
 are not independent post-boot hash or physical acceptance. See KEY-MINIGAMES.md
 for precise hashes and the still-open paired-deployment gates.
+
+### Maintenance progress and exact backup ownership (2026-10-29)
+
+Reused the reviewed PCController hostui/update_progress.go stage-local measured
+versus unknown progress rule, retaining the imported themed Flutter controls.
+The first accessibility run correctly rejected a prose-valued progress semantic;
+the control now uses Flutter's numeric percentage semantics. Five responsive,
+RTL, theme and large-text design tests, eight delivery tests and four upgrade
+lifecycle tests pass. The new Urboot export fixtures initially omitted mandatory
+board identity; corrected fixtures rather than weakening the production identity
+guard. All 30 firmware-controller tests and analyzer pass. Exact backup downloads
+are boot/job/request fenced before and after transfer, including exact byte
+length, and never fall back from Urboot to unrelated ISP backups.
+
+The S3 build's PU route guard detected stale application target bindings after
+the narrow audio-owner edit. Reread the actual donor registrations and current
+five mapped application regions; repair only target hashes and line references,
+not donor identities or route dispositions. The 50-route guard and canonical
+S3 build pass. Evidence hashes retain the separation between origin source rows
+and target/proof references; comparison generation and Check pass. No failed
+gate was disabled, and no failed fixture justified a production API downgrade.
+
+## Color Pattern pacing and visible matching (2026-10-29)
+
+Consulted games-streaming and the exact Puzzles.ino donor-audit route. The
+complete unchanged Puzzles sketch and its WS2811 header/implementation were
+reread, alongside the actual PCController TonePlayer deadline owner and
+Pealayer SoundEffectFields. Reuse bounded phase-local progression, finite
+color-note ownership and the tone player's previous-deadline anchoring rather
+than donor blocking welcome waits or an additional presentation engine.
+
+The current Color Pattern intro used one saved 1000 ms interval per box and
+reanchored each reveal to the current service tick, accumulating stalls. Cap
+its effective interval/final pause at 500 ms, default new color-puzzle settings
+to 500 ms and catch up over at most nine expired reveals without stale-note
+bursts. Matching Pairs keeps its own reveal/preview policy. No board settings
+or saved instance files are migrated by this source change.
+
+The old default palette used three blue-family hues. Replace the default seven
+with saturated Red/Green/Blue/Yellow/Magenta/Orange/White; optional extra slots
+are Cyan/Pink. Preserve palette-index note associations. Exact engine state
+matching does not use brightness or wire correction output. The observed
+mask62/progress5 with six enabled boxes identifies box1 as unmatched, not a
+disabled-box or off-by-one success condition. No independent matching algorithm
+defect has been reproduced; neither the old snapshot nor new source tests can
+prove what all physical groups displayed.
+
+Add nonmutating per-participating-box intended palette positions, RGB, hex,
+semantic color names and matched status to the existing Color Pattern snapshot,
+plus its effective intro interval. Core regressions cover all511 nonempty masks
+and all palette sizes2–9, repeated Down/release, sparse layouts, 5/6-to-6/6
+completion, long-hold reversal, normal-brightness palette distinction and
+reveal cap/stall/rollover behavior. Bind these reviewed bytes and proofs in the
+same Puzzles ledger row before canonical verification. No board command,
+firmware build, new round or optical acceptance was performed by this subtask;
+fresh six-box human feedback remains required after approved deployment.
