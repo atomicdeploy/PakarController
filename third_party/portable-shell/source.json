@@ -107,46 +107,46 @@
     },
     {
       "path": "include/portable_terminal.h",
-      "revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
+      "revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "sha256": "356dea61f6096e06a6328691d8f919c2dc582086f2234714cf5efbb4ffef79e1",
       "bytes": 14369,
       "snapshot": "../../firmware/esp/src/portable-shell/portable_terminal.h"
     },
     {
       "path": "include/portable_editor.h",
-      "revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
+      "revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "sha256": "1187b7714998afaa5a045f333c50ce3081de846c6c9b0d9b41b8186723bb48ea",
       "bytes": 17531,
       "snapshot": "../../firmware/esp/src/portable-shell/portable_editor.h"
     },
     {
       "path": "include/portable_shell_editor.hpp",
-      "revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
+      "revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "sha256": "9bf1a3b590217b8b1cc6562fbd681f9a71af9d761f057ac10585f597d3e11ff5",
       "bytes": 5741,
       "snapshot": "../../firmware/esp/src/portable-shell/portable_shell_editor.hpp"
     },
     {
       "path": "include/portable_device_view.hpp",
-      "revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
-      "sha256": "f6affb6e7da8d2d0a3f80d695bf4f0f4e8683c91a21a99744e1bb1dd6975dc00",
-      "bytes": 41892,
+      "revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
+      "sha256": "38ccd92c729abb086088e2a76e0a3e35130b8ed5e73c22968af56dd1e044fdf1",
+      "bytes": 41937,
       "snapshot": "../../firmware/esp/src/portable-shell/portable_device_view.hpp"
     },
     {
       "path": "include/portable_style.h",
-      "revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
+      "revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "sha256": "d86b758b8d8509667ee5e8a49b9ab8319b8961b32923f89b89ea3d23e3db0e11",
       "bytes": 4054,
       "snapshot": "../../firmware/esp/src/portable-shell/portable_style.h"
     },
     {
       "path": "include/portable_device_table.hpp",
-      "revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf",
+      "revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "sha256": "784b6315a407af641060db4f01e4caf92148bf149389b79d5b5e397946c525a2",
       "bytes": 23512,
       "snapshot": "../../firmware/esp/src/portable-shell/portable_device_table.hpp"
     }
   ],
-  "component_revision": "f1804eb3261405d702e2ad276f462ba9fd1c13bf"
+  "component_revision": "e90ffc004b39912e21a1799a75061ac61f22c74f"
 }

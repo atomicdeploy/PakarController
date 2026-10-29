@@ -2,7 +2,7 @@
 
 ## Canonical components (current integration)
 
-PortableShell commit `f1804eb3261405d702e2ad276f462ba9fd1c13bf` now owns the
+PortableShell commit `e90ffc004b39912e21a1799a75061ac61f22c74f` now owns the
 shared C Telnet/terminal primitives, C event editor, thin C++ callback facade
 and optional snapshot/action device view. The exact six component files are compiled
 from `firmware/esp/src/portable-shell/`; `source.json` binds their upstream paths,
