@@ -117,7 +117,13 @@ assert(networkServicesGuarded(main),'Offline builds exclude BLE and peer-relay s
 const loopOnly=main.slice(main.indexOf('void loop() {'));
 assert(!networkServicesGuarded(loopOnly.replace('  serviceBle();','')),'Missing service remains a failure');
 assert(!networkServicesGuarded(loopOnly.replace('  serviceBle();','')+'\nserviceBle();'),'A service outside the guard remains a failure');
-assert(!networkServicesGuarded(loopOnly.replace('#if PAKAR_NETWORK_ENABLED\n  servicePeerRelay();','#if !PAKAR_NETWORK_ENABLED\n  servicePeerRelay();')),'Negated nested guard must fail');
+const negatedNetwork=loopOnly.replace(
+  /(#if )PAKAR_NETWORK_ENABLED(\r?\n(?:  servicePeerNetworkCommission\(\);\r?\n)?  servicePeerRelay\(\);)/,
+  '$1!PAKAR_NETWORK_ENABLED$2');
+assert.notEqual(negatedNetwork,loopOnly,'Negative fixture must actually change the network guard');
+assert(!networkServicesGuarded(negatedNetwork),'Negated nested guard must fail');
+assert(!networkServicesGuarded(negatedNetwork.replaceAll('\r\n','\n')),'LF negative fixture must fail');
+assert(!networkServicesGuarded(negatedNetwork.replaceAll('\r\n','\n').replaceAll('\n','\r\n')),'CRLF negative fixture must fail');
 assert(urboot.includes('serviceBleReadOnly();'));
 assert(wire.includes('packetLimit(mtu)-kHeader'));
 assert(wire.includes('static_cast<uint32_t>(now-started_)>=60000U'));

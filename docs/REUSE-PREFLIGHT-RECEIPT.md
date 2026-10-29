@@ -11754,3 +11754,122 @@ redacted settings, POSTs once, always requests restoration, and retains bounded
 receipts across client loss/reboot. A pending rebooted job is not resumed.
 Commission/network/relay fixtures pass; root integration/SDK and actual AP/LAN
 execution are separate gates. See PEER-NETWORK-COMMISSIONING.md.
+
+## Rich PortableShell device workspace (2026-10-29)
+
+Consulted device-shell, terminal-ui, portable-shell inventory and the exact
+PU850-ESP Shell/Telnet/Commands sources before replacing the limited renderer.
+The canonical component pin is1235d4965ab9944be276807e31d6ef0298b9f280.
+Six current files plus17 preserved historical records pass the23-entry source
+lock. The original renderer/footer editor remain upstream behind explicit flags;
+CPU/MCU identity never disables the rich table, themes, widgets or dialogs.
+
+The actual ShellTuiBinding now supplies typed/category metadata and routes edits
+through the same validators and hardware owners. Nine pages have responsive
+columns, red rounded borders, inline editing, optional F2 dialogs, typed controls,
+secret masking, stale-edit rejection and changed-row repaint. Session terminal
+settings expose violet/red/lumen/onedark and true color. A complete-frame budget
+and output-queue deferral prevent a larger table from faulting the old8KB queue.
+History reporting uses its configured capacity instead of an unrelated literal.
+
+The native shell wrapper, actual binding fixture, descriptor/PROGMEM profiles,
+metadata gate,23-source lock and TCP/UDP loopbacks pass. The binding fixture
+injects keys through actual application code for all9 pages, inline brightness,
+toggle/theme dispatch, dialog cancel, masking and backpressure; its observations
+and hardware owners are test doubles. Actual emitted ANSI bytes were replayed by
+a C terminal utility and rendered with Agave. Inspection found and fixed Unicode
+hint sanitization, palette-reset background patches, dialog line erasure and
+unnecessary meters on generic numeric fields in the canonical upstream code.
+
+Recovery evidence: an initial donor lookup used PU850 instead of the indexed
+PU850-ESP name; inspected the inventory and consulted the correct records.
+Comparison generation found Timer/LooseTestCodes.txt still bound to the former
+4096-byte frame assertion. Read that entire donor and current test, then changed
+only its proof anchor to the explicit complete-frame budget. Arduino sketch
+staging omitted the new .inc member file; inspected the failing compiler path,
+renamed the canonical member include to .hpp and repinned both consumers.
+Fresh upstream CI passes native Windows/macOS/Linux with libc on/off, ARM32,
+AVR components and explicit small/ASCII/legacy profiles. Consumer CI passes
+Uno (view explicitly off), Mega (rich view on), STM32 and AVR simulation.
+
+The first local guarded S3 SDK build passed (2396075 program bytes,140156 static
+RAM bytes); source was still being refined during that iteration, so it is not
+the final candidate attestation. Final frozen-source build and GitHub integration
+are recorded separately. No board flash/reset, output diagnostic, production
+session or saved setting was changed. The production hold remains active.
+Event-editor Unicode/grapheme input, donor AP configuration/restore semantics and
+full application parity remain open in the existing ledger/issue29. A richer
+source renderer and fixture pictures do not establish universal superiority or
+physical acceptance.
+
+## Contextual matrix correction after user visual review (2026-10-29)
+
+The first rich-table captures still repeated categories and overlapping footer
+hints. User review also correctly questioned cell colors and the rectangular
+layout. Reread PCController Tools/Controller/internal/tui/table.go completely at
+b0111ae0 (SHA256 ecd399e2bf7718f3eb7b62e49f9dd884c0fb179e3d907bd15b238c01d31501e3),
+plus actual LedGrid state/color accessors, StateAppearance, Protocol CellState,
+TableCellMapping and web/modules/table-layout.js. The existing cell renderer
+incorrectly collapsed state3 (won) into gray and ignored configured appearance.
+The canonical view now takes provider RGB/state labels and the paired staggered
+geometry; the application supplies its real StateAppearance colors. Selection
+is a separate marker, not a replacement state color. Configured colors are not
+physical light/driver confirmation. Geometry and arrow neighbors use the same
+20-column paired offset mapping as the Web table, not a guessed wiring order.
+
+Adapt PCController's logical-row/section-line separation into the shared bounded
+view, with grouped headers and optional explicit category columns. Dedicated
+matrix mode has its own viewport and contextual actions. Focus keeps cell/game
+shortcuts out of settings; inline editing hides navigation hints; modal editing
+owns its only Apply/Cancel hint. On/Off glyphs, friendly choices, brightness
+percentages/ranges and units improve values without replacing raw owner keys.
+Unicode dimensions use U+00D7; ASCII remains an explicit alternative.
+
+Native tests cover configured lost/won colors, all80 binding RGB entries,
+staggered neighbor IDs, narrow/ASCII rendering, focus refusal and displayed
+owner rejection. Captures come from the real binding with deterministic doubles;
+all9 pages and inline/dialog/Lumen/One Dark frames are re-rendered with Agave.
+The same production hold applies. PR38 was returned to draft during correction;
+its earlier green jobs do not certify this changed source. Complete final checks
+and separately authorized hardware acceptance remain required.
+
+The GitHub integration returned403 for comment/PR creation. Its read operations
+remain usable; authenticated repository CLI writes were used, with no policy or
+production approval bypass. Compiler errors from a local duplicate layout-counter
+name and misleading indentation were fixed in the canonical renderer before
+repinning; changed native assertions now check grouped/contextual behavior rather
+than preserve the rejected repeated labels.
+
+Final review removed the narrow-tab header's second navigation hint and changed
+the shell's terminal-size response to Unicode multiplication with an ASCII
+fallback. Canonical component pin f1804eb3261405d702e2ad276f462ba9fd1c13bf.
+The full native shell wrapper passes after that pin. The preceding frozen4f6d1bc
+SDK build passed at2400275 linked program bytes and140156 static RAM bytes;
+its application BIN was2400416 bytes, SHA256
+d34dafd380922c7e7f29a45c3d88761ac4feac0a10e521112a85739e52241d5a.
+The final typography-only follow-up receives a separate build attestation on
+PR38/issue29. Static RAM is not a runtime peak measurement. All historical donor
+records and omissions remain; no production action was taken.
+
+## Consolidated PR37/38/39 integration (2026-10-29)
+
+Reconsulted github-coordination and the exact Pealayer review-audit donor, read
+all refreshed PR conversations/reviews/threads and retained the complete reviewed
+source diffs. PR39 and PR38 merged normally after their exact-head Build and
+CodeQL success. No protection bypass or completed Copilot review is claimed.
+
+The combined shell retains both command-only SSH prompt suppression and the
+PortableShell theme, and the actual workspace fixture now models command-only
+and closing fields used by the retained Exit branch. Both receipt appendices,
+all source revisions/omissions and added mappings are retained. Resolve only
+reference-hash conflicts for the reviewed combined shell/binding; regenerate the
+existing Markdown/CSV projections, not a replacement ledger.
+
+PR37 Build40827209405 failed because the BLE negative fixture's exact replacement
+stopped matching when commissioning service was inserted before the relay call.
+The production network guard was still present. The negative fixture now matches
+that optional service, asserts that mutation actually occurs, and verifies LF
+and CRLF cases. No guard is removed and no check is suppressed. The existing
+bluetooth/source wiring was inspected; this is fixture repair, not BLE radio
+acceptance. Combined shell and audit fixtures pass; final SSH/quality/SDK/client
+CI remains a separate exact-head gate. No boards or production apps changed.

@@ -56,14 +56,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -91,14 +91,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -131,14 +131,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -166,19 +166,19 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df"
         },
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -206,7 +206,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         },
         {
           "path": "firmware/esp/src/PortableShellCore.h",
@@ -218,7 +218,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [],
@@ -240,19 +240,19 @@
         {
           "path": "tools/test-shell.ps1",
           "anchor": "foreach($taskName",
-          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075"
+          "sha256": "51673e6f5ae86036a7a439214e3e456a0b8dab6f4dc17485e1244ca862174967"
         },
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -280,14 +280,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -315,14 +315,14 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -357,7 +357,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df"
         },
         {
           "path": "firmware/esp/src/TelnetShell.h",
@@ -369,7 +369,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -403,7 +403,7 @@
         {
           "path": "third_party/portable-shell/README.md",
           "anchor": "# Portable Shell source integration",
-          "sha256": "8c3a47f742ebe0bb28b60d4ffb68d030c479cb65ddf8df2dd300ed0721a71311"
+          "sha256": "dbdd9653cb23ba484160e050ed8c3c409d314b128ec0398620b391334c7bf24c"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -415,7 +415,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         },
         {
           "path": "tests/telnet_client_test.mjs",
@@ -449,7 +449,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df"
         },
         {
           "path": "tools/telnet-shell.mjs",
@@ -461,7 +461,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         },
         {
           "path": "tests/telnet_client_test.mjs",
@@ -504,7 +504,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df"
         }
       ],
       "proof": [
@@ -516,7 +516,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -546,7 +546,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -563,7 +563,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         },
         {
           "path": "tests/telnet_client_test.mjs",
@@ -606,12 +606,12 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df"
         },
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
           "anchor": "class DeviceView",
-          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694"
+          "sha256": "38ccd92c729abb086088e2a76e0a3e35130b8ed5e73c22968af56dd1e044fdf1"
         },
         {
           "path": "firmware/esp/src/ShellLabels.h",
@@ -633,7 +633,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         },
         {
           "path": "tests/shell_tone_dispatch_test.mjs",
@@ -668,7 +668,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df"
         },
         {
           "path": "firmware/esp/src/ShellWire.h",
@@ -685,7 +685,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         },
         {
           "path": "tests/telnet_client_test.mjs",
@@ -728,7 +728,7 @@
         {
           "path": "firmware/esp/src/ShellService.h",
           "anchor": "void executeDeviceShell",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27"
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df"
         }
       ],
       "proof": [
@@ -740,7 +740,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -774,7 +774,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "proof": [
@@ -786,7 +786,7 @@
         {
           "path": "tests/portable_shell_source_test.mjs",
           "anchor": "const source=",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e"
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773"
         }
       ],
       "omissions": [
@@ -2954,15 +2954,15 @@
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
+          "sha256": "38ccd92c729abb086088e2a76e0a3e35130b8ed5e73c22968af56dd1e044fdf1",
           "anchor": "class DeviceView"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
-          "anchor": "assert(output.size()<=4096)"
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
+          "anchor": "assert(output.size()<=PS_DEVICE_VIEW_FRAME_BYTES)"
         }
       ],
       "omissions": [
@@ -6427,7 +6427,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df",
           "anchor": "void serviceShellRemoteQuery()"
         },
         {
@@ -15969,7 +15969,7 @@
         {
           "path": "tests/ble_firmware_test.mjs",
           "anchor": "BLE firmware integration source guards",
-          "sha256": "8359be8eb6c8d752a3db69ccba881a548428fd26b0ba2a1e189c2ec8058997bc"
+          "sha256": "7bfd1e524abb6303f16bc0d9bf75a80ba892876d9c72548575954de34fd8a4f0"
         },
         {
           "path": "tests/ble_storage_test.cpp",
@@ -16343,10 +16343,16 @@
           "path": "desktop/src/terminal_ui.rs",
           "sha256": "762c7ee8137a21fdbd83a40bb776238a6f75b943da35d01073bbff6b2dd64379",
           "anchor": "fn window(total: usize, visible: usize, cursor: usize)"
+        },
+        {
+          "path": "firmware/esp/src/portable-shell/portable_device_table.hpp",
+          "sha256": "784b6315a407af641060db4f01e4caf92148bf149389b79d5b5e397946c525a2",
+          "anchor": "// PCController's logical-row/section-line separation, without heap storage."
         }
       ],
       "preserved": [
-        "Actual tableWindow cursor-centred viewport arithmetic is adapted and exhaustively tested across total/visible/cursor cases. Reuses native logical selection/navigation and Unicode column clipping."
+        "Actual tableWindow cursor-centred viewport arithmetic is adapted and exhaustively tested across total/visible/cursor cases. Reuses native logical selection/navigation and Unicode column clipping.",
+        "2026-10-29: also adapt logical control-row versus section-line mapping into the canonical shared event view. Contiguous categories render once as section headings, selection counts only settings, and viewport follows the selected logical row. This closes the grouping portion of the historical omission below; mouse mapping, complete tone semantics and richer specialized editors remain open."
       ],
       "omissions": [
         {
@@ -16368,6 +16374,11 @@
           "path": "tests/terminal_ui_test.mjs",
           "sha256": "3916ae657e18de899b278509cd0f8fad53886579c9af53deebc6e47cb5ff9b26",
           "anchor": "TUI must reject redirected surfaces before contacting a device"
+        },
+        {
+          "path": "tests/shell_workspace_test.cpp",
+          "sha256": "4dc5ca08b38543de404e96a6a94cfcbac3483c9be89a6f1a0e877dac4cafeb84",
+          "anchor": "s.output.find(\"Lighting\")==s.output.rfind(\"Lighting\")"
         }
       ],
       "improvement": "Bounded checkpoint only; no whole-repository superiority or physical acceptance claim."
@@ -16793,24 +16804,24 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController."
+        "Actual exhaustive review-thread/review-summary/standalone-comment audit procedure adapted into read-only paginated GitHub collection, hash-bound manual scope decisions, unresolved/outdated preservation and quota-versus-completed-review distinction. Used on every state of Pakar, Pealayer and PCController. Targeted cold-cache refresh now retains other repositories from the committed inventory, preserving all 778 PCController/Pealayer records alongside 38 refreshed Pakar records without promoting their review status."
       ],
       "targets": [
         {
           "path": "tools/audit-github-conversations.mjs",
-          "sha256": "d2b9dff0e72c8fa58a5982cde925e550bd159c22d207ac267f5991c68d57656a",
+          "sha256": "0bd597414af4e28668d2da96e250a27a99550fff9b86e5d58136b7de583a1dcf",
           "anchor": "export function collect"
         },
         {
           "path": "docs/GITHUB-COORDINATION.md",
-          "sha256": "bfe6cae355c53bccbd128f6afb3235b8ed132d5b6791897ffd15c504a79ecf47",
+          "sha256": "64a078407d296db907e8645e07dc25a6392168cb1cb2e39cc8bb18a9bce01f0d",
           "anchor": "# Conversation-aware integration"
         }
       ],
       "proof": [
         {
           "path": "tests/github_conversation_audit_test.mjs",
-          "sha256": "d71ee1e531770b756ab7f5269f9b6cb6d1bf75f7d17cd6c5e71e1529712ae7bd",
+          "sha256": "dc841c32e7f17b65ae9f16222dde27d0aa7d7d96565654e383978d4919499486",
           "anchor": "Paginated GitHub audit"
         }
       ],
@@ -21085,7 +21096,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
+          "sha256": "fb551fb47f1c32d0b57c1245b2cc701af6265bf927b159bb556983dacd48d1e9",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -21182,12 +21193,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Unchanged Enter is not a write."
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075",
+          "sha256": "51673e6f5ae86036a7a439214e3e456a0b8dab6f4dc17485e1244ca862174967",
           "anchor": "-Concern device-shell -Gate"
         },
         {
@@ -21328,7 +21339,7 @@
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
+          "sha256": "fb551fb47f1c32d0b57c1245b2cc701af6265bf927b159bb556983dacd48d1e9",
           "anchor": "struct ShellTuiSnapshot"
         },
         {
@@ -21365,12 +21376,12 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Unchanged Enter is not a write."
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075",
+          "sha256": "51673e6f5ae86036a7a439214e3e456a0b8dab6f4dc17485e1244ca862174967",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -21437,7 +21448,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21479,7 +21490,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075",
+          "sha256": "51673e6f5ae86036a7a439214e3e456a0b8dab6f4dc17485e1244ca862174967",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -21534,7 +21545,7 @@
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df",
           "anchor": "void serviceDeviceShells()"
         },
         {
@@ -21576,7 +21587,7 @@
         },
         {
           "path": "tools/test-shell.ps1",
-          "sha256": "9fb4a11ea30f14cbf306683cdbf1fdfe6042b5a3ddcc13f4a87cfb9f69b0f075",
+          "sha256": "51673e6f5ae86036a7a439214e3e456a0b8dab6f4dc17485e1244ca862174967",
           "anchor": "-Concern device-shell -Gate"
         }
       ],
@@ -21627,12 +21638,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
+          "sha256": "fb551fb47f1c32d0b57c1245b2cc701af6265bf927b159bb556983dacd48d1e9",
           "anchor": "shellGet(property)"
         },
         {
@@ -21669,7 +21680,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Readonly never emits Set."
         },
         {
@@ -21745,12 +21756,12 @@
       "targets": [
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df",
           "anchor": "bool shellSet("
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
+          "sha256": "fb551fb47f1c32d0b57c1245b2cc701af6265bf927b159bb556983dacd48d1e9",
           "anchor": "shellGet(property)"
         },
         {
@@ -21777,7 +21788,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Readonly never emits Set."
         },
         {
@@ -21834,29 +21845,29 @@
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
+          "sha256": "38ccd92c729abb086088e2a76e0a3e35130b8ed5e73c22968af56dd1e044fdf1",
           "anchor": "class DeviceView"
         },
         {
           "path": "firmware/esp/src/ShellTuiBinding.h",
-          "sha256": "f8f12193c2b76891076f7b8e097558f8938c7009cab6e97ca786b9bdbcac6222",
+          "sha256": "fb551fb47f1c32d0b57c1245b2cc701af6265bf927b159bb556983dacd48d1e9",
           "anchor": "struct ShellTuiSnapshot"
         }
       ],
       "proof": [
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "private\\trefresh"
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "Async observation cannot repaint draft."
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "rows[0].editable=false"
         }
       ],
@@ -21897,17 +21908,17 @@
         },
         {
           "path": "firmware/esp/src/portable-shell/portable_terminal.h",
-          "sha256": "4b95ce09b9a7bc4c2e5d7e3076d9a5257bed84e2ff2d63d5309841f9bc4d6ee9",
+          "sha256": "356dea61f6096e06a6328691d8f919c2dc582086f2234714cf5efbb4ffef79e1",
           "anchor": "static inline size_t ps_terminal_text"
         },
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
+          "sha256": "38ccd92c729abb086088e2a76e0a3e35130b8ed5e73c22968af56dd1e044fdf1",
           "anchor": "class DeviceView"
         },
         {
           "path": "firmware/esp/src/ShellService.h",
-          "sha256": "305807d2c5f6109ee1c493a5acafa9b72a1687ad7708ea4bac8bff32d9d32f27",
+          "sha256": "988751a727abecc9737d9f7b9b3e8d14c8031deb761a83133632d404da2215df",
           "anchor": "void closeDeviceShells()"
         },
         {
@@ -21929,7 +21940,7 @@
         },
         {
           "path": "tests/shell_tui_test.cpp",
-          "sha256": "7abbd0277e2a76e7804ab579c418321da3ab0dbd400faaec401d2c5c84d63f2a",
+          "sha256": "650a377abfcef9bccf989b501d452b4d9a175f8970fa3fcc52f0e6d227bb1d2d",
           "anchor": "never-render-this"
         },
         {
@@ -26256,25 +26267,30 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_terminal.h",
-      "sha256": "4b95ce09b9a7bc4c2e5d7e3076d9a5257bed84e2ff2d63d5309841f9bc4d6ee9",
-      "source_revision": "10b7d29469690822d8ee687a6d27a36977e9c194",
+      "sha256": "356dea61f6096e06a6328691d8f919c2dc582086f2234714cf5efbb4ffef79e1",
+      "source_revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Exact canonical header at 10b7d29469690822d8ee687a6d27a36977e9c194. Ardush-driven configurable prompt/suggestion storage, optional software decimal division and Unicode navigation footer are retained. Existing default capacities, hidden input, Telnet framing, secret drafts, action validation and application-owned routing remain unchanged."
+        "Complete canonical component at e90ffc004b39912e21a1799a75061ac61f22c74f. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_terminal.h",
-          "sha256": "4b95ce09b9a7bc4c2e5d7e3076d9a5257bed84e2ff2d63d5309841f9bc4d6ee9",
+          "sha256": "356dea61f6096e06a6328691d8f919c2dc582086f2234714cf5efbb4ffef79e1",
           "anchor": "static inline int ps_telnet_feed"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e",
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773",
           "anchor": "Consumer must use canonical components"
+        },
+        {
+          "path": "tests/shell_workspace_test.cpp",
+          "sha256": "4dc5ca08b38543de404e96a6a94cfcbac3483c9be89a6f1a0e877dac4cafeb84",
+          "anchor": "Actual workspace binding"
         }
       ],
       "omissions": [],
@@ -26285,25 +26301,30 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_editor.h",
-      "sha256": "cb0067ca358c9c86cd64727681186014cff0ce18b17edcfb48521ce75a0f9a0b",
-      "source_revision": "10b7d29469690822d8ee687a6d27a36977e9c194",
+      "sha256": "1187b7714998afaa5a045f333c50ce3081de846c6c9b0d9b41b8186723bb48ea",
+      "source_revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Exact canonical header at 10b7d29469690822d8ee687a6d27a36977e9c194. Ardush-driven configurable prompt/suggestion storage, optional software decimal division and Unicode navigation footer are retained. Existing default capacities, hidden input, Telnet framing, secret drafts, action validation and application-owned routing remain unchanged."
+        "Complete canonical component at e90ffc004b39912e21a1799a75061ac61f22c74f. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_editor.h",
-          "sha256": "cb0067ca358c9c86cd64727681186014cff0ce18b17edcfb48521ce75a0f9a0b",
+          "sha256": "1187b7714998afaa5a045f333c50ce3081de846c6c9b0d9b41b8186723bb48ea",
           "anchor": "static inline int ps_editor_feed"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e",
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773",
           "anchor": "Consumer must use canonical components"
+        },
+        {
+          "path": "tests/shell_workspace_test.cpp",
+          "sha256": "4dc5ca08b38543de404e96a6a94cfcbac3483c9be89a6f1a0e877dac4cafeb84",
+          "anchor": "Actual workspace binding"
         }
       ],
       "omissions": [],
@@ -26314,25 +26335,30 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_shell_editor.hpp",
-      "sha256": "2596f4e070331aeef24c444c7234767f218f9e8ee0fd966b30efa4c0613c4ee5",
-      "source_revision": "10b7d29469690822d8ee687a6d27a36977e9c194",
+      "sha256": "9bf1a3b590217b8b1cc6562fbd681f9a71af9d761f057ac10585f597d3e11ff5",
+      "source_revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Exact canonical header at 10b7d29469690822d8ee687a6d27a36977e9c194. Ardush-driven configurable prompt/suggestion storage, optional software decimal division and Unicode navigation footer are retained. Existing default capacities, hidden input, Telnet framing, secret drafts, action validation and application-owned routing remain unchanged."
+        "Complete canonical component at e90ffc004b39912e21a1799a75061ac61f22c74f. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_shell_editor.hpp",
-          "sha256": "2596f4e070331aeef24c444c7234767f218f9e8ee0fd966b30efa4c0613c4ee5",
+          "sha256": "9bf1a3b590217b8b1cc6562fbd681f9a71af9d761f057ac10585f597d3e11ff5",
           "anchor": "class LineEditor"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e",
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773",
           "anchor": "Consumer must use canonical components"
+        },
+        {
+          "path": "tests/shell_workspace_test.cpp",
+          "sha256": "4dc5ca08b38543de404e96a6a94cfcbac3483c9be89a6f1a0e877dac4cafeb84",
+          "anchor": "Actual workspace binding"
         }
       ],
       "omissions": [],
@@ -26343,25 +26369,98 @@
     {
       "origin": "portable-shell",
       "path": "include/portable_device_view.hpp",
-      "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
-      "source_revision": "10b7d29469690822d8ee687a6d27a36977e9c194",
+      "sha256": "38ccd92c729abb086088e2a76e0a3e35130b8ed5e73c22968af56dd1e044fdf1",
+      "source_revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
       "source_read": "complete",
       "verdict": "equivalent-file",
       "preserved": [
-        "Exact canonical header at 10b7d29469690822d8ee687a6d27a36977e9c194. Ardush-driven configurable prompt/suggestion storage, optional software decimal division and Unicode navigation footer are retained. Existing default capacities, hidden input, Telnet framing, secret drafts, action validation and application-owned routing remain unchanged."
+        "Complete canonical component at e90ffc004b39912e21a1799a75061ac61f22c74f. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
       ],
       "targets": [
         {
           "path": "firmware/esp/src/portable-shell/portable_device_view.hpp",
-          "sha256": "ca563844c5e0954eb5e1f72c7b9d26bbbfd71deff65a51a4daf0b57df2170694",
+          "sha256": "38ccd92c729abb086088e2a76e0a3e35130b8ed5e73c22968af56dd1e044fdf1",
           "anchor": "class DeviceView"
         }
       ],
       "proof": [
         {
           "path": "tests/portable_shell_source_test.mjs",
-          "sha256": "e3295c0cf3817797256bb4f76369afcb1a208e04c63764637845784f1d034d7e",
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773",
           "anchor": "Consumer must use canonical components"
+        },
+        {
+          "path": "tests/shell_workspace_test.cpp",
+          "sha256": "4dc5ca08b38543de404e96a6a94cfcbac3483c9be89a6f1a0e877dac4cafeb84",
+          "anchor": "Actual workspace binding"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Complete board firmware CI and separately authorized live device acceptance; no production deployment in this source integration."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "include/portable_style.h",
+      "sha256": "d86b758b8d8509667ee5e8a49b9ab8319b8961b32923f89b89ea3d23e3db0e11",
+      "source_revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Complete canonical component at e90ffc004b39912e21a1799a75061ac61f22c74f. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/portable-shell/portable_style.h",
+          "sha256": "d86b758b8d8509667ee5e8a49b9ab8319b8961b32923f89b89ea3d23e3db0e11",
+          "anchor": "ps_style_ink"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773",
+          "anchor": "Consumer must use canonical components"
+        },
+        {
+          "path": "tests/shell_workspace_test.cpp",
+          "sha256": "4dc5ca08b38543de404e96a6a94cfcbac3483c9be89a6f1a0e877dac4cafeb84",
+          "anchor": "Actual workspace binding"
+        }
+      ],
+      "omissions": [],
+      "remaining": [
+        "Complete board firmware CI and separately authorized live device acceptance; no production deployment in this source integration."
+      ]
+    },
+    {
+      "origin": "portable-shell",
+      "path": "include/portable_device_table.hpp",
+      "sha256": "784b6315a407af641060db4f01e4caf92148bf149389b79d5b5e397946c525a2",
+      "source_revision": "e90ffc004b39912e21a1799a75061ac61f22c74f",
+      "source_read": "complete",
+      "verdict": "equivalent-file",
+      "preserved": [
+        "Complete canonical component at e90ffc004b39912e21a1799a75061ac61f22c74f. Shared full palettes, rich tables, inline values and optional typed controls/dialogs. Explicit feature flags retain smaller layouts. Render inspection corrected Unicode hints, diagnostic surfaces and modal compositing."
+      ],
+      "targets": [
+        {
+          "path": "firmware/esp/src/portable-shell/portable_device_table.hpp",
+          "sha256": "784b6315a407af641060db4f01e4caf92148bf149389b79d5b5e397946c525a2",
+          "anchor": "renderTable"
+        }
+      ],
+      "proof": [
+        {
+          "path": "tests/portable_shell_source_test.mjs",
+          "sha256": "f9b52abd7672d2053463adad77078e55c4fdd0bb3102463ce8c20c3895193773",
+          "anchor": "Consumer must use canonical components"
+        },
+        {
+          "path": "tests/shell_workspace_test.cpp",
+          "sha256": "4dc5ca08b38543de404e96a6a94cfcbac3483c9be89a6f1a0e877dac4cafeb84",
+          "anchor": "Actual workspace binding"
         }
       ],
       "omissions": [],
