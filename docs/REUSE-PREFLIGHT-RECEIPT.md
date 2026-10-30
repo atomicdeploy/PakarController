@@ -57,6 +57,25 @@ The13 policy tests and repository checker pass, and the corrected PC source
 checkpoint is f122ccdf; its exact-head AVR/source CI passes while other jobs
 remain separate gates. Existing unrelated PR failures/drafts are still open.
 
+PR42's full CI then detected the independent original contract-manifest binding
+to WireCodec.h still held the old target hash. The exhaustive comparison was
+already updated; reread the23-entry source-mapping guard and focused record, then
+refresh only that reviewed target binding and retained-behavior note. The original
+donor revision/hash, every other mapping and the strict guard stay unchanged.
+The mapping test now agrees with the authoritative comparison. Under the user's
+renewed clean-worktree request, the one known generated pyc was removed normally
+with native Remove-Item; this supersedes its old cleanup blocker. No alternative
+shell, ignore entry, stash deletion or source/history loss was used.
+
+After that binding repair the complete canonical `node tools/ci-checks.mjs quality`
+runner exited0. The still-running runner was observed by its exact PID/command
+and its retained process handle reported the exit code; it was not rerun merely
+because earlier console output had scrolled away. Full paginated Pakar records
+were refreshed with the existing auditor, and PR40/42 bodies and empty review/
+thread sets were read. PR40 merged normally as d5008bd after all exact-head checks
+passed; PR42 was retargeted to main. PC703's complete conversation is also empty
+and all checks now pass. Separate final metadata/head CI remains required.
+
 ## Web correction preview connection/foreground ownership, 2026-10-30 (#3)
 
 Reread the complete actual PCController mobile/lib/unified/pwm_control.dart

@@ -3,6 +3,20 @@
   "records": [
     {
       "repository": "atomicdeploy/PakarController",
+      "number": 40,
+      "scope": "full-record",
+      "content_sha256": "afb88ff39ab8862b618e3669b7e0c3704badcae5fa73e7dd24ed43bb17efca81",
+      "application": "Read complete body and all paginated conversations, reviews and threads; none contain findings. Reviewed source/test diff and canonical generated Web outputs separately. Exact fd6d31a Build41062411902 and CodeQL41062411910 pass, including S3/AVR, Android and Windows packages. Retain generation-pinned correction preview and foreground lifecycle; no board or rendered-browser acceptance inferred. The historical bytecode blocker in the body was subsequently cleared by normal native cleanup under renewed user authorization."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
+      "number": 42,
+      "scope": "full-record",
+      "content_sha256": "a8c8c64ccab6b9e555f060453d9d15c6d64ea340d02d34dc6b0e0cf08e575874",
+      "application": "Read complete first-slice scope, verification limits and all paginated conversations, reviews and threads; no comments or findings. Preserve linked issue41 and PCController702, shared strict COBS fixtures and actual carrier distinctions. Exact-head CI remains a separate integration gate; neither conversation review nor this slice certifies whole-transport parity, MCU HAL ports, repository merger or hardware acceptance."
+    },
+    {
+      "repository": "atomicdeploy/PakarController",
       "number": 25,
       "scope": "full-record",
       "content_sha256": "7bc8df2ff872d71e18b55432d9fa4bee22b36a59ba4f511299510005d4f957e9",

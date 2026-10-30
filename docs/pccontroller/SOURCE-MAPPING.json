@@ -42,10 +42,10 @@
       "source_sha256": "b35dc074bf98c9782b83e2ebbdd594ba0537211f7ee90df5c36fcec2ecc771f1",
       "source_read": "complete",
       "target": "libraries/BoardCore/src/WireCodec.h",
-      "target_sha256_utf8_lf": "d54686786b9e8295c2959c16623eb3831af05f26f6caf489a26916735b5c8a91",
+      "target_sha256_utf8_lf": "8f9bf8a72b39e03415b295ec8b326fb9ba4c20c719ea12263cbad1b61972347c",
       "line": 8,
       "anchor": "crc8",
-      "retained": "Existing bounded CRC/COBS codec retained; new transport/assembly tests bind sequence, size and corruption boundaries.",
+      "retained": "Existing bounded CRC/COBS codec retained; new transport/assembly tests bind sequence, size and corruption boundaries. 2026-10-30 rereview: reject a zero inside a COBS data block even when an enclosing CRC matches; valid wire bytes, in-place/caller-owned storage and existing buffer bounds are unchanged. The same correction is applied to the current PCController C++/Go and Pakar Rust/Dart adapters; shared vectors and targeted regressions do not imply full application-contract parity.",
       "omitted_code_and_reason": "Do not instantiate duplicate raw decoder or enlarge AVR frame buffers; full 48-byte requests assembled with independent 0x57 chunks."
     },
     {
