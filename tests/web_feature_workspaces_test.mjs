@@ -15,9 +15,10 @@ class Element{
  reportValidity(){return this.checkValidity();}scrollIntoView(){this.scrolls=(this.scrolls||0)+1;}focus(){}remove(){if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(n=>n!==this);}
 }
 const layout=new Element('div'),listeners=new Map();
-const document={createElement:tag=>new Element(tag),querySelector:()=>layout,querySelectorAll:selector=>layout.querySelectorAll(selector),getElementById:id=>layout.querySelectorAll('*').find(n=>n.id===id)||null};
+const documentListeners=new Map();
+const document={visibilityState:'visible',addEventListener:(name,fn)=>documentListeners.set(name,fn),removeEventListener:name=>documentListeners.delete(name),createElement:tag=>new Element(tag),querySelector:()=>layout,querySelectorAll:selector=>layout.querySelectorAll(selector),getElementById:id=>layout.querySelectorAll('*').find(n=>n.id===id)||null};
 const modalRequests=[];
-const context=vm.createContext({document,navigator:{},setTimeout,clearTimeout,confirm:()=>{throw Error('Blocking browser confirm must not be used');},addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)});
+const context=vm.createContext({document,navigator:{},URLSearchParams,setTimeout,clearTimeout,confirm:()=>{throw Error('Blocking browser confirm must not be used');},addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)});
 context.WebUI={dialog(spec){let onClose,closed=false;const prompt={spec,element:{addEventListener(type,callback){assert.equal(type,'close');onClose=callback;}},close(){if(closed)return;closed=true;onClose?.();}};modalRequests.push(prompt);return prompt;}};
 const approveReload=async prompt=>{await prompt.spec.actions[1].action();prompt.close();};
 vm.runInContext(await readFile(new URL('../assets/web/pixel-groups.js',import.meta.url),'utf8'),context);
@@ -489,14 +490,19 @@ ownedCorrections.dispose();assert.equal(layout.children.length,0);
 {
 state={board_id:'preview',boot_id:'boot',pixel_corrections_revision:0};
 saved=structuredClone(configuration);features.clear();for(const f of ['identity','pixel-corrections','pixel-corrections-preview'])features.add(f);
-let live=false,activeSources=[...saved.sources],previewWrites=0,persistentWrites=0;
-const previewResponse=()=>({...saved,active_sources:activeSources,preview:{active:live,lease_id:live?7:0,base_revision:saved.revision,remaining_ms:live?10000:0}});
+let live=false,activeSources=[...saved.sources],previewWrites=0,persistentWrites=0,connectionGeneration=1,nextLease=7,activeLease=0;
+const previewPins=[];
+const previewResponse=()=>({...saved,active_sources:activeSources,preview:{active:live,lease_id:live?activeLease:0,base_revision:saved.revision,remaining_ms:live?10000:0}});
 const previewWorkspace=context.createFeatureWorkspaces({...options,
- api:async()=>previewResponse(),
- command:async(path,data)=>{const value=JSON.parse(data.configuration);
-  if(path.endsWith('/preview')){previewWrites++;live=!value.clear;
+ pin:()=>({board:state.board_id,boot:state.boot_id,generation:connectionGeneration}),
+ api:async(path,init={})=>{
+  if(path.endsWith('/preview')){assert.equal(init.method,'POST');assert.equal(init.peer.generation,connectionGeneration,'Preview POST retains its original connection pin');previewPins.push(init.peer);
+   const value=JSON.parse(init.body.get('configuration'));previewWrites++;if(!live&&!value.clear)activeLease=nextLease++;live=!value.clear;
    activeSources=live?Array.from(contracts.correctionSources(saved.pixels,value.enabled,value.rules)):[...saved.sources];
    return previewResponse();}
+  assert.equal(path,'/api/pixels/corrections');return previewResponse();
+ },
+ command:async(path,data)=>{const value=JSON.parse(data.configuration);
   assert.equal(path,'/api/pixels/corrections');assert.equal(live,false,'Release precedes durable save');persistentWrites++;
   saved={...saved,...value,revision:saved.revision+1,sources:Array.from(contracts.correctionSources(saved.pixels,value.enabled,value.rules))};return saved;
  }});
@@ -509,7 +515,23 @@ await previewButton('Add rule').onclick();await new Promise(setImmediate);
 assert.equal(previewWrites,1);assert.equal(persistentWrites,0);assert.equal(live,true);
 await previewButton('Save to board').onclick();await new Promise(setImmediate);
 assert.equal(previewWrites,2);assert.equal(persistentWrites,1);assert.equal(live,false);
+assert.equal(previewPins[0],previewPins[1],'Acquisition and release use the captured pin, not a fresh admission');
+await previewButton('Add rule').onclick();await new Promise(setImmediate);assert.equal(live,true);
+document.visibilityState='hidden';documentListeners.get('visibilitychange')?.();await new Promise(setImmediate);
+assert.equal(live,false,'Backgrounding immediately retires the RAM lease without saving');assert.equal(persistentWrites,1);
+const backgroundWrites=previewWrites;document.visibilityState='visible';documentListeners.get('visibilitychange')?.();previewWorkspace.update();await new Promise(setImmediate);
+assert.equal(previewWrites,backgroundWrites,'Foreground return must not replay the draft or reacquire a lease');
+await previewButton('Add rule').onclick();await new Promise(setImmediate);assert.equal(live,true);
+listeners.get('pagehide')?.();await new Promise(setImmediate);assert.equal(live,false,'Page departure retires its preview');
+const departureWrites=previewWrites;await previewButton('Add rule').onclick();await new Promise(setImmediate);assert.equal(previewWrites,departureWrites,'A departing page cannot acquire another lease');
+listeners.get('pageshow')?.();previewWorkspace.update();await new Promise(setImmediate);assert.equal(previewWrites,departureWrites,'BFCache restoration is passive');
+await previewButton('Add rule').onclick();await new Promise(setImmediate);assert.equal(live,true);
+const oldRouteWrites=previewWrites;connectionGeneration++;previewWorkspace.update();await new Promise(setImmediate);
+assert.equal(previewWrites,oldRouteWrites,'Same board/boot on a new connection cannot receive the old lease cleanup');
+document.visibilityState='hidden';documentListeners.get('visibilitychange')?.();await new Promise(setImmediate);assert.equal(previewWrites,oldRouteWrites,'An already retired route is never redirected during background cleanup');
 previewWorkspace.dispose();
+assert.equal(documentListeners.has('visibilitychange'),false);for(const name of ['pagehide','pageshow'])assert.equal(listeners.has(name),false,'Disposal removes '+name+' observer');
+document.visibilityState='visible';
 }
 assert(!source.includes('new WebSocket'));assert(!source.includes('setInterval('));assert(!source.includes('innerHTML'));
 assert(!source.includes('/api/audio'),'Existing sound controls remain the only implementation');
