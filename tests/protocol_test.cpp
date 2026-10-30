@@ -12,6 +12,12 @@
 using namespace BoardCore::Protocol;
 
 int main() {
+  // Same malformed COBS vectors as PCController. Rejected before frame/CRC
+  // dispatch; in-place decoding must retain the existing bounded ownership.
+  uint8_t decodedScratch[3] = {};
+  const uint8_t embeddedZero[] = {2, 0}, laterZero[] = {3, 0x11, 0};
+  assert(BoardCore::WireCodec::cobsDecode(embeddedZero,2,decodedScratch,3)==0);
+  assert(BoardCore::WireCodec::cobsDecode(laterZero,3,decodedScratch,3)==0);
   BoardCore::AvrAdmissionRecovery admission;
   assert(!admission.needsHello(3000,0));
   admission.sent();admission.sent();

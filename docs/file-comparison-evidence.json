@@ -2174,16 +2174,38 @@
       "source_read": "complete",
       "verdict": "parity-gap",
       "preserved": [
-        "Read all bounded C++11 CRC/COBS algorithms and complete Pakar WireCodec.h. CRC/decoder structure is common; encoder bounds and ownership wrappers differ. Documented the path toward one dependency-free codec rather than silently replacing the live implementation."
+        "Read all bounded C++11 CRC/COBS algorithms and complete Pakar WireCodec.h. CRC/decoder structure is common; encoder bounds and ownership wrappers differ. Documented the path toward one dependency-free codec rather than silently replacing the live implementation.",
+        "2026-10-30: reread both complete primitives against the preserved b0111ae0 donor snapshot. Apply the same zero-in-data-block COBS rejection to both current projects, retaining valid bytes, fixed buffers, in-place decode and owning/borrowed frame boundaries. PC Go host UDP uses its corrected shared Go decoder; the Pakar Rust/Dart adapters gain equivalent validation and targeted regressions. The cross-repository fixture and first-pass decision do not claim complete carrier/API or stock-board interoperability."
       ],
       "targets": [
         {
           "path": "docs/PC-CONTROLLER-MERGE-READINESS.md",
           "anchor": "### Framing and dispatch",
           "sha256": "a023cd4573108622cbd76a62cb52115c7dd6735d1b15999b73df1e5a2a9b96d5"
+        },
+        {
+          "path": "libraries/BoardCore/src/WireCodec.h",
+          "anchor": "if (input[readIndex] == 0) return 0;",
+          "sha256": "8f9bf8a72b39e03415b295ec8b326fb9ba4c20c719ea12263cbad1b61972347c"
+        },
+        {
+          "path": "docs/TRANSPORT-CONVERGENCE.md",
+          "anchor": "## Decision: shared semantics, appropriate carriers",
+          "sha256": "91b59a9967f1eed8f8ac3381147b6a26c9b595e69cab105fe7648320b555e0ef"
         }
       ],
-      "proof": [],
+      "proof": [
+        {
+          "path": "tests/protocol_test.cpp",
+          "anchor": "Same malformed COBS vectors as PCController",
+          "sha256": "4d2f38e2823672336bd512240ae35c4ff3e234f95766509efba80f86fa100144"
+        },
+        {
+          "path": "tests/fixtures/cobs.json",
+          "anchor": "COBS delimiter-free",
+          "sha256": "81683deafa749b231e483d2b75e4c45cae2a3262cab014ad0a20c74a82b31694"
+        }
+      ],
       "omissions": [
         {
           "code": "One-source codec and zero-copy UART integration",
@@ -2192,7 +2214,7 @@
         }
       ],
       "remaining": [
-        "Issue #3/#6: shared bounded codec conformance, malformed/full-boundary fixtures and AVR lifetime/budget verification; no new test execution is claimed."
+        "Issues #41 and PC#702 coordinate shared core ownership, typed service/opcode compatibility, optional capabilities and full transport/client parity. First-slice fixtures/strict malformed rejection are implemented; AVR lifetime, flash/stack deltas, full-boundary/resource, deployed/LAN/physical and complete shared-code acceptance remain open."
       ]
     },
     {
@@ -2304,7 +2326,7 @@
         {
           "path": "tests/protocol_test.cpp",
           "anchor": "admission.needsHello(2000,0)",
-          "sha256": "92cd55f433424863ff59ba08b048c873c205af3133dba1bf1c9aacf5034135af"
+          "sha256": "4d2f38e2823672336bd512240ae35c4ff3e234f95766509efba80f86fa100144"
         }
       ],
       "omissions": [
@@ -7444,7 +7466,7 @@
       "targets": [
         {
           "path": "desktop/src/main.rs",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c",
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a",
           "anchor": "#![cfg_attr(windows, windows_subsystem = \"windows\")]"
         },
         {
@@ -7512,7 +7534,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c",
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a",
           "anchor": "cli_println!(\"{reply}\")"
         },
         {
@@ -7671,7 +7693,7 @@
         },
         {
           "path": "mobile/test/usb_transport_test.dart",
-          "sha256": "19c07b6986d1ebe734d4ffb37aa19b01becc8ebc5bfde504972b9e1e0f3214fd",
+          "sha256": "c18934fdea3c2001264dcab582a4ebf1c1f5b7897c9ffc514821e4c6047c563f",
           "anchor": "Real channel session performs HELLO introduction snapshot and atomic batch without HTTP or DNS"
         },
         {
@@ -9374,7 +9396,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "SerialCommand::Bridge(target",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c"
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a"
         }
       ],
       "omissions": [
@@ -15715,7 +15737,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c",
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a",
           "anchor": "fn scoped_http_request("
         },
         {
@@ -15859,7 +15881,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c",
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a",
           "anchor": "// The mapping response identifies its own producer."
         },
         {
@@ -16005,7 +16027,7 @@
       "targets": [
         {
           "path": "tests/protocol_test.cpp",
-          "sha256": "92cd55f433424863ff59ba08b048c873c205af3133dba1bf1c9aacf5034135af",
+          "sha256": "4d2f38e2823672336bd512240ae35c4ff3e234f95766509efba80f86fa100144",
           "anchor": "Adapt donor matching-identity/request assertions"
         },
         {
@@ -16927,7 +16949,7 @@
       "proof": [
         {
           "path": "tests/protocol_test.cpp",
-          "sha256": "92cd55f433424863ff59ba08b048c873c205af3133dba1bf1c9aacf5034135af",
+          "sha256": "4d2f38e2823672336bd512240ae35c4ff3e234f95766509efba80f86fa100144",
           "anchor": "Actual donor TestVersionedCoreAPIRoutesAreRejected cases"
         },
         {
@@ -18521,7 +18543,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c",
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a",
           "anchor": "fn status_bar_startup_message_respects_disconnected_and_selected_route()"
         },
         {
@@ -22718,7 +22740,7 @@
         },
         {
           "path": "mobile/lib/usb_transport.dart",
-          "sha256": "880728e89341200cfb9c1c846e2c2407e4b105608e5b4dac0355c01b1ce2ad2c",
+          "sha256": "6b7600fb34460397f778d5d46239e2e90954c33ae1a2b28f0b37a492185dd13b",
           "anchor": "class PakarUsbTransport"
         },
         {
@@ -23132,7 +23154,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c",
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a",
           "anchor": "event_log.failure(\"Windows tray tooltip\", &error)"
         }
       ],
@@ -23256,7 +23278,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c",
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a",
           "anchor": "fn serial_worker("
         },
         {
@@ -23293,7 +23315,7 @@
         },
         {
           "path": "desktop/src/main.rs",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c",
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a",
           "anchor": "fn usb_selected_http_worker_never_contacts_even_a_live_network_endpoint()"
         },
         {
@@ -24168,7 +24190,7 @@
         {
           "path": "desktop/src/main.rs",
           "anchor": "peer_http::remember_address",
-          "sha256": "29e2f9f22eb47f5e5508c8978f47e30fc8d670e61cc12bc7c5b6b75d56ab3f2c"
+          "sha256": "a0c7410e1acbc534c2aa514610ecb48a2706cf605bd19681f461360e00909c3a"
         },
         {
           "path": "firmware/esp/src/PeerLanResolver.h",

@@ -2144,6 +2144,9 @@ fn cobs_encode(input: &[u8]) -> Vec<u8> {
     out
 }
 fn cobs_decode(input: &[u8]) -> Option<Vec<u8>> {
+    if input.is_empty() {
+        return None;
+    }
     let mut out = Vec::new();
     let mut at = 0;
     while at < input.len() {
@@ -2153,7 +2156,11 @@ fn cobs_decode(input: &[u8]) -> Option<Vec<u8>> {
         }
         at += 1;
         for _ in 1..code {
-            out.push(*input.get(at)?);
+            let value = *input.get(at)?;
+            if value == 0 {
+                return None;
+            }
+            out.push(value);
             at += 1;
         }
         if code != 0xff && at < input.len() {
@@ -6496,6 +6503,19 @@ mod tests {
         let (op, payload) = decode_frame(&encoded[..encoded.len() - 1]).unwrap();
         assert_eq!(op, OP_CELL_ACTION);
         assert_eq!(payload, vec![80, 2, 1]);
+    }
+    #[test]
+    fn shared_cobs_vectors() {
+        let vectors: serde_json::Value = serde_json::from_str(include_str!("../../tests/fixtures/cobs.json")).unwrap();
+        let bytes = |v: &serde_json::Value| v.as_array().unwrap().iter().map(|v| u8::try_from(v.as_u64().unwrap()).unwrap()).collect::<Vec<_>>();
+        for value in vectors["valid"].as_array().unwrap() {
+            let encoded=bytes(&value["encoded"]);let decoded=bytes(&value["decoded"]);
+            assert_eq!(cobs_decode(&encoded),Some(decoded.clone()));
+            let mut actual=cobs_encode(&decoded);assert_eq!(actual.pop(),Some(0));
+            assert_eq!(actual,encoded);
+        }
+        for value in vectors["invalid"].as_array().unwrap() { assert!(cobs_decode(&bytes(value)).is_none()); }
+        assert_eq!(crc8(&bytes(&vectors["crc8_atm"]["input"])),vectors["crc8_atm"]["checksum"].as_u64().unwrap() as u8);
     }
     #[test]
     fn streaming_packet_bounds() {

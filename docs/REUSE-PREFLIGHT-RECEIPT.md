@@ -1,5 +1,81 @@
 # Donor-first preflight receipt
 
+## Controller transport convergence first slice, 2026-10-30 (#41 / PC#702)
+
+Read current repository instructions, transport and merge-readiness documents;
+consult avr-convergence and exact donor-audit Project/ProtocolCodec.h mappings.
+Read complete PC/Pakar C++ CRC/COBS primitives and current Go COBS, plus concrete
+UART/header, UDP packet, Rust/Dart USB and Pealayer decoder slices. The latter
+are slice review, not whole-file donor certification. Added a transport-convergence
+index route so previously unindexed host UDP/framing sources remain visible.
+Both root epics track actual unrelated-history/file-by-file merger requirements
+and reference the existing MCU/firmware owners, not competing architecture epics.
+
+The pre-fix Go conformance test accepts0200 as valid COBS. C++/Go/Rust/Dart
+decoders now reject embedded zeroes without changing valid encodings. PC UDP
+already reuses the Go primitive and now rejects short nonfinal fragments in its
+encoder, matching the existing decoder. Pealayer already rejects embedded zeroes;
+its runtime is left unchanged. Shared JSON fixtures are byte-identical in both
+repos; no third protocol, socket owner, allocator or dispatcher is introduced.
+PC's read-only MCU list exposes existing Mega/native lanes and explicit adapter
+metadata; it does not claim an STM32/ESP hardware port or change328P programming.
+
+Initial verification hit the existing hash gate after protocol_test.cpp changed;
+no bypass was used. Existing proofs are rebound only after reviewing the bounded
+diff and retaining anchors. A Go command initially requested a UDP package with
+no tests; real UDP codec tests were added, not a test-selector exception. The
+first UDP fixture compared nil and empty payload slices as different; byte-wise
+payload comparison now retains every actual wire-field assertion. Source/CI,
+installed apps, LAN loss/timing and hardware acceptance remain separate.
+
+PC checkpoint f2b1b3ff is pushed in PR703: stable-path Go native/UDP tests pass,
+canonical CMake firmware_protocol_codec_unit passes, and both MCU inventory
+tests pass without a toolchain invocation. Pakar's canonical Rust test passes
+shared_cobs_vectors; canonical mobile analysis reports no issues and all13 USB
+transport tests pass. The shared fixture SHA256 is81683deafa749b231e483d2b75e4c45cae2a3262cab014ad0a20c74a82b31694.
+The larger protocol wrapper passed its framing/renderer/storage/programming
+fixtures but stopped at a later stale reference after a formatting-only source
+edit; it was not labeled a complete passing suite. Final comparison checks and
+CI remain exact-head gates. No source/profile tests are physical timing proof.
+
+Repository reconciliation is not complete: the initial refresh found ten PC
+PRs (before this new PR), including failing host/source checks on699, an unstable
+692, blocked688 and several active drafts; Pealayer has seven, including unstable
+drafts216/212. Owner worktrees are clean and preserved, along with22 PC and three
+Pealayer stashes. They are not discarded or blindly merged. Pakar40's stale route
+gate is repaired; its final full CI is still independent from this transport pass.
+
+The full protocol wrapper's later isolated LLDP build then failed to find
+GameRole.h via S3 BoardPins.h. Read the actual test-lldp/test-ethernet wrappers
+and headers, consult ethernet/build-storage, and reuse the sibling wrapper's
+BoardCore include directory. The unchanged LLDP codec/ownership/TCPIP fixture now
+compiles and passes with SDK doubles. No production header, assertion or gate
+was weakened; the larger wrapper is not retroactively labeled fully passed.
+PC's new guide links initially failed its privacy policy; a document-and-repo
+specific exception plus negative tests preserves unrelated/private-path rejection.
+The13 policy tests and repository checker pass, and the corrected PC source
+checkpoint is f122ccdf; its exact-head AVR/source CI passes while other jobs
+remain separate gates. Existing unrelated PR failures/drafts are still open.
+
+PR42's full CI then detected the independent original contract-manifest binding
+to WireCodec.h still held the old target hash. The exhaustive comparison was
+already updated; reread the23-entry source-mapping guard and focused record, then
+refresh only that reviewed target binding and retained-behavior note. The original
+donor revision/hash, every other mapping and the strict guard stay unchanged.
+The mapping test now agrees with the authoritative comparison. Under the user's
+renewed clean-worktree request, the one known generated pyc was removed normally
+with native Remove-Item; this supersedes its old cleanup blocker. No alternative
+shell, ignore entry, stash deletion or source/history loss was used.
+
+After that binding repair the complete canonical `node tools/ci-checks.mjs quality`
+runner exited0. The still-running runner was observed by its exact PID/command
+and its retained process handle reported the exit code; it was not rerun merely
+because earlier console output had scrolled away. Full paginated Pakar records
+were refreshed with the existing auditor, and PR40/42 bodies and empty review/
+thread sets were read. PR40 merged normally as d5008bd after all exact-head checks
+passed; PR42 was retargeted to main. PC703's complete conversation is also empty
+and all checks now pass. Separate final metadata/head CI remains required.
+
 ## Web correction preview connection/foreground ownership, 2026-10-30 (#3)
 
 Reread the complete actual PCController mobile/lib/unified/pwm_control.dart
