@@ -15732,7 +15732,7 @@
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "pub fn admit("
         },
         {
@@ -15871,12 +15871,12 @@
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_revocation_during_preflight_stops_before_write()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_revocation_after_dispatch_reports_uncertainty_not_success()"
         },
         {
@@ -15886,32 +15886,32 @@
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_mapping_enveloped_read_needs_no_http_status_preflight()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_mapping_foreign_or_previous_boot_response_is_never_adopted()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_mapping_incomplete_or_invalid_envelope_is_not_legacy()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_mapping_revoked_inflight_result_is_not_applied()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_mapping_expired_queue_does_not_contact_device()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_mapping_without_envelope_retains_both_legacy_status_fences()"
         },
         {
@@ -16037,7 +16037,7 @@
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_settings_pin_every_nested_request_and_verify_same_boot()"
         },
         {
@@ -16080,22 +16080,22 @@
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_readback_from_new_boot_is_not_applied()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()"
         },
         {
           "path": "desktop/src/peer_http.rs",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50",
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b",
           "anchor": "fn gui_server_boot_conflict_is_not_replayed()"
         },
         {
@@ -24186,7 +24186,7 @@
         {
           "path": "desktop/src/peer_http.rs",
           "anchor": "pub fn device_client_builder",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50"
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b"
         },
         {
           "path": "desktop/src/main.rs",
@@ -24228,7 +24228,7 @@
         {
           "path": "desktop/src/peer_http.rs",
           "anchor": "fn local_verified_address_override_preserves_http_hostname_and_explicit_port",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50"
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b"
         },
         {
           "path": "tests/peer_relay_test.cpp",
@@ -24258,7 +24258,7 @@
         {
           "path": "desktop/src/peer_http.rs",
           "anchor": "fn local_address_cache_accepts_only_verified_tcp_peer_not_advertised_ip",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50"
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b"
         }
       ],
       "omissions": [
@@ -24285,7 +24285,7 @@
         {
           "path": "desktop/src/peer_http.rs",
           "anchor": "fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority",
-          "sha256": "4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50"
+          "sha256": "ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b"
         },
         {
           "path": "mobile/test/network_route_recovery_test.dart",

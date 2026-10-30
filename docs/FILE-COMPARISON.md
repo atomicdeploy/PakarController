@@ -2584,14 +2584,14 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. Original-byte SHA-256: `b03498f9df5a9f8e5bc3c94eabec71ab4fb412b53c1fb1729fe63a45ec1ba3b9`.
 
 - Target: `mobile/test/selection_batch_network_test.dart:19 [UTF8-LF sha256=41eb7d501bf707974913ef8d1813b0e18d841b85266c032778acd15848f09dc3; anchor=test(]`.
-- Target: `desktop/src/peer_http.rs:959 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn local_address_cache_accepts_only_verified_tcp_peer_not_advertised_ip]`.
+- Target: `desktop/src/peer_http.rs:963 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn local_address_cache_accepts_only_verified_tcp_peer_not_advertised_ip]`.
 - Retained: Adapted actual cached-address reuse and changed-DHCP-address scenarios with injected lookups/dials. Added actual loopback HTTP Host identity, authentication/timeout retention, selection/batch/readback and melody fixtures.
 - Retained: Native fixtures exercise actual reqwest loopback TCP, cached subsequent resolution, original HTTP Host and explicit port, provenance rejection, finite cache/replacement and invalidation. They are not Windows mDNS, Android DNS or DHCP physical acceptance.
 - Retained: Current native discovery fixtures cover persisted route roundtrip, endpoint/board/scheme/port fencing and credential-free failed-hostname recovery. Flutter trusted-CA HTTPS/WSS fixtures exercise actual numeric TCP fallback with original logical certificate identity, wrong-board rejection and shared-route reuse without repeated DNS. Separate ControlShell widget fixtures cover startup, manual Disconnect and editor handoff holds; none contacts production.
 - Omitted/replaced code: `Go net.TCPConn placeholders, netip addresses and go test runtime`. Disposition: **replaced**. Reason: Tests exercise the Dart resolver used by this application and a real local HTTP listener; Go donor tests are not executed as Flutter evidence. Physical phone/Wi-Fi and audible melody acceptance remain separate.
 - Test-code evidence: `mobile/test/lan_resolver_transport_test.dart:12 [UTF8-LF sha256=bf4a46ca2ce7a9639b66bd7c03f9ecd57065b58a2d7fb2cc5e8f6a0edc3f637e; anchor=void main()]`.
 - Test-code evidence: `mobile/test/selection_batch_network_test.dart:19 [UTF8-LF sha256=41eb7d501bf707974913ef8d1813b0e18d841b85266c032778acd15848f09dc3; anchor=test(]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1110 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1114 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn local_address_cache_bounds_replaces_and_invalidates_without_ttl_or_authority]`.
 - Test-code evidence: `mobile/test/network_route_recovery_test.dart:11 [UTF8-LF sha256=e353a06b0fab6f9dd84cc7ce24aee1a5e8517c6e179b3975826f6adaa52f951f; anchor=void main()]`.
 - Test-code evidence: `mobile/test/configuration_event_transport_test.dart:9 [UTF8-LF sha256=4c48e1641b05832a0c0fd5945a9a63e080b8563515f00970f03bb7fcdee9dd08; anchor=void main()]`.
 - Test-code evidence: `tests/peer_relay_test.cpp:140 [UTF8-LF sha256=30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2; anchor=int main()]`.
@@ -2606,7 +2606,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `mobile/lib/api.dart:181 [UTF8-LF sha256=bbb407cc65ccd54e10d7a21328d07831ce5fa3eff70eebe99a6a10b3815257e8; anchor=final LanResolver resolver;]`.
 - Target: `mobile/lib/discovery.dart:116 [UTF8-LF sha256=8cb3956f80a50c5be2c134829bc7d323a3f4c58fbbcf1ea5d5e1aaa10ac7fbba; anchor=class DiscoveryCatalog]`.
 - Target: `mobile/lib/devices_page.dart:73 [UTF8-LF sha256=73b22cde59bac6f882fd989e6494a09d3d19b010b0fc8e5ae69e55591eca44c0; anchor=catalog]`.
-- Target: `desktop/src/peer_http.rs:339 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=pub fn device_client_builder]`.
+- Target: `desktop/src/peer_http.rs:339 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=pub fn device_client_builder]`.
 - Target: `desktop/src/main.rs:820 [UTF8-LF sha256=919d2a1ebeaae2e2694270a8251b93cf4fc56ba882be87a3cdce5297227cff32; anchor=peer_http::remember_address]`.
 - Target: `firmware/esp/src/PeerLanResolver.h:13 [UTF8-LF sha256=2413d89e26403aae1a9a528c60da09acf4ea5079067b8c1183e7e6c4d8f41546; anchor=class PeerLanResolver]`.
 - Retained: Actual complete donor resolver and tests read from canonical PCController; adapted successful-address caching, retaining URL hostname/HTTP Host/TLS SNI rather than replacing the public identity with an IP.
@@ -2619,7 +2619,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `Go mutex, process-global resolver, Linux platform NBNS fallback and unbounded address candidates`. Disposition: **replaced**. Reason: Dart isolate ownership and a shared per-API resolver replace Go synchronization/global state. DNS and each dial have deadlines, successful cache is bounded64 hosts and candidates2; platform discovery remains separate. Android OS/mDNS resolution and DHCP movement still need actual phone/LAN acceptance; no platform helper or multicast success is inferred.
 - Test-code evidence: `mobile/test/lan_resolver_transport_test.dart:12 [UTF8-LF sha256=bf4a46ca2ce7a9639b66bd7c03f9ecd57065b58a2d7fb2cc5e8f6a0edc3f637e; anchor=void main()]`.
 - Test-code evidence: `mobile/test/selection_batch_network_test.dart:19 [UTF8-LF sha256=41eb7d501bf707974913ef8d1813b0e18d841b85266c032778acd15848f09dc3; anchor=test(]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1199 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn local_verified_address_override_preserves_http_hostname_and_explicit_port]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1203 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn local_verified_address_override_preserves_http_hostname_and_explicit_port]`.
 - Test-code evidence: `tests/peer_relay_test.cpp:140 [UTF8-LF sha256=30aa409380278617eacba57eba16589bb4e7b4671479e9c44087817882494ba2; anchor=int main()]`.
 - Scoped advantage: Session-sticky routing plus hostname-first durable same-board recovery; authentication and generic HTTP failures never grant discovery or mutation replay authority.
 - Remaining: Verify physical Android DNS-SD/mDNS resolution, reconnect/DHCP change, TLS hostname identity and retained discovery records under real network loss. Preserve explicit Disconnect and identity fencing.
@@ -2667,7 +2667,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 
 - Target: `tests/protocol_test.cpp:76 [UTF8-LF sha256=b3ae3673e4953e4b44251d2b17482e08c27c9ed6664db283fc74d03943033d04; anchor=Adapt donor matching-identity/request assertions]`.
 - Target: `desktop/src/terminal_ui.rs:1412 [UTF8-LF sha256=762c7ee8137a21fdbd83a40bb776238a6f75b943da35d01073bbff6b2dd64379; anchor=fn server_reboot_between_preflight_and_post_stops_without_replay()]`.
-- Target: `desktop/src/peer_http.rs:1561 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_settings_pin_every_nested_request_and_verify_same_boot()]`.
+- Target: `desktop/src/peer_http.rs:1567 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_settings_pin_every_nested_request_and_verify_same_boot()]`.
 - Target: `desktop/src/usb_table.rs:102 [UTF8-LF sha256=7991f9c24f579b05d0d3a07a5af2ecbba0ed13da93ab88b7fed226ff41d9aec1; anchor=pub struct Operation]`.
 - Retained: Actual fakePort matching/mismatched request and identity scenarios read fully and adapted to C++ peer validation and native same-host reboot/pinned-header/409 no-replay HTTP fixtures.
 - Retained: Old receipts stay in Events, not new peer's confirmed output.
@@ -2679,10 +2679,10 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Omitted/replaced code: `compact HELLO schemas/build stamp and DTR reset/inactive control-line tests`. Disposition: **pending**. Reason: Build stamp is not board/boot identity; numbered public generation negotiation conflicts with living API. Adapt additive identity and explicit one-shot reset policy with serial owner, without schema selectors/reset-on-connect.
 - Test-code evidence: `desktop/src/terminal_ui.rs:1484 [UTF8-LF sha256=762c7ee8137a21fdbd83a40bb776238a6f75b943da35d01073bbff6b2dd64379; anchor=fn shared_cli_mutation_inherits_pinned_epoch_headers()]`.
 - Test-code evidence: `tests/peer_fence_test.mjs:23 [UTF8-LF sha256=09291cb48a20e945aef09f5176eb9089db1bf7440fc45deb73daf9e832a456c4; anchor=Upload callbacks precede middleware]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1590 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1623 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_readback_from_new_boot_is_not_applied()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1682 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1607 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_server_boot_conflict_is_not_replayed()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1596 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_preflight_reboot_or_capability_loss_never_dispatches_mutation()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1629 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_readback_from_new_boot_is_not_applied()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1688 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_unfenced_mutation_fails_before_network_and_preserves_correlation()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1613 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_server_boot_conflict_is_not_replayed()]`.
 - Test-code evidence: `tests/web_access_fence_test.cpp:121 [UTF8-LF sha256=a6d3b4d5a9fd3703c6265d093acaa21bd2cb17a30cda92ba9b4e18848e322a72; anchor=Real async queue + real fence recheck]`.
 - Test-code evidence: `desktop/src/usb_table.rs:843 [UTF8-LF sha256=7991f9c24f579b05d0d3a07a5af2ecbba0ed13da93ab88b7fed226ff41d9aec1; anchor=fn actual_usb_worker_preempts_large_preview_and_confirms_compact_board_readback()]`.
 - Test-code evidence: `desktop/src/usb_table.rs:736 [UTF8-LF sha256=7991f9c24f579b05d0d3a07a5af2ecbba0ed13da93ab88b7fed226ff41d9aec1; anchor=fn compact_usb_readback_validates_all_values_without_renewing_full_observations()]`.
@@ -2701,7 +2701,7 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Target: `firmware/esp/src/WebAccess.h:92 [UTF8-LF sha256=774b524f4cd81c003e4139d0bb6cf3353d987674bbfb49d7a1b989ee2a232294; anchor=bool peerAllowed(]`.
 - Target: `firmware/esp/application.ino:2077 [UTF8-LF sha256=a607abb53d7834663853f2adb45286361d9d5b1cf82edb0d18ee11c9d9a74c41; anchor=bool authenticate()]`.
 - Target: `assets/web/peer-http.js:90 [UTF8-LF sha256=9613bb23bfa007afcde525d49a193b25b93788b0f24e6a0374ce4f49560f8f9e; anchor=function assertOwner(peer)]`.
-- Target: `desktop/src/peer_http.rs:590 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=pub fn admit(]`.
+- Target: `desktop/src/peer_http.rs:590 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=pub fn admit(]`.
 - Target: `desktop/src/main.rs:847 [UTF8-LF sha256=919d2a1ebeaae2e2694270a8251b93cf4fc56ba882be87a3cdce5297227cff32; anchor=fn scoped_http_request(]`.
 - Target: `desktop/src/usb_table.rs:572 [UTF8-LF sha256=7991f9c24f579b05d0d3a07a5af2ecbba0ed13da93ab88b7fed226ff41d9aec1; anchor=pub struct Admission]`.
 - Target: `mobile/lib/command_readback.dart:14 [UTF8-LF sha256=c920c79353178bfb46aaed6e80a467951b9131f7f3cab0653d970f6408d8703c; anchor=bool commandReadbackMatches(]`.
@@ -2752,15 +2752,15 @@ Verdict: **parity-gap**. Revision: `b0111ae0c80dc34149ea1044de7dd5488920301b`. O
 - Test-code evidence: `mobile/test/bridge_discovery_test.dart:37 [UTF8-LF sha256=1e650a1f6897c67ce9e87de864ff28ed98e0a818ca95ba6b413897b5cd99a905; anchor=Same-host board/boot replacement retires firmware owners synchronously]`.
 - Test-code evidence: `tests/peer_fence_test.mjs:23 [UTF8-LF sha256=09291cb48a20e945aef09f5176eb9089db1bf7440fc45deb73daf9e832a456c4; anchor=Upload callbacks precede middleware]`.
 - Test-code evidence: `tests/web_peer_http_test.mjs:24 [UTF8-LF sha256=db715ef84572ee0279db89cdb3bc5700bbd6e7ebe206a8fdedf335b60d60d048; anchor=Same-host reboot between draft creation and preflight]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1640 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_revocation_during_preflight_stops_before_write()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1660 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_revocation_after_dispatch_reports_uncertainty_not_success()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1646 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_revocation_during_preflight_stops_before_write()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1666 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_revocation_after_dispatch_reports_uncertainty_not_success()]`.
 - Test-code evidence: `desktop/src/main.rs:889 [UTF8-LF sha256=919d2a1ebeaae2e2694270a8251b93cf4fc56ba882be87a3cdce5297227cff32; anchor=// The mapping response identifies its own producer.]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1442 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_mapping_enveloped_read_needs_no_http_status_preflight()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1459 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_mapping_foreign_or_previous_boot_response_is_never_adopted()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1481 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_mapping_incomplete_or_invalid_envelope_is_not_legacy()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1504 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_mapping_revoked_inflight_result_is_not_applied()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1521 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_mapping_expired_queue_does_not_contact_device()]`.
-- Test-code evidence: `desktop/src/peer_http.rs:1534 [UTF8-LF sha256=4e824caea5ef7bea0b2fc81af1ba1571bb7f3374582c3d641223cf0ce20cae50; anchor=fn gui_mapping_without_envelope_retains_both_legacy_status_fences()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1448 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_mapping_enveloped_read_needs_no_http_status_preflight()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1465 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_mapping_foreign_or_previous_boot_response_is_never_adopted()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1487 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_mapping_incomplete_or_invalid_envelope_is_not_legacy()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1510 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_mapping_revoked_inflight_result_is_not_applied()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1527 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_mapping_expired_queue_does_not_contact_device()]`.
+- Test-code evidence: `desktop/src/peer_http.rs:1540 [UTF8-LF sha256=ae1b14ad237c9e218d29f7eb3076cda183ec267a73394f9c05ca2bf13469270b; anchor=fn gui_mapping_without_envelope_retains_both_legacy_status_fences()]`.
 - Test-code evidence: `tests/web_access_fence_test.cpp:121 [UTF8-LF sha256=a6d3b4d5a9fd3703c6265d093acaa21bd2cb17a30cda92ba9b4e18848e322a72; anchor=Real async queue + real fence recheck]`.
 - Test-code evidence: `desktop/src/usb_table.rs:1540 [UTF8-LF sha256=7991f9c24f579b05d0d3a07a5af2ecbba0ed13da93ab88b7fed226ff41d9aec1; anchor=fn table_write_is_exact_boot_fenced_and_post_ack_values_are_not_assumed()]`.
 - Test-code evidence: `mobile/test/connection_lifecycle_test.dart:254 [UTF8-LF sha256=7c3e281d1e98ee1cf49e9116a0cc8c85a9adcc33683992d225b6258dcd94bce4; anchor=Lost post-ACK readback stops bulk without discarding a fresh workspace]`.
