@@ -1,5 +1,50 @@
 # Donor-first preflight receipt
 
+## Controller transport convergence first slice, 2026-10-30 (#41 / PC#702)
+
+Read current repository instructions, transport and merge-readiness documents;
+consult avr-convergence and exact donor-audit Project/ProtocolCodec.h mappings.
+Read complete PC/Pakar C++ CRC/COBS primitives and current Go COBS, plus concrete
+UART/header, UDP packet, Rust/Dart USB and Pealayer decoder slices. The latter
+are slice review, not whole-file donor certification. Added a transport-convergence
+index route so previously unindexed host UDP/framing sources remain visible.
+Both root epics track actual unrelated-history/file-by-file merger requirements
+and reference the existing MCU/firmware owners, not competing architecture epics.
+
+The pre-fix Go conformance test accepts0200 as valid COBS. C++/Go/Rust/Dart
+decoders now reject embedded zeroes without changing valid encodings. PC UDP
+already reuses the Go primitive and now rejects short nonfinal fragments in its
+encoder, matching the existing decoder. Pealayer already rejects embedded zeroes;
+its runtime is left unchanged. Shared JSON fixtures are byte-identical in both
+repos; no third protocol, socket owner, allocator or dispatcher is introduced.
+PC's read-only MCU list exposes existing Mega/native lanes and explicit adapter
+metadata; it does not claim an STM32/ESP hardware port or change328P programming.
+
+Initial verification hit the existing hash gate after protocol_test.cpp changed;
+no bypass was used. Existing proofs are rebound only after reviewing the bounded
+diff and retaining anchors. A Go command initially requested a UDP package with
+no tests; real UDP codec tests were added, not a test-selector exception. The
+first UDP fixture compared nil and empty payload slices as different; byte-wise
+payload comparison now retains every actual wire-field assertion. Source/CI,
+installed apps, LAN loss/timing and hardware acceptance remain separate.
+
+PC checkpoint f2b1b3ff is pushed in PR703: stable-path Go native/UDP tests pass,
+canonical CMake firmware_protocol_codec_unit passes, and both MCU inventory
+tests pass without a toolchain invocation. Pakar's canonical Rust test passes
+shared_cobs_vectors; canonical mobile analysis reports no issues and all13 USB
+transport tests pass. The shared fixture SHA256 is81683deafa749b231e483d2b75e4c45cae2a3262cab014ad0a20c74a82b31694.
+The larger protocol wrapper passed its framing/renderer/storage/programming
+fixtures but stopped at a later stale reference after a formatting-only source
+edit; it was not labeled a complete passing suite. Final comparison checks and
+CI remain exact-head gates. No source/profile tests are physical timing proof.
+
+Repository reconciliation is not complete: the initial refresh found ten PC
+PRs (before this new PR), including failing host/source checks on699, an unstable
+692, blocked688 and several active drafts; Pealayer has seven, including unstable
+drafts216/212. Owner worktrees are clean and preserved, along with22 PC and three
+Pealayer stashes. They are not discarded or blindly merged. Pakar40's stale route
+gate is repaired; its final full CI is still independent from this transport pass.
+
 ## Web correction preview connection/foreground ownership, 2026-10-30 (#3)
 
 Reread the complete actual PCController mobile/lib/unified/pwm_control.dart

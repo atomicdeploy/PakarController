@@ -197,6 +197,13 @@ class UsbFixture {
 }
 
 void main() {
+  test('COBS rejects embedded delimiters even with a valid envelope CRC', () {
+    final raw = [165, 0, 1, 1, 0];
+    raw.add(UsbFrame.crc(raw));
+    expect(UsbFrame.decode([raw.length + 1, ...raw]), isNull);
+    final valid = const UsbFrame(1, 1, []).encode();
+    expect(UsbFrame.decode(valid.sublist(0, valid.length - 1))?.opcode, 1);
+  });
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
   test('USB backend switch waits for active driver, sends once, and never uses network', () async {

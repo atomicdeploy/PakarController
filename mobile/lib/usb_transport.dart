@@ -56,7 +56,9 @@ class UsbFrame {
   }
 
   static UsbFrame? decode(List<int> encoded) {
-    if (encoded.isEmpty || encoded.length > 55) {
+    if (encoded.isEmpty ||
+        encoded.length > 55 ||
+        encoded.any((value) => value < 1 || value > 255)) {
       return null;
     }
     final raw = <int>[];
