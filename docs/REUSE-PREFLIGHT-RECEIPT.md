@@ -45,6 +45,18 @@ drafts216/212. Owner worktrees are clean and preserved, along with22 PC and thre
 Pealayer stashes. They are not discarded or blindly merged. Pakar40's stale route
 gate is repaired; its final full CI is still independent from this transport pass.
 
+The full protocol wrapper's later isolated LLDP build then failed to find
+GameRole.h via S3 BoardPins.h. Read the actual test-lldp/test-ethernet wrappers
+and headers, consult ethernet/build-storage, and reuse the sibling wrapper's
+BoardCore include directory. The unchanged LLDP codec/ownership/TCPIP fixture now
+compiles and passes with SDK doubles. No production header, assertion or gate
+was weakened; the larger wrapper is not retroactively labeled fully passed.
+PC's new guide links initially failed its privacy policy; a document-and-repo
+specific exception plus negative tests preserves unrelated/private-path rejection.
+The13 policy tests and repository checker pass, and the corrected PC source
+checkpoint is f122ccdf; its exact-head AVR/source CI passes while other jobs
+remain separate gates. Existing unrelated PR failures/drafts are still open.
+
 ## Web correction preview connection/foreground ownership, 2026-10-30 (#3)
 
 Reread the complete actual PCController mobile/lib/unified/pwm_control.dart
