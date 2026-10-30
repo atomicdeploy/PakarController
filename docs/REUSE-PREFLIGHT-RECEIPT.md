@@ -1,5 +1,56 @@
 # Donor-first preflight receipt
 
+## Web correction preview connection/foreground ownership, 2026-10-30 (#3)
+
+Reread the complete actual PCController mobile/lib/unified/pwm_control.dart
+at its unchanged eda65965 snapshot hash and the complete existing Flutter
+PixelCorrectionPreview. Read PixelCorrectionsPage's allowed, connection,
+foreground/active and departure lifecycle slices, the current shared Web HTTP
+owner, Web editor and firmware's real corrections/preview handlers. No donor
+source changed. Two mistaken relative donor paths were absent; the actual
+installed donor was read and hash-verified rather than substituting new code.
+
+The current canonical page already embeds the preview controller and wires the
+default-on, capability-gated preview-on-edit checkbox; staged-only ledger text
+was stale. Its adapter nevertheless reacquired generic command admission and
+identified ownership by board/boot only. Preview acquire/renew/read/release now
+retain the original shared HTTP pin including connection generation. There is
+no named WS preview command, so none was invented. The existing HTTP owner
+still provides asynchronous preflight fencing, auth, deadlines and no replay.
+
+Hidden-document and pagehide retire the temporary lease; foreground and BFCache
+return remain passive. Disposal removes these listeners. Save remains the only
+persistent correction writer; saved rules and diagnostic numbering are unchanged.
+The DOM fixture now supplies the browser URLSearchParams API and unique lease
+IDs per acquisition (the production lease contract), rather than reusing7 after
+release. The pre-fix regression failed; focused editor/controller/HTTP tests
+pass after the fix. No test assertion or ownership guard was weakened.
+
+Only canonical full/onboard Web assets are rebuilt. Explicit workspace-panel
+hiding, actual rendered lifecycle/RTL/touch and device/output acceptance remain
+open. Browser automation remains blocked by unsupported Windows browser URL
+policy enforcement; no alternate automation route is used. No production board,
+settings, running client, firmware upload or actuator is contacted or changed.
+
+Verification: editor, lease-controller, shared HTTP, single-source, app-contract,
+dialog and control-presentation tests pass, as do living-contract and comparison
+Check. Rebound51 changed-file references only after checking their prior hashes
+and retained anchors; unchanged donor counts remain436 comparisons/4302 pending.
+The first comparison generation correctly rejected an omitted canonical-page
+reference; those four generated-page references were then explicitly verified.
+Full/onboard builds and no-write checks match revision aa518a96eea2dd7d,
+546206 HTML bytes /154031 gzip bytes. Existing read-only simulated preview at
+localhost:64453 serves the updated source (HTTP200, simulated header); this is
+not a new screenshot or rendered/hardware acceptance. CI remains its own gate.
+
+PR40 CI41029329937 subsequently failed the independent PU route gate on all
+three script hosts: the file-comparison bindings were current but two root/UI
+route bindings still hashed the prior generated WebUi.h. Read the actual donor
+root-registration slice and current target, then ran the canonical auditor on
+the existing donor checkout. Exactly two SHA bindings changed; registrations,
+anchors, line numbers and dispositions are unchanged. pu_routes_test now passes;
+no route assertion or build gate was bypassed.
+
 ## Game picker acceptance gaps, side conversation, 2026-10-29 (#32)
 
 Scope is the Flutter game-mode selector, not board deployment or the main

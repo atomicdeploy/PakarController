@@ -900,7 +900,7 @@
         {
           "path": "assets/web/feature-workspaces.js",
           "anchor": "async function reloadCorrections(",
-          "sha256": "93f24fd4008ef69eb247dd02d084a531a04b1dffaa86d6b651df43b5b6c3f33a"
+          "sha256": "13a51897342b90e6d328d84da0c7272fd6f909fb84996de23a164bb48feb88fa"
         },
         {
           "path": "web/modules/components.js",
@@ -922,7 +922,7 @@
         {
           "path": "tests/web_feature_workspaces_test.mjs",
           "anchor": "Only one confirmation may own the editor",
-          "sha256": "0ee5cabce984e6f4e39fcdbe057e65897559a1f67dc1a35e010dab929ed691ca"
+          "sha256": "e02d06ce8ffcd53f00ecbb4524396aebe31d9035bb6e575b10fc47cca4eb1a7a"
         },
         {
           "path": "tests/web_dialog_test.mjs",
@@ -932,7 +932,7 @@
         {
           "path": "tests/web_feature_workspaces_test.mjs",
           "anchor": "Only one group confirmation owns the draft",
-          "sha256": "0ee5cabce984e6f4e39fcdbe057e65897559a1f67dc1a35e010dab929ed691ca"
+          "sha256": "e02d06ce8ffcd53f00ecbb4524396aebe31d9035bb6e575b10fc47cca4eb1a7a"
         }
       ],
       "omissions": [
@@ -1043,7 +1043,7 @@
         {
           "path": "assets/web/feature-workspaces.js",
           "anchor": "function stepped(",
-          "sha256": "93f24fd4008ef69eb247dd02d084a531a04b1dffaa86d6b651df43b5b6c3f33a"
+          "sha256": "13a51897342b90e6d328d84da0c7272fd6f909fb84996de23a164bb48feb88fa"
         },
         {
           "path": "assets/web/command-transport.js",
@@ -1070,7 +1070,7 @@
         {
           "path": "tests/web_feature_workspaces_test.mjs",
           "anchor": "Retired group row callbacks cannot mutate replacement draft",
-          "sha256": "0ee5cabce984e6f4e39fcdbe057e65897559a1f67dc1a35e010dab929ed691ca"
+          "sha256": "e02d06ce8ffcd53f00ecbb4524396aebe31d9035bb6e575b10fc47cca4eb1a7a"
         },
         {
           "path": "tests/web_command_transport_test.mjs",
@@ -1085,7 +1085,7 @@
         {
           "path": "tests/web_feature_workspaces_test.mjs",
           "anchor": "Rule window includes its prefix, not later rules",
-          "sha256": "0ee5cabce984e6f4e39fcdbe057e65897559a1f67dc1a35e010dab929ed691ca"
+          "sha256": "e02d06ce8ffcd53f00ecbb4524396aebe31d9035bb6e575b10fc47cca4eb1a7a"
         }
       ],
       "omissions": [
@@ -1115,7 +1115,8 @@
         "Correction-editor owner read the complete donor. Adapted owned numeric drafts versus authoritative board state, invalid input retention and explicit commit. Live correction preview is a separate bounded board-owned lease; only Save writes persistent corrections.",
         "Per-group count editor reuses the imported ControllerDialog and existing bounded numeric controls. Counts are local drafts with cumulative physical-address preview; explicit save uses same-peer revision fencing and effective-count readback, including normalized no-op saves. Invalid advertised layouts fail closed rather than silently using six/twelve.",
         "The Web correction editor follows the actual Flutter correction-row enabled flag and the reread donor's local-edit/explicit-commit split. Per-rule checkboxes modify drafts only, disabled flags survive reordering and full saves, missing flags alone default true, malformed booleans are rejected, and exact saved readback compares enabled alongside kind/address/offset. Existing peer, capability and revision ownership remains shared.",
-        "Reread the complete actual PCController pwm_control at the unchanged inventoried hash and the complete existing Flutter pixel_correction_preview.dart. Adapted Flutter's explicit-only RAM lease, 280ms edit coalescing, exact source/base/owner readback, latency-adjusted renewal/expiry, original-route cleanup and no uncertain replay into a staged transport-injected Web controller. It reuses the canonical correction projection and owns no socket, renderer or persistence. UI integration, transport wiring and deployed behavior are not claimed."
+        "Reread the complete actual PCController pwm_control at the unchanged inventoried hash and the complete existing Flutter pixel_correction_preview.dart. Adapted Flutter's explicit-only RAM lease, 280ms edit coalescing, exact source/base/owner readback, latency-adjusted renewal/expiry, original-route cleanup and no uncertain replay into a staged transport-injected Web controller. It reuses the canonical correction projection and owns no socket, renderer or persistence. UI integration, transport wiring and deployed behavior are not claimed.",
+        "2026-10-30 reread the complete unchanged PCController pwm_control and Flutter preview controller plus its actual foreground/active/save lifecycle slices. The canonical Web source already embedded the controller and preview-on-edit checkbox despite stale staged-only records. Acquisition/renewal/readback/release now use the original shared HTTP pin including connection generation, not a freshly admitted generic command. Hidden-document/pagehide cleanup and passive foreground/BFCache return adapt Flutter's foreground ownership; same-board route changes cannot redirect cleanup. Focused source/DOM tests cover captured-pin identity, lifecycle and disposal; actual browser/device/output and hidden workspace-panel acceptance remain open."
       ],
       "targets": [
         {
@@ -1136,7 +1137,7 @@
         {
           "path": "assets/web/feature-workspaces.js",
           "anchor": "function correctionsMatch(",
-          "sha256": "93f24fd4008ef69eb247dd02d084a531a04b1dffaa86d6b651df43b5b6c3f33a"
+          "sha256": "13a51897342b90e6d328d84da0c7272fd6f909fb84996de23a164bb48feb88fa"
         },
         {
           "path": "assets/web/correction-preview.js",
@@ -1163,7 +1164,7 @@
         {
           "path": "tests/web_feature_workspaces_test.mjs",
           "anchor": "Disabled state follows a reordered rule",
-          "sha256": "0ee5cabce984e6f4e39fcdbe057e65897559a1f67dc1a35e010dab929ed691ca"
+          "sha256": "e02d06ce8ffcd53f00ecbb4524396aebe31d9035bb6e575b10fc47cca4eb1a7a"
         },
         {
           "path": "tests/web_correction_preview_test.mjs",
@@ -1180,7 +1181,7 @@
       ],
       "remaining": [
         "Network correction management is implemented; Flutter USB/BLE correction-editor configuration is not claimed.",
-        "The staged Web lease controller is not embedded or UI-wired. Explicit capability-gated controls, pinned shared transport/context authorization, foreground/panel/save/reload/disposal lifecycle and rendered acceptance remain open. Firmware currently has fenced HTTP/USB preview handlers but no named WebSocket preview command; do not invent a wire command or claim WebSocket preview support. No production lease or output acceptance from clock/transport doubles."
+        "The current Web controller and capability-gated preview-on-edit checkbox are embedded and connected. Original-generation HTTP ownership and background/page lifecycle cleanup are source-tested; explicit workspace-panel hiding, rendered browser behavior and production lease/output acceptance remain open. Firmware currently has fenced HTTP/USB preview handlers but no named WebSocket preview command; do not invent one or claim WebSocket preview support. Opening/restoring the page is passive; edits may preview only when the existing checkbox is enabled."
       ]
     },
     {
@@ -1403,7 +1404,7 @@
         {
           "path": "web/index.html",
           "anchor": "function renderAssignmentTools(",
-          "sha256": "50951b137bc42eccc73d953ecf599c2d28d31ce2c041c0539b96d5ad3c747686"
+          "sha256": "aa518a96eea2dd7d787cb0a31d5191c78886e2e31605eda64458a0cea728835d"
         }
       ],
       "proof": [
@@ -8831,7 +8832,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function firmwareUpdateObservation(s)"
         }
       ],
@@ -12969,7 +12970,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function upgradeObservation(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         }
       ],
       "omissions": [
@@ -13094,7 +13095,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         }
       ],
       "proof": [
@@ -13184,7 +13185,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         }
       ],
       "proof": [
@@ -13274,7 +13275,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         }
       ],
       "proof": [
@@ -13364,7 +13365,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function lcdObservation(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         }
       ],
       "proof": [
@@ -13676,7 +13677,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -13817,7 +13818,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         }
       ],
       "proof": [
@@ -13996,7 +13997,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -14073,7 +14074,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function presentDeviceAccess(info)"
         }
       ],
@@ -14895,7 +14896,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function statusRgbOutput"
         }
       ],
@@ -15029,7 +15030,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function acceptStatusRgb("
         }
       ],
@@ -15503,7 +15504,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function readStreamPolicy"
         }
       ],
@@ -16955,7 +16956,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function connectWs()"
         }
       ],
@@ -17064,7 +17065,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "async function refreshAuthenticated(options={})"
         },
         {
@@ -17156,7 +17157,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function report(e,tone)"
         }
       ],
@@ -17328,7 +17329,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function connectWs()"
         }
       ],
@@ -17431,7 +17432,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function renderSelectionSummary()"
         }
       ],
@@ -17527,7 +17528,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -17612,7 +17613,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "<script data-pakar-presentation>"
         }
       ],
@@ -17812,12 +17813,12 @@
         },
         {
           "path": "web/index.html",
-          "sha256": "50951b137bc42eccc73d953ecf599c2d28d31ce2c041c0539b96d5ad3c747686",
+          "sha256": "aa518a96eea2dd7d787cb0a31d5191c78886e2e31605eda64458a0cea728835d",
           "anchor": "function renderLedBackendControl(anchor){"
         },
         {
           "path": "web/index.html",
-          "sha256": "50951b137bc42eccc73d953ecf599c2d28d31ce2c041c0539b96d5ad3c747686",
+          "sha256": "aa518a96eea2dd7d787cb0a31d5191c78886e2e31605eda64458a0cea728835d",
           "anchor": "function waitForLedBackend("
         }
       ],
@@ -18000,7 +18001,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "// BEGIN SHARED LOCALIZATION"
         }
       ],
@@ -18306,7 +18307,7 @@
         },
         {
           "path": "assets/web/feature-workspaces.js",
-          "sha256": "93f24fd4008ef69eb247dd02d084a531a04b1dffaa86d6b651df43b5b6c3f33a",
+          "sha256": "13a51897342b90e6d328d84da0c7272fd6f909fb84996de23a164bb48feb88fa",
           "anchor": "function reveal(target)"
         },
         {
@@ -18358,7 +18359,7 @@
         },
         {
           "path": "tests/web_feature_workspaces_test.mjs",
-          "sha256": "0ee5cabce984e6f4e39fcdbe057e65897559a1f67dc1a35e010dab929ed691ca",
+          "sha256": "e02d06ce8ffcd53f00ecbb4524396aebe31d9035bb6e575b10fc47cca4eb1a7a",
           "anchor": "Injected navigation must not be followed by a second targetless fallback"
         },
         {
@@ -18432,7 +18433,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function statusRgbOutput"
         },
         {
@@ -18618,7 +18619,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function peerAvailability("
         }
       ],
@@ -18808,7 +18809,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         }
       ],
       "omissions": [
@@ -19007,7 +19008,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "<!-- BEGIN SHARED BRAND HEADER -->"
         },
         {
@@ -19017,7 +19018,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "function renderApplicationIdentity"
         },
         {
@@ -19098,7 +19099,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "<!-- BEGIN SHARED BRAND FAVICON -->"
         },
         {
@@ -19839,7 +19840,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -20009,7 +20010,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         },
         {
           "path": "firmware/avr/BootMelody.cpp",
@@ -22149,7 +22150,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "// BEGIN SHARED APPEARANCE"
         }
       ],
@@ -22256,7 +22257,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "/* Fixed manager slots:"
         },
         {
@@ -22517,7 +22518,7 @@
         },
         {
           "path": "firmware/esp/src/WebUi.h",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95",
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73",
           "anchor": "id=\"uiHaptics\""
         }
       ],
@@ -23475,7 +23476,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "async function boardSoundTransaction(",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         },
         {
           "path": "desktop/src/ui/device_settings.rs",
@@ -24919,12 +24920,12 @@
         },
         {
           "path": "assets/web/feature-workspaces.js",
-          "sha256": "93f24fd4008ef69eb247dd02d084a531a04b1dffaa86d6b651df43b5b6c3f33a",
+          "sha256": "13a51897342b90e6d328d84da0c7272fd6f909fb84996de23a164bb48feb88fa",
           "anchor": "function diagnosticWorkspace(value)"
         },
         {
           "path": "web/index.html",
-          "sha256": "50951b137bc42eccc73d953ecf599c2d28d31ce2c041c0539b96d5ad3c747686",
+          "sha256": "aa518a96eea2dd7d787cb0a31d5191c78886e2e31605eda64458a0cea728835d",
           "anchor": "function workspaceDiagnosticDraft()"
         },
         {
@@ -24986,7 +24987,7 @@
         },
         {
           "path": "tests/web_feature_workspaces_test.mjs",
-          "sha256": "0ee5cabce984e6f4e39fcdbe057e65897559a1f67dc1a35e010dab929ed691ca",
+          "sha256": "e02d06ce8ffcd53f00ecbb4524396aebe31d9035bb6e575b10fc47cca4eb1a7a",
           "anchor": "Live observations do not trigger durable writes"
         },
         {
@@ -25255,7 +25256,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function createWorkspaceStorage",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         },
         {
           "path": "assets/web/device-settings.js",
@@ -25309,7 +25310,7 @@
         {
           "path": "firmware/esp/src/WebUi.h",
           "anchor": "function workspaceSettingsRecord",
-          "sha256": "37f97386ad9cc8d87df469629066e20e0601adcee6641b52af9687bc807eca95"
+          "sha256": "dcd9e175d488ecbcb4c824fa7c7fd2004c5da9411c67851831940a4ba8881a73"
         }
       ],
       "proof": [

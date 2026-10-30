@@ -1779,15 +1779,32 @@ g.WebWorkspace={normalize,move,offset,attach};
     function message(text,error=false){notice.textContent=translate(text);notice.classList.toggle('field-error',error);}
     const livePreview=input('checkbox');livePreview.checked=true;
     const livePreviewField=field('Live preview',livePreview);fixed.append(livePreviewField);
+    // Adapt Flutter's connectionRevision and foreground ownership. A board/boot
+    // alone is not the connection which acquired a temporary preview lease.
+    let pageLeaving=false;
+    function previewOwner(){
+      if(!current(owner))return null;
+      try{const connection=pin?.();if(!connection)return null;
+        return {key:JSON.stringify([owner,connection]),editor:owner,pin:Object.freeze({...connection})};
+      }catch{return null;}
+    }
+    function requirePreviewOwner(identity){requireCurrent(identity.editor);if(previewOwner()?.key!==identity.key)throw Error('Device connection changed. No preview was replayed.');}
     const preview=root.createPixelCorrectionPreview?.({
-      owner:()=>current(owner)?{key:owner,pin:pin?.()}:null,
-      allowed:()=>current(owner)&&peer().has('pixel-corrections-preview')&&!!model?.saved&&!model.conflict&&validCorrectionDraft(model),
+      owner:previewOwner,
+      allowed:()=>!pageLeaving&&document.visibilityState!=='hidden'&&current(owner)&&peer().has('pixel-corrections-preview')&&!!model?.saved&&!model.conflict&&validCorrectionDraft(model),
       configuration:()=>({revision:model.saved.revision,enabled:model.enabled,rules:model.rules}),
       pixels:()=>model.saved.pixels,project:correctionSources,
-      send:async(value,identity)=>{requireCurrent(identity.key);const reply=await command(correctionPath+'/preview',{configuration:JSON.stringify(value)});requireCurrent(identity.key);return reply.pixel_corrections_preview?{revision:value.revision,preview:reply.pixel_corrections_preview}:reply;},
-      read:async identity=>{requireCurrent(identity.key);return api(correctionPath,identity.pin?{peer:identity.pin}:{});},
+      // No named WS preview command exists. Use the shared fenced HTTP owner,
+      // retaining the acquisition pin through its asynchronous preflight too.
+      send:async(value,identity)=>{requirePreviewOwner(identity);const reply=await api(correctionPath+'/preview',{method:'POST',peer:identity.pin,body:new URLSearchParams({configuration:JSON.stringify(value)})});requirePreviewOwner(identity);return reply;},
+      read:async identity=>{requirePreviewOwner(identity);const reply=await api(correctionPath,{peer:identity.pin});requirePreviewOwner(identity);return reply;},
       onChange:state=>{if(state.error)message(state.error,true);}
     });
+    const previewVisibility=()=>{if(document.visibilityState==='hidden')void preview?.stop();};
+    const previewPageHide=()=>{pageLeaving=true;void preview?.stop();};
+    const previewPageShow=()=>{pageLeaving=false;}; // BFCache return never starts output.
+    document.addEventListener?.('visibilitychange',previewVisibility);
+    root.addEventListener('pagehide',previewPageHide);root.addEventListener('pageshow',previewPageShow);
     livePreview.onchange=()=>{if(!livePreview.checked)void preview?.stop();else if(model?.dirty)startPreview();};
     function startPreview(){if(!livePreview.checked||!preview||!validCorrectionDraft(model)||model.conflict)return;if(preview.snapshot().enabled)preview.edited();else void preview.start();}
     function changed(){if(!model)return;correctionEdits++;model.dirty=true;message(model.conflict?'Board changed elsewhere. Reload before saving.':'Unsaved changes',model.conflict);sync();if(model.mappingView==='draft')drawMapping();rememberPresentation();startPreview();}
@@ -2139,7 +2156,7 @@ g.WebWorkspace={normalize,move,offset,attach};
     }
     const beforeUnload=event=>{if(groups?.dirty()||[...models.values()].some(record=>record.dirty||record.busy)){event.preventDefault();event.returnValue='';}};
     root.addEventListener('beforeunload',beforeUnload);
-    installed={update,workspaceSnapshot(scope){return model&&model.scope===scope?diagnosticWorkspace(model.diagnosticDraft):undefined;},presentationSnapshot(scope){return model&&model.scope===scope?pixelToolsWorkspace(model.presentation):undefined;},dispose(){void preview?.dispose();disposed=true;dismissReload();root.removeEventListener('beforeunload',beforeUnload);groups?.dispose();userFiles?.dispose();corrections.card.remove();diagnostics.card.remove();inspector.card.remove();installed=null;}};
+    installed={update,workspaceSnapshot(scope){return model&&model.scope===scope?diagnosticWorkspace(model.diagnosticDraft):undefined;},presentationSnapshot(scope){return model&&model.scope===scope?pixelToolsWorkspace(model.presentation):undefined;},dispose(){void preview?.dispose();disposed=true;dismissReload();document.removeEventListener?.('visibilitychange',previewVisibility);root.removeEventListener('pagehide',previewPageHide);root.removeEventListener('pageshow',previewPageShow);root.removeEventListener('beforeunload',beforeUnload);groups?.dispose();userFiles?.dispose();corrections.card.remove();diagnostics.card.remove();inspector.card.remove();installed=null;}};
     update();return installed;
   }
   root.createFeatureWorkspaces=create;
