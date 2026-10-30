@@ -12166,3 +12166,12 @@ callbacks, CommandEntry handlers and DeviceParameter get/set callbacks provide
 an adapter boundary. A future migration must preserve device handlers, network
 lifecycle, persistence and serial/Telnet behavior, then compile and test hardware.
 No PU850 replacement or board rollout was performed in this pass.
+
+PU850 command mapping must retain `save`/`restore` persistence, `busy`/`ready`
+controller signals, `status` network observations and device-specific `beep`.
+Its `hex` converts a number: do not replace it silently with the desktop hex
+editor demo. Its upper/noupper behavior can migrate to a typed dotted setting
+under an explicit consumer decision. Keep its current command argument and
+read-only parameter semantics, write/close callbacks, per-session echo/line
+ending behavior, hostname prompt, and Wi-Fi/mDNS reconnect lifecycle. The library
+provides reusable byte/parser/rendering mechanisms, not these device operations.
