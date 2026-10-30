@@ -12055,3 +12055,26 @@ and CRLF cases. No guard is removed and no check is suppressed. The existing
 bluetooth/source wiring was inspected; this is fixture repair, not BLE radio
 acceptance. Combined shell and audit fixtures pass; final SSH/quality/SDK/client
 CI remains a separate exact-head gate. No boards or production apps changed.
+
+## Windows WebSocket-bootstrap fixture repair (2026-10-30, PR43)
+
+Actions run41080991373 failed in the loopback server at peer_http.rs:746:
+Winsock10035 (WouldBlock) on the first HTTP request read, followed by the
+client's connection-reset error. The listener deliberately polls accept, but
+Windows can inherit its nonblocking mode into accepted sockets. Explicitly
+restore blocking mode before the existing bounded HTTP/WebSocket reads. Apply
+the same correction to the adjacent cached-HTTP-route fixture. Preserve all
+hostname, Host-header, verified-TCP-address, identity, revocation and deadline
+assertions; no production transport code or command admission changes.
+
+Consulted peer-binding's three mapped PCController session/admission sources
+and outstanding lifecycle gaps, plus the actual netpolicy HTTP URL and public
+transport tests. Those Go tests retain explicit route assertions, but their
+net.Pipe/Go runtime does not supply a Rust/Winsock socket-mode fix. Keep Pakar's
+existing bounded loopback fixture rather than replace production resolution.
+
+The canonical focused native-test wrapper was attempted and refused before
+Cargo: live Pealayer tracked-file inventory drift. Do not bypass that gate,
+change its checkout, relabel unread donor changes as reviewed or claim a local
+native pass. Exact-head Windows CI must execute the retained regression and
+the broader native suite. No boards, installed apps or device settings changed.
