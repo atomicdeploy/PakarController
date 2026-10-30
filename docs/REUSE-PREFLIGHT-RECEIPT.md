@@ -12122,3 +12122,12 @@ Cargo: live Pealayer tracked-file inventory drift. Do not bypass that gate,
 change its checkout, relabel unread donor changes as reviewed or claim a local
 native pass. Exact-head Windows CI must execute the retained regression and
 the broader native suite. No boards, installed apps or device settings changed.
+
+The stacked artwork PR44 also exposed two stale PU route target bindings in
+run41091875727. Reviewed the three generated WebUi.h changes: shared header
+artwork, application icon bytes and favicon bytes only. Both existing remote
+update anchors and route implementations remain unchanged at line417. Refresh
+only those two target hashes in PU850-ROUTE-PARITY.json, keeping donor hashes,
+route classifications and remaining acceptance unchanged. The actual50-route
+checker, Web identity test and no-write application-artwork check pass. This is
+not execution of native tests, firmware compilation or OTA/physical acceptance.
