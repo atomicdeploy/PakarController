@@ -43,6 +43,14 @@ Full/onboard builds and no-write checks match revision aa518a96eea2dd7d,
 localhost:64453 serves the updated source (HTTP200, simulated header); this is
 not a new screenshot or rendered/hardware acceptance. CI remains its own gate.
 
+PR40 CI41029329937 subsequently failed the independent PU route gate on all
+three script hosts: the file-comparison bindings were current but two root/UI
+route bindings still hashed the prior generated WebUi.h. Read the actual donor
+root-registration slice and current target, then ran the canonical auditor on
+the existing donor checkout. Exactly two SHA bindings changed; registrations,
+anchors, line numbers and dispositions are unchanged. pu_routes_test now passes;
+no route assertion or build gate was bypassed.
+
 ## Game picker acceptance gaps, side conversation, 2026-10-29 (#32)
 
 Scope is the Flutter game-mode selector, not board deployment or the main
