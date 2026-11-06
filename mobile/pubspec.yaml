@@ -41,7 +41,7 @@ dependencies:
   mqtt_client: ^10.14.0
   crypto: ^3.0.8
   # Bounded OOXML cell assignment documents; no native Excel dependency.
-  archive: ^4.5.2
+  archive: ^4.6.0
   xml: ^7.1.0
 
 dev_dependencies:
