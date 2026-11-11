@@ -17,12 +17,14 @@ use std::{
 };
 const SSDP_GROUP: Ipv4Addr = Ipv4Addr::new(239, 255, 255, 250);
 const TYPE: &str = "urn:schemas-upnp-org:device:Basic:1";
+const PEER_SERVICE: &str = "_lan-peer._tcp.local.";
 #[derive(Default)]
 struct Registry {
     active: BTreeSet<String>,
     errors: BTreeMap<String, String>,
     peers: BTreeMap<String, (Instant, Value)>,
-    attempted: BTreeMap<String, Instant>,
+    network_peers: BTreeMap<String, (Instant, Value)>,
+    attempted: BTreeMap<(String, &'static str), Instant>,
 }
 pub struct Advertiser {
     stop: Arc<AtomicBool>,
@@ -86,40 +88,43 @@ impl Advertiser {
             match ServiceDaemon::new() {
                 Ok(daemon) => {
                     let peer_policy = crate::peer_identity::advertised_policy();
-                    let service = ServiceInfo::new(
-                        "_pakarcontroller._tcp.local.",
-                        &format!("PakarController on {}", settings.hostname),
-                        &format!("{}.local.", settings.hostname),
-                        addresses
-                            .iter()
-                            .map(ToString::to_string)
-                            .collect::<Vec<_>>()
-                            .join(","),
-                        settings.port,
-                        [
-                            ("product", "pakarcontroller"),
-                            ("kind", "bridge"),
-                            ("api", "/api"),
-                            ("ws", "/ws"),
-                            ("hostname", settings.hostname.as_str()),
-                            ("instance", settings.instance_id.as_str()),
-                            ("version", crate::peer_identity::VERSION),
-                            ("minimum_app", peer_policy.minimum_app.as_str()),
-                            ("minimum_board", peer_policy.minimum_board.as_str()),
-                            (
-                                "version_check",
-                                if crate::peer_identity::enforced() {
-                                    "true"
-                                } else {
-                                    "false"
-                                },
-                            ),
-                        ]
-                        .as_slice(),
-                    );
-                    match service.and_then(|s| daemon.register(s)) {
-                        Ok(()) => {}
-                        Err(e) => result.fault("mdns", e),
+                    for kind in ["_pakarcontroller._tcp.local.", PEER_SERVICE] {
+                        let service = ServiceInfo::new(
+                            kind,
+                            &format!("PakarController on {}", settings.hostname),
+                            &format!("{}.local.", settings.hostname),
+                            addresses
+                                .iter()
+                                .map(ToString::to_string)
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            settings.port,
+                            [
+                                ("product", "pakarcontroller"),
+                                ("health", "/healthz"),
+                                ("kind", "bridge"),
+                                ("api", "/api"),
+                                ("ws", "/ws"),
+                                ("hostname", settings.hostname.as_str()),
+                                ("instance", settings.instance_id.as_str()),
+                                ("version", crate::peer_identity::VERSION),
+                                ("minimum_app", peer_policy.minimum_app.as_str()),
+                                ("minimum_board", peer_policy.minimum_board.as_str()),
+                                (
+                                    "version_check",
+                                    if crate::peer_identity::enforced() {
+                                        "true"
+                                    } else {
+                                        "false"
+                                    },
+                                ),
+                            ]
+                            .as_slice(),
+                        );
+                        match service.and_then(|s| daemon.register(s)) {
+                            Ok(()) => {}
+                            Err(e) => result.fault("mdns", e),
+                        }
                     }
                     if let Ok(monitor) = daemon.monitor() {
                         let stop = result.stop.clone();
@@ -152,7 +157,11 @@ impl Advertiser {
                             }
                         });
                     }
-                    for kind in ["_pakarcontroller._tcp.local.", "_http._tcp.local."] {
+                    for kind in [
+                        "_pakarcontroller._tcp.local.",
+                        "_http._tcp.local.",
+                        PEER_SERVICE,
+                    ] {
                         match daemon.browse(kind) {
                             Ok(events) => {
                                 let stop = result.stop.clone();
@@ -169,6 +178,17 @@ impl Advertiser {
                                             {
                                                 continue;
                                             }
+                                            let claimed = if kind == PEER_SERVICE {
+                                                let Some(product) = service
+                                                    .get_property_val_str("product")
+                                                    .filter(|value| peer_product(value))
+                                                else {
+                                                    continue;
+                                                };
+                                                Some(product.to_string())
+                                            } else {
+                                                None
+                                            };
                                             for ip in service.get_addresses_v4() {
                                                 offer(
                                                     &tx,
@@ -183,6 +203,8 @@ impl Advertiser {
                                                             .trim_end_matches('.')
                                                             .into(),
                                                         protocol: "dns-sd",
+                                                        generic: kind == PEER_SERVICE,
+                                                        claimed: claimed.clone(),
                                                     },
                                                 );
                                             }
@@ -222,6 +244,21 @@ impl Advertiser {
                     let addresses = addresses.clone();
                     let tx = tx.clone();
                     thread::spawn(move || {
+                        let searchers = if mndp {
+                            Vec::new()
+                        } else {
+                            addresses
+                                .iter()
+                                .filter_map(|ip| {
+                                    let socket = UdpSocket::bind((*ip, 0)).ok()?;
+                                    socket2::SockRef::from(&socket)
+                                        .set_multicast_if_v4(ip)
+                                        .ok()?;
+                                    socket.set_nonblocking(true).ok()?;
+                                    Some(socket)
+                                })
+                                .collect::<Vec<_>>()
+                        };
                         let mut last = Instant::now() - Duration::from_secs(31);
                         let mut sequence = 0u16;
                         let mut replies = BTreeMap::new();
@@ -245,9 +282,26 @@ impl Advertiser {
                                             (group, port),
                                         );
                                     }
-                                    let _ = socket.send_to(SEARCH, (group, port));
+                                    for searcher in &searchers {
+                                        let _ = searcher.send_to(SEARCH, (group, port));
+                                    }
                                 }
                                 last = Instant::now();
+                            }
+                            for searcher in &searchers {
+                                for _ in 0..16 {
+                                    let Ok((len, source)) = searcher.recv_from(&mut bytes) else {
+                                        break;
+                                    };
+                                    if let Some(candidate) = parse_ssdp(&bytes[..len], source)
+                                        && !addresses.iter().any(|ip| {
+                                            candidate.origin
+                                                == format!("http://{ip}:{}", settings.port)
+                                        })
+                                    {
+                                        offer(&tx, &registry, candidate);
+                                    }
+                                }
                             }
                             let (length, source) = match socket.recv_from(&mut bytes) {
                                 Ok(v) => v,
@@ -351,7 +405,10 @@ impl Advertiser {
         let mut r = self.registry.lock().unwrap();
         r.peers
             .retain(|_, (at, _)| at.elapsed() < Duration::from_secs(120));
-        json!({"active_protocols":r.active,"errors":r.errors,"peers":r.peers.values().map(|(_,v)|v).collect::<Vec<_>>(),"automatic_authority":false})
+        r.network_peers
+            .retain(|_, (at, _)| at.elapsed() < Duration::from_secs(120));
+        json!({"active_protocols":r.active,"errors":r.errors,"peers":r.peers.values().map(|(_,v)|v).collect::<Vec<_>>(),
+            "network_peers":r.network_peers.values().map(|(_,v)|v).collect::<Vec<_>>(),"automatic_authority":false})
     }
 }
 impl Drop for Advertiser {
@@ -367,6 +424,15 @@ struct Candidate {
     origin: String,
     hostname: String,
     protocol: &'static str,
+    generic: bool,
+    claimed: Option<String>,
+}
+fn peer_product(value: &str) -> bool {
+    (1..=48).contains(&value.len())
+        && value.as_bytes()[0].is_ascii_lowercase()
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
 }
 fn local_source(address: SocketAddr) -> bool {
     matches!(address.ip(),IpAddr::V4(ip) if !ip.is_unspecified()&&!ip.is_multicast()&&!ip.is_broadcast()&&address.port()!=0)
@@ -375,23 +441,24 @@ fn offer(tx: &mpsc::SyncSender<Candidate>, registry: &Mutex<Registry>, candidate
     let mut r = registry.lock().unwrap();
     r.attempted
         .retain(|_, at| at.elapsed() < Duration::from_secs(30));
-    if r.attempted.len() >= 128 || r.attempted.contains_key(&candidate.origin) {
+    let key = (candidate.origin.clone(), candidate.protocol);
+    if r.attempted.len() >= 128 || r.attempted.contains_key(&key) {
         return;
     }
-    r.attempted.insert(candidate.origin.clone(), Instant::now());
-    drop(r);
-    let _ = tx.try_send(candidate);
+    r.attempted.insert(key.clone(), Instant::now());
+    if tx.try_send(candidate).is_err() {
+        r.attempted.remove(&key);
+    }
 }
 fn verify(candidate: Candidate, registry: &Mutex<Registry>) {
-    let Ok(client) = crate::peer_identity::client_builder()
-        .no_proxy()
-        .redirect(reqwest::redirect::Policy::none())
-        .timeout(Duration::from_millis(900))
-        .build()
-    else {
-        return;
+    let build = |builder: reqwest::blocking::ClientBuilder| {
+        builder
+            .no_proxy()
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(Duration::from_millis(900))
+            .build()
     };
-    let read = |path: &str, limit: u64| -> Option<Vec<u8>> {
+    let read = |client: &reqwest::blocking::Client, path: &str, limit: u64| -> Option<Vec<u8>> {
         let response = client
             .get(format!("{}{path}", candidate.origin))
             .send()
@@ -403,21 +470,77 @@ fn verify(candidate: Candidate, registry: &Mutex<Registry>) {
         response.take(limit + 1).read_to_end(&mut bytes).ok()?;
         (bytes.len() <= limit as usize).then_some(bytes)
     };
-    let public = read("/api/peer/info", 8192)
+    if candidate.generic {
+        let Ok(public_client) = build(reqwest::blocking::Client::builder()) else {
+            return;
+        };
+        let health = read(&public_client, "/healthz", 4096)
+            .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok());
+        let identity = health.as_ref().and_then(|health| {
+            let product = health["product_id"]
+                .as_str()
+                .or(health["product"].as_str())?;
+            (health["status"] == "ok"
+                && health["discovery"] == "lan-peer"
+                && peer_product(product)
+                && candidate
+                    .claimed
+                    .as_deref()
+                    .is_none_or(|claim| claim == product))
+            .then_some(product)
+        });
+        if let Some(product) = identity {
+            let mut r = registry.lock().unwrap();
+            if r.network_peers.len() < 128 || r.network_peers.contains_key(&candidate.origin) {
+                let entry = r.network_peers.entry(candidate.origin.clone()).or_insert_with(|| (Instant::now(), json!({
+                    "endpoint": candidate.origin, "product": product, "verified": true, "protocols": []
+                })));
+                if entry.1["product"] == product {
+                    entry.0 = Instant::now();
+                    if let Some(protocols) = entry.1["protocols"].as_array_mut() {
+                        let protocol = json!(candidate.protocol);
+                        if !protocols.contains(&protocol) {
+                            protocols.push(protocol);
+                        }
+                    }
+                }
+            }
+            if product != "pakarcontroller" {
+                return;
+            }
+        } else if candidate.claimed.as_deref() != Some("pakarcontroller") {
+            // Bare UPnP Basic replies can come from unrelated equipment.
+            // Verify our legacy description before sending product headers.
+            let legacy = candidate.claimed.is_none()
+                && read(&public_client, "/description.xml", 8192)
+                    .and_then(|bytes| String::from_utf8(bytes).ok())
+                    .is_some_and(|xml| legacy_description(&xml));
+            if !legacy {
+                return;
+            }
+        }
+    }
+    let Ok(client) = build(crate::peer_identity::client_builder()) else {
+        return;
+    };
+    let public = read(&client, "/api/peer/info", 8192)
         .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
-        .filter(|v| v["product"] == "PakarController"||v["application"]=="PakarController")
-        .or_else(||read("/api/discovery",8192).and_then(|b|serde_json::from_slice::<Value>(&b).ok()).filter(|v|v["product"]=="PakarController"));
-    let status = read("/api/status", 32768)
+        .filter(|v| v["product"] == "PakarController" || v["application"] == "PakarController")
+        .or_else(|| {
+            read(&client, "/api/discovery", 8192)
+                .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
+                .filter(|v| v["product"] == "PakarController")
+        });
+    let status = read(&client, "/api/status", 32768)
         .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
         .filter(valid_status);
     if public.is_none() && status.is_none() {
-        let Some(xml) = read("/description.xml", 8192).and_then(|b| String::from_utf8(b).ok())
+        let Some(xml) =
+            read(&client, "/description.xml", 8192).and_then(|b| String::from_utf8(b).ok())
         else {
             return;
         };
-        if !xml.contains("PakarController")
-            || !xml.contains("<manufacturer>AtomicDeploy</manufacturer>")
-        {
+        if !legacy_description(&xml) {
             return;
         }
     }
@@ -481,6 +604,9 @@ fn verify(candidate: Candidate, registry: &Mutex<Registry>) {
         "compatibility":public.as_ref().and_then(|v|v.get("compatibility")).or_else(||status.as_ref().and_then(|v|v.get("compatibility"))),
         "supported":status.as_ref().and_then(|v|serde_json::from_value::<crate::DeviceStatus>(v.clone()).ok()).map(|s|crate::peer_identity::validate_board(&s).is_ok())})));
 }
+fn legacy_description(xml: &str) -> bool {
+    xml.contains("PakarController") && xml.contains("<manufacturer>AtomicDeploy</manufacturer>")
+}
 fn valid_status(v: &Value) -> bool {
     serde_json::from_value::<crate::DeviceStatus>(v.clone())
         .ok()
@@ -496,6 +622,8 @@ pub(super) fn verified_origin(origin: &str) -> bool {
             origin: origin.into(),
             hostname: String::new(),
             protocol: "ssdp",
+            generic: false,
+            claimed: None,
         },
         &registry,
     );
@@ -550,9 +678,13 @@ pub(super) fn scan_origins(timeout: Duration) -> Vec<String> {
         .as_ref()
         .into_iter()
         .flat_map(|d| {
-            ["_pakarcontroller._tcp.local.", "_pakar-update._tcp.local.", "_http._tcp.local."]
-                .into_iter()
-                .filter_map(|kind| d.browse(kind).ok())
+            [
+                "_pakarcontroller._tcp.local.",
+                "_pakar-update._tcp.local.",
+                "_http._tcp.local.",
+            ]
+            .into_iter()
+            .filter_map(|kind| d.browse(kind).ok())
         })
         .collect();
     let deadline = Instant::now() + timeout;
@@ -633,7 +765,7 @@ fn ssdp(s: &crate::bridge::Settings, ip: Ipv4Addr, nts: &str) -> String {
         format!("NOTIFY * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nNTS: {nts}\r\nNT: {TYPE}\r\n")
     };
     format!(
-        "{first}CACHE-CONTROL: max-age=60\r\n{}ST: {TYPE}\r\nUSN: uuid:{}::{TYPE}\r\nLOCATION: http://{ip}:{}/description.xml\r\nX-Digitalogic-Product: pakarcontroller\r\nX-PCController-Name: {}\r\n\r\n",
+        "{first}CACHE-CONTROL: max-age=60\r\n{}ST: {TYPE}\r\nUSN: uuid:{}::{TYPE}\r\nLOCATION: http://{ip}:{}/description.xml\r\nX-Digitalogic-Discovery: lan-peer\r\nX-Digitalogic-Product: pakarcontroller\r\nX-PCController-Name: {}\r\n\r\n",
         crate::peer_identity::server_headers(),
         s.instance_id,
         s.port,
@@ -706,6 +838,8 @@ fn parse_mndp(packet: &[u8], source: SocketAddr) -> Option<Candidate> {
         origin: format!("http://{}:{port}", source.ip()),
         hostname: String::new(),
         protocol: "mndp",
+        generic: false,
+        claimed: None,
     })
 }
 
@@ -737,6 +871,13 @@ fn parse_ssdp(packet: &[u8], source: SocketAddr) -> Option<Candidate> {
     {
         return None;
     }
+    let generic = headers.get("x-digitalogic-discovery") == Some(&"lan-peer")
+        || matches!(headers.get("st").copied(), Some(TYPE | "upnp:rootdevice"));
+    let claimed = headers
+        .get("x-digitalogic-product")
+        .copied()
+        .filter(|value| peer_product(value))
+        .map(str::to_owned);
     Some(Candidate {
         origin: format!(
             "{}://{}:{}",
@@ -746,6 +887,8 @@ fn parse_ssdp(packet: &[u8], source: SocketAddr) -> Option<Candidate> {
         ),
         hostname: String::new(),
         protocol: "ssdp",
+        generic,
+        claimed,
     })
 }
 
